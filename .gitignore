@@ -1,0 +1,7 @@
+kubelab
+*.pub
+opentofu/terraform.tfstate
+opentofu/plan
+opentofu/terraform.tfstate.backup
+opentofu/.terraform.lock.hcl
+opentofu/.terraform/*
