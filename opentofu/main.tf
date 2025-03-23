@@ -39,7 +39,7 @@ resource "proxmox_virtual_environment_vm" "k8s_master" {
   network_device {
     bridge = "vmbr0"
     model  = "virtio"
-    vlan_id = 100
+    # vlan_id = 100
   }
 
   operating_system {
@@ -49,13 +49,13 @@ resource "proxmox_virtual_environment_vm" "k8s_master" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.100.${40 + count.index + 1}/24" # Static IP for master nodes
-        gateway = "192.168.100.1"
+        address = "${var.net}.${43 + count.index + 1}/24" # Static IP for master nodes
+        gateway = "${var.net}.1"
       }
     }
 
     dns {
-      servers = ["192.168.100.1"] # DNS servers
+      servers = ["${var.net}.1"] # DNS servers
     }
 
     user_account {
@@ -96,7 +96,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   network_device {
     bridge = "vmbr0"
     model  = "virtio"
-    vlan_id = 100
+    # vlan_id = 100
   }
 
   operating_system {
@@ -106,13 +106,13 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.100.${50 + count.index + 1}/24" # Static IP for worker nodes
-        gateway = "192.168.100.1"
+        address = "${var.net}.${45 + count.index + 1}/24" # Static IP for worker nodes
+        gateway = "${var.net}.1"
       }
     }
 
     dns {
-      servers = ["192.168.100.1"] # DNS servers
+      servers = ["${var.net}.1"] # DNS servers
     }
 
     user_account {
