@@ -8,6 +8,60 @@ provider "proxmox" {
   insecure  = true
 }
 
+# K8s lb
+resource "proxmox_virtual_environment_vm" "k8s_lb" {
+  name        = "k8s-lb"
+  node_name   = "kubelab-1"
+  description = "Kubernetes Load Balancer"
+  vm_id       = 4000 # Unique VM ID for the load balancer
+
+  cpu {
+    cores = 2
+  }
+
+  memory {
+    dedicated = 2048
+  }
+
+  disk {
+    datastore_id = "local-lvm"
+    file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
+    interface    = "virtio0"
+    iothread     = true
+    discard      = "on"
+    size         = 20
+  }
+
+  network_device {
+    bridge = "vmbr0"
+    model  = "virtio"
+    # vlan_id = XXX
+  }
+
+  operating_system {
+    type = "l26" # Linux kernel type
+  }
+
+  initialization {
+    ip_config {
+      ipv4 {
+        address = "192.168.0.40/24" # Static IP for the load balancer
+        gateway = "192.168.0.1"
+      }
+    }
+
+    dns {
+      servers = ["192.168.0.1"] # DNS servers
+    }
+
+    user_account {
+      username = "ubuntu"
+      password = "ubuntu"
+      keys     = [file("./../kubelab.pub")]
+    }
+  }
+}
+
 # Master Nodes
 resource "proxmox_virtual_environment_vm" "k8s_master" {
   count       = 2

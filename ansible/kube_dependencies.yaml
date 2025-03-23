@@ -1,5 +1,5 @@
 - name: Kubernetes Dependencies
-  hosts: all
+  hosts: master, workers 
   become: yes
   tasks:
     - name: Updates
