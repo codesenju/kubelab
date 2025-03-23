@@ -10,7 +10,8 @@ tofu apply --auto-approve
 
 Setup K8s
 ```bash
-ansible-playbook -i inventory.ini k8s-setup.yaml
+ansible-playbook -i inventory.ini kube_dependencies.yaml
+ansible-playbook -i inventory.ini kube_cluster.yaml
 ```
 
 ```
