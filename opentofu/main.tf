@@ -27,8 +27,7 @@ resource "proxmox_virtual_environment_vm" "k8s_master" {
 
   disk {
     datastore_id = "local-lvm"
-    # file_id      = proxmox_virtual_environment_download_file.kubelab[1].id
-    file_id      = "local:iso/noble-server-cloudimg-amd64.img"
+    file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
@@ -49,7 +48,7 @@ resource "proxmox_virtual_environment_vm" "k8s_master" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${var.net}.${43 + count.index + 1}/24" # Static IP for master nodes
+        address = "${var.net}.${40 + count.index + 1}/24" # Static IP for master nodes
         gateway = "${var.net}.1"
       }
     }
@@ -85,8 +84,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
 
   disk {
     datastore_id = "local-lvm"
-    # file_id      = proxmox_virtual_environment_download_file.kubelab[0].id
-    file_id      = "local:iso/noble-server-cloudimg-amd64.img"
+    file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
@@ -106,7 +104,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${var.net}.${45 + count.index + 1}/24" # Static IP for worker nodes
+        address = "${var.net}.${50 + count.index + 1}/24" # Static IP for worker nodes
         gateway = "${var.net}.1"
       }
     }
@@ -128,5 +126,5 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
 #   content_type = "iso"
 #   datastore_id = "local"
 #   node_name    = "kubelab-${count.index + 1}"
-#   url = "https://cloud-images.ubuntu.com/noble/current/noble-server-cloudimg-amd64.img"
+#   url = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
 # }
