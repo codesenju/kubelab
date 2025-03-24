@@ -51,8 +51,8 @@
         dest: /etc/nginx/tcpconf.d/kubernetes.conf
         content: |
           upstream kubernetes {
-              server {{ hostvars['k8s-master-1']['ansible_host'] }}:6443;
-              server {{ hostvars['k8s-master-2']['ansible_host'] }}:6443;
+              server {{ hostvars['k8s-control-plane-1']['ansible_host'] }}:6443;
+              server {{ hostvars['k8s-control-plane-2']['ansible_host'] }}:6443;
           }
 
           server {

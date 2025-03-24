@@ -1,0 +1,15 @@
+---
+- name: Import Nginx Load Balancer Playbook
+  import_playbook: nginx-lb.yaml
+
+- name: Import Kubernetes Dependencies Playbook
+  import_playbook: kube-dependencies.yaml
+
+- name: Import Kubernetes Cluster Setup Playbook
+  import_playbook: kube-cluster.yaml
+
+- name: Setup kubeconfig
+  import_playbook: kubeconfig.yaml
+
+- name: Setup k8s tools
+  import_playbook: k8s-tools.yaml

@@ -1,0 +1,32 @@
+- name: Kubernetes Dependencies
+  hosts: workers 
+  become: yes
+  tasks:
+    - name: Updates
+      apt:
+        update_cache: yes
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - nfs-common
+          - open-iscsi
+        state: present
+        update_cache: yes
+
+- hosts: k8s-control-plane-1
+  become: yes
+  tasks:
+    - name: Install longhorn
+      shell:  |-
+        set -e
+        helm repo add longhorn https://charts.longhorn.io
+        helm repo update
+        helm install longhorn longhorn/longhorn \
+             --namespace longhorn-system \
+             --create-namespace \
+             --set service.ui.type="LoadBalancer"
+      args:
+        chdir: $HOME
+        creates: longhorn.log
+

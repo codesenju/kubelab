@@ -1,4 +1,4 @@
-- hosts: master
+- hosts: control-plane
   become: yes
   tasks:
     - name: Create an Empty file for Kubeadm configuring
@@ -14,7 +14,7 @@
           kind: ClusterConfiguration
           apiVersion: kubeadm.k8s.io/v1beta3
           networking:
-            podSubnet: "10.244.0.0/16"
+            podSubnet: "{{ pod_cidr }}"
           controlPlaneEndpoint: "{{ hostvars['loadbalancer']['ansible_host'] }}:6443"
           ---
           kind: KubeletConfiguration
@@ -35,7 +35,7 @@
       args:
         chdir: $HOME
         creates: cluster_initialized.log
-      when: inventory_hostname == "k8s-master-1"
+      when: inventory_hostname == "k8s-control-plane-1"
 
     - name: Create .kube directory
       file:
@@ -49,30 +49,30 @@
         dest: $HOME/.kube/config
         remote_src: yes
         owner: "{{ ansible_user }}"
-      when: inventory_hostname == "k8s-master-1"
+      when: inventory_hostname == "k8s-control-plane-1"
 
     - name: Get join command for control plane
       shell: kubeadm token create --print-join-command
-      register: join_command_master
-      when: inventory_hostname == "k8s-master-1"
+      register: join_command_control_plane
+      when: inventory_hostname == "k8s-control-plane-1"
 
     - name: Get certificate key
       shell: kubeadm init phase upload-certs --upload-certs | tail -1
       register: cert_key
-      when: inventory_hostname == "k8s-master-1"
+      when: inventory_hostname == "k8s-control-plane-1"
 
     - name: Join additional control plane nodes
-      shell: "{{ hostvars['k8s-master-1']['join_command_master'].stdout }} --control-plane --certificate-key {{ hostvars['k8s-master-1']['cert_key'].stdout }}"
-      when: inventory_hostname == "k8s-master-2"
+      shell: "{{ hostvars['k8s-control-plane-1']['join_command_control_plane'].stdout }} --control-plane --certificate-key {{ hostvars['k8s-control-plane-1']['cert_key'].stdout }}"
+      when: inventory_hostname == "k8s-control-plane-2"
 
     - name: Install Pod Network
-      shell: kubectl apply -f https://raw.githubusercontent.com/flannel-io/flannel/master/Documentation/kube-flannel.yml >> pod_network_setup.log
+      shell: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml >> pod_network_setup.log
       args:
         chdir: $HOME
         creates: pod_network_setup.log
-      when: inventory_hostname == "k8s-master-1"
+      when: inventory_hostname == "k8s-control-plane-1"
 
-- hosts: k8s-master-1
+- hosts: k8s-control-plane-1
   become: yes
   tasks:
     - name: Get worker join command
@@ -87,4 +87,4 @@
   become: yes
   tasks:
     - name: Join worker nodes
-      shell: "{{ hostvars['k8s-master-1']['worker_join_command'] }}"
+      shell: "{{ hostvars['k8s-control-plane-1']['worker_join_command'] }}"

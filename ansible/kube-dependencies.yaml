@@ -1,5 +1,5 @@
 - name: Kubernetes Dependencies
-  hosts: master, workers 
+  hosts: control-plane, workers 
   become: yes
   tasks:
     - name: Updates
@@ -16,6 +16,8 @@
           - apt-transport-https
           - ca-certificates
           - software-properties-common
+          - nfs-common
+          - open-iscsi
         state: present
         update_cache: yes
 
@@ -151,7 +153,7 @@
     - name: Reboot
       reboot:
 
-- hosts: master
+- hosts: control-plane
   become: yes
   tasks:
     - name: Install Kubectl

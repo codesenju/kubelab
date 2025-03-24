@@ -16,11 +16,11 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
   vm_id       = 4000 # Unique VM ID for the load balancer
 
   cpu {
-    cores = 2
+    cores = local.worker_cores
   }
 
   memory {
-    dedicated = 2048
+    dedicated = local.worker_memory
   }
 
   disk {
@@ -60,22 +60,26 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
       keys     = [file("./../kubelab.pub")]
     }
   }
+  # create lifecycle to ignore changes to keys
+  lifecycle {
+    ignore_changes = [initialization[0].user_account[0].keys]
+  }
 }
 
-# Master Nodes
-resource "proxmox_virtual_environment_vm" "k8s_master" {
+# control-plane Nodes
+resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
   count       = 2
-  name        = "k8s-master-${count.index + 1}"
+  name        = "k8s-control-plane-${count.index + 1}"
   node_name   = "kubelab-${count.index + 1}"
-  description = "Kubernetes Master Node ${count.index + 1}"
-  vm_id       = 4000 + count.index + 1 # Unique VM ID for each master node
+  description = "Kubernetes control-plane Node ${count.index + 1}"
+  vm_id       = 4000 + count.index + 1 # Unique VM ID for each control-plane node
 
   cpu {
-    cores = 2
+    cores = local.control_plane_cores
   }
 
   memory {
-    dedicated = 4096
+    dedicated = local.control_plane_memory
   }
 
 
@@ -85,7 +89,7 @@ resource "proxmox_virtual_environment_vm" "k8s_master" {
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
-    size         = 20
+    size         = local.control_plane_disk_size
   }
 
 
@@ -102,7 +106,7 @@ resource "proxmox_virtual_environment_vm" "k8s_master" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${var.net}.${40 + count.index + 1}/24" # Static IP for master nodes
+        address = "${var.net}.${40 + count.index + 1}/24" # Static IP for control-plane nodes
         gateway = "${var.net}.1"
       }
     }
@@ -117,6 +121,9 @@ resource "proxmox_virtual_environment_vm" "k8s_master" {
       keys     = [file("./../kubelab.pub")]
     }
   }
+    lifecycle {
+    ignore_changes = [initialization[0].user_account[0].keys]
+  }
 }
 
 # Worker Nodes
@@ -128,11 +135,11 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   vm_id       = 5000 + count.index + 1 # Unique VM ID for each worker node
 
   cpu {
-    cores = 2
+    cores = local.worker_cores
   }
 
   memory {
-    dedicated = 4096
+    dedicated = local.worker_memory
   }
 
 
@@ -142,7 +149,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
-    size         = 20
+    size         = local.worker_disk_size
   }
 
   network_device {
@@ -172,6 +179,9 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
       password = "ubuntu"
       keys     = [file("./../kubelab.pub")]
     }
+  }
+  lifecycle {
+    ignore_changes = [initialization[0].user_account[0].keys]
   }
 }
 

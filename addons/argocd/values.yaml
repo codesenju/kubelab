@@ -1,0 +1,34 @@
+global:
+  domain: argocd.x.com
+
+configs:
+  params:
+    server.insecure: true
+
+server:
+  ingress:
+    enabled: false
+    ingressClassName: nginx
+    annotations:
+      nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+      nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+    extraTls:
+      - hosts:
+        - argocd.x.com
+        # Based on the ingress controller used secret might be optional
+        secretName: wildcard-tls
+
+redis-ha:
+  enabled: true
+
+controller:
+  replicas: 1
+
+server:
+  replicas: 2
+
+repoServer:
+  replicas: 2
+
+applicationSet:
+  replicas: 2

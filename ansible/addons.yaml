@@ -1,0 +1,119 @@
+- hosts: k8s-control-plane-1
+  become: yes
+
+  pre_tasks:
+    - name: Install pip3
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install required Python packages
+      pip:
+        name:
+          - kubernetes
+          - PyYAML
+          - jsonpatch
+        state: present
+
+  tasks:
+    - name: Install Cert Manager
+      shell: kubectl apply -f https://github.com/cert-manager/cert-manager/releases/download/v1.17.0/cert-manager.yaml >> cert_manager_setup.log
+      args:
+        chdir: $HOME
+        creates: cert_manager_setup.log
+
+    - name: Install Metallb
+      shell: kubectl apply -f https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-frr-k8s.yaml >> metallb.log
+      args:
+        chdir: $HOME
+        creates: metallb.log
+
+    - name: Wait for cert-manager pods to be ready
+      shell: kubectl wait --for=condition=Ready pods --all -n cert-manager >> cert_manager_ready.log
+      args:
+        chdir: $HOME
+        creates: cert_manager_ready.log
+      register: wait_result
+      retries: 30
+      delay: 10
+      until: wait_result.rc == 0
+
+    - name: Deploy Metallb IPAddressPool
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: k3s-lb-pool
+            namespace: metallb-system
+          spec:
+            addresses:
+            - 192.168.0.55-192.168.0.95
+            autoAssign: true
+
+    - name: Deploy Metallb L2Advertisement
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: k3s-lb-pool
+            namespace: metallb-system
+
+    - name: Deploy nginx webserver
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: nginx-deployment
+            namespace: default
+            labels:
+              app: nginx
+          spec:
+            replicas: 2
+            selector:
+              matchLabels:
+                app: nginx
+            template:
+              metadata:
+                labels:
+                  app: nginx
+              spec:
+                containers:
+                - name: nginx
+                  image: nginx:1.25
+                  ports:
+                  - containerPort: 80
+                  resources:
+                    requests:
+                      cpu: 100m
+                      memory: 128Mi
+                    limits:
+                      cpu: 200m
+                      memory: 256Mi
+    - name: Expose nginx webserver
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: nginx-service
+            namespace: default
+            labels:
+              app: nginx
+          spec:
+            type: LoadBalancer
+            # type: NodePort
+            selector:
+              app: nginx
+            ports:
+              - port: 80
+                targetPort: 80
+                # nodePort: 30080
+          

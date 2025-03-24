@@ -1,0 +1,10 @@
+---
+apiVersion: metallb.io/v1beta1
+kind: IPAddressPool
+metadata:
+  name: k3s-lb-pool
+  namespace: metallb-system
+spec:
+  addresses:
+  - 192.168.0.55-192.168.0.95
+  autoAssign: true
