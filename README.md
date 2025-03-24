@@ -55,3 +55,29 @@ helm upgrade \
 zfs-iscsi democratic-csi/democratic-csi \
 --create-namespace
 # Argo-CD
+
+
+# Issues
+***Error***
+
+k8s-worker-1 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: Warning: Permanently added '192.168.0.51' (ED25519) to the list of known hosts.\r\nubuntu@192.168.x.xx: Permission denied (publickey,password).",
+    "unreachable": true
+}
+
+***Solution***
+
+mv  ~/.ssh/known_hosts  ~/.ssh/known_hosts.bkp
+
+---
+
+***Error***
+
+CRDs stuck in terminating state
+
+***Solution***
+
+kubectl get crd | grep longhorn | awk '{print $1}'
+kubectl get crd | grep longhorn | awk '{print $1}' 
+kubectl patch crd backuptargets.longhorn.io -p '{"metadata":{"finalizers":[]}}' --type=merge
