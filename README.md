@@ -1,21 +1,20 @@
-# kubelab
-Kubernetes runnning on proxmomx
+# Kubelab
+Kubernetes runnning on Proxmox Virtual Environment
 # Kubernetes Cluster Architecture
-
 
 ```mermaid
 graph TD
     subgraph "Control Plane Nodes"
-        CP1[Control Plane Node 1<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
-        CP2[Control Plane Node 2<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
+        CP1[Control Plane Node 1<br/>192.168.0.41<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
+        CP2[Control Plane Node 2<br/>192.168.0.42<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
     end
 
     subgraph "Worker Nodes"
-        W1[Worker Node 1<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
-        W2[Worker Node 2<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
+        W1[Worker Node 1<br/>192.168.0.51<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
+        W2[Worker Node 2<br/>192.168.0.52<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
     end
 
-    LB[Load Balancer<br/>kube-apiserver:6443]
+    LB[Load Balancer<br/>192.168.0.40<br/>kube-apiserver:6443]
 
     LB --> CP1
     LB --> CP2
@@ -24,11 +23,15 @@ graph TD
     CP1 --> W2
     CP2 --> W1
     CP2 --> W2
+
 ```
 
 - Prerequisites
   - Proxmox
   - Downlaod ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+  - If your home network is not `192.168.0.0/24`, modify the configs where neccessary in the following files:
+    - opentofu/local.tf
+    - ansible/inventory.ini
 ## Setup Infrastructure on Proxmox
 dir: opentofu
 ```
@@ -36,7 +39,9 @@ tofu init
 tofu plan -out=plan
 tofu apply "plan"
 ```
+- For a detailed documentation on the infrastructure
 
+   - 📁 [Opentofu](./opentofu/README.md) ← Click to view
 ## Setup K8s
 dir: ansible
 ```bash
@@ -44,12 +49,6 @@ ansible all -m ping
 ```
 ```bash
 ansible-playbook main.yaml --tags baseline
-```
-### Setup kubeconfig on master nodes(Optional)
-```
-mkdir -p $HOME/.kube
-sudo cp -i /etc/kubernetes/admin.conf $HOME/.kube/config
-sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ```
 ###  Setup kubeconfig on bastion
 ```bash
@@ -72,7 +71,7 @@ Argocd Applications
 ```bash
 ansible-playbook main.yaml --tags argocd-apps
 ```
-## TrueNAS NFS settings (MACOS)
+## TrueNAS NFS settings (compatible with macos)
 
 Go to your TrueNAS web UI:
 
@@ -135,6 +134,7 @@ kubectl patch crd backuptargets.longhorn.io -p '{"metadata":{"finalizers":[]}}' 
 
 
 ***Error***
+
 TASK [Wait for ArgoCD pods to be ready] *******************************************************************************************************************************************************************
 An exception occurred during task execution. To see the full traceback, use -vvv. The error was: AttributeError: 'NoneType' object has no attribute 'status'
 fatal: [k8s-control-plane-1]: FAILED! => {"changed": false, "module_stderr": "Shared connection to 192.168.0.41 closed.\r\n", "module_stdout": "Traceback (most recent call last):\r\n
@@ -144,4 +144,5 @@ fatal: [k8s-control-plane-1]: FAILED! => {"changed": false, "module_stderr": "Sh
  File \"/tmp/ansible_kubernetes.core.k8s_info_payload_a2wp4_ji/ansible_kubernetes.core.k8s_info_payload.zip/ansible_collections/kubernetes/core/plugins/module_utils/k8s/waiter.py\", line 86, in custom_condition\r\nAttributeError: 'NoneType' object has no attribute 'status'\r\n", "msg": "MODULE FAILURE: No start of json char found\nSee stdout/stderr for the exact error", "rc": 1}
 
 ***Solution***
+
 Try deploying again

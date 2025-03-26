@@ -1,6 +1,6 @@
 provider "proxmox" {
   # TODO: use terraform variable or remove the line, and use PROXMOX_VE_ENDPOINT= environment variable
-  # endpoint      = ""
+  # endpoint = ""
   # TODO: use terraform variable or remove the line, and use PROXMOX_VE_USERNAME environment variable
   # username = ""
   # TODO: use terraform variable or remove the line, and use PROXMOX_VE_PASSWORD environment variable
@@ -106,19 +106,19 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${var.net}.${40 + count.index + 1}/24" # Static IP for control-plane nodes
-        gateway = "${var.net}.1"
+        address = "${local.net}.${40 + count.index + 1}/24" # Static IP for control-plane nodes
+        gateway = "${local.net}.1"
       }
     }
 
     dns {
-      servers = ["${var.net}.1"] # DNS servers
+      servers = ["${local.net}.1"] # DNS servers
     }
 
     user_account {
       username = "ubuntu"
       password = "ubuntu"
-      keys     = [file("./../kubelab.pub")]
+      keys     = [file("${local.private_key_file_path}")]
     }
   }
     lifecycle {
@@ -165,19 +165,19 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${var.net}.${50 + count.index + 1}/24" # Static IP for worker nodes
-        gateway = "${var.net}.1"
+        address = "${local.net}.${50 + count.index + 1}/24" # Static IP for worker nodes
+        gateway = "${local.net}.1"
       }
     }
 
     dns {
-      servers = ["${var.net}.1"] # DNS servers
+      servers = ["${local.net}.1"] # DNS servers
     }
 
     user_account {
-      username = "ubuntu"
-      password = "ubuntu"
-      keys     = [file("./../kubelab.pub")]
+      username = local.vm_user
+      password = local.vm_password
+      keys     = [file("${local.private_key_file_path}")]
     }
   }
   lifecycle {
