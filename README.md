@@ -1,6 +1,34 @@
 # kubelab
 Kubernetes runnning on proxmomx
+# Kubernetes Cluster Architecture
 
+
+```mermaid
+graph TD
+    subgraph "Control Plane Nodes"
+        CP1[Control Plane Node 1<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
+        CP2[Control Plane Node 2<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
+    end
+
+    subgraph "Worker Nodes"
+        W1[Worker Node 1<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
+        W2[Worker Node 2<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
+    end
+
+    LB[Load Balancer<br/>kube-apiserver:6443]
+
+    LB --> CP1
+    LB --> CP2
+    CP1 --- CP2
+    CP1 --> W1
+    CP1 --> W2
+    CP2 --> W1
+    CP2 --> W2
+```
+
+- Prerequisites
+  - Proxmox
+  - Downlaod ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
 ## Setup Infrastructure on Proxmox
 dir: opentofu
 ```
@@ -28,15 +56,58 @@ sudo chown $(id -u):$(id -g) $HOME/.kube/config
 ssh -i ../kubelab ubuntu@192.168.0.41 cat /home/ubuntu/.kube/config > ~/.kube/config
 ```
 
-### Verify that cluster is all and running
+### Verify that cluster is up and running
 ```bash
 kubectl get no
 kubectl get all -A
 kubectl get sc
 ```
 
-## Addons
+# Addons
+ Argocd
+```bash
+ansible-playbook main.yaml --tags argocd
+```
+Argocd Applications
+```bash
+ansible-playbook main.yaml --tags argocd-apps
+```
+## TrueNAS NFS settings (MACOS)
 
+Go to your TrueNAS web UI:
+
+- Services → NFS → Configure the share (/mnt/pool1/k8s/nfs)
+- Ensure the following settings are applied:
+   - Enabled: ✔️
+   - Network: 192.168.0.0/24 (or your subnet)
+   - Maproot User: root (if needed for macOS compatibility)
+   - Maproot Group: wheel (macOS equivalent of root group)
+   - Security: sys (for compatibility)
+   - Enabled NFSv4: ❌ (macOS often works better with NFSv3)
+
+Mount commands
+- Macos
+
+```bash
+mount -t nfs -o vers=3,resvport,noatime,nolocks,locallocks 192.168.0.15:/mnt/pool1/k8s/nfs ~/nfs-test```
+```
+- Ubuntu
+
+```bash
+sudo mount 192.168.0.15:/mnt/pool1/k8s/nfs nfs-test/
+```
+-  Windows
+```powershell
+mount -o nolock -o mtype=hard <NFS-Server-IP>:/<share-name> <drive-letter>:
+```
+```powershell
+New-PSDrive -Name "Z" -PSProvider FileSystem -Root "\\<NFS-Server-IP>\<share-name>" -Persist
+```
+# adhoc
+### Enable volume expansion
+```bash
+ansible-playbook main.yaml --tags adhoc,enable_volume_expansion
+```
 # Issues
 ***Error***
 

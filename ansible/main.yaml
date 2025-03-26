@@ -48,38 +48,44 @@
   tags:
     - gitops
     - all
+    - argocd
 
 - name: Setup Metrics Server
   import_playbook: ../addons/metrics-server.yaml
   tags:
-    - argocd-app
+    - argocd-apps
     - all
     - metrics-server
 
 - name: Setup Cert Manager
   import_playbook: ../addons/cert-manager.yaml
   tags:
-    - argocd-app
+    - argocd-apps
     - all
     - cert-manager
     
 - name: homarrr
   import_playbook: ../addons/homarr.yaml
   tags:
-    - argocd-app
+    - argocd-apps
     - all
     - homarr
 
 - name: kubeapps
   import_playbook: ../addons/kubeapps.yaml
   tags:
-    - argocd-app
+    - argocd-apps
     - all
     - kubeapps
 
 - name: portainer
   import_playbook: ../addons/portainer.yaml
   tags:
-    - argocd-app
+    - argocd-apps
     - all
     - portainer
+
+- name: adhoc
+  import_playbook: ../addons/adhoc.yaml
+  tags:
+    - adhoc
