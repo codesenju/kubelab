@@ -27,11 +27,13 @@ graph TD
 ```
 
 - Prerequisites
-  - Proxmox
+  - [Proxmox](https://www.proxmox.com/en/products/proxmox-virtual-environment/get-started)
   - Downlaod ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
   - If your home network is not `192.168.0.0/24`, modify the configs where neccessary in the following files:
     - opentofu/local.tf
     - ansible/inventory.ini
+  - [Ansible](https://docs.ansible.com/)
+  - [OpenTofu](https://opentofu.org/docs/intro/install/)
 ## Setup Infrastructure on Proxmox
 dir: opentofu
 ```
