@@ -1,5 +1,5 @@
 # Kubelab
-Kubernetes runnning on Proxmox Virtual Environment
+HA Kubernetes runnning on Proxmox Virtual Environment
 # Kubernetes Cluster Architecture
 
 ```mermaid
