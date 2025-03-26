@@ -2,10 +2,25 @@
   hosts: control-plane, workers 
   become: yes
   tasks:
+
     - name: Updates
       apt:
         update_cache: yes
 
+    - name: Install pip3
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install required Python packages
+      pip:
+        name:
+          - kubernetes
+          - PyYAML
+          - jsonpatch
+        state: present
+        
     - name: Install prerequisites
       apt:
         name:

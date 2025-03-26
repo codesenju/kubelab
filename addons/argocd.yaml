@@ -1,0 +1,79 @@
+- name: Install k9s
+  hosts: k8s-control-plane-1
+  become: no
+  gather_facts: false
+  tasks:
+# kubectl get crd -o name | grep argoproj.io | xargs kubectl delete
+    - name: Deploy Argocd
+      kubernetes.core.helm:
+        name: argocd
+        state: present
+        chart_repo_url: https://argoproj.github.io/argo-helm
+        chart_ref: argo-cd
+        chart_version: "7.8.14"
+        release_namespace: argocd
+        create_namespace: true
+        release_values:
+          global:
+            domain: argocd.x.com
+          configs:
+            params:
+              server.insecure: true
+          server:
+            replicas: 2
+            service:
+              type: LoadBalancer
+              loadBalancerIP: "{{ argocd_static_ip }}"
+            ingress:
+              enabled: false
+              ingressClassName: nginx
+              annotations:
+                nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
+                nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+              extraTls:
+                - hosts:
+                  - argocd.x.com
+                  # Based on the ingress controller used secret might be optional
+                  secretName: wildcard-tls
+          redis-ha:
+            enabled: false
+          controller:
+            replicas: 1
+          repoServer:
+            replicas: 2
+          applicationSet:
+            replicas: 2
+
+    - name: Wait for ArgoCD pods to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: argocd
+        label_selectors:
+          - app.kubernetes.io/part-of=argocd
+        wait: yes
+        wait_sleep: 10
+        wait_timeout: 300
+        wait_condition:
+          type: Ready
+          status: "True"
+
+    - name: Get Argo CD admin password
+      shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      register: argocd_password
+      changed_when: false
+
+    - name: Get LoadBalancer IP
+      shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      register: lb_ip
+      changed_when: false
+
+    - name: Display Argo CD access information
+      ansible.builtin.debug:
+        msg:
+          - "----------------------------------------"
+          - "🚀 Argo CD deployed successfully!"
+          - "----------------------------------------"
+          - "📍 URL:       http://{{ lb_ip.stdout }}"
+          - "👤 Username:  admin"
+          - "🔑 Password:  {{ argocd_password.stdout }}"
+          - "----------------------------------------"

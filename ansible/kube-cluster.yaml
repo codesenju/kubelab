@@ -8,27 +8,33 @@
         force: no
 
     - name: Configure container runtime and control plane
-      blockinfile:
-        path: /etc/kubernetes/kubeadm-config.yaml
-        block: |
-          kind: ClusterConfiguration
-          apiVersion: kubeadm.k8s.io/v1beta3
-          networking:
-            podSubnet: "{{ pod_cidr }}"
-          controlPlaneEndpoint: "{{ hostvars['loadbalancer']['ansible_host'] }}:6443"
-          ---
-          kind: KubeletConfiguration
-          apiVersion: kubelet.config.k8s.io/v1beta1
-          runtimeRequestTimeout: "15m"
-          cgroupDriver: "systemd"
-          systemReserved:
-            cpu: 100m
-            memory: 350M
-          kubeReserved:
-            cpu: 100m
-            memory: 50M
-          enforceNodeAllocatable:
-          - pods
+      block:
+        - blockinfile:
+            path: /etc/kubernetes/kubeadm-config.yaml
+            block: |
+              kind: ClusterConfiguration
+              apiVersion: kubeadm.k8s.io/v1beta3
+              networking:
+                podSubnet: "{{ pod_cidr }}"
+              controlPlaneEndpoint: "{{ hostvars['nginx-server']['ansible_host'] }}:6443"
+              ---
+              kind: KubeletConfiguration
+              apiVersion: kubelet.config.k8s.io/v1beta1
+              runtimeRequestTimeout: "15m"
+              cgroupDriver: "systemd"
+              systemReserved:
+                cpu: 100m
+                memory: 350M
+              kubeReserved:
+                cpu: 100m
+                memory: 50M
+              enforceNodeAllocatable:
+              - pods
+      rescue:
+        - name: Fail with custom message
+          fail:
+            msg: "Failed to configure container runtime and control plane. Playbook will exit!"
+
 
     - name: Initialize the first control plane
       shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs >> cluster_initialized.log

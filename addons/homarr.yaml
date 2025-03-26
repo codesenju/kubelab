@@ -1,0 +1,98 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Create Homarr namespace
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Namespace
+        name: homarr
+
+    - name: Create database encryption secret for Homarr
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          type: Opaque
+          metadata:
+            name: db-secret
+            namespace: homarr
+          stringData:
+            db-encryption-key: "{{ db_encryption_key }}"
+            
+    - name: Deploy Homar
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: homarr
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: homarr
+              repoURL: ghcr.io/homarr-labs/charts  # note: the oci:// syntax is not included.
+              targetRevision: 3.3.0
+              helm:
+                releaseName: homarr
+                values: |
+                  rbac: 
+                    enabled: true
+                  service:
+                    type: LoadBalancer
+                    loadBalancerIP: {{ homarr_static_ip }}
+                  persistence:
+                    homarrDatabase:
+                      enabled: true
+                      storageClassName: {{ storage_class_name }}
+                      size: "1Gi"
+                      accessModes:
+                        - ReadWriteMany
+                  env:
+                    NODE_TLS_REJECT_UNAUTHORIZED: 0
+            destination:
+              name: "in-cluster"
+              namespace: homarr
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Patch Homarr Service LoadBalancer IP
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Service
+        name: homarr
+        namespace: homarr
+        definition:
+          spec:
+            loadBalancerIP: "{{ homarr_static_ip }}"
+        merge_type: strategic-merge
+
+    - name: Get LoadBalancer IP
+      shell: kubectl -n homarr get svc homarr -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      register: lb_ip
+      changed_when: false
+
+    - name: Get LoadBalancer Port
+      shell: kubectl -n homarr get svc homarr -o jsonpath='{.spec.ports[0].port}'
+      register: lb_port
+      changed_when: false
+
+    - name: Display Homar access information
+      ansible.builtin.debug:
+        msg:
+          - "----------------------------------------"
+          - "🚀 Homarr has been deployed successfully!"
+          - "----------------------------------------"
+          - "📍 URL:       http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+          - "----------------------------------------"

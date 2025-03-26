@@ -24,24 +24,21 @@
       shell:  |-
         set -e
         kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/deploy/longhorn.yaml
-        kubectl patch svc longhorn-frontend -n longhorn-system --type='json' -p='[{"op": "add", "path": "/spec/type", "value": "LoadBalancer"}]'
-        kubectl get svc longhorn-frontend -n longhorn-system -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
       args:
         chdir: $HOME
-      tags: longhorn
-
-    # - name: Create longhorn storage class
-    #   shell: kubectl create -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/examples/storageclass.yaml
-    #   args:
-    #     chdir: $HOME
-    #   tags: longhorn
-
-    # - name: Patch longhorn storage class
-    #   shell: |-
-    #     kubectl patch storageclass longhorn -p '{"metadata": {"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
-    #   args:
-    #     chdir: $HOME
-    #   tags: longhorn
+    
+    - name: Patch longhorn frontend Service LoadBalancer IP
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Service
+        name: longhorn-frontend
+        namespace: longhorn-system
+        definition:
+          spec:
+            type: LoadBalancer
+            loadBalancerIP: "{{ longhorn_static_ip }}"
+        merge_type: strategic-merge
 
     - name: Deploy pvc test
       kubernetes.core.k8s:
@@ -59,7 +56,6 @@
             resources:
               requests:
                 storage: 1Gi
-      tags: longhorn
 
     - name: Deploy volume test app
       kubernetes.core.k8s:
@@ -84,4 +80,22 @@
             - name: volv
               persistentVolumeClaim:
                 claimName: longhorn-volv-pvc
-      tags: longhorn
+
+    - name: Get LoadBalancer IP
+      shell: kubectl -n longhorn-system get svc longhorn-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      register: lb_ip
+      changed_when: false
+
+    - name: Get LoadBalancer Port
+      shell: kubectl -n longhorn-system get svc longhorn-frontend -o jsonpath='{.spec.ports[0].port}'
+      register: lb_port
+      changed_when: false
+
+    - name: Display Longhorn access information
+      ansible.builtin.debug:
+        msg:
+          - "----------------------------------------"
+          - "🚀 Longhorn deployed successfully!"
+          - "----------------------------------------"
+          - "📍 URL:  http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+          - "----------------------------------------"
