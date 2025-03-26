@@ -98,6 +98,7 @@ mount -t nfs -o vers=3,resvport,noatime,nolocks,locallocks 192.168.0.15:/mnt/poo
 sudo mount 192.168.0.15:/mnt/pool1/k8s/nfs nfs-test/
 ```
 -  Windows
+  - dism /online /enable-feature /featurename:ServicesForNFS-ClientOnly /all
 ```powershell
 mount -o nolock -o mtype=hard <NFS-Server-IP>:/<share-name> <drive-letter>:
 ```

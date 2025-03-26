@@ -89,3 +89,8 @@
   import_playbook: ../addons/adhoc.yaml
   tags:
     - adhoc
+
+- name: csi-driver-nfs
+  import_playbook: ../addons/csi-driver-nfs.yaml
+  tags:
+    - csi-driver-nfs

@@ -1,4 +1,4 @@
-not- hosts: k8s-control-plane-1
+- hosts: k8s-control-plane-1
   become: no
   tasks:
     - name: Allow volume expansion on default storage class
