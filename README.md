@@ -41,7 +41,7 @@ tofu apply "plan"
 ```
 - For a detailed documentation on the infrastructure
 
-   - 📁 [Opentofu](./opentofu/README.md) ← Click to view
+   - 📁 [Opentofu](./opentofu/README.MD) ← Click to view
 ## Setup K8s
 dir: ansible
 ```bash
