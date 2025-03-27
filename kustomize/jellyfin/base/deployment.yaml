@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+        io.containers.autoupdate: "registry"
+    spec:
+      securityContext:
+        runAsUser: 1000  # Matches $(id -u)
+        runAsGroup: 1000 # Matches $(id -g)
+        fsGroup: 1000
+        seccompProfile:
+          type: RuntimeDefault
+      containers:
+      - name: jellyfin
+        image: docker.io/jellyfin/jellyfin:latest
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8096
+          protocol: TCP
+        - containerPort: 8920
+          protocol: TCP
+        volumeMounts:
+        - mountPath: /config
+          name: config
+          readOnly: false
+        - mountPath: /cache
+          name: cache
+          readOnly: false
+        - mountPath: /media
+          name: media
+          readOnly: true
+        securityContext:
+          allowPrivilegeEscalation: false
+          capabilities:
+            drop: ["ALL"]
+      volumes:
+      - name: config
+        persistentVolumeClaim:
+          claimName: jellyfin-config
+      - name: cache
+        persistentVolumeClaim:
+          claimName: jellyfin-cache
