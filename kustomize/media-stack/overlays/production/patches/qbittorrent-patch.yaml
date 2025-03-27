@@ -1,0 +1,16 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  template:
+    spec:
+      containers:
+      - name: qbittorrent
+        env:
+        - name: QBITTORRENT_CATEGORIES
+          value: "movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv,music=/data/downloads/torrents/music,books=/data/downloads/torrents/books"
+        volumeMounts:
+        - name: data
+          mountPath: /data/downloads/torrents
+          subPath: downloads/torrents

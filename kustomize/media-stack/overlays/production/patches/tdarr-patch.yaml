@@ -1,0 +1,22 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: tdarr
+        env:
+        - name: TZ
+          valueFrom:
+            configMapKeyRef:
+              name: media-stack-env
+              key: TZ
+        volumeMounts:
+        - name: data
+          mountPath: /data/media
+          subPath: media
+        - name: data
+          mountPath: /data/tdarr
+          subPath: tdarr

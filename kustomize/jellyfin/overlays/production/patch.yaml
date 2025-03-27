@@ -72,3 +72,4 @@ spec:
   resources:
     requests:
       storage: 200Gi  # Increased from base for production
+---

@@ -1,0 +1,34 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+resources:
+- ../../base
+
+namespace: media-stack
+
+configMapGenerator:
+- name: media-stack-env
+  literals:
+  - NFS_SERVER=192.168.0.15
+  - MEDIA_PATH=/mnt/pool1/media
+  - TV_PATH=/tv
+  - MOVIES_PATH=/movies
+  - MUSIC_PATH=/music
+  - BOOKS_PATH=/books
+  - DOWNLOADS_PATH=/downloads
+
+images:
+- name: lscr.io/linuxserver/sonarr
+  newTag: 4.0.0.699
+- name: lscr.io/linuxserver/radarr
+  newTag: 5.2.6
+- name: lscr.io/linuxserver/lidarr
+  newTag: 1.2.6
+- name: lscr.io/linuxserver/readarr
+  newTag: 0.3.6
+- name: lscr.io/linuxserver/prowlarr
+  newTag: 1.15.0
+- name: lscr.io/linuxserver/overseerr
+  newTag: 2.0.0
+- name: ghcr.io/haveagitgat/tdarr
+  newTag: 2.30.00

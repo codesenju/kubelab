@@ -1,25 +1,25 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jellyfin
+  name: readarr
   labels:
-    app.kubernetes.io/component: media-server
+    app.kubernetes.io/component: book-management
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: jellyfin
+      app: readarr
   template:
     metadata:
       labels:
-        app: jellyfin
-        app.kubernetes.io/component: media-server
+        app: readarr
+        app.kubernetes.io/component: book-management
     spec:
       securityContext:
         fsGroup: 1000  # Matches shared PGID
       containers:
-      - name: jellyfin
-        image: docker.io/jellyfin/jellyfin:latest
+      - name: readarr
+        image: lscr.io/linuxserver/readarr:develop
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -27,29 +27,24 @@ spec:
         - configMapRef:
             name: global-env
         ports:
-        - containerPort: 8096
+        - containerPort: 8787
           name: http
-        - containerPort: 8920
-          name: https
         volumeMounts:
         - name: config
           mountPath: /config
-        - name: cache
-          mountPath: /cache
         - name: data
-          mountPath: /data/media
-          readOnly: true  # Jellyfin only needs read access
+          mountPath: /data
         resources:
           requests:
+            cpu: "100m"
+            memory: "256Mi"
+          limits:
             cpu: "500m"
             memory: "1Gi"
-          limits:
-            cpu: "2"
-            memory: "4Gi"
       volumes:
       - name: config
         persistentVolumeClaim:
-          claimName: jellyfin-config
-      - name: cache
+          claimName: readarr-config
+      - name: data
         persistentVolumeClaim:
-          claimName: jellyfin-cache
+          claimName: media-data

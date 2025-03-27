@@ -3,17 +3,17 @@ kind: Kustomization
 resources:
 - ../../base
 
-# Patch the base resources for production-specific settings
-patchesStrategicMerge:
-- patch.yaml
+namespace: jellyfin
 
 # Set production-specific image tags
 images:
 - name: docker.io/jellyfin/jellyfin
-  newTag: "2025032405"  # Or pin to a specific version like "10.8.13"
+  newTag: "2025032405"
 
 # Production-specific configurations
 configMapGenerator:
-- name: jellyfin-env
-  literals:
+- literals:
   - JELLYFIN_PublishedServerUrl=https://jellyfin.yourdomain.com
+  name: jellyfin-env
+patches:
+- path: patch.yaml

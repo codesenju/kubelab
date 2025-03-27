@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: readarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: readarr
+        env:
+        - name: READARR__INSTANCE_NAME
+          value: "Readarr-Prod"
+        volumeMounts:
+        - name: data
+          mountPath: /data/media/books
+          subPath: media/books
+        - name: data
+          mountPath: /data/downloads
+          subPath: downloads

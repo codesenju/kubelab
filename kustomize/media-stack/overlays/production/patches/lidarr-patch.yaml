@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: lidarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: lidarr
+        env:
+        - name: LIDARR__INSTANCE_NAME
+          value: "Lidarr-Prod"
+        volumeMounts:
+        - name: data
+          mountPath: /data/media/music
+          subPath: media/music
+        - name: data
+          mountPath: /data/downloads
+          subPath: downloads

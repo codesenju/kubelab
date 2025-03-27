@@ -1,0 +1,19 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: radarr
+        env:
+        - name: RADARR__INSTANCE_NAME
+          value: "Radarr-Prod"
+        volumeMounts:
+        - name: data
+          mountPath: /data/media/movies
+          subPath: media/movies
+        - name: data
+          mountPath: /data/downloads
+          subPath: downloads

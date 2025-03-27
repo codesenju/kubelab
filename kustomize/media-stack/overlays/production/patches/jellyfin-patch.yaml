@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+spec:
+  template:
+    spec:
+      containers:
+      - name: jellyfin
+        env:
+        - name: JELLYFIN_PublishedServerUrl
+          valueFrom:
+            configMapKeyRef:
+              name: media-stack-env
+              key: JELLYFIN_URL
+        volumeMounts:
+        - name: data
+          mountPath: /data/media/movies
+          subPath: media/movies
+        - name: data
+          mountPath: /data/media/tv
+          subPath: media/tv
+        - name: data
+          mountPath: /data/media/music
+          subPath: media/music
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
