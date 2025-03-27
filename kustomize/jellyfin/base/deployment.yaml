@@ -12,12 +12,6 @@ spec:
         app: jellyfin
         io.containers.autoupdate: "registry"
     spec:
-      securityContext:
-        runAsUser: 1000  # Matches $(id -u)
-        runAsGroup: 1000 # Matches $(id -g)
-        fsGroup: 1000
-        seccompProfile:
-          type: RuntimeDefault
       containers:
       - name: jellyfin
         image: docker.io/jellyfin/jellyfin:latest
