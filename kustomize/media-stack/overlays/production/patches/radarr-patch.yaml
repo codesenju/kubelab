@@ -13,7 +13,7 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data/media/movies
-          subPath: media/movies
+          subPath: movies
         - name: data
           mountPath: /data/downloads
           subPath: downloads

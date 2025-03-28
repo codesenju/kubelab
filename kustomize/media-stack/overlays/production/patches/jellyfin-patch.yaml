@@ -18,13 +18,13 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data/media/movies
-          subPath: media/movies
+          subPath: movies
         - name: data
           mountPath: /data/media/tv
-          subPath: media/tv
+          subPath: tv
         - name: data
           mountPath: /data/media/music
-          subPath: media/music
+          subPath: music
       volumes:
       - name: data
         persistentVolumeClaim:
