@@ -15,13 +15,13 @@ spec:
         - name: RADARR__DOWNLOADCLIENT__1__DOWNLOADDIR
           value: "/downloads"
         - name: RADARR__MEDIADIR
-          value: "/data/media/movies"
+          value: "/data/movies"
         volumeMounts:
         - name: data
-          mountPath: /data/media/movies
+          mountPath: /data/movies
           subPath: movies
         - name: data
-          mountPath: /data/downloads
+          mountPath: /downloads
           subPath: downloads
         resources:
           requests:
