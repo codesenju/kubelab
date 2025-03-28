@@ -1,0 +1,20 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tdarr
+spec:
+  ports:
+  - name: api
+    port: 8267  # Must match serverPort
+    targetPort: 8267
+    protocol: TCP
+  - name: ui
+    port: 8268  # Must match webUIPort
+    targetPort: 8268
+    protocol: TCP
+  - name: websocket
+    port: 8266  # Keep original websocket port
+    targetPort: 8266
+    protocol: TCP
+  selector:
+    app: tdarr

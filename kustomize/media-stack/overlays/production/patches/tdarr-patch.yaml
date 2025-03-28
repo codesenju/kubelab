@@ -8,15 +8,17 @@ spec:
       containers:
       - name: tdarr
         env:
-        - name: TZ
-          valueFrom:
-            configMapKeyRef:
-              name: media-stack-env
-              key: TZ
-        volumeMounts:
-        - name: data
-          mountPath: /data/media
-          subPath: media
-        - name: data
-          mountPath: /data/tdarr
-          subPath: tdarr
+        - name: serverPort
+          value: "8267"  # Changed from 8265 to avoid conflict
+        - name: webUIPort
+          value: "8268"  # Different port for web UI
+        - name: serverBindIP
+          value: "false"
+        livenessProbe:
+          httpGet:
+            path: /api/v2/status
+            port: 8267  # Must match serverPort
+        readinessProbe:
+          httpGet:
+            path: /api/v2/status
+            port: 8267
