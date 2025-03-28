@@ -75,6 +75,8 @@ images:
   newTag: "2.36.01"
 - name: docker.io/fallenbagel/jellyseerr
   newTag: "2.5.1"
+- name: lscr.io/linuxserver/readarr
+  newTag: "develop"
 
 # Strategic merge patches
 patches:
