@@ -21,3 +21,11 @@ spec:
         - name: data
           mountPath: /downloads
           subPath: downloads
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: readarr
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.86
