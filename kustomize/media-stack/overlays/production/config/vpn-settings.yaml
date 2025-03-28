@@ -1,0 +1,14 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: vpn-settings
+  labels:
+    app.kubernetes.io/component: network
+data:
+  VPN_ENABLED: "true"
+  VPN_TYPE: "openvpn"
+  STRICT_PORT_FORWARDING: "true"
+  VPN_INTERFACE: "tun0"
+  ALLOWED_SUBNETS: "192.168.0.0/24,10.0.0.0/8"
+  DNS_LEAK_PROTECTION: "true"
+  PIA_SPLIT_TUNNEL: "false"  # Set true for PIA users

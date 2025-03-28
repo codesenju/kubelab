@@ -1,34 +1,95 @@
 apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 
-resources:
-- ../../base
-
+# Namespace configuration
 namespace: media-stack
 
-configMapGenerator:
-- name: media-stack-env
+# Secret generators (automatically hashed for changes)
+secretGenerator:
+- name: vpn-credentials
+  files:
+  - qbittorrent/vpn/config.ovpn
+  - qbittorrent/vpn/auth.txt
+  options:
+    disableNameSuffixHash: true  # Keep consistent secret name
+  type: "kubernetes.io/generic" 
+- name: jellyfin-secrets
   literals:
-  - NFS_SERVER=192.168.0.15
-  - MEDIA_PATH=/mnt/pool1/media
-  - TV_PATH=/tv
-  - MOVIES_PATH=/movies
-  - MUSIC_PATH=/music
-  - BOOKS_PATH=/books
-  - DOWNLOADS_PATH=/downloads
+  - api-key=your-jellyfin-api-key-here
+- name: overseerr-secrets
+  literals:
+  - tmdb-api-key=your-tmdb-key-here
 
+# ConfigMap generators
+configMapGenerator:
+# - name: media-stack-env
+#   behavior: merge
+#   files:
+#   - config/env/common.env
+#   - config/env/production.env
+- name: tdarr-plugins
+  files:
+  - config/tdarr/plugins.json
+# Configuration and secrets
+- name: global-env
+  behavior: create
+  literals:
+    - TZ=Africa/Johannesburg
+    - UMASK=002
+
+# Common labels for all resources
+labels:
+- pairs:
+    app.kubernetes.io/part-of: media-stack
+    app.kubernetes.io/managed-by: kustomize
+  includeTemplates: true
+
+
+# Enable field management for kubectl (CORRECTED)
+buildMetadata:
+  - managedByLabel
+# Image versions (pinned for production)
 images:
+- name: lscr.io/linuxserver/jellyfin
+  newName: docker.io/jellyfin/jellyfin
+  newTag: "2025032405"
+- name: lscr.io/linuxserver/qbittorrent
+  newTag: "5.0.4"
 - name: lscr.io/linuxserver/sonarr
-  newTag: 4.0.0.699
+  newTag: "4.0.14"
 - name: lscr.io/linuxserver/radarr
-  newTag: 5.2.6
+  newTag: 5".21.1"
 - name: lscr.io/linuxserver/lidarr
-  newTag: 1.2.6
-- name: lscr.io/linuxserver/readarr
-  newTag: 0.3.6
+  newTag: "2.10.3"
 - name: lscr.io/linuxserver/prowlarr
-  newTag: 1.15.0
-- name: lscr.io/linuxserver/overseerr
-  newTag: 2.0.0
-- name: ghcr.io/haveagitgat/tdarr
-  newTag: 2.30.00
+  newTag: "1.32.2"
+- name: docker.io/haveagitgat/tdarr
+  newTag: "2.36.01"
+
+# Strategic merge patches
+patches:
+- path: patches/global-data-patch.yaml
+  target:
+    kind: Deployment
+    labelSelector: app.kubernetes.io/part-of=media-stack
+# - path: patches/qbittorrent-vpn-patch.yaml
+- path: patches/jellyfin-patch.yaml
+- path: patches/sonarr-patch.yaml
+- path: patches/radarr-patch.yaml
+- path: patches/lidarr-patch.yaml
+- path: patches/prowlarr-patch.yaml
+- path: patches/tdarr-patch.yaml
+
+# # Customize HPA for production
+# components:
+# - components/hpa/  # Contains HPA scaling profiles
+
+# Resource customization
+resources:
+- resources/production-limits.yaml
+- ../../base
+- config/vpn-settings.yaml
+# - config/external-dns.yaml  # Optional for DNS automation
+# # Required CRDs (if any)
+# crds:
+# - crds/  # Contains Custom Resource Definitions

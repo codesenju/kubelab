@@ -1,0 +1,11 @@
+# sonarr-patch.yaml
+# Patches a Sonarr deployment with production-ready configurations
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: prowlarr
+spec:
+  template:
+    metadata:
+      labels:
+        app: prowlarr

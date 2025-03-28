@@ -19,20 +19,20 @@ spec:
     spec:
       securityContext:
         fsGroup: 1000  # Matches shared PGID
-      initContainers:
-      - name: vpn-init
-        image: dperson/openvpn-client:latest
-        command: ["sh", "-c"]
-        args:
-          - openvpn --config /vpn/config/config.ovpn --auth-user-pass /vpn/config/auth.txt --daemon &&
-            sleep 10 &&
-            curl --retry 5 --retry-all-errors --retry-delay 5 ifconfig.me
-        env:
-        - name: VPN_ENABLED
-          value: "true"
-        volumeMounts:
-        - name: vpn-config
-          mountPath: /vpn/config
+      # initContainers:
+      # - name: vpn-init
+      #   image: dperson/openvpn-client:latest
+      #   command: ["sh", "-c"]
+      #   args:
+      #     - openvpn --config /vpn/config/config.ovpn --auth-user-pass /vpn/config/auth.txt --daemon &&
+      #       sleep 10 &&
+      #       curl --retry 5 --retry-all-errors --retry-delay 5 ifconfig.me
+      #   env:
+      #   - name: VPN_ENABLED
+      #     value: "true"
+      #   volumeMounts:
+      #   - name: vpn-config
+      #     mountPath: /vpn/config
       containers:
       - name: qbittorrent
         image: lscr.io/linuxserver/qbittorrent:latest
@@ -78,6 +78,6 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: media-data
-      - name: vpn-config
-        secret:
-          secretName: vpn-credentials
+      # - name: vpn-config
+      #   secret:
+      #     secretName: vpn-credentials

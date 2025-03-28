@@ -2,6 +2,8 @@ apiVersion: apps/v1
 kind: Deployment
 metadata:
   name: jellyfin
+  labels:
+    app.kubernetes.io/component: media-server
 spec:
   template:
     spec:

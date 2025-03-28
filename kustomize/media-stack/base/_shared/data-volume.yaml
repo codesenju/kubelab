@@ -6,8 +6,8 @@ spec:
   capacity:
     storage: 10Ti
   nfs:
-    server: 192.168.0.15
-    path: /mnt/pool1/media
+    server: 192.168.0.15 # change me
+    path: /mnt/pool1/jellyfin/media
   accessModes:
     - ReadWriteMany
   mountOptions:
@@ -126,7 +126,7 @@ spec:
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: lidarr-config
+  name: sonarr-config
 spec:
   accessModes:
     - ReadWriteOnce
