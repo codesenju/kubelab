@@ -22,11 +22,11 @@ secretGenerator:
 
 # ConfigMap generators
 configMapGenerator:
-# - name: media-stack-env
-#   behavior: merge
-#   files:
-#   - config/env/common.env
-#   - config/env/production.env
+- name: media-stack-env
+  behavior: create
+  files:
+  - config/env/common.env
+  - config/env/production.env
 - name: tdarr-plugins
   files:
   - config/tdarr/plugins.json
@@ -73,6 +73,7 @@ patches:
     kind: Deployment
     labelSelector: app.kubernetes.io/part-of=media-stack
 # - path: patches/qbittorrent-vpn-patch.yaml
+- path: patches/overseerr-patch.yaml
 - path: patches/jellyfin-patch.yaml
 - path: patches/sonarr-patch.yaml
 - path: patches/radarr-patch.yaml
