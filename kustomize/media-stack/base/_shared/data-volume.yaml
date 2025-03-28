@@ -2,6 +2,8 @@ apiVersion: v1
 kind: PersistentVolume
 metadata:
   name: media-data
+  labels:
+    service: media-stack    # This matches the PVC selector
 spec:
   capacity:
     storage: 500Gi
@@ -24,7 +26,11 @@ spec:
   resources:
     requests:
       storage: 500Gi
+  selector:
+    matchLabels:
+      service: media-stack  # Add selector to match PV label
   volumeName: media-data
+  storageClassName: "" # This prevents dynamic provisioning
 ---
 # Application-specific config volumes
 apiVersion: v1
