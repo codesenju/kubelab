@@ -10,9 +10,13 @@ spec:
         env:
         - name: READARR__INSTANCE_NAME
           value: "Readarr-Prod"
+        - name: READARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: "/data/downloads"
+        - name: READARR__MEDIADIR
+          value: "/data/books"
         volumeMounts:
         - name: data
-          mountPath: /data/media/books
+          mountPath: /data/books
           subPath: books
         - name: data
           mountPath: /data/downloads

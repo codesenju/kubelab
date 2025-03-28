@@ -17,13 +17,13 @@ spec:
               key: JELLYFIN_URL
         volumeMounts:
         - name: data
-          mountPath: /data/media/movies
+          mountPath: /data/movies
           subPath: movies
         - name: data
-          mountPath: /data/media/tv
+          mountPath: /data/tv
           subPath: tv
         - name: data
-          mountPath: /data/media/music
+          mountPath: /data/music
           subPath: music
       volumes:
       - name: data

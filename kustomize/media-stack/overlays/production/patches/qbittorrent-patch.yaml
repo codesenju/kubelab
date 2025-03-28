@@ -10,6 +10,8 @@ spec:
         env:
         - name: QBITTORRENT_CATEGORIES
           value: "movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv,music=/data/downloads/torrents/music,books=/data/downloads/torrents/books"
+        - name: DOWNLOADS_LOCATION
+          value: "/data/downloads"
         volumeMounts:
         - name: data
           mountPath: /data/downloads/torrents

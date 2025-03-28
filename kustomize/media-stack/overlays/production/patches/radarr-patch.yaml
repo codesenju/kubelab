@@ -10,9 +10,15 @@ spec:
         env:
         - name: RADARR__INSTANCE_NAME
           value: "Radarr-Prod"
+        - name: RADARR__INSTANCE_NAME
+          value: "Radarr-Prod"
+        - name: RADARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: "/data/downloads"
+        - name: RADARR__MEDIADIR
+          value: "/data/movies"
         volumeMounts:
         - name: data
-          mountPath: /data/media/movies
+          mountPath: /data/movies
           subPath: movies
         - name: data
           mountPath: /data/downloads
