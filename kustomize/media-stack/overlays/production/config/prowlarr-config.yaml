@@ -1,0 +1,48 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prowlarr-config
+  labels:
+    app.kubernetes.io/component: indexer-management
+data:
+  appsettings.json: |-
+    {
+      "AnalyticsEnabled": false,
+      "AuthenticationMethod": "Forms",
+      "Branch": "main",
+      "BindAddress": "*",
+      "ProwlarrUrlBase": "/prowlarr",
+      "LogLevel": "Info",
+      "SslPort": 9696,
+      "EnableSsl": false,
+      "LaunchBrowser": false,
+      "UpdateAutomatically": true,
+      "UpdateMechanism": "Docker",
+      "ProxyEnabled": false,
+      "ProxyType": "http",
+      "ProxyHostname": "",
+      "ProxyPort": 8080,
+      "ProxyUsername": "",
+      "ProxyPassword": "",
+      "ProxyBypassFilter": "",
+      "ProxyBypassLocalAddresses": true,
+      "AuthenticationRequired": "EnabledForLocalAddresses"
+    }
+  logconfig.xml: |-
+    <log4net>
+      <root>
+        <level value="INFO" />
+        <appender-ref ref="LogFileAppender" />
+      </root>
+      <appender name="LogFileAppender" type="log4net.Appender.RollingFileAppender">
+        <file value="/config/logs/prowlarr.txt" />
+        <appendToFile value="true" />
+        <rollingStyle value="Size" />
+        <maxSizeRollBackups value="5" />
+        <maximumFileSize value="10MB" />
+        <staticLogFileName value="true" />
+        <layout type="log4net.Layout.PatternLayout">
+          <conversionPattern value="%date [%thread] %-5level %logger: %message%newline" />
+        </layout>
+      </appender>
+    </log4net>
