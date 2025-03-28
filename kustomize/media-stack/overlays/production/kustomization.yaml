@@ -25,11 +25,18 @@ configMapGenerator:
 - name: media-stack-env
   behavior: create
   files:
-  - config/env/common.env
-  - config/env/production.env
+    - config/env/common.env
+    - config/env/production.env
+  literals:
+    - JELLYFIN_PublishedServerUrl=https://jellyfin.yourdomain.com
+    - JELLYFIN_URL=http://jellyfin:8096
+    - PROWLARR_URL=http://prowlarr:9696
+    - QBITTORRENT_URL=http://qbittorrent:8080
+    - QBITTORRENT_CATEGORIES="movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv" 
+    - TDARR_NODE_ID=production-node-1
 - name: tdarr-plugins
   files:
-  - config/tdarr/plugins.json
+    - config/tdarr/plugins.json
 # Configuration and secrets
 - name: global-env
   behavior: create
