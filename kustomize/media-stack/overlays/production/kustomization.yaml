@@ -86,6 +86,7 @@ patches:
 - path: patches/jellyfin-patch.yaml
 - path: patches/sonarr-patch.yaml
 - path: patches/radarr-patch.yaml
+- patch: patches/readarr-patch.yaml
 - path: patches/lidarr-patch.yaml
 - path: patches/prowlarr-patch.yaml
 - path: patches/tdarr-patch.yaml
