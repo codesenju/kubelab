@@ -11,7 +11,7 @@ spec:
         - name: LIDARR__INSTANCE_NAME
           value: "Lidarr-Prod"
         - name: LIDARR__DOWNLOADCLIENT__1__DOWNLOADDIR
-          value: "/data/downloads"
+          value: "/downloads"
         - name: LIDARR__MEDIADIR
           value: "/data/music"
         volumeMounts:
@@ -19,5 +19,5 @@ spec:
           mountPath: /data/music
           subPath: music
         - name: data
-          mountPath: /data/downloads
+          mountPath: /downloads
           subPath: downloads

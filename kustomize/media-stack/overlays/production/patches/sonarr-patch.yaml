@@ -15,7 +15,7 @@ spec:
         - name: QBITTORRENT__PORT
           value: "8080"
         - name: SONARR__DOWNLOADCLIENT__1__DOWNLOADDIR
-          value: "/data/downloads"
+          value: "/downloads"
         - name: SONARR__MEDIADIR
           value: "/data/tv"
         volumeMounts:
@@ -23,7 +23,7 @@ spec:
           mountPath: /data/tv
           subPath: tv
         - name: data
-          mountPath: /data/downloads
+          mountPath: /downloads
           subPath: downloads
 ---
 apiVersion: v1
