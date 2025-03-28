@@ -21,7 +21,7 @@ spec:
           mountPath: /data/movies
           subPath: movies
         - name: data
-          mountPath: /data/downloads
+          mountPath: /downloads
           subPath: downloads
 ---
 apiVersion: v1

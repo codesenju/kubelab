@@ -14,7 +14,7 @@ spec:
           value: "/data/downloads"
         volumeMounts:
         - name: data
-          mountPath: /data/downloads/torrents
+          mountPath: /downloads/torrents
           subPath: downloads/torrents
 ---
 apiVersion: v1
