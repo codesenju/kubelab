@@ -89,6 +89,7 @@ patches:
 - path: patches/lidarr-patch.yaml
 - path: patches/prowlarr-patch.yaml
 - path: patches/tdarr-patch.yaml
+- path: patches/qbittorrent-patch.yaml
 
 # # Customize HPA for production
 # components:
