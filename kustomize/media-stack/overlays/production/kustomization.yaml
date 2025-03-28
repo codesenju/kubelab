@@ -45,11 +45,7 @@ configMapGenerator:
   literals:
     - TZ=Africa/Johannesburg
     - UMASK=002
-- name: prowlarr-config
-  behavior: create
-  files:
-  - config/prowlarr-config.yaml
-  
+
 # Common labels for all resources
 labels:
 - pairs:

@@ -10,24 +10,3 @@ spec:
         env:
         - name: PROWLARR__INSTANCE_NAME
           value: "Prowlarr-Prod"
-        - name: PROWLARR__LOG_LEVEL
-          valueFrom:
-            configMapKeyRef:
-              name: prowlarr-config
-              key: LogLevel
-        volumeMounts:
-        - name: prowlarr-config
-          mountPath: /config/appsettings.json
-          subPath: appsettings.json
-        - name: prowlarr-config
-          mountPath: /config/logconfig.xml
-          subPath: logconfig.xml
-      volumes:
-      - name: prowlarr-config
-        configMap:
-          name: prowlarr-config
-          items:
-          - key: appsettings.json
-            path: appsettings.json
-          - key: logconfig.xml
-            path: logconfig.xml
