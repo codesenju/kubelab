@@ -4,7 +4,7 @@ metadata:
   name: media-data
 spec:
   capacity:
-    storage: 10Ti
+    storage: 500Gi
   nfs:
     server: 192.168.0.15 # change me
     path: /mnt/pool1/jellyfin/media
@@ -23,7 +23,7 @@ spec:
     - ReadWriteMany
   resources:
     requests:
-      storage: 10Ti
+      storage: 500Gi
   volumeName: media-data
 ---
 # Application-specific config volumes
