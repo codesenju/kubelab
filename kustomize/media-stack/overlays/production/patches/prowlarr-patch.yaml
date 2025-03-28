@@ -10,3 +10,11 @@ spec:
         env:
         - name: PROWLARR__INSTANCE_NAME
           value: "Prowlarr-Prod"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: prowlarr
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.84
