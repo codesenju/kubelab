@@ -6,3 +6,4 @@ opentofu/terraform.tfstate.backup
 opentofu/.terraform.lock.hcl
 opentofu/.terraform/*
 .DS_Store
+opentofu/.terraform.tfstate.lock.info
