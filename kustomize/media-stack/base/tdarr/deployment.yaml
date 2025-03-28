@@ -15,8 +15,8 @@ spec:
         app: tdarr
         app.kubernetes.io/component: media-processing
     spec:
-      securityContext:
-        fsGroup: 1000  # Matches shared PGID
+      # securityContext:
+      #   fsGroup: 1000  # Matches shared PGID
       containers:
       - name: tdarr
         image: ghcr.io/haveagitgat/tdarr:latest

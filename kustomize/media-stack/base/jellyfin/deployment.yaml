@@ -15,8 +15,8 @@ spec:
         app: jellyfin
         app.kubernetes.io/component: media-server
     spec:
-      securityContext:
-        fsGroup: 1000  # Matches shared PGID
+      # securityContext:
+      #   fsGroup: 1000  # Matches shared PGID
       containers:
       - name: jellyfin
         image: docker.io/jellyfin/jellyfin:latest

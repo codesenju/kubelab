@@ -15,8 +15,8 @@ spec:
         app: radarr
         app.kubernetes.io/component: movie-management
     spec:
-      securityContext:
-        fsGroup: 1000  # Matches shared PGID
+      # securityContext:
+      #   fsGroup: 1000  # Matches shared PGID
       containers:
       - name: radarr
         image: lscr.io/linuxserver/radarr:latest

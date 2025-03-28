@@ -17,8 +17,8 @@ spec:
         app: qbittorrent
         app.kubernetes.io/component: download-client
     spec:
-      securityContext:
-        fsGroup: 1000  # Matches shared PGID
+      # securityContext:
+      #   fsGroup: 1000  # Matches shared PGID
       # initContainers:
       # - name: vpn-init
       #   image: dperson/openvpn-client:latest

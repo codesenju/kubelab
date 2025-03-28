@@ -15,8 +15,8 @@ spec:
         app: prowlarr
         app.kubernetes.io/component: indexer-management
     spec:
-      securityContext:
-        fsGroup: 1000  # Matches shared PGID
+      # securityContext:
+      #   fsGroup: 1000  # Matches shared PGID
       containers:
       - name: prowlarr
         image: lscr.io/linuxserver/prowlarr:latest

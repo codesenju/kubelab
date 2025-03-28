@@ -15,8 +15,8 @@ spec:
         app: sonarr
         app.kubernetes.io/component: tv-management
     spec:
-      securityContext:
-        fsGroup: 1000  # Matches shared PGID
+      # securityContext:
+      #   fsGroup: 1000  # Matches shared PGID
       containers:
       - name: sonarr
         image: lscr.io/linuxserver/sonarr:latest
