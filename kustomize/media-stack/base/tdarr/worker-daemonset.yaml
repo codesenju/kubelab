@@ -39,7 +39,7 @@ spec:
           requests:
             cpu: "1"
             memory: "2Gi"
-            nvidia.com/gpu: 1  # Request GPU if available
+            # nvidia.com/gpu: 1  # Request GPU if available
           limits:
             cpu: "2"
             memory: "4Gi"
