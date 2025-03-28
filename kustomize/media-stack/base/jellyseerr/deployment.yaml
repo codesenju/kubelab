@@ -29,7 +29,7 @@ spec:
           name: http
         volumeMounts:
         - name: config
-          mountPath: /config
+          mountPath: /app/config
         resources:
           requests:
             cpu: "200m"
