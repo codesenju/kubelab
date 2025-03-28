@@ -103,6 +103,7 @@ patches:
 # Resource customization
 resources:
 - resources/production-limits.yaml
+- resources/priority-class.yaml
 - ../../base
 # - config/vpn-settings.yaml
 # - config/external-dns.yaml  # Optional for DNS automation
