@@ -16,14 +16,14 @@ spec:
               name: prowlarr-config
               key: LogLevel
         volumeMounts:
-        - name: config
+        - name: prowlarr-config
           mountPath: /config/appsettings.json
           subPath: appsettings.json
-        - name: config
+        - name: prowlarr-config
           mountPath: /config/logconfig.xml
           subPath: logconfig.xml
       volumes:
-      - name: config
+      - name: prowlarr-config
         configMap:
           name: prowlarr-config
           items:
