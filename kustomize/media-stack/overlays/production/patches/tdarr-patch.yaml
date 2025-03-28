@@ -23,10 +23,10 @@ spec:
             path: /api/v2/status
             port: 8267
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: tdarr
-spec:
-  type: LoadBalancer
-  loadBalancerIP: 192.168.0.87
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: tdarr
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.87
