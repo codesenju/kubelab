@@ -41,8 +41,8 @@ spec:
             memory: "2Gi"
             nvidia.com/gpu: 1  # Request GPU if available
           limits:
-            cpu: "4"
-            memory: "8Gi"
+            cpu: "2"
+            memory: "4Gi"
             nvidia.com/gpu: 1
       volumes:
       - name: data
