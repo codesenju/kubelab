@@ -29,3 +29,13 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: media-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin
+  labels:
+    app.kubernetes.io/component: media-server
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.80

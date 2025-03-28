@@ -34,6 +34,8 @@ configMapGenerator:
     - QBITTORRENT_URL=http://qbittorrent:8080
     - QBITTORRENT_CATEGORIES="movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv" 
     - TDARR_NODE_ID=production-node-1
+    - TZ=Africa/Johannesburg
+    - UMASK=002
 - name: tdarr-plugins
   files:
     - config/tdarr/plugins.json

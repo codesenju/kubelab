@@ -27,8 +27,6 @@ spec:
         - configMapRef:
             name: global-env
         env:
-        - name: TZ
-          value: "America/New_York"
         - name: serverIP
           value: "0.0.0.0"
         - name: serverPort
