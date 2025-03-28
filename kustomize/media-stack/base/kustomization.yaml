@@ -33,3 +33,4 @@ resources:
 - overseerr/service.yaml
 - tdarr/deployment.yaml
 - tdarr/service.yaml
+- tdarr/worker-daemonsets.yaml

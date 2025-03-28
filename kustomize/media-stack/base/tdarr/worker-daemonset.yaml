@@ -13,8 +13,6 @@ spec:
       labels:
         app: tdarr-worker
     spec:
-      securityContext:
-        fsGroup: 1000
       containers:
       - name: tdarr-worker
         image: ghcr.io/haveagitgat/tdarr_node:latest
