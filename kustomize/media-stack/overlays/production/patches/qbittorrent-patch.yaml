@@ -14,3 +14,11 @@ spec:
         - name: data
           mountPath: /data/downloads/torrents
           subPath: downloads/torrents
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.83
