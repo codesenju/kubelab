@@ -11,6 +11,8 @@
           metadata:
             name: jellyfin
             namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
           spec:
             project: default
             source:
