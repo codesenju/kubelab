@@ -1,3 +1,4 @@
+# overlays/production/config/prowlarr-config.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:
@@ -5,6 +6,7 @@ metadata:
   labels:
     app.kubernetes.io/component: indexer-management
 data:
+  # Direct JSON content (not nested YAML)
   appsettings.json: |-
     {
       "AnalyticsEnabled": false,
@@ -13,6 +15,7 @@ data:
       "SslPort": 9696,
       "AuthenticationMethod": "Forms"
     }
+  # Direct XML content
   logconfig.xml: |-
     <log4net>
       <root>
