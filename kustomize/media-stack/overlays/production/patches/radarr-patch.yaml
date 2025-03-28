@@ -23,6 +23,13 @@ spec:
         - name: data
           mountPath: /downloads
           subPath: downloads
+        resources:
+          requests:
+            cpu: "1"
+            memory: "512Mi"
+          limits:
+            cpu: "2"
+            memory: "1Gi"
 ---
 apiVersion: v1
 kind: Service
