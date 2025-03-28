@@ -1,23 +1,23 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: radarr
+  name: jellyseerr
   labels:
-    app.kubernetes.io/component: movie-management
+    app.kubernetes.io/component: request-management
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: radarr
+      app: jellyseerr
   template:
     metadata:
       labels:
-        app: radarr
-        app.kubernetes.io/component: movie-management
+        app: jellyseerr
+        app.kubernetes.io/component: request-management
     spec:
       containers:
-      - name: radarr
-        image: lscr.io/linuxserver/radarr:latest
+      - name: jellyseerr
+        image: docker.io/fallenbagel/jellyseerrr:2.5.1
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -25,24 +25,19 @@ spec:
         - configMapRef:
             name: global-env
         ports:
-        - containerPort: 7878
+        - containerPort: 5055
           name: http
         volumeMounts:
         - name: config
           mountPath: /config
-        - name: data
-          mountPath: /data
         resources:
           requests:
-            cpu: "250m"
-            memory: "512Mi"
+            cpu: "200m"
+            memory: "256Mi"
           limits:
-            cpu: "500m"
-            memory: "1Gi"
+            cpu: "400m"
+            memory: "512Mi"
       volumes:
       - name: config
         persistentVolumeClaim:
-          claimName: radarr-config
-      - name: data
-        persistentVolumeClaim:
-          claimName: media-data
+          claimName: jellyseerr-config

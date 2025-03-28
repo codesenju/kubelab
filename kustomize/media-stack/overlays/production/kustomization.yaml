@@ -5,28 +5,28 @@ kind: Kustomization
 namespace: media-stack
 
 # Secret generators (automatically hashed for changes)
-secretGenerator:
-- name: vpn-credentials
-  files:
-  - qbittorrent/vpn/config.ovpn
-  - qbittorrent/vpn/auth.txt
-  options:
-    disableNameSuffixHash: true  # Keep consistent secret name
-  type: "kubernetes.io/generic" 
-- name: jellyfin-secrets
-  literals:
-  - api-key=your-jellyfin-api-key-here
-- name: overseerr-secrets
-  literals:
-  - tmdb-api-key=your-tmdb-key-here
+# secretGenerator:
+# - name: vpn-credentials
+#   files:
+#   - qbittorrent/vpn/config.ovpn
+#   - qbittorrent/vpn/auth.txt
+#   options:
+#     disableNameSuffixHash: true  # Keep consistent secret name
+#   type: "kubernetes.io/generic" 
+# - name: jellyfin-secrets
+#   literals:
+#   - api-key=your-jellyfin-api-key-here
+# - name: overseerr-secrets
+#   literals:
+#   - tmdb-api-key=your-tmdb-key-here
 
 # ConfigMap generators
 configMapGenerator:
 - name: media-stack-env
   behavior: create
-  files:
-    - config/env/common.env
-    - config/env/production.env
+  # files:
+  #   - config/env/common.env
+  #   - config/env/production.env
   literals:
     - JELLYFIN_PublishedServerUrl=https://jellyfin.yourdomain.com
     - JELLYFIN_URL=http://jellyfin:8096
@@ -34,17 +34,16 @@ configMapGenerator:
     - QBITTORRENT_URL=http://qbittorrent:8080
     - QBITTORRENT_CATEGORIES="movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv" 
     - TDARR_NODE_ID=production-node-1
-    - TZ=Africa/Johannesburg
-    - UMASK=002
-- name: tdarr-plugins
-  files:
-    - config/tdarr/plugins.json
-# Configuration and secrets
+# - name: tdarr-plugins
+#   files:
+#     - config/tdarr/plugins.json
+# # Configuration and secrets
 - name: global-env
   behavior: create
   literals:
     - TZ=Africa/Johannesburg
     - UMASK=002
+    - LOG_LEVEL=info
 
 # Common labels for all resources
 labels:
@@ -74,6 +73,8 @@ images:
   newTag: "1.32.2"
 - name: docker.io/haveagitgat/tdarr
   newTag: "2.36.01"
+- name: docker.io/fallenbagel/jellyseerr
+  newTag: "2.5.1"
 
 # Strategic merge patches
 patches:
@@ -82,7 +83,7 @@ patches:
     kind: Deployment
     labelSelector: app.kubernetes.io/part-of=media-stack
 # - path: patches/qbittorrent-vpn-patch.yaml
-- path: patches/overseerr-patch.yaml
+# - path: patches/overseerr-patch.yaml
 - path: patches/jellyfin-patch.yaml
 - path: patches/sonarr-patch.yaml
 - path: patches/radarr-patch.yaml
@@ -91,6 +92,7 @@ patches:
 - path: patches/prowlarr-patch.yaml
 - path: patches/tdarr-patch.yaml
 - path: patches/qbittorrent-patch.yaml
+- path: patches/jellyseerr-patch.yaml
 
 # # Customize HPA for production
 # components:
@@ -100,7 +102,7 @@ patches:
 resources:
 - resources/production-limits.yaml
 - ../../base
-- config/vpn-settings.yaml
+# - config/vpn-settings.yaml
 # - config/external-dns.yaml  # Optional for DNS automation
 # # Required CRDs (if any)
 # crds:
