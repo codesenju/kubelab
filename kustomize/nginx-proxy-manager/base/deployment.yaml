@@ -14,6 +14,8 @@ spec:
       labels:
         app: nginx-proxy-manager
     spec:
+      securityContext:
+        fsGroup: 1000  # Sets the group ownership of volumes
       containers:
       - name: nginx-proxy-manager
         image: IMAGE_TEMPLATE
