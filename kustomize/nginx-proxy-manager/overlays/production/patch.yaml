@@ -13,8 +13,8 @@ spec:
       labels:
         app: nginx-proxy-manager
     spec:
-      securityContext:
-        fsGroup: 0  # Sets the group ownership of volumes
+      # securityContext:
+      #   fsGroup: 0  # Sets the group ownership of volumes
       containers:
       - name: nginx-proxy-manager
         env:
