@@ -14,8 +14,6 @@ spec:
       labels:
         app: nginx-proxy-manager
     spec:
-      securityContext:
-        fsGroup: 0  # Sets the group ownership of volumes
       containers:
       - name: nginx-proxy-manager
         image: IMAGE_TEMPLATE
@@ -26,7 +24,7 @@ spec:
           name: https
         - containerPort: 81
           name: admin
-        env:
+        # env:
         # Uncomment if needed:
         # - name: DB_SQLITE_FILE
         #   value: "/data/database.sqlite"
