@@ -4,7 +4,7 @@ resources:
 - ../../base
 
 images:
-- name: jc21/nginx-proxy-manager
+- name: IMAGE_TEMPLATE
   newName: docker.io/jc21/nginx-proxy-manager
   newTag: 2.12.3
 

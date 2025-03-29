@@ -16,7 +16,7 @@ spec:
     spec:
       containers:
       - name: nginx-proxy-manager
-        image: jc21/nginx-proxy-manager:latest
+        image: IMAGE_TEMPLATE
         ports:
         - containerPort: 80
           name: http
