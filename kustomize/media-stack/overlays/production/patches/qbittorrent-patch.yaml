@@ -7,8 +7,8 @@ spec:
     spec:
       dnsConfig:
         nameservers:
-          - "1.1.1.1"  # Cloudflare
-          - "9.9.9.9"   # Quad9
+          - "103.86.96.100" # nordvpn
+          - "103.86.99.100" # nordvpn
         searches:
           - "local"
       dnsPolicy: "None"  # Required for custom dnsConfig
