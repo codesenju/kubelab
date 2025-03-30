@@ -5,6 +5,14 @@ metadata:
 spec:
   template:
     spec:
+      dnsConfig:
+        nameservers:
+          - "1.1.1.1"  # Cloudflare
+          - "9.9.9.9"   # Quad9
+        searches:
+          - "local"
+      dnsPolicy: "None"  # Required for custom dnsConfig
+
       containers:
 
       # qBittorrent container
