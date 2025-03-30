@@ -22,8 +22,9 @@
           server:
             replicas: 2
             service:
-              type: LoadBalancer
-              loadBalancerIP: "{{ argocd_static_ip }}"
+              type: ClusterIP
+              # type: LoadBalancer
+              # loadBalancerIP: "{{ argocd_static_ip }}"
             ingress:
               enabled: false
               ingressClassName: nginx

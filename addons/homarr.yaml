@@ -45,8 +45,9 @@
                   rbac: 
                     enabled: true
                   service:
-                    type: LoadBalancer
-                    loadBalancerIP: {{ homarr_static_ip }}
+                    # type: LoadBalancer
+                    type: ClusterIP
+                    # loadBalancerIP: {{ homarr_static_ip }}
                   persistence:
                     homarrDatabase:
                       enabled: true
@@ -66,33 +67,33 @@
               syncOptions:
                 - CreateNamespace=true
 
-    - name: Patch Homarr Service LoadBalancer IP
-      kubernetes.core.k8s:
-        state: present
-        api_version: v1
-        kind: Service
-        name: homarr
-        namespace: homarr
-        definition:
-          spec:
-            loadBalancerIP: "{{ homarr_static_ip }}"
-        merge_type: strategic-merge
+    # - name: Patch Homarr Service LoadBalancer IP
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     api_version: v1
+    #     kind: Service
+    #     name: homarr
+    #     namespace: homarr
+    #     definition:
+    #       spec:
+    #         loadBalancerIP: "{{ homarr_static_ip }}"
+    #     merge_type: strategic-merge
 
-    - name: Get LoadBalancer IP
-      shell: kubectl -n homarr get svc homarr -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-      register: lb_ip
-      changed_when: false
+    # - name: Get LoadBalancer IP
+    #   shell: kubectl -n homarr get svc homarr -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+    #   register: lb_ip
+    #   changed_when: false
 
-    - name: Get LoadBalancer Port
-      shell: kubectl -n homarr get svc homarr -o jsonpath='{.spec.ports[0].port}'
-      register: lb_port
-      changed_when: false
+    # - name: Get LoadBalancer Port
+    #   shell: kubectl -n homarr get svc homarr -o jsonpath='{.spec.ports[0].port}'
+    #   register: lb_port
+    #   changed_when: false
 
-    - name: Display Homar access information
-      ansible.builtin.debug:
-        msg:
-          - "----------------------------------------"
-          - "🚀 Homarr has been deployed successfully!"
-          - "----------------------------------------"
-          - "📍 URL:       http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
-          - "----------------------------------------"
+    # - name: Display Homar access information
+    #   ansible.builtin.debug:
+    #     msg:
+    #       - "----------------------------------------"
+    #       - "🚀 Homarr has been deployed successfully!"
+    #       - "----------------------------------------"
+    #       - "📍 URL:       http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+    #       - "----------------------------------------"
