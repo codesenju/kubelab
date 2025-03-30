@@ -37,6 +37,12 @@ spec:
               - NET_ADMIN
               - SYS_MODULE  # For tun device creation
         env:
+          - name: DNS_SERVERS
+            value: "103.86.96.100,103.86.99.100" # NordVPN DNS
+          - name: DNS_PLAINTEXT
+            value: "on" # Required for torrent clients
+          - name: DNS_UPDATE_PERIOD
+            value: "24h"
           - name: VPN_SERVICE_PROVIDER
             value: "nordvpn"
           - name: VPN_TYPE
