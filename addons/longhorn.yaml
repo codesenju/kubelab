@@ -27,18 +27,19 @@
       args:
         chdir: $HOME
     
-    - name: Patch longhorn frontend Service LoadBalancer IP
-      kubernetes.core.k8s:
-        state: present
-        api_version: v1
-        kind: Service
-        name: longhorn-frontend
-        namespace: longhorn-system
-        definition:
-          spec:
-            type: LoadBalancer
-            loadBalancerIP: "{{ longhorn_static_ip }}"
-        merge_type: strategic-merge
+    # Keep commented out if using nginx proxy manager
+    # - name: Patch longhorn frontend Service LoadBalancer IP
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     api_version: v1
+    #     kind: Service
+    #     name: longhorn-frontend
+    #     namespace: longhorn-system
+    #     definition:
+    #       spec:
+    #         type: LoadBalancer
+    #         loadBalancerIP: "{{ longhorn_static_ip }}"
+    #     merge_type: strategic-merge
 
     - name: Deploy pvc test
       kubernetes.core.k8s:

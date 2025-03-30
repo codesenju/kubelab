@@ -20,11 +20,11 @@ spec:
             secretKeyRef:
               name: overseerr-secrets
               key: tmdb-api-key
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: overseerr
-spec:
-  type: LoadBalancer
-  loadBalancerIP: 192.168.0.x
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: overseerr
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.x
