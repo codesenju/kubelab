@@ -19,13 +19,13 @@ spec:
       - name: qbittorrent
         env:
         - name: QBITTORRENT_CATEGORIES
-          value: "movies=/downloads/torrents/movies,tv=/downloads/torrents/tv,music=/downloads/torrents/music,books=/downloads/torrents/books"
+          value: "movies=/downloads/movies,tv=/downloads/tv,music=/downloads/music,books=/downloads/books"
         - name: DOWNLOADS_LOCATION
           value: "/data/downloads"
         volumeMounts:
         - name: data
-          mountPath: /downloads/torrents
-          subPath: downloads/torrents
+          mountPath: /downloads
+          subPath: downloads
 
       # Gluetun VPN container
       - name: gluetun
