@@ -10,8 +10,8 @@ spec:
       cpu: "4"
       memory: "8Gi"
     min:
-      cpu: "200m"
-      memory: "256Mi"
+      cpu: "100m"
+      memory: "128Mi"
     default:
       cpu: "500m"
       memory: "512Mi"
