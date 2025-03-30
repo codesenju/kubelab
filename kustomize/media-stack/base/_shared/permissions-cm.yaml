@@ -3,6 +3,6 @@ kind: ConfigMap
 metadata:
   name: shared-permissions
 data:
-  PUID: "1000"
-  PGID: "1000"
+  PUID: "0"
+  PGID: "0"
   UMASK: "002"  # Ensures group write permissions
