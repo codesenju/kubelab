@@ -4,7 +4,7 @@
 
     - name: Create Homarr namespace
       kubernetes.core.k8s:
-        state: absent
+        state: present
         api_version: v1
         kind: Namespace
         name: homarr
@@ -51,7 +51,7 @@
                   persistence:
                     homarrDatabase:
                       enabled: true
-                      storageClassName: {{ storage_class_name }}
+                      storageClassName: {{ homarr_storage_class_name }}
                       size: "1Gi"
                       accessModes:
                         - ReadWriteMany

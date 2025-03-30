@@ -6,6 +6,8 @@ spec:
   template:
     spec:
       containers:
+
+      # qBittorrent container
       - name: qbittorrent
         env:
         - name: QBITTORRENT_CATEGORIES
@@ -16,6 +18,47 @@ spec:
         - name: data
           mountPath: /downloads/torrents
           subPath: downloads/torrents
+
+      # Gluetun VPN container
+      - name: gluetun
+        image: qmcgaw/gluetun
+        securityContext:
+          privileged: true  # Required for /dev/net/tun
+          capabilities:
+            add:
+              - NET_ADMIN
+              - SYS_MODULE  # For tun device creation
+        env:
+          - name: VPN_SERVICE_PROVIDER
+            value: "nordvpn"
+          - name: VPN_TYPE
+            value: "openvpn"
+          - name: OPENVPN_USER
+            valueFrom:
+              secretKeyRef:
+                name: nordvpn-credentials
+                key: OPENVPN_USER
+          - name: OPENVPN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: nordvpn-credentials
+                key: OPENVPN_PASSWORD
+          - name: SERVER_COUNTRIES
+            value: "Spain"  # Matches your es212.nordvpn.com server
+          - name: OPENVPN_CIPHER
+            value: "AES-256-CBC"
+          - name: OPENVPN_AUTH
+            value: "SHA512"
+        volumeMounts:
+          - name: gluetun-config
+            mountPath: /gluetun
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
 # ---
 # apiVersion: v1
 # kind: Service
