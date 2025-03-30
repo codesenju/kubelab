@@ -58,11 +58,19 @@ spec:
                 name: nordvpn-credentials
                 key: OPENVPN_PASSWORD
           - name: SERVER_COUNTRIES
-            value: "Spain"  # Matches your es212.nordvpn.com server
+            value: "South Africa"
+          - name: SERVER_HOSTNAMES
+            value: "za131.nordvpn.com"
           - name: OPENVPN_CIPHER
             value: "AES-256-CBC"
           - name: OPENVPN_AUTH
             value: "SHA512"
+          # - name: SERVER_COUNTRIES
+          #   value: "Spain"  # Matches your es212.nordvpn.com server
+          # - name: OPENVPN_CIPHER
+          #   value: "AES-256-CBC"
+          # - name: OPENVPN_AUTH
+          #   value: "SHA512"
         volumeMounts:
           - name: gluetun-config
             mountPath: /gluetun
