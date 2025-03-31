@@ -58,7 +58,7 @@ spec:
                 name: nordvpn-credentials
                 key: OPENVPN_PASSWORD
           - name: SERVER_COUNTRIES
-            value: "South Africa"
+            value: "South Africa" # change to location closest to you for faster downloads
           - name: OPENVPN_CIPHER
             value: "AES-256-CBC"
           - name: OPENVPN_AUTH
