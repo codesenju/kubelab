@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: tdarr
+        env:
+        - name: serverPort
+          value: "8267"  # Changed from 8265 to avoid conflict
+        - name: webUIPort
+          value: "8268"  # Different port for web UI
+        - name: serverBindIP
+          value: "false"
+        livenessProbe:
+          httpGet:
+            path: /api/v2/status
+            port: 8267  # Must match serverPort
+        readinessProbe:
+          httpGet:
+            path: /api/v2/status
+            port: 8267
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: tdarr
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.87

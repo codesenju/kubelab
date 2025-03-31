@@ -28,10 +28,13 @@
                     parameters:
                       server: 192.168.0.15
                       share: /mnt/pool1/k8s/nfs
+                      mountPermissions: "0777" 
                     reclaimPolicy: Delete
                     volumeBindingMode: Immediate
                     mountOptions:
                       - nfsvers=4.1
+                      - noatime
+                      - async  # Better for torrent writes
             destination:
               server: https://kubernetes.default.svc
               namespace: csi-driver-nfs

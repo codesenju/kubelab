@@ -1,0 +1,208 @@
+---
+# Secret for NordVPN OpenVPN credentials
+apiVersion: v1
+kind: Secret
+metadata:
+  name: nordvpn-credentials
+type: Opaque
+stringData:
+  OPENVPN_USER: "x"  # Get from NordVPN dashboard
+  OPENVPN_PASSWORD: "x"  # Not your main account password!
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: media-data-downloads
+  labels:
+    service: media-stack    # This matches the PVC selector
+spec:
+  capacity:
+    storage: 50Gi
+  nfs:
+    server: 192.168.0.15 # change me
+    path: /mnt/pool1/jellyfin/media
+  accessModes:
+    - ReadWriteMany
+  mountOptions:
+    - noatime
+    - nfsvers=4.2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: media-data-downloads
+spec:
+  accessModes:
+    - ReadWriteMany
+  resources:
+    requests:
+      storage: 50Gi
+  selector:
+    matchLabels:
+      service: media-data-downloads  # Add selector to match PV label
+  volumeName: media-data-downloads
+  storageClassName: "" # This prevents dynamic provisioning
+---
+# Persistent Volume Claims for all services
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: gluetun-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  storageClassName: "nfs-csi"
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbittorrent-config-pvc
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  storageClassName: "nfs-csi"
+---
+# Combined Gluetun and qBittorrent Deployment in a single pod
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent-vpn
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent-vpn
+  template:
+    metadata:
+      labels:
+        app: qbittorrent-vpn
+    spec:
+      hostname: qbittorrent-vpn
+      containers:
+        # Gluetun VPN container
+        - name: gluetun
+          image: qmcgaw/gluetun
+          securityContext:
+            privileged: true  # Required for /dev/net/tun
+            capabilities:
+              add:
+                - NET_ADMIN
+                - SYS_MODULE  # For tun device creation
+          env:
+            - name: VPN_SERVICE_PROVIDER
+              value: "nordvpn"
+            - name: VPN_TYPE
+              value: "openvpn"
+            - name: OPENVPN_USER
+              valueFrom:
+                secretKeyRef:
+                  name: nordvpn-credentials
+                  key: OPENVPN_USER
+            - name: OPENVPN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nordvpn-credentials
+                  key: OPENVPN_PASSWORD
+            - name: SERVER_COUNTRIES
+              value: "Spain"  # Matches your es212.nordvpn.com server
+            - name: OPENVPN_CIPHER
+              value: "AES-256-CBC"
+            - name: OPENVPN_AUTH
+              value: "SHA512"
+            - name: TZ
+              value: "Europe/London"
+          # ports:
+          #   - containerPort: 6881
+          #     name: tcp-vpn
+          #   - containerPort: 6881
+          #     name: udp-vpn
+          #     protocol: UDP
+          #   - containerPort: 8085
+          #     name: web-vpn
+          volumeMounts:
+            - name: gluetun-config
+              mountPath: /gluetun
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "128Mi"
+            limits:
+              cpu: "200m"
+              memory: "256Mi"
+        
+        # qBittorrent container
+        - name: qbittorrent
+          image: lscr.io/linuxserver/qbittorrent
+          env:
+            - name: VPN_ENABLED
+              value: "true"  # Explicitly tell qBittorrent to expect VPN
+            - name: PUID
+              value: "0"
+            - name: PGID
+              value: "0"
+            - name: TZ
+              value: "Europe/London"
+            - name: WEBUI_PORT
+              value: "8085"
+            # # Point qBittorrent to Gluetun's network interface
+            # - name: LAN_NETWORK
+            #   value: "10.0.0.0/24"  # Adjust to your local network
+          ports:
+            - containerPort: 6881
+              name: torrent-tcp
+            - containerPort: 6881
+              name: torrent-udp
+              protocol: UDP
+            - containerPort: 8085
+              name: qbittorrent-web
+          volumeMounts:
+            - name: config
+              mountPath: /config
+            - name: downloads
+              mountPath: /downloads
+              subPath: downloads
+          resources:
+            requests:
+              cpu: "200m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+      volumes:
+        - name: gluetun-config
+          persistentVolumeClaim:
+            claimName: gluetun-pvc
+        - name: config
+          persistentVolumeClaim:
+            claimName: qbittorrent-config-pvc
+        - name: downloads
+          persistentVolumeClaim:
+            claimName: media-data-downloads
+---
+# Services to expose the applications
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent-vpn
+spec:
+  selector:
+    app: qbittorrent-vpn
+  ports:
+    - name: qbittorrent-web
+      port: 8085
+      targetPort: 8085
+    - name: torrent-tcp
+      port: 6881
+      targetPort: 6881
+    - name: torrent-udp
+      port: 6881
+      targetPort: 6881
+      protocol: UDP
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.95

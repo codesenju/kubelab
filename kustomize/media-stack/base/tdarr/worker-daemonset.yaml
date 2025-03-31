@@ -1,0 +1,57 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: tdarr-worker
+  labels:
+    app.kubernetes.io/component: media-processing
+spec:
+  selector:
+    matchLabels:
+      app: tdarr-worker
+  template:
+    metadata:
+      labels:
+        app: tdarr-worker
+    spec:
+      containers:
+      - name: tdarr-worker
+        image: ghcr.io/haveagitgat/tdarr_node:latest
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        env:
+        - name: nodeID
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: serverIP
+          value: "tdarr"
+        - name: serverPort
+          value: "8266"
+        volumeMounts:
+        - name: data
+          mountPath: /data
+        - name: transcode-cache
+          mountPath: /temp
+        resources:
+          requests:
+            cpu: "1"
+            memory: "2Gi"
+            # nvidia.com/gpu: 1  # Request GPU if available
+          limits:
+            cpu: "2"
+            memory: "4Gi"
+            # nvidia.com/gpu: 1
+      priorityClassName: high-priority
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+      - name: transcode-cache
+        emptyDir: {}
+      tolerations:
+      - key: "gpu"
+        operator: "Exists"
+        effect: "NoSchedule"

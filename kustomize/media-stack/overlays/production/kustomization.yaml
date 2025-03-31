@@ -1,0 +1,112 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Namespace configuration
+namespace: media-stack
+
+# Secret generators (automatically hashed for changes)
+# secretGenerator:
+# - name: vpn-credentials
+#   files:
+#   - qbittorrent/vpn/config.ovpn
+#   - qbittorrent/vpn/auth.txt
+#   options:
+#     disableNameSuffixHash: true  # Keep consistent secret name
+#   type: "kubernetes.io/generic" 
+# - name: jellyfin-secrets
+#   literals:
+#   - api-key=your-jellyfin-api-key-here
+# - name: overseerr-secrets
+#   literals:
+#   - tmdb-api-key=your-tmdb-key-here
+
+# ConfigMap generators
+configMapGenerator:
+- name: media-stack-env
+  behavior: create
+  # files:
+  #   - config/env/common.env
+  #   - config/env/production.env
+  literals:
+    - JELLYFIN_PublishedServerUrl=https://jellyfin.yourdomain.com
+    - JELLYFIN_URL=http://jellyfin:8096
+    - PROWLARR_URL=http://prowlarr:9696
+    - QBITTORRENT_URL=http://qbittorrent:8080
+    - QBITTORRENT_CATEGORIES="movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv" 
+    - TDARR_NODE_ID=production-node-1
+# - name: tdarr-plugins
+#   files:
+#     - config/tdarr/plugins.json
+# # Configuration and secrets
+- name: global-env
+  behavior: create
+  literals:
+    - TZ=Africa/Johannesburg
+    - UMASK=002
+    - LOG_LEVEL=info
+
+# Common labels for all resources
+labels:
+- pairs:
+    app.kubernetes.io/part-of: media-stack
+    app.kubernetes.io/managed-by: kustomize
+  includeTemplates: true
+
+
+# Enable field management for kubectl (CORRECTED)
+buildMetadata:
+  - managedByLabel
+# Image versions (pinned for production)
+images:
+- name: lscr.io/linuxserver/jellyfin
+  newName: docker.io/jellyfin/jellyfin
+  newTag: "2025032405"
+- name: lscr.io/linuxserver/qbittorrent
+  newTag: "5.0.4"
+- name: lscr.io/linuxserver/sonarr
+  newTag: "4.0.14"
+- name: lscr.io/linuxserver/radarr
+  newTag: "5.21.1"
+- name: lscr.io/linuxserver/lidarr
+  newTag: "2.10.3"
+- name: lscr.io/linuxserver/prowlarr
+  newTag: "1.32.2"
+- name: docker.io/haveagitgat/tdarr
+  newTag: "2.36.01"
+- name: docker.io/fallenbagel/jellyseerr
+  newTag: "2.5.1"
+- name: lscr.io/linuxserver/readarr
+  newTag: "develop"
+
+# Strategic merge patches
+patches:
+- path: patches/global-data-patch.yaml
+  target:
+    kind: Deployment
+    labelSelector: app.kubernetes.io/part-of=media-stack
+# - path: patches/qbittorrent-vpn-patch.yaml
+# - path: patches/overseerr-patch.yaml
+- path: patches/jellyfin-patch.yaml
+- path: patches/sonarr-patch.yaml
+- path: patches/radarr-patch.yaml
+- path: patches/readarr-patch.yaml
+- path: patches/lidarr-patch.yaml
+- path: patches/prowlarr-patch.yaml
+- path: patches/tdarr-patch.yaml
+- path: patches/qbittorrent-patch.yaml
+- path: patches/jellyseerr-patch.yaml
+
+# # Customize HPA for production
+# components:
+# - components/hpa/  # Contains HPA scaling profiles
+
+# Resource customization
+resources:
+- resources/production-limits.yaml
+- resources/priority-class.yaml
+- ../../base
+# - config/vpn-settings.yaml
+# - config/external-dns.yaml  # Optional for DNS automation
+# # Required CRDs (if any)
+# crds:
+# - crds/  # Contains Custom Resource Definitions

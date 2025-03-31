@@ -90,7 +90,7 @@ Mount commands
 - Macos
 
 ```bash
-mount -t nfs -o vers=3,resvport,noatime,nolocks,locallocks 192.168.0.15:/mnt/pool1/k8s/nfs ~/nfs-test```
+mount -t nfs -o vers=3,resvport,noatime,nolocks,locallocks 192.168.0.15:/mnt/pool1/k8s/nfs ~/nfs-test
 ```
 - Ubuntu
 
