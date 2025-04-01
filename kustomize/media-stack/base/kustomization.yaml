@@ -36,3 +36,5 @@ resources:
 - tdarr/worker-daemonset.yaml
 - jellyseerr/deployment.yaml
 - jellyseerr/service.yaml
+- flaresolverr/deployment.yaml
+- flaresolverr/service.yaml
