@@ -77,6 +77,9 @@ images:
   newTag: "2.5.1"
 - name: lscr.io/linuxserver/readarr
   newTag: "develop"
+- name: ghcr.io/flaresolverr/flaresolverr
+  newName: ghcr.io/flaresolverr/flaresolverr
+  newTag: "v3.3.21"
 
 # Strategic merge patches
 patches:
@@ -95,7 +98,7 @@ patches:
 - path: patches/tdarr-patch.yaml
 - path: patches/qbittorrent-patch.yaml
 - path: patches/jellyseerr-patch.yaml
-
+- path: patches/flaresolverr-patch.yaml
 # # Customize HPA for production
 # components:
 # - components/hpa/  # Contains HPA scaling profiles
