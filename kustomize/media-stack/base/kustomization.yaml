@@ -10,7 +10,7 @@ resources:
 # Core media services
 - jellyfin/deployment.yaml
 - jellyfin/service.yaml
-- jellyfin/hpa.yaml
+# - jellyfin/hpa.yaml
 
 # Download client
 - qbittorrent/deployment.yaml

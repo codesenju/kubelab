@@ -43,10 +43,10 @@ spec:
           mountPath: /temp
         resources:
           requests:
-            cpu: "512m"
+            cpu: "1"
             memory: "1Gi"
           limits:
-            cpu: "1"
+            cpu: "2"
             memory: "2Gi"
       volumes:
       - name: config
