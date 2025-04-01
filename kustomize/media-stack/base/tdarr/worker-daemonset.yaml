@@ -26,6 +26,10 @@ spec:
           valueFrom:
             fieldRef:
               fieldPath: spec.nodeName
+        - name: serverIP
+          value: "tdarr"
+        - name: serverPort
+          value: "8266"
         volumeMounts:
         - name: data
           mountPath: /data
