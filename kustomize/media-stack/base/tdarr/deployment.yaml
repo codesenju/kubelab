@@ -15,8 +15,6 @@ spec:
         app: tdarr
         app.kubernetes.io/component: media-processing
     spec:
-      # securityContext:
-      #   fsGroup: 1000  # Matches shared PGID
       containers:
       - name: tdarr
         image: ghcr.io/haveagitgat/tdarr:latest
@@ -26,11 +24,11 @@ spec:
             name: shared-permissions
         - configMapRef:
             name: global-env
-        env:
-        - name: serverIP
-          value: "0.0.0.0"
-        - name: serverPort
-          value: "8265"
+        # env:
+        # - name: serverIP
+        #   value: "0.0.0.0"
+        # - name: serverPort
+        #   value: "8265"
         ports:
         - containerPort: 8265
           name: http
