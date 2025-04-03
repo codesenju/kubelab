@@ -1,0 +1,46 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Kube Prometheus Stack
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: kube-prometheus-stack
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://prometheus-community.github.io/helm-charts
+              chart: kube-prometheus-stack
+              targetRevision: "70.4.1"
+              helm:
+                releaseName: kube-prometheus-stack
+                valueFiles:
+                - $values/helm/kube_prometheus_stack_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: development
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: observability
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+
+            # ignoreDifferences:
+            # - group: ""
+            #   kind: PersistentVolumeClaim
+            #   jsonPointers:
+            #   - /status  # Ignore PVC status changes
+      tags: observability
