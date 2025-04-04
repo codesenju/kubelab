@@ -1,15 +1,16 @@
 - hosts: k8s-control-plane-1
+  gather_facts: no
   become: no
   tasks:
 
-    - name: Deploy Jellyfin
+    - name: Deploy Cloudflare ddns
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: jellyfin
+            name: cloudflare-ddns
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
@@ -17,18 +18,18 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/jellyfin/overlays/production
+              path: kustomize/ddns/overlays/production
               targetRevision: development
               kustomize:
                 # Add these to your existing kustomize config
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 commonLabels:
-                  app.kubernetes.io/instance: jellyfin-prod
+                  app.kubernetes.io/instance: cloudflare-ddns
           
             destination:
               server: https://kubernetes.default.svc
-              namespace: jellyfin
+              namespace: ddns
           
             syncPolicy:
               automated:
@@ -44,4 +45,4 @@
             #   kind: PersistentVolumeClaim
             #   jsonPointers:
             #   - /status  # Ignore PVC status changes
-      tags: jellyfin
+      tags: ddns
