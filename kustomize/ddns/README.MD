@@ -10,5 +10,5 @@ kubectl create secret generic cloudflare-api-secret --from-literal=CLOUDFLARE_AP
 ```
 Create ConfigMap
 ```bash
-kubectl create configmap cloudflare-config --from-literal=DOMAINS='example.org' --from-literal=PROXIED='false' -n ddns
+kubectl create configmap cloudflare-config --from-literal=DOMAINS='example.org' --from-literal=PROXIED='false' --from-literal=IP6_PROVIDER='none' -n ddns
 ```
