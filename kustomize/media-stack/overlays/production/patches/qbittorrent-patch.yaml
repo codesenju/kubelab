@@ -75,6 +75,6 @@ spec:
             cpu: "200m"
             memory: "256Mi"
       volumes:
-      - name: gluetun-config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: gluetun-config
+          claimName: media-stack-config
