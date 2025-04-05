@@ -1,23 +1,65 @@
 apiVersion: v1
-kind: PersistentVolumeClaim
+kind: PersistentVolume
 metadata:
-  name: nginx-proxy-manager-data
+  name: npm-data
+  labels:
+    service: npm-data   # This matches the PVC selector
 spec:
+  capacity:
+    storage: 2Gi
+  nfs:
+    server: 192.168.0.15 # change me
+    path: /mnt/pool1/AppData/nginx-proxy-manager
   accessModes:
-    - ReadWriteOnce
-  resources:
-    requests:
-      storage: 2Gi
-  storageClassName: nfs-csi
+    - ReadWriteMany
+  mountOptions:
+    - noatime
+    - nfsvers=4.2
+# ---
+# apiVersion: v1
+# kind: PersistentVolume
+# metadata:
+#   name: npm-letsencrypt
+#   labels:
+#     service: npm-letsencrypt    # This matches the PVC selector
+# spec:
+#   capacity:
+#     storage: 500Gi
+#   nfs:
+#     server: 192.168.0.15 # change me
+#     path: /mnt/pool1/AppData/nginx-proxy-manager
+#   accessModes:
+#     - ReadWriteMany
+#   mountOptions:
+#     - noatime
+#     - nfsvers=4.2
+---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: npm-data
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 2Gi
+#   selector:
+#     matchLabels:
+#       service: media-stack  # Add selector to match PV label
+#   storageClassName: nfs-csi
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim
 metadata:
-  name: nginx-proxy-manager-letsencrypt-data
+  name: npm-data
 spec:
   accessModes:
     - ReadWriteOnce
   resources:
     requests:
       storage: 2Gi
-  storageClassName: nfs-csi
+  selector:
+    matchLabels:
+      service: npm-data  # Add selector to match PV label
+  storageClassName: "" # This prevents dynamic provisioning

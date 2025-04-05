@@ -33,7 +33,7 @@
   import_playbook: ../addons/longhorn.yaml
   tags:
     - baseline
-    - storage
+    - longhorn
     - all
 
 - name: Setup MetalLB
@@ -46,6 +46,7 @@
 - name: Setup Argocd
   import_playbook: ../addons/argocd.yaml
   tags:
+    - baseline
     - gitops
     - all
     - argocd
@@ -53,6 +54,7 @@
 - name: Setup Metrics Server
   import_playbook: ../addons/metrics-server.yaml
   tags:
+    - baseline
     - argocd-apps
     - all
     - metrics-server
@@ -60,6 +62,7 @@
 - name: Setup Cert Manager
   import_playbook: ../addons/cert-manager.yaml
   tags:
+    - baseline
     - argocd-apps
     - all
     - cert-manager
@@ -93,4 +96,6 @@
 - name: csi-driver-nfs
   import_playbook: ../addons/csi-driver-nfs.yaml
   tags:
+    - baseline
+    - all
     - csi-driver-nfs

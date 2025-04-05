@@ -33,12 +33,14 @@ spec:
         volumeMounts:
         - name: data
           mountPath: /data
+          subPath: data
         - name: letsencrypt
           mountPath: /etc/letsencrypt
+          subPath: letsencrypt
       volumes:
       - name: data
         persistentVolumeClaim:
-          claimName: nginx-proxy-manager-data
+          claimName: npm-data
       - name: letsencrypt
         persistentVolumeClaim:
-          claimName: nginx-proxy-manager-letsencrypt-data
+          claimName: npm-data
