@@ -30,10 +30,12 @@ spec:
         - containerPort: 8920
           name: https
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /config
-        - name: cache
+          subPath: jellyfin/config
+        - name: media-stack-config
           mountPath: /cache
+          subPath: jellyfin/cache
         - name: data
           mountPath: /data/media
           readOnly: true  # Jellyfin only needs read access
@@ -45,9 +47,6 @@ spec:
             cpu: "2"
             memory: "4Gi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: jellyfin-config
-      - name: cache
-        persistentVolumeClaim:
-          claimName: jellyfin-cache
+          claimName: media-stack-config

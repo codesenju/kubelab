@@ -33,6 +33,7 @@ spec:
         volumeMounts:
         - name: config
           mountPath: /config
+          subPath: overseerr/config
         - name: data
           mountPath: /data
           readOnly: true  # Only needs read access to media
@@ -44,9 +45,9 @@ spec:
             cpu: "500m"
             memory: "1Gi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: overseerr-config
+          claimName: media-stack-config
       - name: data
         persistentVolumeClaim:
           claimName: media-data

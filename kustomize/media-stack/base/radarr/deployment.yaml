@@ -28,8 +28,9 @@ spec:
         - containerPort: 7878
           name: http
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /config
+          subPath: radarr/config
         - name: data
           mountPath: /data
         resources:
@@ -40,9 +41,9 @@ spec:
             cpu: "500m"
             memory: "1Gi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: radarr-config
+          claimName: media-stack-config
       - name: data
         persistentVolumeClaim:
           claimName: media-data

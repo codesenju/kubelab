@@ -28,8 +28,9 @@ spec:
         - containerPort: 5055
           name: http
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /app/config
+          subPath: jellyseerr/config
         resources:
           requests:
             cpu: "200m"
@@ -38,6 +39,6 @@ spec:
             cpu: "400m"
             memory: "512Mi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: jellyseerr-config
+          claimName: media-stack-config
