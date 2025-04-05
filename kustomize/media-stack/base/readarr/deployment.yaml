@@ -30,8 +30,9 @@ spec:
         - containerPort: 8787
           name: http
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /config
+          subPath: readarr/config
         - name: data
           mountPath: /data
         resources:
@@ -42,9 +43,9 @@ spec:
             cpu: "200m"
             memory: "512Mi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: readarr-config
+          claimName: media-stack-config
       - name: data
         persistentVolumeClaim:
           claimName: media-data

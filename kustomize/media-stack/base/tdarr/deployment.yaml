@@ -35,10 +35,11 @@ spec:
         - containerPort: 8266
           name: websocket
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /app/server
+          subPath: tdarr/config
         - name: data
-          mountPath: /data
+          mountPath: /opt/data/media
         - name: transcode-cache
           mountPath: /temp
         resources:
@@ -49,9 +50,9 @@ spec:
             cpu: "2"
             memory: "2Gi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: tdarr-config
+          claimName: media-stack-config
       - name: data
         persistentVolumeClaim:
           claimName: media-data

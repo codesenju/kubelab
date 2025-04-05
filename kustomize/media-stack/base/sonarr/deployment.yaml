@@ -30,8 +30,9 @@ spec:
         - containerPort: 8989
           name: http
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /config
+          subPath: sonarr/config
         - name: data
           mountPath: /data
         resources:
@@ -42,9 +43,9 @@ spec:
             cpu: "500m"
             memory: "1Gi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: sonarr-config
+          claimName: media-stack-config
       - name: data
         persistentVolumeClaim:
           claimName: media-data

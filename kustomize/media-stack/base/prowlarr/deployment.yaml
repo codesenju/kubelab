@@ -30,8 +30,9 @@ spec:
         - containerPort: 9696
           name: http
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /config
+          subPath: prowlarr/config
         resources:
           requests:
             cpu: "100m"
@@ -40,6 +41,6 @@ spec:
             cpu: "200m"
             memory: "512Mi"
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: prowlarr-config
+          claimName: media-stack-config

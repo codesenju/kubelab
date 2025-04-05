@@ -32,7 +32,7 @@ spec:
           value: "8266"
         volumeMounts:
         - name: data
-          mountPath: /data
+          mountPath: /opt/data/media
         - name: transcode-cache
           mountPath: /temp
         resources:

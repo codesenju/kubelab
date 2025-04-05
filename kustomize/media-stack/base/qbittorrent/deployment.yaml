@@ -45,8 +45,9 @@ spec:
           name: udp-torrent
           protocol: UDP
         volumeMounts:
-        - name: config
+        - name: media-stack-config
           mountPath: /config
+          subPath: qbittorrent/config
         - name: data
           mountPath: /data
         livenessProbe:
@@ -56,9 +57,9 @@ spec:
           initialDelaySeconds: 60
           periodSeconds: 30
       volumes:
-      - name: config
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: qbittorrent-config
+          claimName: media-stack-config
       - name: data
         persistentVolumeClaim:
           claimName: media-data

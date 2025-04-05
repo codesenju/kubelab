@@ -12,3 +12,11 @@ graph LR
     qBittorrent -->|Files| Jellyfin
     Tdarr -->|Optimizes| Jellyfin
 ```
+
+```bash
+kubectl create secret generic nordvpn-credentials \
+  --namespace=media-stack \
+  --type=Opaque \
+  --from-literal=OPENVPN_USER='x' \
+  --from-literal=OPENVPN_PASSWORD='x'
+```
