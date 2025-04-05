@@ -7,3 +7,7 @@ opentofu/.terraform.lock.hcl
 opentofu/.terraform/*
 .DS_Store
 opentofu/.terraform.tfstate.lock.info
+ubuntu/opentofu/terraform.tfstate.backup
+ubuntu/opentofu/.terraform*
+ubuntu/opentofu/terraform.tfstate
+ubuntu/opentofu/plan

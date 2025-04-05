@@ -34,6 +34,7 @@ graph TD
     - ansible/inventory.ini
   - [Ansible](https://docs.ansible.com/)
   - [OpenTofu](https://opentofu.org/docs/intro/install/)
+  - Generate homarr db encryption key - `openssl rand -hex 32`
 ## Setup Infrastructure on Proxmox
 dir: opentofu
 ```
