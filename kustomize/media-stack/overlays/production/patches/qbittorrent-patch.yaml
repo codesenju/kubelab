@@ -64,8 +64,9 @@ spec:
           - name: OPENVPN_AUTH
             value: "SHA512"
         volumeMounts:
-          - name: gluetun-config
+          - name: media-stack-config
             mountPath: /gluetun
+            subPath: gluetun/config
         resources:
           requests:
             cpu: "100m"
