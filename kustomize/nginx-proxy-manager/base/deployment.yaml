@@ -34,13 +34,13 @@ spec:
         - name: data
           mountPath: /data
           subPath: data
-        - name: letsencrypt
+        - name: data
           mountPath: /etc/letsencrypt
           subPath: letsencrypt
       volumes:
       - name: data
         persistentVolumeClaim:
           claimName: npm-data
-      - name: letsencrypt
-        persistentVolumeClaim:
-          claimName: npm-data
+      # - name: letsencrypt
+      #   persistentVolumeClaim:
+      #     claimName: npm-data
