@@ -67,9 +67,13 @@
       register: cert_key
       when: inventory_hostname == "k8s-control-plane-1"
 
+    # - name: Join additional control plane nodes
+    #   shell: "{{ hostvars['k8s-control-plane-1']['join_command_control_plane'].stdout }} --control-plane --certificate-key {{ hostvars['k8s-control-plane-1']['cert_key'].stdout }}"
+    #   when: inventory_hostname == "k8s-control-plane-2"
+
     - name: Join additional control plane nodes
       shell: "{{ hostvars['k8s-control-plane-1']['join_command_control_plane'].stdout }} --control-plane --certificate-key {{ hostvars['k8s-control-plane-1']['cert_key'].stdout }}"
-      when: inventory_hostname == "k8s-control-plane-2"
+      when: inventory_hostname in ["k8s-control-plane-2", "k8s-control-plane-3"]
 
     - name: Install Pod Network
       shell: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml >> pod_network_setup.log

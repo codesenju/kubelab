@@ -68,9 +68,9 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
 
 # control-plane Nodes
 resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
-  count       = 2
+  count       = 3
   name        = "k8s-control-plane-${count.index + 1}"
-  node_name   = "kubelab-${count.index + 1}"
+  node_name   = "kubelab-1"
   description = "Kubernetes control-plane Node ${count.index + 1}"
   vm_id       = 4000 + count.index + 1 # Unique VM ID for each control-plane node
 
@@ -128,9 +128,9 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
 
 # Worker Nodes
 resource "proxmox_virtual_environment_vm" "k8s_worker" {
-  count       = 2
+  count       = 3
   name        = "k8s-worker-${count.index + 1}"
-  node_name   = "kubelab-${count.index + 1}"
+  node_name   = "kubelab-1"
   description = "Kubernetes Worker Node ${count.index + 1}"
   vm_id       = 5000 + count.index + 1 # Unique VM ID for each worker node
 

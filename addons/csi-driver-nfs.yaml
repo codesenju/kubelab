@@ -1,4 +1,5 @@
 - hosts: k8s-control-plane-1
+  gather_facts: no
   become: no
   tasks:
 
