@@ -41,11 +41,11 @@ spec:
           readOnly: true  # Jellyfin only needs read access
         resources:
           requests:
+            cpu: "512m"
+            memory: "1Gi"
+          limits:
             cpu: "1"
             memory: "2Gi"
-          limits:
-            cpu: "2"
-            memory: "4Gi"
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
