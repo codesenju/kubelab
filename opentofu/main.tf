@@ -16,11 +16,11 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
   vm_id       = 4000 # Unique VM ID for the load balancer
 
   cpu {
-    cores = local.worker_cores
+    cores = 1
   }
 
   memory {
-    dedicated = local.worker_memory
+    dedicated = 2048
   }
 
   disk {
@@ -51,7 +51,7 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
     }
 
     dns {
-      servers = ["192.168.0.1"] # DNS servers
+      servers = ["192.168.0.15","1.1.1.1"] # DNS servers
     }
 
     user_account {
@@ -112,7 +112,7 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
     }
 
     dns {
-      servers = ["${local.net}.1"] # DNS servers
+      servers = ["${local.net}.15","1.1.1.1"] # DNS servers
     }
 
     user_account {
@@ -171,7 +171,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
     }
 
     dns {
-      servers = ["${local.net}.1"] # DNS servers
+      servers = ["${local.net}.15","1.1.1.1"] # DNS servers
     }
 
     user_account {
