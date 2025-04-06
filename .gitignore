@@ -21,3 +21,4 @@ tofu/.terraform/
 k8s-add-workers/tofu/terraform.tfstate
 **.terraform**
 **/**/plan
+k8s-add-worker-single/tofu/terraform.tfstate

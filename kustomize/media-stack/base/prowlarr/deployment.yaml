@@ -35,11 +35,11 @@ spec:
           subPath: prowlarr/config
         resources:
           requests:
-            cpu: "100m"
-            memory: "256Mi"
-          limits:
             cpu: "200m"
             memory: "512Mi"
+          limits:
+            cpu: "400m"
+            memory: "1Gi"
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
