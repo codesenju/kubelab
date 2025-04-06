@@ -1,10 +1,11 @@
 apiVersion: apps/v1
-kind: DaemonSet
+kind: Deployment
 metadata:
   name: tdarr-worker
   labels:
     app.kubernetes.io/component: media-processing
 spec:
+  replicas: 5
   selector:
     matchLabels:
       app: tdarr-worker
@@ -13,6 +14,27 @@ spec:
       labels:
         app: tdarr-worker
     spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k8s-worker-4
+                - k8s-worker-5
+                - k8s-worker-6
+                - k8s-worker-7
+        podAntiAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+          - labelSelector:
+              matchExpressions:
+              - key: app
+                operator: In
+                values:
+                - tdarr-worker
+            topologyKey: "kubernetes.io/hostname"
       containers:
       - name: tdarr-worker
         image: ghcr.io/haveagitgat/tdarr_node:latest
@@ -38,11 +60,11 @@ spec:
         resources:
           requests:
             cpu: "1"
-            memory: "2Gi"
+            memory: "1Gi"
             # nvidia.com/gpu: 1  # Request GPU if available
           limits:
             cpu: "2"
-            memory: "4Gi"
+            memory: "2Gi"
             # nvidia.com/gpu: 1
       priorityClassName: high-priority
       volumes:
@@ -51,7 +73,7 @@ spec:
           claimName: media-data
       - name: transcode-cache
         emptyDir: {}
-      tolerations:
-      - key: "gpu"
-        operator: "Exists"
-        effect: "NoSchedule"
+      # tolerations:
+      # - key: "gpu"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"
