@@ -16,11 +16,11 @@ resource "proxmox_virtual_environment_vm" "ubuntu" {
   vm_id       = 2001 # Unique VM ID for the load balancer
 
   cpu {
-    cores = 2
+    cores = 4
   }
 
   memory {
-    dedicated = 2048
+    dedicated = 4096
   }
 
   disk {
@@ -51,7 +51,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu" {
     }
 
     dns {
-      servers = ["192.168.0.55"] # DNS servers
+      servers = ["192.168.0.15","1.1.1.1"] # DNS servers
     }
 
     user_account {

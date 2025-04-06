@@ -7,12 +7,12 @@
     vs_code: true     # Set to false to skip VS Code installation
     nfs_enabled: true # Set to false to skip NFS tools
 
-  tasks:
-    # Ensure cloud-init finished running first
-    - name: Wait for cloud-init to complete
-      shell: cloud-init status --wait
-      register: cloudinit_status
-      changed_when: false
+  tasks: 
+  #   # Ensure cloud-init finished running first
+  #   - name: Wait for cloud-init to complete
+  #     shell: cloud-init status --wait
+  #     register: cloudinit_status
+  #     changed_when: false
 
     # Update apt cache and upgrade all packages
     - name: Update and upgrade apt packages
