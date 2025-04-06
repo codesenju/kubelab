@@ -29,8 +29,8 @@ metadata:
   namespace: media  # Replace with your namespace
 spec:
   hard:
-    requests.cpu: "16"
-    requests.memory: "16Gi"
-    limits.cpu: "32"
+    requests.cpu: "32"
+    requests.memory: "32Gi"
+    limits.cpu: "64"
     limits.memory: "64Gi"
-    pods: "40"
+    pods: "100"
