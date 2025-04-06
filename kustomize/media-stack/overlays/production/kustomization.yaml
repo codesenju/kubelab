@@ -75,7 +75,7 @@ images:
 - name: ghcr.io/haveagitgat/tdarr_node
   newTag: "2.37.01"
 - name: docker.io/fallenbagel/jellyseerr
-  newTag: "2.5.1"
+  newTag: "2.5.2"
 - name: lscr.io/linuxserver/readarr
   newTag: "develop"
 - name: ghcr.io/flaresolverr/flaresolverr
