@@ -11,3 +11,13 @@ ubuntu/opentofu/terraform.tfstate.backup
 ubuntu/opentofu/.terraform*
 ubuntu/opentofu/terraform.tfstate
 ubuntu/opentofu/plan
+k8s-add-workers/tofu/.terraform/
+tofu/terraform.tfstate
+ubuntu/tofu/terraform.tfstate
+ubuntu/tofu/.terraform/
+**/terraform.tfstate.backup
+tofu/.terraform/
+**/**/terraform.tfstate.backup
+k8s-add-workers/tofu/terraform.tfstate
+**.terraform**
+**/**/plan
