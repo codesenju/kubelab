@@ -33,7 +33,7 @@ resources:
 # - overseerr/service.yaml
 - tdarr/deployment.yaml
 - tdarr/service.yaml
-- tdarr/worker-daemonset.yaml
+- tdarr/tdarr-worker.yaml
 - jellyseerr/deployment.yaml
 - jellyseerr/service.yaml
 - flaresolverr/deployment.yaml
