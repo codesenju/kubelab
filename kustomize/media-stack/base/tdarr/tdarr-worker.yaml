@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/component: media-processing
 spec:
-  replicas: 5
+  replicas: 4
   selector:
     matchLabels:
       app: tdarr-worker
