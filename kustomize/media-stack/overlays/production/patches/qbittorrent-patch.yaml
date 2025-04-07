@@ -18,6 +18,10 @@ spec:
       # Gluetun VPN container
       - name: gluetun
         image: ghcr.io/qdm12/gluetun
+        # lifecycle:
+        #   postStart:
+        #     exec:
+        #       command: ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
         securityContext:
           privileged: true  # Required for /dev/net/tun
           capabilities:
@@ -34,7 +38,9 @@ spec:
           - name: VPN_SERVICE_PROVIDER
             value: "nordvpn"
           - name: VPN_TYPE
-            value: "wireguard"
+            value: "openvpn"
+          # - name: VPN_PORT_FORWARDING
+          #   value: "on"
             # value: "openvpn"
           - name: OPENVPN_USER
             valueFrom:
@@ -46,11 +52,11 @@ spec:
               secretKeyRef:
                 name: nordvpn-credentials
                 key: OPENVPN_PASSWORD
-          - name: WIREGUARD_PRIVATE_KEY
-            valueFrom:
-              secretKeyRef:
-                name: nordvpn-credentials
-                key: WIREGUARD_PRIVATE_KEY
+          # - name: WIREGUARD_PRIVATE_KEY
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: nordvpn-credentials
+          #       key: WIREGUARD_PRIVATE_KEY
           - name: SERVER_COUNTRIES
             value: "South Africa" # change to location closest to you for faster downloads
           # - name: OPENVPN_CIPHER
