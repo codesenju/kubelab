@@ -31,8 +31,8 @@ configMapGenerator:
     - JELLYFIN_PublishedServerUrl=https://jellyfin.yourdomain.com
     - JELLYFIN_URL=http://jellyfin:8096
     - PROWLARR_URL=http://prowlarr:9696
-    - QBITTORRENT_URL=http://qbittorrent:8080
-    - QBITTORRENT_CATEGORIES="movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv" 
+    # - QBITTORRENT_URL=http://qbittorrent:8080
+    # - QBITTORRENT_CATEGORIES="movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv" 
     - TDARR_NODE_ID=production-node-1
 # - name: tdarr-plugins
 #   files:
@@ -60,8 +60,8 @@ buildMetadata:
 images:
 - name: lscr.io/linuxserver/jellyfin
   newTag: "10.10.7"
-- name: lscr.io/linuxserver/qbittorrent
-  newTag: "5.0.4"
+# - name: lscr.io/linuxserver/qbittorrent
+#   newTag: "5.0.4"
 - name: lscr.io/linuxserver/sonarr
   newTag: "4.0.14"
 - name: lscr.io/linuxserver/radarr
@@ -97,7 +97,7 @@ patches:
 - path: patches/lidarr-patch.yaml
 - path: patches/prowlarr-patch.yaml
 - path: patches/tdarr-patch.yaml
-- path: patches/qbittorrent-patch.yaml
+# - path: patches/qbittorrent-patch.yaml
 - path: patches/jellyseerr-patch.yaml
 - path: patches/flaresolverr-patch.yaml
 # # Customize HPA for production

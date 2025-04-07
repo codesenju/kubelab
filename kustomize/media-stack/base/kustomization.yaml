@@ -13,8 +13,8 @@ resources:
 # - jellyfin/hpa.yaml
 
 # Download client
-- qbittorrent/deployment.yaml
-- qbittorrent/service.yaml
+# - qbittorrent/deployment.yaml
+# - qbittorrent/service.yaml
 
 # *Arr applications
 - sonarr/deployment.yaml
