@@ -8,9 +8,10 @@ spec:
   template:
     spec:
       containers:
- # Gluetun VPN container
+    
+      # Gluetun VPN container
       - name: gluetun
-        image: qmcgaw/gluetun
+        image: ghcr.io/qdm12/gluetun
         securityContext:
           privileged: true  # Required for /dev/net/tun
           capabilities:
@@ -27,7 +28,8 @@ spec:
           - name: VPN_SERVICE_PROVIDER
             value: "nordvpn"
           - name: VPN_TYPE
-            value: "openvpn"
+            value: "wireguard"
+            # value: "openvpn"
           - name: OPENVPN_USER
             valueFrom:
               secretKeyRef:
@@ -38,16 +40,29 @@ spec:
               secretKeyRef:
                 name: nordvpn-credentials
                 key: OPENVPN_PASSWORD
+          - name: WIREGUARD_PRIVATE_KEY
+            valueFrom:
+              secretKeyRef:
+                name: nordvpn-credentials
+                key: WIREGUARD_PRIVATE_KEY
           - name: SERVER_COUNTRIES
             value: "South Africa" # change to location closest to you for faster downloads
-          - name: OPENVPN_CIPHER
-            value: "AES-256-CBC"
-          - name: OPENVPN_AUTH
-            value: "SHA512"
+          # - name: OPENVPN_CIPHER
+          #   value: "AES-256-CBC"
+          # - name: OPENVPN_AUTH
+          #   value: "SHA512"
         volumeMounts:
           - name: media-stack-config
             mountPath: /gluetun
             subPath: gluetun/config
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        # Gluetun VPN container - END
 
       - name: jellyfin
         env:
