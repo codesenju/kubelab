@@ -1,9 +1,7 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jellyfin
-  labels:
-    app.kubernetes.io/component: media-server
+  name: qbittorrent
 spec:
   template:
     spec:
@@ -16,10 +14,14 @@ spec:
       dnsPolicy: "None"  # Required for custom dnsConfig
 
       containers:
-    
+      
       # Gluetun VPN container
       - name: gluetun
         image: ghcr.io/qdm12/gluetun
+        lifecycle:
+          postStart:
+            exec:
+              command: ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
         securityContext:
           privileged: true  # Required for /dev/net/tun
           capabilities:
@@ -37,6 +39,8 @@ spec:
             value: "nordvpn"
           - name: VPN_TYPE
             value: "wireguard"
+          # - name: VPN_PORT_FORWARDING
+          #   value: "on"
             # value: "openvpn"
           # - name: OPENVPN_USER
           #   valueFrom:
@@ -72,34 +76,27 @@ spec:
             memory: "256Mi"
         # Gluetun VPN container - END
 
-      - name: jellyfin
+      # qBittorrent container
+      - name: qbittorrent
         env:
-        - name: JELLYFIN_PublishedServerUrl
-          valueFrom:
-            configMapKeyRef:
-              name: media-stack-env
-              key: JELLYFIN_URL
+        - name: QBITTORRENT_CATEGORIES
+          value: "movies=/downloads/movies,tv=/downloads/tv,music=/downloads/music,books=/downloads/books"
+        - name: DOWNLOADS_LOCATION
+          value: "/data/downloads"
         volumeMounts:
         - name: data
-          mountPath: /data/movies
-          subPath: movies
-        - name: data
-          mountPath: /data/tv
-          subPath: tv
-        - name: data
-          mountPath: /data/music
-          subPath: music
+          mountPath: /downloads
+          subPath: downloads
+      # qBittorrent container - END
+
       volumes:
-      - name: data
+      - name: media-stack-config
         persistentVolumeClaim:
-          claimName: media-data
-# ---
-# apiVersion: v1
-# kind: Service
-# metadata:
-#   name: jellyfin
-#   labels:
-#     app.kubernetes.io/component: media-server
-# spec:
-#   type: LoadBalancer
-#   loadBalancerIP: 192.168.0.80
+          claimName: media-stack-config
+
+      # - name: wireguard-config
+      #   persistentVolumeClaim:
+      #     claimName: wireguard-config
+      - name: modules
+        hostPath:
+          path: /lib/modules
