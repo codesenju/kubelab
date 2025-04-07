@@ -7,6 +7,14 @@ metadata:
 spec:
   template:
     spec:
+      dnsConfig:
+        nameservers:
+          - "103.86.96.100" # nordvpn
+          - "103.86.99.100" # nordvpn
+        searches:
+          - "local"
+      dnsPolicy: "None"  # Required for custom dnsConfig
+
       containers:
     
       # Gluetun VPN container
