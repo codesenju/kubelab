@@ -14,40 +14,7 @@ spec:
       dnsPolicy: "None"  # Required for custom dnsConfig
 
       containers:
-      # # nordlynx container
-      # - name: nordlynx
-      #   image: ghcr.io/bubuntux/nordlynx
-      #   securityContext:
-      #     capabilities:
-      #       add: ["NET_ADMIN", "SYS_MODULE"]  # Additional capabilities
-      #     allowPrivilegeEscalation: false
-      #   env:
-      #   - name: PRIVATE_KEY
-      #     valueFrom:
-      #       secretKeyRef:
-      #         name: nordvpn-credentials
-      #         key: WIREGUARD_PRIVATE_KEY
-      #   - name: ALLOWED_IPS
-      #     value: "0.0.0.0/1,128.0.0.0/1"
-      #   - name: NET_LOCAL
-      #     value: "10.244.0.0/16,192.168.0.0/24"
-      #   - name: QUERY
-      #     value: "filters[country_id]=200"
-      #   - name: DISABLE_IPV6  # Explicitly disable IPv6 in container
-      #     value: "1"
-      #   ports:
-      #   - containerPort: 8089
-      #     name: qbittorrent-web
-      #   volumeMounts:
-      #   - name: media-stack-config
-      #     mountPath: /config/wireguard
-      #     subPath: wireguard/config
-      #   - name: modules
-      #     mountPath: /lib/modules
-      #     readOnly: true
-
-      # nordlynx container - END
-
+      
       # Gluetun VPN container
       - name: gluetun
         image: ghcr.io/qdm12/gluetun
