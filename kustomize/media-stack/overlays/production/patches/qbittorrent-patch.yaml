@@ -20,7 +20,7 @@ spec:
         securityContext:
           capabilities:
             add: ["NET_ADMIN"]
-          allowPrivilegeEscalation: false
+          privileged: true  # Required for kernel modules
         env:
         - name: PRIVATE_KEY
           valueFrom:
@@ -33,6 +33,8 @@ spec:
           value: "10.244.0.0/16,192.168.0.0/24"
         - name: QUERY
           value: "filters[country_id]=200"
+        - name: DISABLE_IPV6  # Explicitly disable IPv6 in container
+          value: "1"
         ports:
         - containerPort: 8089
           name: qbittorrent-web
