@@ -19,8 +19,8 @@ spec:
         image: ghcr.io/bubuntux/nordlynx
         securityContext:
           capabilities:
-            add: ["NET_ADMIN"]
-          privileged: true  # Required for kernel modules
+            add: ["NET_ADMIN", "SYS_MODULE"]  # Additional capabilities
+          allowPrivilegeEscalation: false
         env:
         - name: PRIVATE_KEY
           valueFrom:
@@ -38,6 +38,14 @@ spec:
         ports:
         - containerPort: 8089
           name: qbittorrent-web
+        volumeMounts:
+        - name: media-stack-config
+          mountPath: /config/wireguard
+          subPath: wireguard/config
+        - name: modules
+          mountPath: /lib/modules
+          readOnly: true
+
       # nordlynx container - END
 
       # # Gluetun VPN container
@@ -106,3 +114,10 @@ spec:
       - name: media-stack-config
         persistentVolumeClaim:
           claimName: media-stack-config
+
+      # - name: wireguard-config
+      #   persistentVolumeClaim:
+      #     claimName: wireguard-config
+      - name: modules
+        hostPath:
+          path: /lib/modules
