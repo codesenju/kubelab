@@ -1,0 +1,251 @@
+# torrent-client-vpn
+services:
+  nordlynx:
+    image: ghcr.io/bubuntux/nordlynx:2025-04-01
+    hostname: nordlynx
+    container_name: nordlynx
+    ports:
+      - 8089:8089
+      - 9091:9091
+      - 51413:51413
+      - 51413:51413/udp
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    env_file: 
+      - .env
+    environment:
+      - filters\[country_id\]=200
+      - NET_LOCAL=192.168.0.0/16,172.17.0.0/16,10.244.0.0/16
+      - TZ=Africa/Johannesburg
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.conf.all.rp_filter=2
+      - net.ipv6.conf.all.disable_ipv6=1
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+  qbittorrent:
+    image: linuxserver/qbittorrent:5.0.4
+    network_mode: service:nordlynx
+    container_name: qbittorrent-nord
+    depends_on:
+      - nordlynx
+    environment:
+      - WEBUI_PORT=8089
+      - PUID=1000
+      - PGID=0
+      - TZ=Africa/Johannesburg
+    volumes:
+      - ./qbittorrent/config:/config
+      - /opt/media/downloads:/downloads
+    restart: unless-stopped
+  transmission:
+    image: lscr.io/linuxserver/transmission:4.0.6
+    container_name: transmission-nord
+    network_mode: service:nordlynx
+    depends_on:
+      - nordlynx
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Arfica/Johannesburg
+      - TRANSMISSION_WEB_HOME=
+      - USER=
+      - PASS=
+      - WHITELIST=
+      - PEERPORT=
+      - HOST_WHITELIST=
+      - TRANSMISSION_DOWNLOAD_DIR=/downloads
+    volumes:
+      - ./config:/config
+      - /opt/media/downloads:/downloads
+      - ./watch:/watch
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+networks: {}
+
+# Firefox
+services:
+  firefox:
+    image: lscr.io/linuxserver/firefox:136.0.4
+    container_name: firefox
+    security_opt:
+      - seccomp:unconfined #optional
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Africa/Johannesburg
+      - FIREFOX_CLI=https://homarr.local.jazziro.com/boards #optional
+    volumes:
+      - ./config:/config
+    ports:
+      - 4000:3000
+      - 4443:3001
+    shm_size: 1gb
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+networks: {}
+
+# Code
+services:
+  openvscode-server:
+    stdin_open: true
+    tty: true
+    init: true
+    ports:
+      - 3001:3000
+    volumes:
+      - ./workspace:/home/workspace:cached
+    image: gitpod/openvscode-server
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+networks: {}
+
+
+# Authentik
+services:
+  postgresql:
+    image: docker.io/library/postgres:16-alpine
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - pg_isready -d $${POSTGRES_DB} -U $${POSTGRES_USER}
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 5s
+    volumes:
+      - ./database:/var/lib/postgresql/data
+    environment:
+      POSTGRES_PASSWORD: ${PG_PASS:?database password required}
+      POSTGRES_USER: ${PG_USER:-authentik}
+      POSTGRES_DB: ${PG_DB:-authentik}
+    env_file:
+      - .env
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+  redis:
+    image: docker.io/library/redis:alpine
+    command: --save 60 1 --loglevel warning
+    restart: unless-stopped
+    healthcheck:
+      test:
+        - CMD-SHELL
+        - redis-cli ping | grep PONG
+      start_period: 20s
+      interval: 30s
+      retries: 5
+      timeout: 3s
+    volumes:
+      - ./redis:/data
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+  server:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.2.3}
+    restart: unless-stopped
+    command: server
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    volumes:
+      - ./media:/media
+      - ./custom-templates:/templates
+    env_file:
+      - .env
+    ports:
+      - ${COMPOSE_PORT_HTTP:-9000}:9000
+      - ${COMPOSE_PORT_HTTPS:-9443}:9443
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+  worker:
+    image: ${AUTHENTIK_IMAGE:-ghcr.io/goauthentik/server}:${AUTHENTIK_TAG:-2025.2.3}
+    restart: unless-stopped
+    command: worker
+    environment:
+      AUTHENTIK_REDIS__HOST: redis
+      AUTHENTIK_POSTGRESQL__HOST: postgresql
+      AUTHENTIK_POSTGRESQL__USER: ${PG_USER:-authentik}
+      AUTHENTIK_POSTGRESQL__NAME: ${PG_DB:-authentik}
+      AUTHENTIK_POSTGRESQL__PASSWORD: ${PG_PASS}
+    # `user: root` and the docker socket volume are optional.
+    # See more for the docker socket integration here:
+    # https://goauthentik.io/docs/outposts/integrations/docker
+    # Removing `user: root` also prevents the worker from fixing the permissions
+    # on the mounted folders, so when removing this make sure the folders have the correct UID/GID
+    # (1000:1000 by default)
+    user: root
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./media:/media
+      - ./certs:/certs
+      - ./custom-templates:/templates
+    env_file:
+      - .env
+    depends_on:
+      postgresql:
+        condition: service_healthy
+      redis:
+        condition: service_healthy
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+networks: {}
