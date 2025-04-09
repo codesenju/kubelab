@@ -72,6 +72,19 @@
                         load: {}       # Collects system load averages
                         memory: {}     # Collects memory usage metrics
                         disk: {}       # Collects disk I/O metrics
+                    kubeletMetrics:
+                      enabled: true
+                      collectionInterval: 30s
+                      authType: serviceAccount    # Authentication method
+                      endpoint: ${env:K8S_HOST_IP}:10250
+                      insecureSkipVerify: true   # Set to false in production
+                      
+                      # Metrics configuration
+                      metrics:
+                        k8s.pod.cpu_limit_utilization:
+                          enabled: true
+                        k8s.pod.memory_limit_utilization:
+                          enabled: true
                     otlpExporter:
                       enabled: true
                     loggingExporter:
