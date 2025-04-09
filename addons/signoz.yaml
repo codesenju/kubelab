@@ -64,28 +64,16 @@
                   otelCollectorEndpoint: signoz-otel-collector.monitoring.svc.cluster.local:4317
                   otelInsecure: true
                   presets:
+                    otlpExporter:
+                      enabled: true
                     hostMetrics:
                       enabled: true
-                      collectionInterval: 5s  # Adjust based on your monitoring needs
-                      scrapers:
-                        cpu: {}        # Collects CPU usage, time, and utilization metrics
-                        load: {}       # Collects system load averages
-                        memory: {}     # Collects memory usage metrics
-                        disk: {}       # Collects disk I/O metrics
+                      collectionInterval: 30s
+                    logsCollection:
+                      enabled: true
                     kubeletMetrics:
                       enabled: true
-                      collectionInterval: 30s
-                      authType: serviceAccount    # Authentication method
-                      endpoint: ${env:K8S_HOST_IP}:10250
-                      insecureSkipVerify: true   # Set to false in production
-                      
-                      # Metrics configuration
-                      metrics:
-                        k8s.pod.cpu_limit_utilization:
-                          enabled: true
-                        k8s.pod.memory_limit_utilization:
-                          enabled: true
-                    otlpExporter:
+                    kubernetesAttributes:
                       enabled: true
                     loggingExporter:
                       enabled: false
