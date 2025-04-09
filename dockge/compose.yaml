@@ -12,8 +12,7 @@ services:
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
-    env_file: 
-      - .env
+    env_file: .env
     environment:
       - filters\[country_id\]=200
       - NET_LOCAL=192.168.0.0/16,172.17.0.0/16,10.244.0.0/16
@@ -27,10 +26,10 @@ services:
       resources:
         limits:
           cpus: "0.5" # Limit to half a CPU core
-          memory: 512M # Limit to 512MB RAM
+          memory: 1G # Limit RAM
         reservations:
           cpus: "0.25" # Guaranteed minimum CPU
-          memory: 256M # Guaranteed minimum RAM
+          memory: 512M # Guaranteed minimum RAM
   qbittorrent:
     image: linuxserver/qbittorrent:5.0.4
     network_mode: service:nordlynx
@@ -46,6 +45,14 @@ services:
       - ./qbittorrent/config:/config
       - /opt/media/downloads:/downloads
     restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 1G # Limit RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 512M # Guaranteed minimum RAM
   transmission:
     image: lscr.io/linuxserver/transmission:4.0.6
     container_name: transmission-nord
@@ -72,10 +79,14 @@ services:
       resources:
         limits:
           cpus: "0.5" # Limit to half a CPU core
-          memory: 512M # Limit to 512MB RAM
+          memory: 1G # Limit RAM
         reservations:
           cpus: "0.25" # Guaranteed minimum CPU
-          memory: 256M # Guaranteed minimum RAM
+          memory: 512M # Guaranteed minimum RAM
+#    ports:
+#      - 9091:9091
+#      - 51413:51413
+#      - 51413:51413/udp
 networks: {}
 
 # Firefox
