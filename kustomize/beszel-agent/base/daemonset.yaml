@@ -13,7 +13,8 @@ spec:
     spec:
       hostNetwork: true
       containers:
-      - env:
+      - name: beszel-agent
+        env:
           - name: LISTEN
             value: '45876'
           - name: KEY
@@ -23,7 +24,6 @@ spec:
                 key: agent-key
         image: IMAGE_TEMPLATE
         imagePullPolicy: Always
-        name: beszel-agent
         ports:
           - containerPort: 45876
             hostPort: 45876
