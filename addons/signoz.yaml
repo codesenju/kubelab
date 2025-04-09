@@ -1,0 +1,87 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Signoz
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: signoz
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: signoz
+              repoURL: https://charts.signoz.io
+              targetRevision: 0.76.1
+              helm:
+                releaseName: signoz
+                values: |
+                  global:
+                    storageClass: nfs-csi
+                    clusterName: "kubelab"
+                    clickhouse:
+                      installCustomStorageClass: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: monitoring
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Deploy Signoz k8s-infra
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: signoz-k8s-infra
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: k8s-infra
+              repoURL: https://charts.signoz.io
+              targetRevision: 0.12.1
+              helm:
+                releaseName: signoz-k8s-infra
+                values: |
+                  global:
+                    cloud: others
+                    clusterName: "kubelab"
+                    deploymentEnvironment: production
+                  otelCollectorEndpoint: signoz-otel-collector.monitoring.svc.cluster.local:4317
+                  otelInsecure: true
+                  presets:
+                    hostMetrics:
+                      enabled: true
+                      collectionInterval: 5s  # Adjust based on your monitoring needs
+                      scrapers:
+                        cpu: {}        # Collects CPU usage, time, and utilization metrics
+                        load: {}       # Collects system load averages
+                        memory: {}     # Collects memory usage metrics
+                        disk: {}       # Collects disk I/O metrics
+                    otlpExporter:
+                      enabled: true
+                    loggingExporter:
+                      enabled: false
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: monitoring
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
