@@ -33,7 +33,7 @@ spec:
             readOnly: true
       volumes:
         - name: containerd-socket
-          hostPath: null
+          hostPath:
             path: /run/containerd/containerd.sock
             type: Socket
       restartPolicy: Always
