@@ -5,10 +5,10 @@ services:
     hostname: nordlynx
     container_name: nordlynx
     ports:
-      - 8089:8089
-      - 9091:9091
-      - 51413:51413
-      - 51413:51413/udp
+      - 8089:8089 # qBittorrent
+      - 9091:9091 # Transmissioin
+      - 51413:51413 # Transmissioin
+      - 51413:51413/udp # Transmissioin
     cap_add:
       - NET_ADMIN
       - SYS_MODULE
