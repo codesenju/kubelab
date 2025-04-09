@@ -27,6 +27,15 @@ spec:
           ports:
             - containerPort: 45876
               hostPort: 45876
+          volumeMounts:
+            - name: containerd-socket
+              mountPath: /run/containerd/containerd.sock
+              readOnly: true
+      volumes:
+        - name: containerd-socket
+          hostPath: null
+          path: /run/containerd/containerd.sock
+          type: Socket
       restartPolicy: Always
       tolerations:
         - effect: NoSchedule
