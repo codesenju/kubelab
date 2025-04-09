@@ -13,25 +13,25 @@ spec:
     spec:
       hostNetwork: true
       containers:
-        - env:
-            - name: LISTEN
-              value: '45876'
-            - name: KEY
-              valueFrom:
-                secretKeyRef:
-                  name: beszel-secret
-                  key: agent-key
-          image: IMAGE_TEMPLATE
-          imagePullPolicy: Always
-          name: beszel-agent
-          ports:
-            - containerPort: 45876
-              hostPort: 45876
-          volumeMounts:
-            - name: containerd-socket
-              mountPath: /run/containerd/containerd.sock
-              readOnly: true
-        volumes:
+      - env:
+          - name: LISTEN
+            value: '45876'
+          - name: KEY
+            valueFrom:
+              secretKeyRef:
+                name: beszel-secret
+                key: agent-key
+        image: IMAGE_TEMPLATE
+        imagePullPolicy: Always
+        name: beszel-agent
+        ports:
+          - containerPort: 45876
+            hostPort: 45876
+        volumeMounts:
+          - name: containerd-socket
+            mountPath: /run/containerd/containerd.sock
+            readOnly: true
+      volumes:
         - name: containerd-socket
           hostPath: null
           path: /run/containerd/containerd.sock
