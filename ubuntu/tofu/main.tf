@@ -20,7 +20,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu" {
   }
 
   memory {
-    dedicated = 4096
+    dedicated = 8192
   }
 
   disk {
@@ -29,7 +29,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu" {
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
-    size         = 20
+    size         = 50
   }
 
   network_device {
