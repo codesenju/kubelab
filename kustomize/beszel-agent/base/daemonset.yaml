@@ -34,8 +34,8 @@ spec:
       volumes:
         - name: containerd-socket
           hostPath: null
-          path: /run/containerd/containerd.sock
-          type: Socket
+            path: /run/containerd/containerd.sock
+            type: Socket
       restartPolicy: Always
       tolerations:
         - effect: NoSchedule
