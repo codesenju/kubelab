@@ -92,22 +92,11 @@ networks: {}
 # Firefox
 services:
   firefox:
-    image: lscr.io/linuxserver/firefox:136.0.4
-    container_name: firefox
-    security_opt:
-      - seccomp:unconfined #optional
-    environment:
-      - PUID=0
-      - PGID=0
-      - TZ=Africa/Johannesburg
-      - FIREFOX_CLI=https://homarr.local.jazziro.com/boards #optional
-    volumes:
-      - ./config:/config
+    image: fhriley/firefox
     ports:
-      - 4000:3000
-      - 4443:3001
-    shm_size: 1gb
-    restart: unless-stopped
+      - 5800:5800
+    volumes:
+      - ./config:/config:rw
     deploy:
       resources:
         limits:
