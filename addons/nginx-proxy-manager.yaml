@@ -18,7 +18,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/nginx-proxy-manager/overlays/production
+              path: kustomize/nginx-proxy-manager/overlays/prod
               targetRevision: development
               kustomize:
                 # Add these to your existing kustomize config

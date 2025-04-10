@@ -1,4 +1,4 @@
-# overlays/production/config/prowlarr-config.yaml
+# overlays/prod/config/prowlarr-config.yaml
 apiVersion: v1
 kind: ConfigMap
 metadata:

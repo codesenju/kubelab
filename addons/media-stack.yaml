@@ -18,7 +18,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/media-stack/overlays/production
+              path: kustomize/media-stack/overlays/prod
               targetRevision: development
               kustomize:
                 # Add these to your existing kustomize config

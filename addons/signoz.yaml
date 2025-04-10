@@ -4,7 +4,7 @@
 
     - name: Deploy Signoz
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -39,7 +39,7 @@
 
     - name: Deploy Signoz k8s-infra
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -60,7 +60,10 @@
                   global:
                     cloud: others
                     clusterName: "kubelab"
-                    deploymentEnvironment: production
+                    storageClass: "nfs-csi"
+                    clickhouse:
+                     installCustomStorageClass: true
+                    deploymentEnvironment: prod
                   otelCollectorEndpoint: signoz-otel-collector.monitoring.svc.cluster.local:4317
                   otelInsecure: true
                   presets:

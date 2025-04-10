@@ -34,7 +34,7 @@ data:
   PROWLARR_URL: http://prowlarr:9696
   QBITTORRENT_CATEGORIES: movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv
   QBITTORRENT_URL: http://qbittorrent:8080
-  TDARR_NODE_ID: production-node-1
+  TDARR_NODE_ID: prod-node-1
 kind: ConfigMap
 metadata:
   labels:
