@@ -26,14 +26,14 @@ configMapGenerator:
   behavior: create
   # files:
   #   - config/env/common.env
-  #   - config/env/production.env
+  #   - config/env/prod.env
   literals:
     - JELLYFIN_PublishedServerUrl=https://jellyfin.yourdomain.com
     - JELLYFIN_URL=http://jellyfin:8096
     - PROWLARR_URL=http://prowlarr:9696
     # - QBITTORRENT_URL=http://qbittorrent:8080
     # - QBITTORRENT_CATEGORIES="movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv" 
-    - TDARR_NODE_ID=production-node-1
+    - TDARR_NODE_ID=prod-node-1
 # - name: tdarr-plugins
 #   files:
 #     - config/tdarr/plugins.json
@@ -56,7 +56,7 @@ labels:
 # Enable field management for kubectl (CORRECTED)
 buildMetadata:
   - managedByLabel
-# Image versions (pinned for production)
+# Image versions (pinned for prod)
 images:
 - name: lscr.io/linuxserver/jellyfin
   newTag: "10.10.7"
@@ -100,13 +100,13 @@ patches:
 # - path: patches/qbittorrent-patch.yaml
 - path: patches/jellyseerr-patch.yaml
 - path: patches/flaresolverr-patch.yaml
-# # Customize HPA for production
+# # Customize HPA for prod
 # components:
 # - components/hpa/  # Contains HPA scaling profiles
 
 # Resource customization
 resources:
-- resources/production-limits.yaml
+- resources/prod-limits.yaml
 - resources/priority-class.yaml
 - ../../base
 # - config/vpn-settings.yaml

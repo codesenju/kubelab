@@ -18,7 +18,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/pihole/overlays/production
+              path: kustomize/pihole/overlays/prod
               targetRevision: development
               kustomize:
                 # Add these to your existing kustomize config

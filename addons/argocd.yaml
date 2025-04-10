@@ -15,8 +15,33 @@
         create_namespace: true
         release_values:
           global:
-            domain: argocd.x.com
+            domain: "{{ argocd_domain }}"
           configs:
+            secret:
+              extra:
+                dex.authentik.clientSecret: "{{ argocd_openid_client_secret }}"
+            rbac:
+              policy.csv: |
+                 g, ArgoCD Admins, role:admin
+                 g, authentik Admins, role:admin
+                 g, ArgoCD Viewers, role:readonly
+            cm:
+              admin.enabled: false
+              exec.enabled: true
+              dex.config: |
+                connectors:
+                - config:
+                    issuer: "{{ argocd_openid_issuer_url }}"
+                    clientID: argocd
+                    clientSecret: $dex.authentik.clientSecret
+                    insecureEnableGroups: true
+                    scopes:
+                      - openid
+                      - profile
+                      - email
+                  name: authentik
+                  type: oidc
+                  id: authentik
             params:
               server.insecure: true
           server:
@@ -45,36 +70,36 @@
           applicationSet:
             replicas: 2
 
-    - name: Wait for ArgoCD pods to be ready
-      kubernetes.core.k8s_info:
-        kind: Pod
-        namespace: argocd
-        label_selectors:
-          - app.kubernetes.io/part-of=argocd
-        wait: yes
-        wait_sleep: 10
-        wait_timeout: 300
-        wait_condition:
-          type: Ready
-          status: "True"
+    # - name: Wait for ArgoCD pods to be ready
+    #   kubernetes.core.k8s_info:
+    #     kind: Pod
+    #     namespace: argocd
+    #     label_selectors:
+    #       - app.kubernetes.io/part-of=argocd
+    #     wait: yes
+    #     wait_sleep: 10
+    #     wait_timeout: 300
+    #     wait_condition:
+    #       type: Ready
+    #       status: "True"
 
-    - name: Get Argo CD admin password
-      shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-      register: argocd_password
-      changed_when: false
+    # - name: Get Argo CD admin password
+    #   shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+    #   register: argocd_password
+    #   changed_when: false
 
-    - name: Get LoadBalancer IP
-      shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-      register: lb_ip
-      changed_when: false
+    # - name: Get LoadBalancer IP
+    #   shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+    #   register: lb_ip
+    #   changed_when: false
 
-    - name: Display Argo CD access information
-      ansible.builtin.debug:
-        msg:
-          - "----------------------------------------"
-          - "🚀 Argo CD deployed successfully!"
-          - "----------------------------------------"
-          - "📍 URL:       http://{{ lb_ip.stdout }}"
-          - "👤 Username:  admin"
-          - "🔑 Password:  {{ argocd_password.stdout }}"
-          - "----------------------------------------"
+    # - name: Display Argo CD access information
+    #   ansible.builtin.debug:
+    #     msg:
+    #       - "----------------------------------------"
+    #       - "🚀 Argo CD deployed successfully!"
+    #       - "----------------------------------------"
+    #       - "📍 URL:       http://{{ lb_ip.stdout }}"
+    #       - "👤 Username:  admin"
+    #       - "🔑 Password:  {{ argocd_password.stdout }}"
+    #       - "----------------------------------------"
