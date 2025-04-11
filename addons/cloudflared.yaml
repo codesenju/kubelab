@@ -101,8 +101,6 @@
               ingress:
               # The first rule proxies traffic to the httpbin sample Service defined in app.yaml
               - hostname: {{ cloudflared_hostname_1 }}
-                service: http://jellyfin.media-stack.svc.cluster.local:8096
-              - hostname: {{ cloudflared_hostname_2 }}
                 service: http://jellyseerr.media-stack.svc.cluster.local:5055
               # This rule sends traffic to the built-in hello-world HTTP server. This can help debug connectivity
               # issues. If hello.example.com resolves and tunnel.example.com does not, then the problem is
