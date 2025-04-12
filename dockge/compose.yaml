@@ -16,7 +16,7 @@ services:
     environment:
       - filters\[country_id\]=200
       - NET_LOCAL=192.168.0.0/16,172.17.0.0/16,10.244.0.0/16
-      - TZ=Africa/Johannesburg
+      - TZ=Etc/GMT-2
     sysctls:
       - net.ipv4.conf.all.src_valid_mark=1
       - net.ipv4.conf.all.rp_filter=2
@@ -40,7 +40,7 @@ services:
       - WEBUI_PORT=8089
       - PUID=1000
       - PGID=0
-      - TZ=Africa/Johannesburg
+      - TZ=Etc/GMT-2
     volumes:
       - ./qbittorrent/config:/config
       - /opt/media/downloads:/downloads
@@ -270,4 +270,80 @@ services:
         reservations:
           cpus: "0.25" # Guaranteed minimum CPU
           memory: 256M # Guaranteed minimum RAM
+networks: {}
+
+
+# Cloudflared
+services:
+  cloudflared:
+    image: cloudflare/cloudflared:2025.4.0
+    env_file:
+      - .env
+    command: tunnel --no-autoupdate run --token $CLOUDFLARED_TOKEN
+networks: {}
+
+
+# Uptime Kuma
+services:
+  uptime-kuma:
+    restart: always
+    ports:
+      - 3002:3001
+    volumes:
+      - ./app_data:/app/data
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+    container_name: uptime-kuma
+    image: louislam/uptime-kuma:1
+volumes:
+  uptime-kuma:
+    external: true
+    name: uptime-kuma
+networks:
+  cloudbeaver_default:
+    external: true
+
+# Cloudbeaver
+services:
+  cloudbeaver:
+    container_name: cloudbeaver
+    tty: true
+    stdin_open: true
+    ports:
+      - 8978:8978
+    volumes:
+      - ./workspace:/opt/cloudbeaver/workspace
+    image: dbeaver/cloudbeaver:25.0.2
+networks: {}
+
+# Webtop
+services:
+  webtop:
+    image: lscr.io/linuxserver/webtop:ubuntu-kde
+    container_name: webtop
+    security_opt:
+      - seccomp:unconfined #optional
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/GMT-2
+      # - SUBFOLDER=/ #optional
+      - TITLE=Webtop #optional
+    volumes:
+      - ./config:/config
+      # - /var/run/docker.sock:/var/run/docker.sock #optional
+    ports:
+      - 4000:3000
+      - 4001:3001
+    deploy:
+      resources:
+        limits:
+          cpus: "1" # Limit CPU core
+          memory: 4G # Limit RAM
+        reservations:
+          cpus: "0.5" # Guaranteed minimum CPU
+          memory: 2G # Guaranteed minimum RAM
+    # devices:
+    #   - /dev/dri:/dev/dri #optional
+    shm_size: 1gb #optional
+    restart: unless-stopped
 networks: {}

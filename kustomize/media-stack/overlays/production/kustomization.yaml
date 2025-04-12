@@ -41,7 +41,7 @@ configMapGenerator:
 - name: global-env
   behavior: create
   literals:
-    - TZ=Africa/Johannesburg
+    - TZ=Etc/GMT-2
     - UMASK=002
     - LOG_LEVEL=info
 
