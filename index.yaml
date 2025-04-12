@@ -17,7 +17,7 @@ spec:
 apiVersion: v1
 data:
   LOG_LEVEL: info
-  TZ: Africa/Johannesburg
+  TZ: Etc/GMT-2
   UMASK: "002"
 kind: ConfigMap
 metadata:

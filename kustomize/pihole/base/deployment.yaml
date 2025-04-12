@@ -32,7 +32,7 @@ spec:
           protocol: TCP
         env:
         - name: TZ
-          value: "Africa/Johannesburg"
+          value: Etc/GMT-2
         # - name: FTLCONF_webserver_api_password
         #   value: "correct horse battery staple"
         - name: FTLCONF_dns_listeningMode

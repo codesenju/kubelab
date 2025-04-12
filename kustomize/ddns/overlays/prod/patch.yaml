@@ -9,7 +9,7 @@ spec:
       - name: cloudflare-ddns  # Must match container name
         env:
         - name: TZ
-          value: "Africa/Johannesburg"  # Sets timezone
+          value: "Etc/GMT-2"  # Sets timezone
         resources:
           requests:
             cpu: "64m"
