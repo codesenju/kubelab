@@ -69,7 +69,7 @@ images:
 - name: lscr.io/linuxserver/lidarr
   newTag: "2.10.3"
 - name: lscr.io/linuxserver/prowlarr
-  newTag: "1.32.2"
+  newTag: "1.33.3"
 - name: ghcr.io/haveagitgat/tdarr
   newTag: "2.37.01"
 - name: ghcr.io/haveagitgat/tdarr_node
