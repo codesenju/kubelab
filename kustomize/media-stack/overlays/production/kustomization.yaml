@@ -77,7 +77,7 @@ images:
 - name: docker.io/fallenbagel/jellyseerr
   newTag: "2.5.2"
 - name: lscr.io/linuxserver/readarr
-  newTag: "develop-version-0.3.27.2538"
+  newTag: "develop-version-0.4.14.2782"
 - name: ghcr.io/flaresolverr/flaresolverr
   newName: ghcr.io/flaresolverr/flaresolverr
   newTag: "v3.3.21"
