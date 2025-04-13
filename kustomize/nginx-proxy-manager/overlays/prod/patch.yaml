@@ -19,7 +19,7 @@ spec:
       - name: nginx-proxy-manager
         env:
         - name: TZ
-          value: "Etc/GMT-2
+          value: "Etc/GMT-2"
         # - name: PUID
         #   value: "1000"
         # - name: PGID
