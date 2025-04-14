@@ -1,5 +1,7 @@
 - name: Install k9s
   hosts: k8s-control-plane-1
+  vars_files:
+  - ../ansible/vars.ignore.yaml
   become: no
   gather_facts: false
   tasks:
@@ -26,7 +28,7 @@
                  g, authentik Admins, role:admin
                  g, ArgoCD Viewers, role:readonly
             cm:
-              admin.enabled: false
+              admin.enabled: true
               exec.enabled: true
               dex.config: |
                 connectors:
@@ -83,23 +85,23 @@
     #       type: Ready
     #       status: "True"
 
-    # - name: Get Argo CD admin password
-    #   shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
-    #   register: argocd_password
-    #   changed_when: false
+    - name: Get Argo CD admin password
+      shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      register: argocd_password
+      changed_when: false
 
-    # - name: Get LoadBalancer IP
-    #   shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-    #   register: lb_ip
-    #   changed_when: false
+    - name: Get LoadBalancer IP
+      shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      register: lb_ip
+      changed_when: false
 
-    # - name: Display Argo CD access information
-    #   ansible.builtin.debug:
-    #     msg:
-    #       - "----------------------------------------"
-    #       - "🚀 Argo CD deployed successfully!"
-    #       - "----------------------------------------"
-    #       - "📍 URL:       http://{{ lb_ip.stdout }}"
-    #       - "👤 Username:  admin"
-    #       - "🔑 Password:  {{ argocd_password.stdout }}"
-    #       - "----------------------------------------"
+    - name: Display Argo CD access information
+      ansible.builtin.debug:
+        msg:
+          - "----------------------------------------"
+          - "🚀 Argo CD deployed successfully!"
+          - "----------------------------------------"
+          - "📍 URL:       http://{{ lb_ip.stdout }}"
+          - "👤 Username:  admin"
+          - "🔑 Password:  {{ argocd_password.stdout }}"
+          - "----------------------------------------"

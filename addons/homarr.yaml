@@ -9,19 +9,94 @@
         kind: Namespace
         name: homarr
 
-    - name: Create database encryption secret for Homarr
+    - name: Deploy Homarr db pv
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: v1
-          kind: Secret
-          type: Opaque
+          kind: PersistentVolume
           metadata:
-            name: db-secret
+            name: homarr-db
             namespace: homarr
-          stringData:
-            db-encryption-key: "{{ db_encryption_key }}"
-            
+            labels:
+              service: homarr-db  # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 50Mi
+            nfs:
+              server: 192.168.0.15 # change me
+              path: /mnt/pool1/AppData/homarr/db
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy Homarr db pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: homarr-db
+            namespace: homarr
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Mi
+            selector:
+              matchLabels:
+                service: homarr-db  # Add selector to match PV label
+            volumeName: homarr-db
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Deploy Homarr images pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: homarr-images
+            namespace: homarr
+            labels:
+              service: homarr   # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 50Mi
+            nfs:
+              server: 192.168.0.15 # change me
+              path: /mnt/pool1/AppData/homarr/images
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy Homarr images pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: homarr-images
+            namespace: homarr
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Mi
+            selector:
+              matchLabels:
+                service: homarr-images  # Add selector to match PV label
+            volumeName: homarr-images
+            storageClassName: "" # This prevents dynamic provisioning
+
     - name: Deploy Homar
       kubernetes.core.k8s:
         state: present
@@ -38,7 +113,7 @@
             source:
               chart: homarr
               repoURL: ghcr.io/homarr-labs/charts  # note: the oci:// syntax is not included.
-              targetRevision: 3.3.0
+              targetRevision: 3.7.1
               helm:
                 releaseName: homarr
                 values: |
@@ -51,12 +126,23 @@
                   persistence:
                     homarrDatabase:
                       enabled: true
-                      storageClassName: {{ homarr_storage_class_name }}
-                      size: "1Gi"
-                      accessModes:
-                        - ReadWriteMany
+                      name: "homarr-db"
+                      storageClassName: ""
+                      size: "50Mii"
+                      accessMode: "ReadWriteOnce"
+                      volumeClaimName: "homarr-db"
+                    homarrImages:
+                      enabled: true
+                      name: "homarr-images"
+                      storageClassName: ""
+                      accessMode: "ReadWriteOnce"
+                      size: "50Mi"
+                      mountPath: "/images"
+                      volumeClaimName: "homarr-images"
                   env:
                     NODE_TLS_REJECT_UNAUTHORIZED: 0
+                    TZ: Etc/GMT-2
+                    AUTH_SESSION_EXPIRY_TIME: "24h"
             destination:
               name: "in-cluster"
               namespace: homarr
