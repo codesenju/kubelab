@@ -75,6 +75,8 @@
             mountOptions:
               - noatime
               - nfsvers=4.2
+      tags:
+        - homarr-images-pv
 
     - name: Deploy Homarr images pvc
       kubernetes.core.k8s:
