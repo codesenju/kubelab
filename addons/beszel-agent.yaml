@@ -25,21 +25,19 @@
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 commonLabels:
-                  app.kubernetes.io/instance: pihole-prod
+                  app.kubernetes.io/instance: beszel-agent-prod
           
             destination:
               server: https://kubernetes.default.svc
-              namespace: monitoring
-          
+              namespace: beszel
             syncPolicy:
               automated:
-                prune: false
-                selfHeal: false
+                prune: true
+                selfHeal: true
               syncOptions:
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
-
             # ignoreDifferences:
             # - group: ""
             #   kind: PersistentVolumeClaim
