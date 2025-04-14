@@ -128,7 +128,7 @@
                       enabled: true
                       name: "homarr-db"
                       storageClassName: ""
-                      size: "50Mii"
+                      size: "50Mi"
                       accessMode: "ReadWriteOnce"
                       volumeClaimName: "homarr-db"
                     homarrImages:
