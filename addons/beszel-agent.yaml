@@ -24,7 +24,7 @@
                 # Add these to your existing kustomize config
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-                commonLabels:
+                labels:
                   app.kubernetes.io/instance: beszel-agent-prod
           
             destination:
