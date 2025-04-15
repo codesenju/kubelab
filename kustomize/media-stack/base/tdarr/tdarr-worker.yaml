@@ -60,11 +60,11 @@ spec:
         resources:
           requests:
             cpu: "1"
-            memory: "512Mi"
+            memory: "1Gi"
             # nvidia.com/gpu: 1  # Request GPU if available
           limits:
             cpu: "2"
-            memory: "1Gi"
+            memory: "2Gi"
             # nvidia.com/gpu: 1
       priorityClassName: high-priority
       volumes:
