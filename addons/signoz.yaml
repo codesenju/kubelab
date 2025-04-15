@@ -4,7 +4,7 @@
 
     - name: Deploy Signoz
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -29,7 +29,7 @@
                       installCustomStorageClass: true
             destination:
               server: https://kubernetes.default.svc
-              namespace: monitoring
+              namespace: signoz
             syncPolicy:
               automated:
                 prune: true
@@ -39,7 +39,7 @@
 
     - name: Deploy Signoz k8s-infra
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -61,11 +61,10 @@
                     cloud: others
                     clusterName: "kubelab"
                     storageClass: "nfs-csi"
-                    clickhouse:
-                     installCustomStorageClass: true
                     deploymentEnvironment: prod
-                  otelCollectorEndpoint: signoz-otel-collector.monitoring.svc.cluster.local:4317
+                  otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
                   otelInsecure: true
+                  insecureSkipVerify: true
                   presets:
                     otlpExporter:
                       enabled: true
@@ -74,15 +73,25 @@
                       collectionInterval: 30s
                     logsCollection:
                       enabled: true
+                      blacklist:
+                        enabled: true
+                        namespaces: 
+                          - kube-system
                     kubeletMetrics:
                       enabled: true
+                      insecureSkipVerify: true
                     kubernetesAttributes:
                       enabled: true
-                    loggingExporter:
+                      insecureSkipVerify: true
+                    clusterMetrics:
                       enabled: true
+                      insecureSkipVerify: true
+                    k8sEvents:
+                      enabled: true
+                      insecureSkipVerify: true
             destination:
               server: https://kubernetes.default.svc
-              namespace: monitoring
+              namespace: signoz
             syncPolicy:
               automated:
                 prune: true

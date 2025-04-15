@@ -34,7 +34,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   initialization {
     ip_config {
       ipv4 {
-        address = "${var.network_prefix}.${55 + count.index + 1}/24"
+        address = "${var.network_prefix}.${53 + count.index + 1}/24"
         gateway = "${var.network_prefix}.1"
       }
     }
