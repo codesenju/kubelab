@@ -5,7 +5,7 @@ metadata:
   labels:
     app.kubernetes.io/component: media-processing
 spec:
-  replicas: 4
+  replicas: 3
   selector:
     matchLabels:
       app: tdarr-worker
@@ -25,7 +25,6 @@ spec:
                 - k8s-worker-4
                 - k8s-worker-5
                 - k8s-worker-6
-                - k8s-worker-7
         podAntiAffinity:
           requiredDuringSchedulingIgnoredDuringExecution:
           - labelSelector:
@@ -59,12 +58,12 @@ spec:
           mountPath: /temp
         resources:
           requests:
-            cpu: "1"
-            memory: "2Gi"
+            cpu: "512m"
+            memory: "1Gi"
             # nvidia.com/gpu: 1  # Request GPU if available
           limits:
-            cpu: "2"
-            memory: "4Gi"
+            cpu: "1"
+            memory: "2Gi"
             # nvidia.com/gpu: 1
       priorityClassName: high-priority
       volumes:
