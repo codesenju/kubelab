@@ -14,10 +14,10 @@ tofu init
 ## Step 2: Create Worker VMs
 #### Create default (1 worker)
 
-`tofu plan -out=plan -var="worker_count=3"`
+`tofu plan -out=plan -var proxmox_node=kubelab-2 -var worker_count=4`
 
 ### Create multiple workers (example: 3 workers)
-`tofu apply -var="worker_count=3"`
+` tofu apply "plan"`
 
 ## Step 3: Configure Ansible Inventory
 ```bash

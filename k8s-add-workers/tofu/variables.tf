@@ -6,13 +6,12 @@ variable "proxmox_node" {
 variable "worker_count" {
   type        = number
   description = "Number of worker nodes to add"
-  default     = 1
 }
 
 variable "base_vm_id" {
   type        = number
   description = "Base VM ID for worker nodes"
-  default     = 6000
+  default     = 5000
 }
 
 variable "network_prefix" {
