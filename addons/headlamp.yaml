@@ -2,33 +2,33 @@
   become: no
   tasks:
 
-    - name: Deploy Kube Prometheus Stack
+    - name: Deploy Headlamp
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: kube-prometheus-stack
+            name: headlamp
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
           spec:
             project: default
             sources:
-            - repoURL: https://prometheus-community.github.io/helm-charts
-              chart: kube-prometheus-stack
-              targetRevision: "70.4.1"
+            - repoURL: https://kubernetes-sigs.github.io/headlamp/
+              chart: headlamp
+              targetRevision: "0.30.1"
               helm:
-                releaseName: kube-prometheus-stack
+                releaseName: headlamp
                 valueFiles:
-                - $values/helm/kube_prometheus_stack_values.yaml
+                - $values/helm/headlamp_values.yaml
             - repoURL: 'https://github.com/codesenju/kubelab.git'
               targetRevision: development
               ref: values
             destination:
               server: https://kubernetes.default.svc
-              namespace: kube-prometheus-stack
+              namespace: headlamp
             syncPolicy:
               automated:
                 prune: true
@@ -43,4 +43,4 @@
             #   kind: PersistentVolumeClaim
             #   jsonPointers:
             #   - /status  # Ignore PVC status changes
-      tags: kube-prometheus-stack
+      tags: observability
