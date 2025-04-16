@@ -93,7 +93,7 @@ spec:
       - name: data
         persistentVolumeClaim:
           claimName: media-data
-# ---
+---
 apiVersion: v1
 kind: Service
 metadata:
