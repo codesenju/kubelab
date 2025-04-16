@@ -111,6 +111,14 @@ New-PSDrive -Name "Z" -PSProvider FileSystem -Root "\\<NFS-Server-IP>\<share-nam
 ```bash
 ansible-playbook main.yaml --tags adhoc,enable_volume_expansion
 ```
+# Creating an Image Pull Secret for Docker Hub
+```bash
+kubectl create secret docker-registry dockerhub-secret \
+  --docker-server=https://index.docker.io/v1/ \
+  --docker-username=<your-dockerhub-username> \
+  --docker-password=<your-dockerhub-password> \
+  --docker-email=<your-email>
+```
 # Issues
 ***Error***
 

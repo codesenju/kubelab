@@ -4,7 +4,7 @@
 
     - name: Deploy Kubeapps
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -22,10 +22,8 @@
               helm:
                 releaseName: kubeapps
                 values: |
-                  frontend:
-                    service:
-                      type: LoadBalancer
-                      loadBalancerIP: {{ kubeapps_static_ip }}
+                  global:
+                    imagePullSecrets: ["dockerhub-secret"]
             destination:
               server: https://kubernetes.default.svc
               namespace: kubeapps
@@ -36,34 +34,34 @@
               syncOptions:
                 - CreateNamespace=true
 
-    - name: Wait for kubeapps pods to be ready
-      kubernetes.core.k8s_info:
-        kind: Pod
-        namespace: kubeapps
-        label_selectors:
-          - app.kubernetes.io/name=kubeapps
-        wait: yes
-        wait_sleep: 10
-        wait_timeout: 300
-        wait_condition:
-          type: Ready
-          status: "True"
+    # - name: Wait for kubeapps pods to be ready
+    #   kubernetes.core.k8s_info:
+    #     kind: Pod
+    #     namespace: kubeapps
+    #     label_selectors:
+    #       - app.kubernetes.io/name=kubeapps
+    #     wait: yes
+    #     wait_sleep: 10
+    #     wait_timeout: 300
+    #     wait_condition:
+    #       type: Ready
+    #       status: "True"
 
-    - name: Get LoadBalancer IP
-      shell: kubectl -n kubeapps get svc kubeapps -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-      register: lb_ip
-      changed_when: false
+    # - name: Get LoadBalancer IP
+    #   shell: kubectl -n kubeapps get svc kubeapps -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+    #   register: lb_ip
+    #   changed_when: false
 
-    - name: Get LoadBalancer Port
-      shell: kubectl -n kubeapps get svc kubeapps -o jsonpath='{.spec.ports[0].port}'
-      register: lb_port
-      changed_when: false
+    # - name: Get LoadBalancer Port
+    #   shell: kubectl -n kubeapps get svc kubeapps -o jsonpath='{.spec.ports[0].port}'
+    #   register: lb_port
+    #   changed_when: false
 
-    - name: Display Homar access information
-      ansible.builtin.debug:
-        msg:
-          - "----------------------------------------"
-          - "🚀 Kubeapps is deployed successfully!"
-          - "----------------------------------------"
-          - "📍 URL: http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
-          - "----------------------------------------"
+    # - name: Display Homar access information
+    #   ansible.builtin.debug:
+    #     msg:
+    #       - "----------------------------------------"
+    #       - "🚀 Kubeapps is deployed successfully!"
+    #       - "----------------------------------------"
+    #       - "📍 URL: http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+    #       - "----------------------------------------"
