@@ -9,6 +9,7 @@
     bridge_gateway: "192.168.0.1" # Default gateway
     dns_servers: ["1.1.1.1", "8.8.8.8"]
     cloudstack_version: "4.20"  # CloudStack version
+    root_password: "cloud"
 
   tasks:
     # --- STEP 1: Add CloudStack Repository & Update ---
@@ -116,14 +117,6 @@
           - mysql-server
         state: present
 
-    # --- STEP 6: Configure MySQL for CloudStack ---
-    # - name: Set MySQL root password
-    #   ansible.builtin.mysql_user:
-    #     name: root
-    #     password: "{{ mysql_root_password }}"
-    #     check_implicit_admin: yes
-    #     login_unix_socket: /var/run/mysqld/mysqld.sock
-
     - name: Create CloudStack MySQL config
       ansible.builtin.copy:
         dest: /etc/mysql/conf.d/cloudstack.cnf
@@ -147,6 +140,7 @@
         cloudstack-setup-databases {{ cloudstack_user }}:{{ mysql_root_password }}@localhost --deploy-as=root -i {{ bridge_ip }}
       args:
         executable: /bin/bash
+      tags: init
 
     # --- STEP 8: Configure NFS Storage ---
     - name: Install NFS server & Quota
@@ -265,6 +259,13 @@
       args:
         executable: /bin/bash
 
+    # --- STEP 10: Start CloudStack Management ---
+    - name: Run CloudStack management setup
+      ansible.builtin.shell: cloudstack-setup-management
+      args:
+        executable: /bin/bash
+      tags: init
+
      # --- Downlaod template ---
     - name: Download and install CloudStack system template
       shell: >
@@ -277,34 +278,9 @@
         creates: /export/secondary/template/tmpl/1/1/systemvmtemplate-4.17.0-kvm.qcow2
       register: template_result
       ignore_errors: yes
-      tags: template_download
-
-    # --- STEP 10: Start CloudStack Management ---
-    - name: Run CloudStack management setup
-      ansible.builtin.shell: cloudstack-setup-management
-      args:
-        executable: /bin/bash
+      tags: template-download
 
     # --- Setup password less ssh ---
-    - name: Ensure SSH directory exists
-      ansible.builtin.file:
-        path: /home/cloud/.ssh
-        state: directory
-        mode: '0700'
-        owner: cloud
-        group: cloud
-      become: yes
-      tags: ssh-key-setup
-    
-    - name: Generate SSH key pair (if missing)
-      ansible.builtin.command: ssh-keygen -t rsa -b 4096 -f /home/cloud/.ssh/id_rsa -N ""
-      args:
-        creates: /home/cloud/.ssh/id_rsa
-      become: yes
-      become_user: cloud
-      ignore_errors: yes  # Continue if keygen fails (e.g., missing ssh-keygen)
-      tags: ssh-key-setup
-    
     - name: Verify public key exists
       ansible.builtin.stat:
         path: /home/cloud/.ssh/id_rsa.pub
@@ -317,15 +293,6 @@
       register: cloud_ssh_key
       become_user: cloud
       tags: ssh-key-setup
-    
-    - name: Ensure root .ssh directory exists
-      file:
-        path: /root/.ssh
-        state: directory
-        mode: '0700'
-        owner: root
-        group: root
-      tags: ssh-key-setup
       
     - name: Add cloud user's SSH key to root's authorized_keys
       lineinfile:
@@ -337,3 +304,9 @@
         group: root
       tags: ssh-key-setup
     
+    - name: Set root password
+      user:
+        name: root
+        password: "{{ root_password | password_hash('sha512') }}"
+        update_password: always
+      tags: root-password-setup

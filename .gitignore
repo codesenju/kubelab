@@ -27,3 +27,4 @@ addons/secret.yaml
 *ignore.*
 */*/terraform.tfstate
 .vscode
+CloudStack/terraform.tfstate
