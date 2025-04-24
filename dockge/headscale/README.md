@@ -1,3 +1,18 @@
+# NPM Advanced Configurations
+```json
+location /{
+    proxy_pass http://192.168.0.99:8084; # headscale
+}
+
+location ^~ /admin/ {
+proxy_pass http://192.168.0.99:8000/admin/; # headscale-admin
+}
+
+location ^~ /web/ {
+proxy_pass https://192.168.0.99:5443/web/; # headscale-ui
+}
+
+```
 # Tailscale Exit Node Setup: Full Solution
 ## 1. Ubuntu Exit Node Configuration
 ### A) Enable IP Forwarding
