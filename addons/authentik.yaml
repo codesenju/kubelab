@@ -1,0 +1,111 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Create namespace in Kubernetes
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: zero-trust
+  
+    - name: Deploy Authentik postgresql pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: authentik-db
+            namespace: zero-trust
+            labels:
+              service: authentik-db  # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 8Gi
+            nfs:
+              server: 192.168.0.15 # change me
+              path: /mnt/pool1/AppData/authentik/database
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy Authentik postgresql db pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: authentik-db
+            namespace: zero-trust
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 8Gi
+            selector:
+              matchLabels:
+                service: authentik-db  # Add selector to match PV label
+            volumeName: authentik-db
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Deploy Authentik
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: authentik
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: authentik
+              repoURL: https://charts.goauthentik.io/
+              targetRevision: 2025.2.4
+              helm:
+                releaseName: authentik
+                values: |
+                  authentik:
+                    secret_key: {{ authentik_secret_key }}
+                    # This sends anonymous usage-data, stack traces on errors and
+                    # performance data to authentik.error-reporting.a7k.io, and is fully opt-in
+                    error_reporting:
+                      enabled: true
+                    postgresql:
+                      password: {{ authentik_postgresql_password }}
+                  server:
+                    ingress:
+                      enabled: false
+                  postgresql:
+                    enabled: true
+                    image:
+                      tag: 16.6.0-debian-12-r1
+                    auth:
+                      password: {{ authentik_postgresql_password }}
+                    primary:
+                      persistence:
+                        enabled: true
+                        mountPath: /bitnami/postgresql/data
+                        existingClaim: authentik-db
+                  redis:
+                    enabled: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: zero-trust
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
