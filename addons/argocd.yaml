@@ -34,6 +34,7 @@
                 connectors:
                 - config:
                     issuer: "{{ argocd_openid_issuer_url }}"
+                    redirectURI: "{{ argocd_openid_redirect_uri }}"
                     clientID: argocd
                     clientSecret: $dex.authentik.clientSecret
                     insecureEnableGroups: true
@@ -54,15 +55,10 @@
               # loadBalancerIP: "{{ argocd_static_ip }}"
             ingress:
               enabled: false
-              ingressClassName: nginx
-              annotations:
-                nginx.ingress.kubernetes.io/force-ssl-redirect: "true"
-                nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
-              extraTls:
-                - hosts:
-                  - argocd.x.com
-                  # Based on the ingress controller used secret might be optional
-                  secretName: wildcard-tls
+            extraArgs: 
+                - --dex-server
+                - http://argocd-argo-cd-dex.argocd.svc.cluster.local:5556
+                - --dex-server-plaintext 
           redis-ha:
             enabled: false
           controller:
@@ -71,7 +67,10 @@
             replicas: 2
           applicationSet:
             replicas: 2
-
+          dex:
+            enabled: true
+            extraArgs:
+              - --disable-tls 
     # - name: Wait for ArgoCD pods to be ready
     #   kubernetes.core.k8s_info:
     #     kind: Pod
