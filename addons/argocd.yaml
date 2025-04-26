@@ -55,10 +55,10 @@
               # loadBalancerIP: "{{ argocd_static_ip }}"
             ingress:
               enabled: false
-            extraArgs: 
-                - --dex-server
-                - http://argocd-argo-cd-dex.argocd.svc.cluster.local:5556
-                - --dex-server-plaintext 
+            # extraArgs: 
+            #     - --dex-server
+            #     - http://argocd-argo-cd-dex.argocd.svc.cluster.local:5556
+            #     - --dex-server-plaintext 
           redis-ha:
             enabled: false
           controller:
@@ -69,8 +69,8 @@
             replicas: 2
           dex:
             enabled: true
-            extraArgs:
-              - --disable-tls 
+            # extraArgs:
+            #   - --disable-tls 
     # - name: Wait for ArgoCD pods to be ready
     #   kubernetes.core.k8s_info:
     #     kind: Pod
