@@ -633,7 +633,7 @@ configMap:
 
         ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
         ## secret_value option below.
-        secret_name: authelia
+        secret_name: 'authelia'
 
         ## The value of a generated secret when using the ~ secret_name.
         value: JWT_SECRET
@@ -834,7 +834,7 @@ configMap:
 
       ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
       ## secret_value option below.
-      secret_name: authelia
+      secret_name: 'authelia'
 
       ## The value of a generated secret when using the ~ secret_name.
       value: DUO_SECRET_KEY
@@ -993,7 +993,7 @@ configMap:
 
         ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
         ## secret_value option below.
-        secret_name: authelia
+        secret_name: 'authelia'
 
         ## The value of a generated secret when using the ~ secret_name.
         value: LDAP_PASSWORD
@@ -1257,7 +1257,7 @@ configMap:
 
       ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
       ## secret_value option below.
-      secret_name: authelia
+      secret_name: 'authelia'
 
       ## The value of a generated secret when using the ~ secret_name.
       value: SESSION_SECRET
@@ -1328,7 +1328,7 @@ configMap:
 
         ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
         ## secret_value option below.
-        secret_name: authelia
+        secret_name: 'authelia'
 
         ## The value of a generated secret when using the ~ secret_name.
         value: REDIS_PASSWORD
@@ -1387,7 +1387,7 @@ configMap:
 
           ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
           ## secret_value option below.
-          secret_name: authelia
+          secret_name: 'authelia'
 
           ## The value of a generated secret when using the ~ secret_name.
           value: REDIS_SENTINEL_PASSWORD
@@ -1447,7 +1447,7 @@ configMap:
 
       ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
       ## secret_value option below.
-      secret_name: authelia
+      secret_name: 'authelia'
 
       ## The value of a generated secret when using the ~ secret_name.
       value: STORAGE_ENCRYPTION_KEY
@@ -1487,7 +1487,7 @@ configMap:
 
         ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
         ## secret_value option below.
-        secret_name: authelia
+        secret_name: 'authelia'
 
         ## The value of a generated secret when using the ~ secret_name.
         value: STORAGE_PASSWORD
@@ -1542,7 +1542,7 @@ configMap:
 
         ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
         ## secret_value option below.
-        secret_name: authelia
+        secret_name: 'authelia'
 
         ## The value of a generated secret when using the ~ secret_name.
         value: STORAGE_PASSWORD
@@ -1640,7 +1640,7 @@ configMap:
 
         ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
         ## secret_value option below.
-        secret_name: authelia
+        secret_name: 'authelia'
 
         ## The value of a generated secret when using the ~ secret_name.
         value: SMTP_PASSWORD
@@ -1681,7 +1681,7 @@ configMap:
 
         ## The secret name. The ~ name is special as it is the secret we generate either automatically or via the
         ## secret_value option below.
-        secret_name: authelia
+        secret_name: 'authelia'
 
         ## The value of a generated secret when using the ~ secret_name.
         value: OIDC_HMAC_SECRET
