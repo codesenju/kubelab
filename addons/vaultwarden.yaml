@@ -24,17 +24,16 @@
                 # Add these to your existing kustomize config
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-                commonLabels:
+                labels:
                   app.kubernetes.io/instance: vaultwarden-prod
           
             destination:
               server: https://kubernetes.default.svc
               namespace: zero-trust
-          
             syncPolicy:
               automated:
                 prune: true
-                selfHeal: false
+                selfHeal: true
               syncOptions:
               - CreateNamespace=true
               - ServerSideApply=true
