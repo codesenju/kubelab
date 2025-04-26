@@ -19,15 +19,15 @@ spec:
           image: IMAGE_TEMPLATE
           env:
             - name: ADMIN_TOKEN
-                valueFrom:
-                  secretKeyRef:
-                    name: vaultwarden-secrets
-                    key: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secrets
+                  key: ADMIN_TOKEN
             - name: DOMAIN
-                valueFrom:
-                  secretKeyRef:
-                    name: vaultwarden-secrets
-                    key: DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secrets
+                  key: DOMAIN
           volumeMounts:
             - name: vw-data
               mountPath: /data/
