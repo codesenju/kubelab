@@ -1971,8 +1971,8 @@ secret:
   #   example-without-items: {}
 
 certificates:
-  existingSecret: ''
-  # existingSecret: 'authelia'
+  # existingSecret: ''
+  existingSecret: 'authelia'
 
   annotations: {}
   # annotations:
@@ -2095,7 +2095,7 @@ redis:
     enabled: false
     sentinel: true
     password: "redis"
-    existingSecret: ""
+    existingSecret: "authelia"
     existingSecretPasswordKey: ""
     usePasswordFiles: false
   master:
