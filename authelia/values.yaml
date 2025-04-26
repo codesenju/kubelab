@@ -1944,7 +1944,7 @@ secret:
   disabled: false
 
   # existingSecret: ''
-  existingSecret: authelia
+  existingSecret: 'authelia'
 
   annotations: {}
   # annotations:
