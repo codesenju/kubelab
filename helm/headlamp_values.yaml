@@ -43,9 +43,9 @@ config:
     #       name: oidc
     secret:
       # -- Generate OIDC secret. If true, will generate a secret using .config.oidc.
-      create: true
+      create: false
       # -- Name of the OIDC secret.
-      name: oidc
+      name: headlamp-oidc
 
     # Option 2:
     # @param config.oidc - OIDC env configuration
