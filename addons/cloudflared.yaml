@@ -104,6 +104,8 @@
                 service: http://jellyseerr.media-stack.svc.cluster.local:5055
               - hostname: {{ cloudflared_hostname_2 }}
                 service: http://authentik-server.zero-trust.svc.cluster.local
+              - hostname: {{ cloudflared_hostname_3 }}
+                service: http://vaultwarden.zero-trust.svc.cluster.local
               # This rule sends traffic to the built-in hello-world HTTP server. This can help debug connectivity
               # issues. If hello.example.com resolves and tunnel.example.com does not, then the problem is
               # in the connection from cloudflared to your local service, not from the internet to cloudflared.
