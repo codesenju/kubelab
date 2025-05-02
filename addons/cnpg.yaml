@@ -100,18 +100,37 @@
       retries: 30
       delay: 10
     
-    - name: Deploy example postgresql cluster
+    - name: Deploy cloudnative-postgresql cluster
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: postgresql.cnpg.io/v1
-          kind: Cluster
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
           metadata:
-            name: pg16-example
-            namespace: cnpg-system
+            name: cnpg-cluster
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
           spec:
-            imageName: ghcr.io/cloudnative-pg/postgresql:16beta1
-            instances: 3
-            storage:
-              size: 1Gi
-    
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/cnpg/overlays/prod
+              targetRevision: development
+              kustomize:
+                # Add these to your existing kustomize config
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                labels:
+                  app.kubernetes.io/instance: cnpg
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: cnpg-system
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
