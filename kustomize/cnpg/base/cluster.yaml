@@ -1,0 +1,10 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: pg16-example
+  namespace: cnpg-system
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:16beta1
+  instances: 3
+  storage:
+    size: 1Gi
