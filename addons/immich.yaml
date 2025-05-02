@@ -55,6 +55,41 @@
             volumeName: immich-data
             storageClassName: "" # This prevents dynamic provisioning
 
+    - name: Deploy cloudnative-postgresql cluster
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: immich-postgres
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/immich-postgres/overlays/prod
+              targetRevision: development
+              kustomize:
+                # Add these to your existing kustomize config
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                labels:
+                  app.kubernetes.io/instance: cnpg
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: immich
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+
     - name: Deploy immich
       kubernetes.core.k8s:
         state: present
@@ -87,6 +122,13 @@
                         # Automatically creating the library volume is not supported by this chart
                         # You have to specify an existing PVC to use
                         existingClaim: immich-data
+                  redis:
+                    enabled: true
+                  postgresql:
+                    global:
+                      postgresql:
+                        auth:
+                          existingSecret: immich-postgres-user
             destination:
               server: https://kubernetes.default.svc
               namespace: immich
@@ -96,38 +138,3 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
-
-- name: Deploy cloudnative-postgresql cluster
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: immich-postgres
-            namespace: argocd
-            finalizers:
-              - resources-finalizer.argocd.argoproj.io
-          spec:
-            project: default
-            source:
-              repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/immich-postgres/overlays/prod
-              targetRevision: development
-              kustomize:
-                # Add these to your existing kustomize config
-                commonAnnotations:
-                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
-                labels:
-                  app.kubernetes.io/instance: cnpg
-            destination:
-              server: https://kubernetes.default.svc
-              namespace: immich
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-              syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
