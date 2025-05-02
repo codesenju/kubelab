@@ -1,0 +1,98 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Create namespace in Kubernetes
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: immich
+
+    - name: Deploy immich data pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: immich-data
+            labels:
+              service: immich-data  # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 8Gi
+            nfs:
+              server: 192.168.0.15 # change me
+              path: /mnt/pool1/AppData/immich/data
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy immich data pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: immich-data
+            namespace: immich
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 8Gi
+            selector:
+              matchLabels:
+                service: immich-data  # Add selector to match PV label
+            volumeName: immich-data
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Deploy immich
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: immich
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: immich
+              repoURL: ghcr.io/immich-app/immich-charts
+              targetRevision: 0.9.3
+              helm:
+                releaseName: immich
+                values: |
+                  image:
+                    tag: v1.132.3
+                  immich:
+                    metrics:
+                      # Enabling this will create the service monitors needed to monitor immich with the prometheus operator
+                      enabled: false
+                    persistence:
+                      # Main data store for all photos shared between different components.
+                      library:
+                        # Automatically creating the library volume is not supported by this chart
+                        # You have to specify an existing PVC to use
+                        existingClaim: immich-data
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: immich
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true

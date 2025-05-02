@@ -4,7 +4,7 @@
 
     - name: Deploy Signoz
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -27,6 +27,10 @@
                     clusterName: "kubelab"
                     clickhouse:
                       installCustomStorageClass: true
+                  otelCollector:
+                    service:
+                      type: LoadBalancer
+                      loadBalancerIP: 192.168.0.59
             destination:
               server: https://kubernetes.default.svc
               namespace: signoz
@@ -39,7 +43,7 @@
 
     - name: Deploy Signoz k8s-infra
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -68,27 +72,33 @@
                   presets:
                     otlpExporter:
                       enabled: true
-                    hostMetrics:
-                      enabled: true
-                      collectionInterval: 30s
-                    logsCollection:
-                      enabled: true
-                      blacklist:
-                        enabled: true
-                        namespaces: 
-                          - kube-system
-                    kubeletMetrics:
-                      enabled: true
-                      insecureSkipVerify: true
-                    kubernetesAttributes:
-                      enabled: true
-                      insecureSkipVerify: true
-                    clusterMetrics:
-                      enabled: true
-                      insecureSkipVerify: true
-                    k8sEvents:
-                      enabled: true
-                      insecureSkipVerify: true
+                    loggingExporter:
+                      enabled: false
+                    # hostMetrics:
+                    #   enabled: true
+                    #   collectionInterval: 30s
+                    # logsCollection:
+                    #   enabled: true
+                    #   blacklist:
+                    #     enabled: true
+                    #     namespaces: 
+                    #       - kube-system
+                    # kubeletMetrics:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
+                    # kubernetesAttributes:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
+                    # clusterMetrics:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
+                    # k8sEvents:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
             destination:
               server: https://kubernetes.default.svc
               namespace: signoz

@@ -1,0 +1,119 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Deploy Elastic Operator
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: elastic-operator
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: eck-operator
+              repoURL: https://helm.elastic.co
+              targetRevision: 3.0.0
+              helm:
+                releaseName: elastic-operator
+                # values: |
+                #   args:
+                #     - --kubelet-insecure-tls
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: elastic-system
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Deploy Elasticsearch
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: elasticsearch.k8s.elastic.co/v1
+          kind: Elasticsearch
+          metadata:
+            name: quickstart
+            namespace: elastic-system
+          spec:
+            version: 8.16.1
+            nodeSets:
+            - name: default
+              count: 1
+              config:
+                node.store.allow_mmap: false
+              podTemplate:
+                spec:
+                  containers:
+                  - name: elasticsearch
+                    resources:
+                      requests:
+                        memory: 2Gi
+                        cpu: 2
+                      limits:
+                        memory: 4Gi
+                        cpu: 4
+      register: previous_task_result
+
+    - name: Get Elasticsearch password
+      kubernetes.core.k8s_info:
+        kind: Secret
+        name: quickstart-es-elastic-user
+        namespace: elastic-system
+      register: es_secret
+      when: previous_task_result is not defined or previous_task_result.state != 'absent'
+
+    - name: Set password fact
+      set_fact:
+        elastic_password: "{{ es_secret.resources[0].data.elastic | b64decode }}"
+      when: previous_task_result is not defined or previous_task_result.state != 'absent'
+
+    - name: Deploy Kibana
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: kibana.k8s.elastic.co/v1
+          kind: Kibana
+          metadata:
+            name: quickstart
+            namespace: elastic-system
+          spec:
+            version: 8.16.1
+            count: 1
+            elasticsearchRef:
+              name: quickstart
+
+    - name: Get Kibana password
+      kubernetes.core.k8s_info:
+        kind: Secret
+        name: quickstart-es-elastic-user
+        namespace: elastic-system
+      register: kibana_secret
+      when: previous_task_result is not defined or previous_task_result.state != 'absent'
+
+    - name: Set Kibana password fact
+      set_fact:
+        kibana_password: "{{ kibana_secret.resources[0].data.elastic | b64decode }}"
+      when: previous_task_result is not defined or previous_task_result.state != 'absent'
+
+    - name: Display Elasticsearch access information
+      ansible.builtin.debug:
+        msg:
+          - "----------------------------------------"
+          - "🚀 Elasticsearch deployed successfully!"
+          - "----------------------------------------"
+          - "📍 URL:       https://quickstart-es-http.elastic-system:9200"
+          - "👤 Username:  elastic"
+          - "🔑 Password:  {{ elastic_password }}"
+          - "----------------------------------------"
+      when: previous_task_result is not defined or previous_task_result.state != 'absent'
+    
