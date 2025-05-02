@@ -12,49 +12,6 @@
           metadata:
             name: cnpg-system
 
-    # - name: Deploy cloudnative-postgresql data pv
-    #   kubernetes.core.k8s:
-    #     state: present
-    #     definition:
-    #       apiVersion: v1
-    #       kind: PersistentVolume
-    #       metadata:
-    #         name: cnpg-data
-    #         labels:
-    #           service: cnpg-data  # This matches the PVC selector
-    #       spec:
-    #         capacity:
-    #           storage: 8Gi
-    #         nfs:
-    #           server: 192.168.0.15 # change me
-    #           path: /mnt/pool1/AppData/cnpg/data
-    #         accessModes:
-    #           - ReadWriteOnce
-    #         mountOptions:
-    #           - noatime
-    #           - nfsvers=4.2
-
-    # - name: Deploy cloudnative-postgresql data pvc
-    #   kubernetes.core.k8s:
-    #     state: present
-    #     definition:
-    #       apiVersion: v1
-    #       kind: PersistentVolumeClaim
-    #       metadata:
-    #         name: cnpg-data
-    #         namespace: cnpg
-    #       spec:
-    #         accessModes:
-    #           - ReadWriteOnce
-    #         resources:
-    #           requests:
-    #             storage: 8Gi
-    #         selector:
-    #           matchLabels:
-    #             service: cnpg-data  # Add selector to match PV label
-    #         volumeName: cnpg-data
-    #         storageClassName: "" # This prevents dynamic provisioning
-
     - name: Deploy cloudnative-postgresql
       kubernetes.core.k8s:
         state: present
