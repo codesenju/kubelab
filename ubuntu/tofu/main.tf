@@ -29,7 +29,7 @@ resource "proxmox_virtual_environment_vm" "ubuntu" {
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
-    size         = 50
+    size         = 80
   }
 
   network_device {
