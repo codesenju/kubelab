@@ -82,7 +82,7 @@
                   app.kubernetes.io/instance: cnpg
             destination:
               server: https://kubernetes.default.svc
-              namespace: cnpg-system
+              namespace: immich
             syncPolicy:
               automated:
                 prune: true
