@@ -4,5 +4,13 @@ kind: Kustomization
 # Namespace configuration
 namespace: cnpg-system
 
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+- name: immich-postgres-user
+  envs:
+    - .env
+
 resources:
 - ../../base
