@@ -4,7 +4,7 @@ metadata:
   name: immich-postgres
 spec:
   # At the time of writing, immich is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-  imageName: ghcr.io/cloudnative-pg/postgresql:16.8 # UiD 26, GID 999
+  imageName: ghcr.io/cloudnative-pg/postgresql:15-bullseye # UiD 26, GID 999
   instances: 1
   postgresql:
     shared_preload_libraries:
