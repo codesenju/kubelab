@@ -110,6 +110,8 @@
               helm:
                 releaseName: immich
                 values: |
+                  env:
+                    DB_HOSTNAME: immich-postgres-rw.immich.svc.cluster.local
                   image:
                     tag: v1.132.3
                   immich:
