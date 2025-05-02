@@ -5,6 +5,6 @@ metadata:
   namespace: cnpg-system
 spec:
   imageName: ghcr.io/cloudnative-pg/postgresql:16beta1
-  instances: 3
+  instances: 1
   storage:
     size: 1Gi
