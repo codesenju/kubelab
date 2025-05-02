@@ -59,7 +59,7 @@
     
     - name: Deploy cloudnative-postgresql cluster
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -72,7 +72,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/cnpg/overlays/prod
+              path: kustomize/immich-postgresql/overlays/prod
               targetRevision: development
               kustomize:
                 # Add these to your existing kustomize config
