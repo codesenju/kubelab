@@ -34,9 +34,8 @@ graph TD
     - ansible/inventory.ini
   - [Ansible](https://docs.ansible.com/)
   - [OpenTofu](https://opentofu.org/docs/intro/install/)
-  - Generate homarr db encryption key - `openssl rand -hex 32`
 ## Setup Infrastructure on Proxmox
-dir: opentofu
+dir: tofu
 ```
 tofu init
 tofu plan -out=plan
@@ -51,7 +50,7 @@ dir: ansible
 ansible all -m ping
 ```
 ```bash
-ansible-playbook main.yaml --tags baseline
+ansible-playbook main.yaml --tags k8s
 ```
 ###  Setup kubeconfig on bastion
 ```bash
@@ -68,11 +67,11 @@ kubectl get sc
 # Addons
  Argocd
 ```bash
-ansible-playbook main.yaml --tags argocd
+ansible-playbook ../addons/argocd.yaml
 ```
-Argocd Applications
+Other Applications
 ```bash
-ansible-playbook main.yaml --tags argocd-apps
+ansible-playbook ../addons/<application>.yaml
 ```
 ## TrueNAS NFS settings (compatible with macos)
 
