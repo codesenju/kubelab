@@ -4,30 +4,35 @@
   tags:
     - baseline
     - all
+    - k8s
 
 - name: Import Kubernetes Dependencies Playbook
   import_playbook: kube-dependencies.yaml
   tags:
     - baseline
     - all
+    - k8s
 
 - name: Import Kubernetes Cluster Setup Playbook
   import_playbook: kube-cluster.yaml
   tags:
     - baseline
     - all
+    - k8s
 
 - name: Setup kubeconfig
   import_playbook: kubeconfig.yaml
   tags:
     - baseline
     - all
+    - k8s
 
 - name: Setup k8s tools
   import_playbook: k8s-tools.yaml
   tags:
     - baseline
     - all
+    - k8s
 
 - name: Setup Longhonrn
   import_playbook: ../addons/longhorn.yaml
@@ -73,13 +78,6 @@
     - argocd-apps
     - all
     - homarr
-
-- name: kubeapps
-  import_playbook: ../addons/kubeapps.yaml
-  tags:
-    - argocd-apps
-    - all
-    - kubeapps
 
 - name: portainer
   import_playbook: ../addons/portainer.yaml
