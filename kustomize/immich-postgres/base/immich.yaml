@@ -28,13 +28,13 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
 
   storage:
-    size: 1Gi
+    size: 5Gi
     pvcTemplate:
       accessModes:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 1Gi
+          storage: 5Gi
       selector:
         matchLabels:
           service: immich-postgres-data

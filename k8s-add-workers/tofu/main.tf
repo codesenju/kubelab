@@ -49,6 +49,8 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
       keys     = [file("../../kubelab.pub")]
     }
   }
+  
+  serial_device { device = "socket"}
 
   lifecycle {
     ignore_changes = [initialization[0].user_account[0].keys]
