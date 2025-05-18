@@ -5,7 +5,7 @@
 
     - name: Create namespace in Kubernetes
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Namespace
@@ -14,7 +14,7 @@
 
     - name: Deploy immich data pv
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -24,7 +24,7 @@
               service: immich-data  # This matches the PVC selector
           spec:
             capacity:
-              storage: 8Gi
+              storage: 1Gi
             nfs:
               server: 192.168.0.15 # change me
               path: /mnt/pool1/AppData/immich/data
@@ -36,7 +36,7 @@
 
     - name: Deploy immich data pvc
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -48,7 +48,7 @@
               - ReadWriteOnce
             resources:
               requests:
-                storage: 8Gi
+                storage: 1Gi
             selector:
               matchLabels:
                 service: immich-data  # Add selector to match PV label
@@ -57,7 +57,7 @@
 
     - name: Deploy cloudnative-postgresql cluster
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -92,7 +92,7 @@
 
     - name: Deploy immich
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

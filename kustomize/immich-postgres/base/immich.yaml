@@ -28,7 +28,7 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
 
   storage:
-    size: 5Gi
+    size: 1Gi
     pvcTemplate:
       accessModes:
         - ReadWriteOnce
