@@ -16,11 +16,11 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
   vm_id       = 4000 # Unique VM ID for the load balancer
 
   cpu {
-    cores = 1
+    units = 512
   }
 
   memory {
-    dedicated = 2048
+    dedicated = 1024
   }
 
   disk {

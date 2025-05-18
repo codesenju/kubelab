@@ -5,7 +5,7 @@
 
     - name: Create namespace in Kubernetes
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Namespace
@@ -14,7 +14,7 @@
 
     - name: Deploy immich data pv
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -36,7 +36,7 @@
 
     - name: Deploy immich data pvc
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -57,7 +57,7 @@
 
     - name: Deploy cloudnative-postgresql cluster
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -71,7 +71,7 @@
             source:
               repoURL: https://github.com/codesenju/kubelab.git
               path: kustomize/immich-postgres/overlays/prod
-              targetRevision: development
+              targetRevision: develop
               kustomize:
                 # Add these to your existing kustomize config
                 commonAnnotations:
@@ -92,7 +92,7 @@
 
     - name: Deploy immich
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

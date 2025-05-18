@@ -24,7 +24,7 @@
                 valueFiles:
                 - $values/helm/headlamp_values.yaml
             - repoURL: 'https://github.com/codesenju/kubelab.git'
-              targetRevision: development
+              targetRevision: develop
               ref: values
             destination:
               server: https://kubernetes.default.svc
