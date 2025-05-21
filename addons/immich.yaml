@@ -24,7 +24,7 @@
               service: immich-data  # This matches the PVC selector
           spec:
             capacity:
-              storage: 4Gi
+              storage: 1Gi
             nfs:
               server: 192.168.0.15 # change me
               path: /mnt/pool1/AppData/immich/data
