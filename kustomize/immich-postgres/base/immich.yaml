@@ -34,7 +34,7 @@ spec:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 5Gi
+          storage: 1Gi
       selector:
         matchLabels:
           service: immich-postgres-data
