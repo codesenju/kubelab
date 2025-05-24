@@ -16,11 +16,11 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
   vm_id       = 4000 # Unique VM ID for the load balancer
 
   cpu {
-    cores = 1
+    units = 512
   }
 
   memory {
-    dedicated = 2048
+    dedicated = 1024
   }
 
   disk {
@@ -60,6 +60,9 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
       keys     = [file("./../kubelab.pub")]
     }
   }
+
+  serial_device { device = "socket"}
+
   # create lifecycle to ignore changes to keys
   lifecycle {
     ignore_changes = [initialization[0].user_account[0].keys]
@@ -121,7 +124,10 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
       keys     = [file("${local.private_key_file_path}")]
     }
   }
-    lifecycle {
+
+  serial_device { device = "socket"}
+
+  lifecycle {
     ignore_changes = [initialization[0].user_account[0].keys]
   }
 }
@@ -180,6 +186,9 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
       keys     = [file("${local.private_key_file_path}")]
     }
   }
+
+  serial_device { device = "socket"}
+
   lifecycle {
     ignore_changes = [initialization[0].user_account[0].keys]
   }

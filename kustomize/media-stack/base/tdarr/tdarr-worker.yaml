@@ -22,18 +22,20 @@ spec:
               - key: kubernetes.io/hostname
                 operator: In
                 values:
-                - k8s-worker-4
+                - k8s-worker-1
+                - k8s-worker-3
                 - k8s-worker-5
-                - k8s-worker-6
         podAntiAffinity:
-          requiredDuringSchedulingIgnoredDuringExecution:
-          - labelSelector:
-              matchExpressions:
-              - key: app
-                operator: In
-                values:
-                - tdarr-worker
-            topologyKey: "kubernetes.io/hostname"
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - tdarr-worker
+              topologyKey: "kubernetes.io/hostname"
       containers:
       - name: tdarr-worker
         image: ghcr.io/haveagitgat/tdarr_node:latest
