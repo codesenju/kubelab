@@ -14,9 +14,18 @@ spec:
         searches:
           - "local"
       dnsPolicy: "None"  # Required for custom dnsConfig
-
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k8s-worker-1
+                - k8s-worker-2
+                - k8s-worker-3
       containers:
-    
       # Gluetun VPN container
       - name: gluetun
         image: ghcr.io/qdm12/gluetun
