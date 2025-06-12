@@ -33,7 +33,7 @@
               syncOptions:
                 - CreateNamespace=true
 
-  - name: Deploy Minio S3 Tenant
+    - name: Deploy Minio S3 Tenant
       kubernetes.core.k8s:
         state: present
         definition:
@@ -46,7 +46,7 @@
               - resources-finalizer.argocd.argoproj.io
           spec:
             project: default
-            source:
+            sources:
             - repoURL: https://operator.min.io
               chart: tenant
               targetRevision: 7.1.1
