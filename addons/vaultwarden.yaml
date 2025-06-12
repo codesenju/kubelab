@@ -26,7 +26,6 @@
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 labels:
                   app.kubernetes.io/instance: vaultwarden-prod
-          
             destination:
               server: https://kubernetes.default.svc
               namespace: zero-trust
@@ -38,10 +37,4 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
-
-            # ignoreDifferences:
-            # - group: ""
-            #   kind: PersistentVolumeClaim
-            #   jsonPointers:
-            #   - /status  # Ignore PVC status changes
       tags: vaultwarden
