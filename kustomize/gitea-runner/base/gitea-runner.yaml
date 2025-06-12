@@ -55,9 +55,9 @@ spec:
           securityContext:
             privileged: true
           args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
-          volumeMounts:
-            - name: dind-sock
-              mountPath: /var/run/docker.sock
+          # volumeMounts:
+          #   - name: dind-sock
+          #     mountPath: /var/run/docker.sock
       volumes:
         - name: runner-config
           configMap:
@@ -67,5 +67,5 @@ spec:
             claimName: gitea-runner-data
         - name: docker-graph-storage
           emptyDir: {}
-        - name: dind-sock
-          emptyDir: {}
+        # - name: dind-sock
+        #   emptyDir: {}
