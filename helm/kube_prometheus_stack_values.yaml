@@ -4405,7 +4405,7 @@ prometheus:
     ## This is experimental and may change significantly without backward compatibility in any release.
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#thanosspec
     ##
-    thanos: {}
+    thanos:
       # secretProviderClass:
       #   provider: gcp
       #   parameters:
