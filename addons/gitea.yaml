@@ -1,0 +1,127 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy cloudnative-postgresql gitea cluster
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitea-database
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/gitea-database/overlays/prod
+              targetRevision: develop
+              kustomize:
+                # Add these to your existing kustomize config
+                labels:
+                  app.kubernetes.io/instance: gitea-database
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: gitea
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
+
+    - name: Deploy Gitea
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitea
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://dl.gitea.com/charts/
+              chart: gitea
+              targetRevision: 12.0.0
+              helm:
+                releaseName: gitea
+                values: |
+                  global:
+                    storageClass: "nfs-csi"
+                  # postgresql:
+                  #   enabled: true
+                  #   global:
+                  #     postgresql:
+                  #       auth:
+                  #         password: gitea
+                  #         postgres_password: gitea
+                  #         database: gitea
+                  #         username: gitea
+                  #       service:
+                  #         ports:
+                  #           postgresql: 5432
+                  #   primary:
+                  #     persistence:
+                  #       size: 10Gi
+                  # postgresql-ha:
+                  #   global:
+                  #     postgresql:
+                  #       database: gitea
+                  #       password: gitea
+                  #       username: gitea
+                  #   enabled: false
+                  #   postgresql:
+                  #     repmgrPassword: gitea
+                  #     postgresPassword: gitea
+                  #     password: gitea
+                  #   pgpool:
+                  #     adminPassword: gitea
+                  #   service:
+                  #     ports:
+                  #       postgresql: 5432
+                  #   persistence:
+                  #     size: 10Gi
+                  gitea:
+                    admin:
+                      # existingSecret: gitea-admin-secret
+                      existingSecret:
+                      username: {{ gitea_admin_username }}
+                      password: {{ gitea_admin_password }}
+                      email: {{ gitea_admin_email }}
+                      passwordMode: keepUpdated
+                  ingress:
+                    enabled: true
+                    className: "nginx"
+                    pathType: Prefix
+                    annotations: {}
+                    hosts:
+                      - host: {{ gitea_domain }}
+                        paths:
+                          - path: /
+                    tls: []
+                    #  - secretName: chart-example-tls
+                    #    hosts:
+                    #      - git.example.com
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: gitea
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
