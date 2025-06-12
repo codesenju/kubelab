@@ -68,12 +68,27 @@
                     enabled: false
                   gitea:
                     config:
+                      attachment:
+                        STORAGE_TYPE: minio
+                      lfs:
+                        STORAGE_TYPE: minio
+                      picture:
+                        AVATAR_STORAGE_TYPE: minio
+                      "storage.packages":
+                        STORAGE_TYPE: minio
+                      storage:
+                        MINIO_ENDPOINT: minio-s3-hls.gitea.svc.cluster.local:9000
+                        # MINIO_LOCATION: gitea-storage
+                        MINIO_ACCESS_KEY_ID: {{ s3_access_key }}
+                        MINIO_SECRET_ACCESS_KEY:{{ s3_secret_key }}
+                        MINIO_BUCKET: gitea-storage
+                        MINIO_USE_SSL: false
                       database:
                         DB_TYPE: postgres
                         HOST: gitea-postgres-rw.gitea.svc.cluster.local:5432
-                        NAME: gitea
-                        USER: gitea
-                        PASSWD: gitea12345
+                        NAME: {{ gitea_db_name }}
+                        USER: {{ gitea_db_user }}
+                        PASSWD: {{ gitea_db_password }}
                     admin:
                       # existingSecret: gitea-admin-secret
                       existingSecret:
