@@ -14,6 +14,13 @@ spec:
       labels:
         app: gitea-runner
     spec:
+      initContainers:
+        - name: fix-docker-sock
+          image: busybox
+          command: ["sh", "-c", "if [ -d /var/run/docker.sock ]; then rm -rf /var/run/docker.sock; fi"]
+          volumeMounts:
+            - name: docker-sock
+              mountPath: /var/run/docker.sock
       containers:
         - name: docker-daemon
           image: docker:dind
