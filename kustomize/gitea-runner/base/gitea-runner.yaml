@@ -22,16 +22,6 @@ spec:
       #       - name: docker-sock
       #         mountPath: /var/run
       containers:
-        - name: docker-daemon
-          image: docker:dind
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - name: docker-graph-storage
-              mountPath: /var/lib/docker
-              subPath: gitea-runner
-            - name: docker-sock
-              mountPath: /var/run/
         - name: gitea-act-runner
           image: docker.io/gitea/act_runner:nightly
           env:
@@ -42,22 +32,32 @@ spec:
                 secretKeyRef:
                   name: gitea-runner-secret
                   key: instance_url
+            - name: GITEA_RUNNER_NAME
+              value: "static-runner"
+            - name: GITEA_RUNNER_LABELS
+              value: "static,linux,k8s,x86_64"
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
             - name: GITEA_RUNNER_REGISTRATION_TOKEN
               valueFrom:
                 secretKeyRef:
                   name: gitea-runner-secret
                   key: registration_token
-            - name: GITEA_RUNNER_NAME
-              value: "static-runner"
-            - name: GITEA_RUNNER_LABELS
-              value: "static,linux,k8s,x86_64"
           volumeMounts:
             - name: runner-config
               mountPath: /config
             - name: runner-data
               mountPath: /data
-            - name: docker-sock
-              mountPath: /var/run/
+            # - name: dind-sock
+            #   mountPath: /var/run/docker.sock
+        - name: dind
+          image: docker:24-dind
+          securityContext:
+            privileged: true
+          args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock"]
+          volumeMounts:
+            - name: dind-sock
+              mountPath: /var/run/docker.sock
       volumes:
         - name: runner-config
           configMap:
@@ -67,5 +67,5 @@ spec:
             claimName: gitea-runner-data
         - name: docker-graph-storage
           emptyDir: {}
-        - name: docker-sock
+        - name: dind-sock
           emptyDir: {}
