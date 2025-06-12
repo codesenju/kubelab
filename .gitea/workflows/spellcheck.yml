@@ -20,6 +20,35 @@ jobs:
 
       - name: Set up Python venv and install codespell
         run: |
+          find . -type f -name "*.md" -print0 | xargs -0 typos
+
+      - name: Install codespell
+        run: pip install codespell
+
+      - name: Run codespell on Markdown files
+        run: codespell --ignore-words-list="mke,teh" --skip="*.py,*.yml,*.yaml" .
+name: Spellcheck Documentation
+
+on:
+  push:
+    paths:
+      - '*.md'
+  pull_request:
+    paths:
+      - '*.md'
+  
+env:
+  CLICOLOR: 1
+
+jobs:
+  spellcheck:
+    runs-on: ubuntu-latest
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Set up Python venv and install codespell
+        run: |
           python3 -m venv .venv
           . .venv/bin/activate
           pip install --upgrade pip
