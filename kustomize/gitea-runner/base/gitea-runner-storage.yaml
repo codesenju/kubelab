@@ -28,7 +28,7 @@ spec:
   resources:
     requests:
       storage: 1Gi
-  volumeName: gitea-runner-data
+  storageClassName: ""
   selector:
     matchLabels:
       service: gitea-runner-data
