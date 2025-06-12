@@ -10,6 +10,13 @@ spec:
         env:
         - name: PROWLARR__INSTANCE_NAME
           value: "Prowlarr-Prod"
+        resources:
+          requests:
+            cpu: 15m
+            memory: 226M
+          limits:
+            cpu: 15m
+            memory: 226M
 # ---
 # apiVersion: v1
 # kind: Service

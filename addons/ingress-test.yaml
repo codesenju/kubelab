@@ -1,0 +1,80 @@
+- name: Deploy httpd app with ingress
+  hosts: k8s-control-plane-1
+  become: no
+  tasks:
+    - name: Create test namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: test
+
+    - name: Deploy httpd Deployment
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: httpd
+            namespace: test
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: httpd
+            template:
+              metadata:
+                labels:
+                  app: httpd
+              spec:
+                containers:
+                  - name: httpd
+                    image: httpd:latest
+                    ports:
+                      - containerPort: 80
+
+    - name: Deploy httpd Service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: httpd
+            namespace: test
+          spec:
+            selector:
+              app: httpd
+            ports:
+              - protocol: TCP
+                port: 80
+                targetPort: 80
+            type: ClusterIP
+
+    - name: Deploy httpd Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: httpd-ingress
+            namespace: test
+            annotations:
+              nginx.ingress.kubernetes.io/rewrite-target: /
+          spec:
+            ingressClassName: nginx
+            rules:
+              - host: "{{ ingress_httpd_test_host }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: httpd
+                          port:
+                            number: 80

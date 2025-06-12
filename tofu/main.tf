@@ -142,6 +142,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
 
   cpu {
     cores = local.worker_cores
+    type = "host" # Use host CPU to resolve minio issue - Fatal glibc error: CPU does not support x86-64-v2
   }
 
   memory {

@@ -31,6 +31,13 @@ spec:
           - name: containerd-socket
             mountPath: /run/containerd/containerd.sock
             readOnly: true
+        resources:
+          requests:
+            cpu: 15m
+            memory: 105M
+          limits:
+            cpu: 15m
+            memory: 105M
       volumes:
         - name: containerd-socket
           hostPath:
