@@ -1,0 +1,14 @@
+# Common files to ignore
+node_modules/
+*.log
+.DS_Store
+.env
+
+# Files to ignore ONLY for GitHub
+secrets/
+config/local.json
+build/special/
+terraform/.terraform/
+terraform/terraform.tfstate
+terraform/terraform.tfstate.backup
+ansible/vault_password.txt
