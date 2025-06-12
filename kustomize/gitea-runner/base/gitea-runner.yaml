@@ -20,7 +20,7 @@ spec:
           command: ["sh", "-c", "if [ -d /var/run/docker.sock ]; then rm -rf /var/run/docker.sock; fi"]
           volumeMounts:
             - name: docker-sock
-              mountPath: /var/run/docker.sock
+              mountPath: /var/run
       containers:
         - name: docker-daemon
           image: docker:dind
