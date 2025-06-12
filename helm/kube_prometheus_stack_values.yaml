@@ -5116,7 +5116,7 @@ thanosRuler:
     ## ObjectStorageConfig configures object storage in Thanos
     objectStorageConfig:
       # use existing secret, if configured, objectStorageConfig.secret will not be used
-      existingSecret: {}
+      existingSecret:
         name: "thanos-s3"
         key: "objstore.yaml"
       # will render objectStorageConfig secret data and configure it to be used by Thanos Ruler custom resource, ignored when objectStorageConfig.existingSecret is set
