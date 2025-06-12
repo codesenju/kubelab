@@ -1,7 +1,7 @@
 - hosts: k8s-control-plane-1
   become: no
   vars:
-    minio_endpoint: minio-s3-hl.minio-s3.svc.cluster.local:9000
+    minio_endpoint: "{{ s3_endpoint }}"
   tasks:
 
     - name: Deploy cloudnative-postgresql gitea cluster
@@ -88,7 +88,7 @@
                         MINIO_SECRET_ACCESS_KEY: {{ s3_secret_key }}
                         MINIO_BUCKET: gitea-storage
                         MINIO_USE_SSL: true
-                        MINIO_INSECURE_SKIP_VERIFY: true
+                        MINIO_INSECURE_SKIP_VERIFY: false
                         SERVE_DIRECT: true
                       "storage.minio":
                         STORAGE_TYPE: minio
@@ -98,7 +98,7 @@
                         MINIO_SECRET_ACCESS_KEY: {{ s3_secret_key }}
                         MINIO_BUCKET: gitea-storage
                         MINIO_USE_SSL: true
-                        MINIO_INSECURE_SKIP_VERIFY: true
+                        MINIO_INSECURE_SKIP_VERIFY: false
                         SERVE_DIRECT: true
                       database:
                         DB_TYPE: postgres
