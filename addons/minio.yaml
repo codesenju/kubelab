@@ -15,14 +15,17 @@
               - resources-finalizer.argocd.argoproj.io
           spec:
             project: default
-            source:
-              chart: minio-operator
-              repoURL: https://operator.min.io
-              targetRevision: 4.3.7
+            sources:
+            - repoURL: https://operator.min.io
+              chart: operator
+              targetRevision: 7.1.1
               helm:
                 releaseName: minio-operator
-                # values: |
-                #   installCRDs: true
+                values: |
+                  $values/helm/minio_operator_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: develop
+              ref: values
             destination:
               server: https://kubernetes.default.svc
               namespace: minio-operator
@@ -32,10 +35,12 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      tags:
+        - operator
 
     - name: Deploy Minio S3 Tenant
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -66,3 +71,5 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      tags:
+        - tenant
