@@ -3856,8 +3856,7 @@ prometheus:
 
     ## Allows setting additional arguments for the Prometheus container
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#monitoring.coreos.com/v1.Prometheus
-    additionalArgs:
-    - --store=dnssrv+_grpc._tcp.kube-prometheus-stack-thanos-discovery.kube-prometheus-stack.svc.cluster.local
+    additionalArgs: {}
     ## File to which scrape failures are logged.
     ## Reloading the configuration will reopen the file.
     ## Defaults to empty (disabled)
