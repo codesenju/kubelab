@@ -55,7 +55,7 @@ spec:
           image: docker:24-dind
           securityContext:
             privileged: true
-          args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
+          args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false", "--tlsverify=false"]
           env:
             - name: DOCKER_TLS_CERTDIR
               value: ""
