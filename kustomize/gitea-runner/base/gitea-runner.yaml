@@ -56,9 +56,9 @@ spec:
           securityContext:
             privileged: true
           args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
-          # env:
-          #   - name: DOCKER_TLS_CERTDIR
-          #     value: ""
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
       volumes:
         - name: runner-config
           configMap:
