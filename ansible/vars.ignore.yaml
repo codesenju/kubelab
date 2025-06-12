@@ -23,3 +23,5 @@ gitea_admin_username: root
 gitea_admin_password: Gitea@homelab
 gitea_admin_email: root@jazziro.com
 gitea_domain: git.jazziro.com
+gitea_registration_token: JZhPlb0sWlYbBuwqMeOrURAG5N4ODOrglXXbaloB
+gitea_instance_url: https://git.jazziro.com

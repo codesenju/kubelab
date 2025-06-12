@@ -1,0 +1,64 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea-runner
+  namespace: gitea
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitea-runner
+  template:
+    metadata:
+      labels:
+        app: gitea-runner
+    spec:
+      containers:
+        - name: docker-daemon
+          image: docker:dind
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - name: docker-graph-storage
+              mountPath: /var/lib/docker
+              subPath: gitea-runner
+            - name: docker-sock
+              mountPath: /var/run
+        - name: gitea-act-runner
+          image: docker.io/gitea/act_runner:nightly
+          env:
+            - name: CONFIG_FILE
+              value: /config/config.yaml
+            - name: GITEA_INSTANCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-runner-secret
+                  key: instance_url
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-runner-secret
+                  key: registration_token
+            - name: GITEA_RUNNER_NAME
+              value: "static-runner"
+            - name: GITEA_RUNNER_LABELS
+              value: "static,linux,k8s,x86_64"
+          volumeMounts:
+            - name: runner-config
+              mountPath: /config
+            - name: runner-data
+              mountPath: /data
+            - name: docker-sock
+              mountPath: /var/run
+      volumes:
+        - name: runner-config
+          configMap:
+            name: gitea-runner-config
+        - name: runner-data
+          persistentVolumeClaim:
+            claimName: gitea-runner-data
+        - name: docker-graph-storage
+          emptyDir: {}
+        - name: docker-sock
+          emptyDir: {}

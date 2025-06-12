@@ -135,3 +135,55 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+
+    - name: Create gitea-runner-secret for Gitea runner
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: gitea-runner-secret
+            namespace: gitea
+          type: Opaque
+          stringData:
+            registration_token: "{{ gitea_registration_token }}"
+            instance_url: "{{ gitea_instance_url }}"
+
+    - name: Deploy gitea-runner
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitea-runner
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/gitea-runner/overlays/prod
+              targetRevision: develop
+              kustomize:
+                # Add these to your existing kustomize config
+                labels:
+                  app.kubernetes.io/instance: gitea-runner
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: gitea
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            # ignoreDifferences:
+            #   - group: "postgresql.cnpg.io"
+            #     kind: Cluster
+            #     jsonPointers:
+            #       - /spec/managed/roles
