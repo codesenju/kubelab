@@ -47,4 +47,5 @@ jobs:
         run: |
           . "$VENV_DIR/bin/activate"
           yamllint --version
-          yamllint --no-warnings . || true
+          yamllint --no-warnings .
+        continue-on-error: true
