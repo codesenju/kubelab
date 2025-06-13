@@ -38,11 +38,6 @@ jobs:
         uses: ansible/ansible-lint@main
         continue-on-error: true
 
-      # - name: Run ansible-lint on all Ansible files
-      #   run: |
-      #     . "$VENV_DIR/bin/activate"
-      #     ansible-lint . || true
-
       - name: Run yamllint on YAML files
         run: |
           . "$VENV_DIR/bin/activate"
