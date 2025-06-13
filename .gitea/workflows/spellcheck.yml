@@ -22,7 +22,11 @@ jobs:
       - name: Spelling
         uses: crate-ci/typos@v1.33.1
         with:
-          args: '--ignore-words-list="mke,teh" --skip="*.py,*.yml,*.yaml"'
+          files: |
+            **/**/*.md
+            **/*.md
+            *.md
+
 
       - name: Install codespell
         run: pip install codespell
