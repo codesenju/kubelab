@@ -32,12 +32,6 @@ jobs:
           codespell --version
           codespell --ignore-words-list="mke,teh" --skip="*.py,*.yml,*.yaml" .
 
-      - name: Run ansible-lint on Ansible files
-        run: |
-          . .venv/bin/activate
-          ansible-lint --version
-          ansible-lint --exclude .venv .
-
       - name: Run ansible-lint on all Ansible files
         run: |
           . .venv/bin/activate
