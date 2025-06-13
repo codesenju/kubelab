@@ -3,13 +3,9 @@ name: Spellcheck Documentation
 on:
   push:
     paths:
-      - '**/**/*.md'
-      - '**/*.md'
       - '*.md'
   pull_request:
     paths:
-      - '**/**/*.md'
-      - '**/*.md'
       - '*.md'
   
 env:
