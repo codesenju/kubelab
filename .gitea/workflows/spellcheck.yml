@@ -30,8 +30,11 @@ jobs:
             **/*.md
             *.md
 
+      - name: Ensure pipx is installed
+        run: python3 -m pip install --user pipx && python3 -m pipx ensurepath
+
       - name: Install codespell
-        run: pip install codespell
+        run: pipx install codespell
 
       - name: Run codespell on Markdown files
-        run: codespell --ignore-words-list="mke,teh" --skip="*.py,*.yml,*.yaml" .
+        run: pipx run codespell --ignore-words-list="mke,teh" --skip="*.py,*.yml,*.yaml" .
