@@ -1,6 +1,10 @@
 # Kubelab
+<<<<<<< HEAD
 Kubernetes running on Proxmox Virtual Environment
 Kubernetes running on Proxmox Virtual Environment
+=======
+HA Kubernetes runnning on Proxmox Virtual Environment
+>>>>>>> main
 # Kubernetes Cluster Architecture
 
 ```mermaid
@@ -157,4 +161,8 @@ fatal: [k8s-control-plane-1]: FAILED! => {"changed": false, "module_stderr": "Sh
 
 ***Solution***
 
+<<<<<<< HEAD
 Try deploying again.
+=======
+Try deploying again
+>>>>>>> main
