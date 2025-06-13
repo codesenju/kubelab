@@ -145,7 +145,7 @@
     # --- STEP 8: Configure NFS Storage ---
     - name: Install NFS server & Quota
       ansible.builtin.apt:
-        name: 
+        name:
           - nfs-kernel-server
           - quota
         state: present
