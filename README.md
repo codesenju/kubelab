@@ -156,4 +156,4 @@ fatal: [k8s-control-plane-1]: FAILED! => {"changed": false, "module_stderr": "Sh
 
 ***Solution***
 
-Try deploying again.
+Try deployng again.

@@ -25,10 +25,7 @@ jobs:
       - name: Spelling
         uses: crate-ci/typos@v1.33.1
         with:
-          files: |
-            **/**/*.md
-            **/*.md
-            *.md
+          files: '*.md'
 
       - name: Set up Python venv and install codespell
         run: |
