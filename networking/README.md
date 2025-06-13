@@ -11,5 +11,3 @@ kubectl apply -f custom-resource.yaml
 helm install cilium cilium/cilium --version 1.17.4 \
   --namespace kube-system
 ```
-
-ommited
