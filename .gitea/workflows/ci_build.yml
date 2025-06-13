@@ -5,7 +5,7 @@ on:
     types: [opened]
   push:
     branches:
-      - 'feat*'
+      - 'feat*/*'
 
 env:
   CLICOLOR: 1
