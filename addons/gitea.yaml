@@ -167,7 +167,7 @@
               # repoURL: https://github.com/codesenju/kubelab.git
               repoURL: https://git.jazziro.com/kubelab/kubelab.git
               path: kustomize/gitea-runner/overlays/prod
-              targetRevision: develop
+              targetRevision: main
               kustomize:
                 # Add these to your existing kustomize config
                 labels:
