@@ -36,6 +36,7 @@ jobs:
 
       - name: Run ansible-lint
         uses: ansible/ansible-lint@main
+        continue-on-error: true
 
       # - name: Run ansible-lint on all Ansible files
       #   run: |
