@@ -37,6 +37,8 @@ jobs:
           . .venv/bin/activate
           ansible-lint --version
           ansible-lint --exclude .venv .
+
+      - name: Run ansible-lint on all Ansible files
         run: |
           . .venv/bin/activate
           ansible-lint *ansible **/*ansible **/**/*ansible || true
