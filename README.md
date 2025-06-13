@@ -1,5 +1,5 @@
 # Kubelab
-HA Kubernetes runnning on Proxmox Virtual Environment
+HA Kubernetes running on Proxmox Virtual Environment
 # Kubernetes Cluster Architecture
 
 ```mermaid
@@ -28,8 +28,8 @@ graph TD
 
 - Prerequisites
   - [Proxmox](https://www.proxmox.com/en/products/proxmox-virtual-environment/get-started)
-  - Downlaod ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-  - If your home network is not `192.168.0.0/24`, modify the configs where neccessary in the following files:
+  - Download ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+  - If your home network is not `192.168.0.0/24`, modify the configs where necessary in the following files:
     - opentofu/local.tf
     - ansible/inventory.ini
   - [Ansible](https://docs.ansible.com/)
@@ -150,10 +150,10 @@ TASK [Wait for ArgoCD pods to be ready] ****************************************
 An exception occurred during task execution. To see the full traceback, use -vvv. The error was: AttributeError: 'NoneType' object has no attribute 'status'
 fatal: [k8s-control-plane-1]: FAILED! => {"changed": false, "module_stderr": "Shared connection to 192.168.0.41 closed.\r\n", "module_stdout": "Traceback (most recent call last):\r\n
 
---- ommited --
+--- omitted --
 
  File \"/tmp/ansible_kubernetes.core.k8s_info_payload_a2wp4_ji/ansible_kubernetes.core.k8s_info_payload.zip/ansible_collections/kubernetes/core/plugins/module_utils/k8s/waiter.py\", line 86, in custom_condition\r\nAttributeError: 'NoneType' object has no attribute 'status'\r\n", "msg": "MODULE FAILURE: No start of json char found\nSee stdout/stderr for the exact error", "rc": 1}
 
 ***Solution***
 
-Try deploying again
+Try deploying again.

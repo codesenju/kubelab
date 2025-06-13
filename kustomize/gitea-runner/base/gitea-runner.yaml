@@ -1,0 +1,72 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gitea-runner
+  namespace: gitea
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gitea-runner
+  template:
+    metadata:
+      labels:
+        app: gitea-runner
+    spec:
+      initContainers:
+        - name: install-docker-client
+          image: docker:24-dind
+          command: ["sh", "-c", "cp /usr/local/bin/docker /docker-bin/docker"]
+          volumeMounts:
+            - name: docker-bin
+              mountPath: /docker-bin
+      containers:
+        - name: gitea-act-runner
+          image: docker.io/gitea/act_runner:nightly
+          env:
+            - name: CONFIG_FILE
+              value: /config/config.yaml
+            - name: GITEA_INSTANCE_URL
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-runner-secret
+                  key: instance_url
+            - name: GITEA_RUNNER_NAME
+              value: "static-runner"
+            - name: GITEA_RUNNER_LABELS
+              value: "static,linux,k8s,x86_64"
+            - name: DOCKER_HOST
+              value: "tcp://localhost:2375"
+            - name: GITEA_RUNNER_REGISTRATION_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: gitea-runner-secret
+                  key: registration_token
+          volumeMounts:
+            - name: runner-config
+              mountPath: /config
+            - name: runner-data
+              mountPath: /data
+            - name: docker-bin
+              mountPath: /usr/local/bin/docker
+              subPath: docker
+        - name: dind
+          image: docker:24-dind
+          securityContext:
+            privileged: true
+          args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
+          env:
+            - name: DOCKER_TLS_CERTDIR
+              value: ""
+      volumes:
+        - name: runner-config
+          configMap:
+            name: gitea-runner-config
+        - name: runner-data
+          persistentVolumeClaim:
+            claimName: gitea-runner-data
+        - name: docker-graph-storage
+          emptyDir: {}
+        - name: docker-bin
+          emptyDir: {}

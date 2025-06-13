@@ -44,3 +44,23 @@
             #   jsonPointers:
             #   - /status  # Ignore PVC status changes
       tags: kube-prometheus-stack
+
+    - name: Create Thanos S3 Secret (inline YAML, using stringData)
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: thanos-s3
+            namespace: kube-prometheus-stack
+          type: Opaque
+          stringData:
+            objstore.yaml: |
+              type: s3
+              config:
+                bucket: thanos-store
+                endpoint: {{ s3_endpoint }}
+                access_key: {{ s3_access_key }}
+                secret_key: {{ s3_secret_key }}
+      tags: kube-prometheus-stack
