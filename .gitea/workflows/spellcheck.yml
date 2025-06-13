@@ -19,14 +19,8 @@ jobs:
       - name: Checkout code
         uses: actions/checkout@v4
 
-      - name: Install typos
-        run: |
-          curl -sSfL https://github.com/crate-ci/typos/releases/latest/download/typos-x86_64-unknown-linux-musl.tar.gz | tar xz
-          sudo mv typos /usr/local/bin/
-
-      - name: Run typos on Markdown files
-        run: |
-          find . -type f -name "*.md" -print0 | xargs -0 typos
+      - name: Spelling
+        uses: crate-ci/typos@v1.33.1
 
       - name: Install codespell
         run: pip install codespell
