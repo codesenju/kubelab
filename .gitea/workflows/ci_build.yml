@@ -35,7 +35,7 @@ jobs:
       - name: Run ansible-lint on all Ansible files
         run: |
           . .venv/bin/activate
-          ansible-lint *ansible **/*ansible **/**/*ansible || true
+          ansible-lint . || true
 
       - name: Run yamllint on YAML files
         run: |
