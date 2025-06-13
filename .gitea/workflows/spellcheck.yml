@@ -21,6 +21,8 @@ jobs:
 
       - name: Spelling
         uses: crate-ci/typos@v1.33.1
+        with:
+          args: '**/*.md'
 
       - name: Install codespell
         run: pip install codespell
