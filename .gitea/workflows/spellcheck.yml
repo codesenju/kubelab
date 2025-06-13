@@ -11,6 +11,9 @@ on:
       - '**/**/*.md'
       - '**/*.md'
       - '*.md'
+  
+env:
+  CLICOLOR: 1
 
 jobs:
   spellcheck:
@@ -26,7 +29,6 @@ jobs:
             **/**/*.md
             **/*.md
             *.md
-
 
       - name: Install codespell
         run: pip install codespell
