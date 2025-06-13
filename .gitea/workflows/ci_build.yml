@@ -11,7 +11,7 @@ env:
   CLICOLOR: 1
 
 jobs:
-  spellcheck:
+  lint_and_spellcheck:
     runs-on: ubuntu-latest
     steps:
       - name: Checkout code
