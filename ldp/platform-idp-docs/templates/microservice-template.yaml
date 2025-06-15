@@ -1,0 +1,10 @@
+# Template for Microservice claim
+apiVersion: platform.example.org/v1alpha1
+kind: Microservice
+metadata:
+  name: <service-name>
+spec:
+  name: <service-name>
+  image: <docker-image>
+  domain: <your-domain>
+  # port: <port-number>  # defaults to 80 if omitted
