@@ -24,7 +24,7 @@
                 valueFiles:
                 - $values/helm/kube_prometheus_stack_values.yaml
             - repoURL: 'https://github.com/codesenju/kubelab.git'
-              targetRevision: develop
+              targetRevision: main
               ref: values
             destination:
               server: https://kubernetes.default.svc
