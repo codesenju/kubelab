@@ -19,7 +19,7 @@
             source:
               repoURL: https://github.com/codesenju/kubelab.git
               path: kustomize/beszel-agent/overlays/prod
-              targetRevision: develop
+              targetRevision: main
               kustomize:
                 # Add these to your existing kustomize config
                 commonAnnotations:

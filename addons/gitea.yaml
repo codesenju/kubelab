@@ -20,7 +20,7 @@
             source:
               repoURL: https://github.com/codesenju/kubelab.git
               path: kustomize/gitea-database/overlays/prod
-              targetRevision: develop
+              targetRevision: main
               kustomize:
                 # Add these to your existing kustomize config
                 labels:
