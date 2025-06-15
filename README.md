@@ -34,6 +34,41 @@ graph TD
     - ansible/inventory.ini
   - [Ansible](https://docs.ansible.com/)
   - [OpenTofu](https://opentofu.org/docs/intro/install/)
+  - Load env variables to your system from the file vars.ymal:
+
+  vars.yaml:
+  ```yaml
+  argocd_openid_client_secret: ***
+  argocd_openid_issuer_url: https://<domain>/application/o/argocd/
+  argocd_openid_redirect_uri: https://<domain>/api/dex/callback
+  argocd_domain:
+  cloudflared_hostname_1:
+  cloudflared_hostname_2:
+  cloudflared_hostname_3:
+  cloudflared_hostname_4:
+  cloudflared_hostname_5:
+  db_encryption_key: 
+  argocd_domain:
+  authentik_secret_key:
+  authentik_postgresql_password:
+  s3_access_key:
+  s3_secret_key:
+  s3_endpoint:
+  ingress_httpd_test_host:
+  gitea_db_name:
+  gitea_db_password:
+  gitea_db_user:
+  gitea_db_repmgr_password:
+  gitea_admin_username:
+  gitea_admin_password:
+  gitea_admin_email:
+  gitea_domain:
+  gitea_registration_token:
+  gitea_instance_url:
+  ```
+  ```bash
+  yq eval '. as $item ireduce ({}; . *+ $item) | to_entries | .[] | "export \(.key)=\(.value)"' vars.yaml | source /dev/stdin
+  ```
 ## Setup Infrastructure on Proxmox
 dir: tofu
 ```

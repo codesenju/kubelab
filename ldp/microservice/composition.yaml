@@ -1,0 +1,130 @@
+apiVersion: apiextensions.crossplane.io/v1
+kind: Composition
+metadata:
+  name: microservice
+spec:
+  mode: Resources
+  compositeTypeRef:
+    apiVersion: platform.example.org/v1alpha1
+    kind: XMicroservice
+  resources:
+#---------- deployment ----------
+    - name: microservice-deployment
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: apps/v1
+              kind: Deployment
+              metadata:
+                labels:
+                  app: nginx
+                namespace: default
+              spec:
+                replicas: 1
+                selector:
+                  matchLabels:
+                    app: nginx
+                template:
+                  metadata:
+                    labels:
+                      app: nginx
+                  spec:
+                    containers:
+                      - name: nginx
+                        image: nginx:latest
+                        ports:
+                          - containerPort: 80
+          providerConfigRef:
+            name: kubernetes-provider
+      patches:
+        - fromFieldPath: "spec.image"
+          toFieldPath: "spec.forProvider.manifest.spec.template.spec.containers[0].image"
+        - fromFieldPath: "spec.name"
+          toFieldPath: "spec.forProvider.manifest.metadata.name"
+        - fromFieldPath: "spec.name"
+          toFieldPath: "spec.forProvider.manifest.spec.template.metadata.labels.app"
+        - fromFieldPath: "spec.name"
+          toFieldPath: "spec.forProvider.manifest.spec.selector.matchLabels.app"
+        - fromFieldPath: "spec.team"
+          toFieldPath: "spec.forProvider.manifest.metadata.namespace"
+        - fromFieldPath: "spec.port"
+          toFieldPath: "spec.forProvider.manifest.spec.template.spec.containers[0].ports[0].containerPort"
+
+#---------- service ----------
+    - name: microservice-service
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: v1
+              kind: Service
+              metadata:
+                labels:
+                  app: microservice
+                namespace: default
+              spec:
+                type: ClusterIP
+                selector:
+                  app: microservice
+                ports:
+                  - port: 80
+                    targetPort: 80
+          providerConfigRef:
+            name: kubernetes-provider
+      patches:
+        - fromFieldPath: "spec.name"
+          toFieldPath: "spec.forProvider.manifest.metadata.name"
+        - fromFieldPath: "spec.name"
+          toFieldPath: "spec.forProvider.manifest.spec.selector.app"
+        - fromFieldPath: "spec.team"
+          toFieldPath: "spec.forProvider.manifest.metadata.namespace"
+        - fromFieldPath: "spec.port"
+          toFieldPath: "spec.forProvider.manifest.spec.ports[0].port"
+        - fromFieldPath: "spec.port"
+          toFieldPath: "spec.forProvider.manifest.spec.ports[0].targetPort"
+
+#---------- ingress ----------
+    - name: microservice-ingress
+      base:
+        apiVersion: kubernetes.crossplane.io/v1alpha1
+        kind: Object
+        spec:
+          forProvider:
+            manifest:
+              apiVersion: networking.k8s.io/v1
+              kind: Ingress
+              metadata:
+                annotations:
+                  nginx.ingress.kubernetes.io/rewrite-target: /
+                namespace: default
+              spec:
+                ingressClassName: nginx
+                rules:
+                  - host: microservice.local
+                    http:
+                      paths:
+                        - path: /
+                          pathType: Prefix
+                          backend:
+                            service:
+                              name: nginx
+                              port:
+                                number: 80
+          providerConfigRef:
+            name: kubernetes-provider
+      patches:
+        - fromFieldPath: "spec.domain"
+          toFieldPath: "spec.forProvider.manifest.spec.rules[0].host"
+        - fromFieldPath: "spec.name"
+          toFieldPath: "spec.forProvider.manifest.spec.rules[0].http.paths[0].backend.service.name"
+        - fromFieldPath: "spec.name"
+          toFieldPath: "spec.forProvider.manifest.metadata.name"
+        - fromFieldPath: "spec.team"
+          toFieldPath: "spec.forProvider.manifest.metadata.namespace"
+        - fromFieldPath: "spec.port"
+          toFieldPath: "spec.forProvider.manifest.spec.rules[0].http.paths[0].backend.service.port.number"
