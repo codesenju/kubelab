@@ -34,7 +34,7 @@ graph TD
     - ansible/inventory.ini
   - [Ansible](https://docs.ansible.com/)
   - [OpenTofu](https://opentofu.org/docs/intro/install/)
-  - Load env variables to your system from the file vars.ymal:
+  - Load env variables to your system from the file vars.yaml:
 
   vars.yaml:
   ```yaml
