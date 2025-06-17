@@ -1,18 +1,50 @@
 # Kubelab
+HA Kubernetes running on Proxmox Virtual Environment
 
-A production-ready Kubernetes cluster running on Proxmox Virtual Environment with GitOps-based application deployment.
+## Configuration Variables
+Before setting up the cluster, create a `vars.yaml` file in the ansible directory with your custom values. Below are the variables you can configure (reference from `ansible/vars.ignore.yaml`):
 
-## Overview
+```yaml
+# ArgoCD Configuration
+argocd_openid_client_secret: "<your-client-secret>"
+argocd_openid_issuer_url: "<your-openid-issuer-url>"
+argocd_openid_redirect_uri: "<your-redirect-uri>"
+argocd_domain: "<your-argocd-domain>"
 
-Kubelab provides a complete solution for deploying and managing a high-availability Kubernetes cluster with:
+# Cloudflared Configuration
+cloudflared_hostname_1: "<hostname-1>"
+cloudflared_hostname_2: "<hostname-2>"
+cloudflared_hostname_3: "<hostname-3>"
+cloudflared_hostname_4: "<hostname-4>"
+cloudflared_hostname_5: "<hostname-5>"
 
-- Automated infrastructure provisioning using OpenTofu
-- Kubernetes cluster setup and configuration with Ansible
-- GitOps-based application deployment using ArgoCD
-- Comprehensive monitoring and observability stack
-- Integrated authentication and identity management
+# Database and Security
+db_encryption_key: "<your-encryption-key>"
+authentik_secret_key: "<your-authentik-secret-key>"
+authentik_postgresql_password: "<your-postgresql-password>"
 
-## Architecture
+# S3 Configuration
+s3_access_key: "<your-s3-access-key>"
+s3_secret_key: "<your-s3-secret-key>"
+s3_endpoint: "<your-s3-endpoint>"
+
+# Ingress Configuration
+ingress_httpd_test_host: "<your-httpd-test-host>"
+
+# Gitea Configuration
+gitea_db_name: "<your-gitea-db-name>"
+gitea_db_password: "<your-gitea-db-password>"
+gitea_db_user: "<your-gitea-db-user>"
+gitea_db_repmgr_password: "<your-gitea-repmgr-password>"
+gitea_admin_username: "<your-gitea-admin-username>"
+gitea_admin_password: "<your-gitea-admin-password>"
+gitea_admin_email: "<your-gitea-admin-email>"
+gitea_domain: "<your-gitea-domain>"
+gitea_registration_token: "<your-gitea-registration-token>"
+gitea_instance_url: "<your-gitea-instance-url>"
+```
+
+# Kubernetes Cluster Architecture
 
 ```mermaid
 graph TD
@@ -35,80 +67,137 @@ graph TD
     CP1 --> W2
     CP2 --> W1
     CP2 --> W2
+
 ```
 
-## Quick Start
-
-### Prerequisites
-
-- [Proxmox Virtual Environment](https://www.proxmox.com/en/products/proxmox-virtual-environment/get-started)
-- [OpenTofu](https://opentofu.org/docs/intro/install/) for infrastructure provisioning
-- [Ansible](https://docs.ansible.com/) for configuration management
-- Ubuntu cloud image: [jammy-server-cloudimg-amd64.img](https://cloud-images.ubuntu.com/jammy/current/)
-
-### 1. Configure Environment Variables
-
-Create a `vars.yaml` file with your configuration values and load them:
-
-```bash
-yq eval '. as $item ireduce ({}; . *+ $item) | to_entries | .[] | "export \(.key)=\(.value)"' vars.yaml | source /dev/stdin
+- Prerequisites
+  - [Proxmox](https://www.proxmox.com/en/products/proxmox-virtual-environment/get-started)
+  - Download ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
+  - If your home network is not `192.168.0.0/24`, modify the configs where necessary in the following files:
+    - opentofu/local.tf
+    - ansible/inventory.ini
+  - [Ansible](https://docs.ansible.com/)
+  - [OpenTofu](https://opentofu.org/docs/intro/install/)
+## Setup Infrastructure on Proxmox
+dir: tofu
 ```
-
-### 2. Provision Infrastructure
-
-```bash
-cd tofu
 tofu init
 tofu plan -out=plan
 tofu apply "plan"
 ```
+- For a detailed documentation on the infrastructure
 
-### 3. Deploy Kubernetes
-
+   - 📁 [Opentofu](./opentofu/README.MD) ← Click to view
+## Setup K8s
+dir: ansible
 ```bash
-cd ../ansible
 ansible all -m ping
+```
+```bash
 ansible-playbook main.yaml --tags k8s
 ```
-
-### 4. Configure Local Access
-
+###  Setup kubeconfig on bastion
 ```bash
 ssh -i ../kubelab ubuntu@192.168.0.41 cat /home/ubuntu/.kube/config > ~/.kube/config
-kubectl get nodes
 ```
 
-### 5. Deploy Applications
-
+### Verify that cluster is up and running
 ```bash
-# Deploy ArgoCD
-ansible-playbook ../addons/argocd.yaml
+kubectl get no
+kubectl get all -A
+kubectl get sc
+```
 
-# Deploy other applications
+# Addons
+ Argocd
+```bash
+ansible-playbook ../addons/argocd.yaml
+```
+Other Applications
+```bash
 ansible-playbook ../addons/<application>.yaml
 ```
+## TrueNAS NFS settings (compatible with macos)
 
-## Directory Structure
+Go to your TrueNAS web UI:
 
-- `/addons` - ArgoCD application manifests
-- `/ansible` - Ansible playbooks for cluster setup
-- `/helm` - Helm values for applications
-- `/kustomize` - Kustomize overlays for applications
-- `/tofu` - OpenTofu configurations for infrastructure
-- `/docs` - Additional documentation
+- Services → NFS → Configure the share (/mnt/pool1/k8s/nfs)
+- Ensure the following settings are applied:
+   - Enabled: ✔️
+   - Network: 192.168.0.0/24 (or your subnet)
+   - Maproot User: root (if needed for macOS compatibility)
+   - Maproot Group: wheel (macOS equivalent of root group)
+   - Security: sys (for compatibility)
+   - Enabled NFSv4: ❌ (macOS often works better with NFSv3)
 
-## Storage Configuration
+Mount commands
+- Macos
 
-The cluster is configured to use TrueNAS NFS storage. See [Storage Documentation](./k8s-storage/README.MD) for details.
+```bash
+mount -t nfs -o vers=3,resvport,noatime,nolocks,locallocks 192.168.0.15:/mnt/pool1/k8s/nfs ~/nfs-test
+```
+- Ubuntu
 
-## Upgrading Kubernetes
+```bash
+sudo mount 192.168.0.15:/mnt/pool1/k8s/nfs nfs-test/
+```
+-  Windows
+  - dism /online /enable-feature /featurename:ServicesForNFS-ClientOnly /all
+```powershell
+mount -o nolock -o mtype=hard <NFS-Server-IP>:/<share-name> <drive-letter>:
+```
+```powershell
+New-PSDrive -Name "Z" -PSProvider FileSystem -Root "\\<NFS-Server-IP>\<share-name>" -Persist
+```
+# adhoc
+### Enable volume expansion
+```bash
+ansible-playbook main.yaml --tags adhoc,enable_volume_expansion
+```
+# Creating an Image Pull Secret for Docker Hub
+```bash
+kubectl create secret docker-registry dockerhub-secret \
+  --docker-server=https://index.docker.io/v1/ \
+  --docker-username=<your-dockerhub-username> \
+  --docker-password=<your-dockerhub-password> \
+  --docker-email=<your-email>
+```
+# Issues
+***Error***
 
-For upgrade instructions, see [Kubernetes Upgrade Guide](./upgrade_k8s.md).
+k8s-worker-1 | UNREACHABLE! => {
+    "changed": false,
+    "msg": "Failed to connect to the host via ssh: Warning: Permanently added '192.168.0.51' (ED25519) to the list of known hosts.\r\nubuntu@192.168.x.xx: Permission denied (publickey,password).",
+    "unreachable": true
+}
 
-## Troubleshooting
+***Solution***
 
-Common issues and their solutions are documented in the [Troubleshooting Guide](./docs/troubleshooting.md).
+mv  ~/.ssh/known_hosts  ~/.ssh/known_hosts.bkp
 
-## Contributing
+---
 
-Contributions are welcome! Please feel free to submit a Pull Request.
+***Error***
+
+CRDs stuck in terminating state
+
+***Solution***
+
+kubectl get crd | grep longhorn | awk '{print $1}'
+kubectl get crd | grep longhorn | awk '{print $1}' 
+kubectl patch crd backuptargets.longhorn.io -p '{"metadata":{"finalizers":[]}}' --type=merge
+
+
+***Error***
+
+TASK [Wait for ArgoCD pods to be ready] *******************************************************************************************************************************************************************
+An exception occurred during task execution. To see the full traceback, use -vvv. The error was: AttributeError: 'NoneType' object has no attribute 'status'
+fatal: [k8s-control-plane-1]: FAILED! => {"changed": false, "module_stderr": "Shared connection to 192.168.0.41 closed.\r\n", "module_stdout": "Traceback (most recent call last):\r\n
+
+--- omitted --
+
+ File \"/tmp/ansible_kubernetes.core.k8s_info_payload_a2wp4_ji/ansible_kubernetes.core.k8s_info_payload.zip/ansible_collections/kubernetes/core/plugins/module_utils/k8s/waiter.py\", line 86, in custom_condition\r\nAttributeError: 'NoneType' object has no attribute 'status'\r\n", "msg": "MODULE FAILURE: No start of json char found\nSee stdout/stderr for the exact error", "rc": 1}
+
+***Solution***
+
+Try deploying again.
