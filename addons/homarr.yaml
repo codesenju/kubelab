@@ -1,0 +1,187 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Create Homarr namespace
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Namespace
+        name: homarr
+
+    - name: Deploy Homarr db pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: homarr-db
+            namespace: homarr
+            labels:
+              service: homarr-db  # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 50Mi
+            nfs:
+              server: 192.168.0.15 # change me
+              path: /mnt/pool1/AppData/homarr/db
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy Homarr db pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: homarr-db
+            namespace: homarr
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Mi
+            selector:
+              matchLabels:
+                service: homarr-db  # Add selector to match PV label
+            volumeName: homarr-db
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Deploy Homarr images pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: homarr-images
+            namespace: homarr
+            labels:
+              service: homarr   # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 50Mi
+            nfs:
+              server: 192.168.0.15 # change me
+              path: /mnt/pool1/AppData/homarr/images
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+      tags:
+        - homarr-images-pv
+
+    - name: Deploy Homarr images pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: homarr-images
+            namespace: homarr
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 50Mi
+            selector:
+              matchLabels:
+                service: homarr-images  # Add selector to match PV label
+            volumeName: homarr-images
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Deploy Homar
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: homarr
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: homarr
+              repoURL: ghcr.io/homarr-labs/charts  # note: the oci:// syntax is not included.
+              targetRevision: 3.7.1
+              helm:
+                releaseName: homarr
+                values: |
+                  rbac: 
+                    enabled: true
+                  service:
+                    # type: LoadBalancer
+                    type: ClusterIP
+                    # loadBalancerIP: {{ homarr_static_ip }}
+                  persistence:
+                    homarrDatabase:
+                      enabled: true
+                      name: "homarr-db"
+                      storageClassName: ""
+                      size: "50Mi"
+                      accessMode: "ReadWriteOnce"
+                      volumeClaimName: "homarr-db"
+                    homarrImages:
+                      enabled: true
+                      name: "homarr-images"
+                      storageClassName: ""
+                      accessMode: "ReadWriteOnce"
+                      size: "50Mi"
+                      mountPath: "/images"
+                      volumeClaimName: "homarr-images"
+                  env:
+                    NODE_TLS_REJECT_UNAUTHORIZED: 0
+                    TZ: Etc/GMT-2
+                    AUTH_SESSION_EXPIRY_TIME: "24h"
+            destination:
+              name: "in-cluster"
+              namespace: homarr
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    # - name: Patch Homarr Service LoadBalancer IP
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     api_version: v1
+    #     kind: Service
+    #     name: homarr
+    #     namespace: homarr
+    #     definition:
+    #       spec:
+    #         loadBalancerIP: "{{ homarr_static_ip }}"
+    #     merge_type: strategic-merge
+
+    # - name: Get LoadBalancer IP
+    #   shell: kubectl -n homarr get svc homarr -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+    #   register: lb_ip
+    #   changed_when: false
+
+    # - name: Get LoadBalancer Port
+    #   shell: kubectl -n homarr get svc homarr -o jsonpath='{.spec.ports[0].port}'
+    #   register: lb_port
+    #   changed_when: false
+
+    # - name: Display Homar access information
+    #   ansible.builtin.debug:
+    #     msg:
+    #       - "----------------------------------------"
+    #       - "🚀 Homarr has been deployed successfully!"
+    #       - "----------------------------------------"
+    #       - "📍 URL:       http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+    #       - "----------------------------------------"

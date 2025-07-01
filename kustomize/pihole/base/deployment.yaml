@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: pihole
+  labels:
+    app: pihole
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: pihole
+  template:
+    metadata:
+      labels:
+        app: pihole
+    spec:
+      containers:
+      - name: pihole
+        image: IMAGE_TEMPLATE
+        ports:
+        - containerPort: 53
+          name: dns-tcp
+          protocol: TCP
+        - containerPort: 53
+          name: dns-udp
+          protocol: UDP
+        - containerPort: 80
+          name: http
+          protocol: TCP
+        - containerPort: 443
+          name: https
+          protocol: TCP
+        env:
+        - name: TZ
+          value: Etc/GMT-2
+        # - name: FTLCONF_webserver_api_password
+        #   value: "correct horse battery staple"
+        - name: FTLCONF_dns_listeningMode
+          value: "all"
+        volumeMounts:
+        - name: etc-pihole
+          mountPath: /etc/pihole
+          subPath: pihole/etc
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN", "SYS_TIME", "SYS_NICE"]
+      volumes:
+      - name: etc-pihole
+        persistentVolumeClaim:
+          claimName: etc-pihole

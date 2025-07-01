@@ -1,0 +1,102 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  template:
+    spec:
+      dnsConfig:
+        nameservers:
+          - "103.86.96.100" # nordvpn
+          - "103.86.99.100" # nordvpn
+        searches:
+          - "local"
+      dnsPolicy: "None"  # Required for custom dnsConfig
+
+      containers:
+      
+      # Gluetun VPN container
+      - name: gluetun
+        image: ghcr.io/qdm12/gluetun
+        # lifecycle:
+        #   postStart:
+        #     exec:
+        #       command: ["/bin/sh", "-c", "(ip rule del table 51820; ip -6 rule del table 51820) || true"]
+        securityContext:
+          privileged: true  # Required for /dev/net/tun
+          capabilities:
+            add:
+              - NET_ADMIN
+              - SYS_MODULE  # For tun device creation
+        env:
+          - name: DNS_SERVERS
+            value: "103.86.96.100,103.86.99.100" # NordVPN DNS
+          - name: DNS_PLAINTEXT
+            value: "on" # Required for torrent clients
+          - name: DNS_UPDATE_PERIOD
+            value: "24h"
+          - name: VPN_SERVICE_PROVIDER
+            value: "nordvpn"
+          - name: VPN_TYPE
+            value: "openvpn"
+          # - name: VPN_PORT_FORWARDING
+          #   value: "on"
+            # value: "openvpn"
+          - name: OPENVPN_USER
+            valueFrom:
+              secretKeyRef:
+                name: nordvpn-credentials
+                key: OPENVPN_USER
+          - name: OPENVPN_PASSWORD
+            valueFrom:
+              secretKeyRef:
+                name: nordvpn-credentials
+                key: OPENVPN_PASSWORD
+          # - name: WIREGUARD_PRIVATE_KEY
+          #   valueFrom:
+          #     secretKeyRef:
+          #       name: nordvpn-credentials
+          #       key: WIREGUARD_PRIVATE_KEY
+          - name: SERVER_COUNTRIES
+            value: "South Africa" # change to location closest to you for faster downloads
+          # - name: OPENVPN_CIPHER
+          #   value: "AES-256-CBC"
+          # - name: OPENVPN_AUTH
+          #   value: "SHA512"
+        volumeMounts:
+          - name: media-stack-config
+            mountPath: /gluetun
+            subPath: gluetun/config
+        resources:
+          requests:
+            cpu: "100m"
+            memory: "128Mi"
+          limits:
+            cpu: "200m"
+            memory: "256Mi"
+        # Gluetun VPN container - END
+
+      # qBittorrent container
+      - name: qbittorrent
+        env:
+        - name: QBITTORRENT_CATEGORIES
+          value: "movies=/downloads/movies,tv=/downloads/tv,music=/downloads/music,books=/downloads/books"
+        - name: DOWNLOADS_LOCATION
+          value: "/data/downloads"
+        volumeMounts:
+        - name: data
+          mountPath: /downloads
+          subPath: downloads
+      # qBittorrent container - END
+
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+
+      # - name: wireguard-config
+      #   persistentVolumeClaim:
+      #     claimName: wireguard-config
+      - name: modules
+        hostPath:
+          path: /lib/modules

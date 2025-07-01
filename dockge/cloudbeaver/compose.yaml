@@ -1,0 +1,12 @@
+services:
+  cloudbeaver:
+    container_name: cloudbeaver
+    restart: unless-stopped
+    tty: true
+    stdin_open: true
+    ports:
+      - 8978:8978
+    volumes:
+      - ./workspace:/opt/cloudbeaver/workspace
+    image: dbeaver/cloudbeaver:25.0.2
+networks: {}

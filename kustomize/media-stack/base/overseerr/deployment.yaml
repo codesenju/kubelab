@@ -1,0 +1,53 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overseerr
+  labels:
+    app.kubernetes.io/component: request-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: overseerr
+  template:
+    metadata:
+      labels:
+        app: overseerr
+        app.kubernetes.io/component: request-management
+    spec:
+      containers:
+      - name: overseerr
+        image: lscr.io/linuxserver/overseerr:latest
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        env:
+        - name: NODE_ENV
+          value: "prod"
+        ports:
+        - containerPort: 5055
+          name: http
+        volumeMounts:
+        - name: config
+          mountPath: /config
+          subPath: overseerr/config
+        - name: data
+          mountPath: /data
+          readOnly: true  # Only needs read access to media
+        resources:
+          requests:
+            cpu: "250m"
+            memory: "512Mi"
+          limits:
+            cpu: "500m"
+            memory: "1Gi"
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data

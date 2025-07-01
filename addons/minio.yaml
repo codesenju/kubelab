@@ -1,0 +1,80 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Minio
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: minio-operator
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://operator.min.io/
+              chart: operator
+              targetRevision: 7.1.1
+              helm:
+                releaseName: minio-operator
+                # values: |
+                #   $values/helm/minio_operator_values.yaml
+            # - repoURL: 'https://github.com/codesenju/kubelab.git'
+            #   targetRevision: main
+            #   ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: minio-operator
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+      tags:
+        - operator
+
+    - name: Deploy Minio S3 Tenant
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: minio-s3
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://operator.min.io
+              chart: tenant
+              targetRevision: 7.1.1
+              helm:
+                releaseName: minio-s3
+                valueFiles:
+                - $values/helm/minio_s3_tenant_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: main
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: minio-s3
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
+      tags:
+        - tenant

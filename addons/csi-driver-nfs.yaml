@@ -1,0 +1,47 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Deploy csi-driver-nfs
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: csi-driver-nfs
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: csi-driver-nfs
+              repoURL: https://raw.githubusercontent.com/kubernetes-csi/csi-driver-nfs/master/charts
+              targetRevision: 4.11.0
+              helm:
+                releaseName: csi-driver-nfs
+                values: |
+                  storageClass:
+                    create: true
+                    name: nfs-csi
+                    parameters:
+                      server: 192.168.0.15
+                      share: /mnt/pool1/k8s/nfs
+                      mountPermissions: "0777" 
+                    reclaimPolicy: Delete
+                    volumeBindingMode: Immediate
+                    mountOptions:
+                      - nfsvers=4.1
+                      - noatime
+                      - async  # Better for torrent writes
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: csi-driver-nfs
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true

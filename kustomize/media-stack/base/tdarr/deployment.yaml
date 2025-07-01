@@ -1,0 +1,60 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+  labels:
+    app.kubernetes.io/component: media-processing
+spec:
+  replicas: 1  # Master node only
+  selector:
+    matchLabels:
+      app: tdarr
+  template:
+    metadata:
+      labels:
+        app: tdarr
+        app.kubernetes.io/component: media-processing
+    spec:
+      containers:
+      - name: tdarr
+        image: ghcr.io/haveagitgat/tdarr:latest
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        # env:
+        # - name: serverIP
+        #   value: "0.0.0.0"
+        # - name: serverPort
+        #   value: "8265"
+        ports:
+        - containerPort: 8265
+          name: http
+        - containerPort: 8266
+          name: websocket
+        volumeMounts:
+        - name: media-stack-config
+          mountPath: /app/server
+          subPath: tdarr/config
+        - name: data
+          mountPath: /opt/data/media
+        - name: transcode-cache
+          mountPath: /temp
+        resources:
+          requests:
+            cpu: "1"
+            memory: "1Gi"
+          limits:
+            cpu: "2"
+            memory: "2Gi"
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+      - name: transcode-cache
+        emptyDir: {}

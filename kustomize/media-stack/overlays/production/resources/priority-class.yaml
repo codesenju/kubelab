@@ -1,0 +1,14 @@
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: default-priority
+value: 10
+globalDefault: true
+description: "This priority class should be used for regular pods."
+---
+apiVersion: scheduling.k8s.io/v1
+kind: PriorityClass
+metadata:
+  name: high-priority
+value: 20
+description: "This priority class should be used for high priority pods."

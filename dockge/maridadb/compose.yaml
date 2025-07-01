@@ -1,0 +1,17 @@
+# MariaDB
+services:
+  mariadb:
+    image: lscr.io/linuxserver/mariadb:11.4.5
+    container_name: mariadb
+    env_file:
+      - .env
+    environment:
+      - PUID=1000
+      - PGID=1000
+      - TZ=Etc/GMT-2
+      - REMOTE_SQL=http://URL1/your.sql,https://URL2/your.sql #optional
+    volumes:
+      - ./config:/config
+    ports:
+      - 3306:3306
+    restart: unless-stopped

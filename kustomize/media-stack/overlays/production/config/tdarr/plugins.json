@@ -1,0 +1,9 @@
+{
+    "id": "Tdarr_Plugin_00td_action_re_order_all_streams",
+    "action": "Transcode",
+    "data": {
+      "encoder": "libx265",
+      "preset": "medium",
+      "crf": 23
+    }
+  }

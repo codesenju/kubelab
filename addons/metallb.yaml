@@ -1,0 +1,109 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Install Metallb
+      kubernetes.core.k8s:
+        state: present
+        src: https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-frr-k8s.yaml
+
+    - name: Wait for metallb pods to be ready
+      shell: kubectl wait --for=condition=Ready pods --all -n metallb-system >> metallb_ready.log
+      args:
+        chdir: $HOME
+        creates: metallb_ready.log
+      register: wait_result
+      retries: 30
+      delay: 10
+      until: wait_result.rc == 0
+
+    - name: Deploy Metallb IPAddressPool
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: IPAddressPool
+          metadata:
+            name: k3s-lb-pool
+            namespace: metallb-system
+          spec:
+            addresses:
+            - '{{ metallb_addr_pool_range }}'
+            autoAssign: true
+
+    - name: Deploy Metallb L2Advertisement
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: metallb.io/v1beta1
+          kind: L2Advertisement
+          metadata:
+            name: k3s-lb-pool
+            namespace: metallb-system
+
+    # - name: Deploy nginx webserver test
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: apps/v1
+    #       kind: Deployment
+    #       metadata:
+    #         name: nginx-deployment
+    #         namespace: default
+    #         labels:
+    #           app: nginx
+    #       spec:
+    #         replicas: 2
+    #         selector:
+    #           matchLabels:
+    #             app: nginx
+    #         template:
+    #           metadata:
+    #             labels:
+    #               app: nginx
+    #           spec:
+    #             containers:
+    #             - name: nginx
+    #               image: nginx:1.25
+    #               ports:
+    #               - containerPort: 80
+    #               resources:
+    #                 requests:
+    #                   cpu: 100m
+    #                   memory: 128Mi
+    #                 limits:
+    #                   cpu: 200m
+    #                   memory: 256Mi
+
+    # - name: Expose nginx webserver
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: v1
+    #       kind: Service
+    #       metadata:
+    #         name: nginx-service
+    #         namespace: default
+    #         labels:
+    #           app: nginx
+    #       spec:
+    #         type: LoadBalancer
+    #         # type: NodePort
+    #         selector:
+    #           app: nginx
+    #         ports:
+    #           - port: 80
+    #             targetPort: 80
+    #             # nodePort: 30080
+
+    # - name: Get nginx external IP
+    #   shell: kubectl get svc nginx-service -n default -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+    #   register: nginx_ip
+    #   retries: 30
+    #   delay: 10
+    #   until: nginx_ip.stdout != ""
+
+    # - name: Print nginx external IP
+    #   debug:
+    #     msg: "Nginx external IP: {{ nginx_ip.stdout }}"

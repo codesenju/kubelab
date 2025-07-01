@@ -1,0 +1,67 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Portainer
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: portainer
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: portainer
+              repoURL: https://portainer.github.io/k8s/
+              targetRevision: 1.0.63
+              helm:
+                releaseName: portainer
+                values: |
+                  service:
+                    type: LoadBalancer
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: portainer
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+            
+    - name: Patch Portainer LoadBalancer IP
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Service
+        name: portainer
+        namespace: portainer
+        definition:
+          spec:
+            type: LoadBalancer
+            loadBalancerIP: "{{ portainer_static_ip }}"
+        merge_type: strategic-merge
+
+    - name: Get LoadBalancer IP
+      shell: kubectl -n portainer get svc portainer -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      register: lb_ip
+      changed_when: false
+
+    - name: Get LoadBalancer Port
+      shell: kubectl -n portainer get svc portainer -o jsonpath='{.spec.ports[0].port}'
+      register: lb_port
+      changed_when: false
+
+    - name: Display Portainer access information
+      ansible.builtin.debug:
+        msg:
+          - "----------------------------------------"
+          - "🚀 Portainer deployed successfully!"
+          - "----------------------------------------"
+          - "📍 URL:  http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+          - "----------------------------------------"

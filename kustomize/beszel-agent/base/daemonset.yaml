@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: beszel-agent
+spec:
+  selector:
+    matchLabels:
+      app: beszel-agent
+  template:
+    metadata:
+      labels:
+        app: beszel-agent
+    spec:
+      hostNetwork: true
+      containers:
+      - name: beszel-agent
+        env:
+          - name: LISTEN
+            value: '45876'
+          - name: KEY
+            valueFrom:
+              secretKeyRef:
+                name: beszel-secret
+                key: agent-key
+        image: IMAGE_TEMPLATE
+        imagePullPolicy: Always
+        ports:
+          - containerPort: 45876
+            hostPort: 45876
+        volumeMounts:
+          - name: containerd-socket
+            mountPath: /run/containerd/containerd.sock
+            readOnly: true
+        resources:
+          requests:
+            cpu: 15m
+            memory: 105M
+          limits:
+            cpu: 15m
+            memory: 105M
+      volumes:
+        - name: containerd-socket
+          hostPath:
+            path: /run/containerd/containerd.sock
+            type: Socket
+      restartPolicy: Always
+      tolerations:
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/master
+          operator: Exists
+        - effect: NoSchedule
+          key: node-role.kubernetes.io/control-plane
+          operator: Exists
+  updateStrategy:
+    rollingUpdate:
+      maxSurge: 0
+      maxUnavailable: 100%
+    type: RollingUpdate

@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+  labels:
+    app.kubernetes.io/component: movie-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radarr
+  template:
+    metadata:
+      labels:
+        app: radarr
+        app.kubernetes.io/component: movie-management
+    spec:
+      containers:
+      - name: radarr
+        image: lscr.io/linuxserver/radarr:latest
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        ports:
+        - containerPort: 7878
+          name: http
+        volumeMounts:
+        - name: media-stack-config
+          mountPath: /config
+          subPath: radarr/config
+        - name: data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: "128m"
+            memory: "256Mi"
+          limits:
+            cpu: "256m"
+            memory: "512Gi"
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
