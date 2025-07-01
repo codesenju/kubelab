@@ -1,0 +1,22 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: qbittorrent
+  labels:
+    app.kubernetes.io/component: download-client
+spec:
+  type: ClusterIP
+  ports:
+  - name: webui
+    port: 8080
+    targetPort: 8080
+  - name: tcp-torrent
+    port: 6881
+    targetPort: 6881
+    protocol: TCP
+  - name: udp-torrent
+    port: 6881
+    targetPort: 6881
+    protocol: UDP
+  selector:
+    app: qbittorrent

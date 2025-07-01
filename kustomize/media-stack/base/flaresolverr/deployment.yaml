@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: flaresolverr
+  labels:
+    app.kubernetes.io/component: proxy-server  # Adjusted label
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flaresolverr
+  template:
+    metadata:
+      labels:
+        app: flaresolverr
+        app.kubernetes.io/component: proxy-server
+    spec:
+      containers:
+      - name: flaresolverr
+        image: ghcr.io/flaresolverr/flaresolverr:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: LOG_LEVEL
+          value: "info"  # Default, override via ConfigMap if needed
+        - name: LOG_HTML
+          value: "false"
+        - name: CAPTCHA_SOLVER
+          value: "none"
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        ports:
+        - containerPort: 8191
+          name: http
+        resources:
+          requests:
+            cpu: 15m
+            memory: 443M
+          limits:
+            cpu: 15m
+            memory: 443M
+        # No volumes needed (stateless service)
+      restartPolicy: Always  # Kubernetes equivalent of `unless-stopped`

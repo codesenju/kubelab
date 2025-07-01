@@ -1,0 +1,31 @@
+---
+- name: Join worker nodes to Kubernetes cluster
+  hosts: workers
+  become: yes
+  vars:
+    control_plane_node: "k8s-control-plane-1"
+
+  tasks:
+    - name: Get join command from control plane
+      delegate_to: "{{ control_plane_node }}"
+      become: yes
+      command: kubeadm token create --print-join-command
+      register: join_command
+
+    - name: Join worker node to cluster
+      command: "{{ join_command.stdout }}"
+      register: join_result
+      changed_when: "'This node has joined the cluster' in join_result.stdout"
+
+    - name: Verify node joined successfully
+      command: kubectl get nodes
+      delegate_to: "{{ control_plane_node }}"
+      register: node_status
+      until: "'{{ inventory_hostname }}' in node_status.stdout"
+      retries: 10
+      delay: 10
+      changed_when: false
+
+    - name: Show node status
+      debug:
+        var: node_status.stdout_lines

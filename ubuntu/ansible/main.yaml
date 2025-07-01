@@ -1,0 +1,7 @@
+- name: Configure Server
+  import_playbook: configure-server.yaml
+  tags: configure
+  
+- name: Install GUI on Ubuntu 22.04 Cloud Image
+  import_playbook: gui.yaml
+  tags: gui

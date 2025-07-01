@@ -1,0 +1,1155 @@
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: media-stack-resource-quota
+  namespace: media-stack
+spec:
+  hard:
+    limits.cpu: "32"
+    limits.memory: 64Gi
+    pods: "40"
+    requests.cpu: "16"
+    requests.memory: 16Gi
+---
+apiVersion: v1
+data:
+  LOG_LEVEL: info
+  TZ: Etc/GMT-2
+  UMASK: "002"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: global-env-29d2d9thh9
+  namespace: media-stack
+---
+apiVersion: v1
+data:
+  JELLYFIN_PublishedServerUrl: https://jellyfin.yourdomain.com
+  JELLYFIN_URL: http://jellyfin:8096
+  PROWLARR_URL: http://prowlarr:9696
+  QBITTORRENT_CATEGORIES: movies=/data/downloads/torrents/movies,tv=/data/downloads/torrents/tv
+  QBITTORRENT_URL: http://qbittorrent:8080
+  TDARR_NODE_ID: prod-node-1
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: media-stack-env-bcgt456b96
+  namespace: media-stack
+---
+apiVersion: v1
+data:
+  PGID: "0"
+  PUID: "0"
+  UMASK: "002"
+kind: ConfigMap
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: shared-permissions
+  namespace: media-stack
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: flaresolverr
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 8191
+    targetPort: 8191
+  selector:
+    app: flaresolverr
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: media-server
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: jellyfin
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 8096
+    targetPort: 8096
+  - name: https
+    port: 8920
+    targetPort: 8920
+  selector:
+    app: jellyfin
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: request-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: jellyseerr
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 5055
+    targetPort: 5055
+  selector:
+    app: jellyseerr
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: music-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: lidarr
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 8686
+    targetPort: 8686
+  selector:
+    app: lidarr
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: indexer-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: prowlarr
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 9696
+    targetPort: 9696
+  selector:
+    app: prowlarr
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: download-client
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: qbittorrent
+  namespace: media-stack
+spec:
+  ports:
+  - name: webui
+    port: 8080
+    targetPort: 8080
+  - name: tcp-torrent
+    port: 6881
+    protocol: TCP
+    targetPort: 6881
+  - name: udp-torrent
+    port: 6881
+    protocol: UDP
+    targetPort: 6881
+  selector:
+    app: qbittorrent
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: movie-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: radarr
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 7878
+    targetPort: 7878
+  selector:
+    app: radarr
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: book-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: readarr
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 8787
+    targetPort: 8787
+  selector:
+    app: readarr
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/component: tv-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: sonarr
+  namespace: media-stack
+spec:
+  ports:
+  - name: http
+    port: 8989
+    targetPort: 8989
+  selector:
+    app: sonarr
+  type: ClusterIP
+---
+apiVersion: v1
+kind: Service
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: tdarr
+  namespace: media-stack
+spec:
+  loadBalancerIP: 192.168.0.87
+  ports:
+  - name: http
+    port: 8265
+    protocol: TCP
+    targetPort: 8265
+  - name: websocket
+    port: 8266
+    protocol: TCP
+    targetPort: 8266
+  selector:
+    app: tdarr
+  type: LoadBalancer
+---
+apiVersion: v1
+kind: LimitRange
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: media-stack-resource-limits
+  namespace: media-stack
+spec:
+  limits:
+  - default:
+      cpu: 500m
+      memory: 512Mi
+    defaultRequest:
+      cpu: 250m
+      memory: 256Mi
+    max:
+      cpu: "4"
+      memory: 8Gi
+    maxLimitRequestRatio:
+      cpu: "2"
+      memory: "2"
+    min:
+      cpu: 100m
+      memory: 128Mi
+    type: Container
+---
+apiVersion: scheduling.k8s.io/v1
+description: This priority class should be used for regular pods.
+globalDefault: true
+kind: PriorityClass
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: default-priority
+value: 10
+---
+apiVersion: scheduling.k8s.io/v1
+description: This priority class should be used for high priority pods.
+kind: PriorityClass
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: high-priority
+value: 20
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+    service: media-stack
+  name: media-data
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 250Gi
+  mountOptions:
+  - noatime
+  - nfsvers=4.2
+  nfs:
+    path: /mnt/pool1/jellyfin/media
+    server: 192.168.0.15
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+    service: media-stack-config
+  name: media-stack-config
+spec:
+  accessModes:
+  - ReadWriteMany
+  capacity:
+    storage: 20Gi
+  mountOptions:
+  - noatime
+  - nfsvers=4.2
+  nfs:
+    path: /mnt/pool1/AppData/
+    server: 192.168.0.15
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: media-data
+  namespace: media-stack
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 250Gi
+  selector:
+    matchLabels:
+      service: media-stack
+  storageClassName: ""
+  volumeName: media-data
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  labels:
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: media-stack-config
+  namespace: media-stack
+spec:
+  accessModes:
+  - ReadWriteMany
+  resources:
+    requests:
+      storage: 20Gi
+  selector:
+    matchLabels:
+      service: media-stack-config
+  storageClassName: ""
+  volumeName: media-stack-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: proxy-server
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: flaresolverr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: flaresolverr
+  template:
+    metadata:
+      labels:
+        app: flaresolverr
+        app.kubernetes.io/component: proxy-server
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: LOG_LEVEL
+          value: info
+        - name: LOG_HTML
+          value: "false"
+        - name: CAPTCHA_SOLVER
+          value: none
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: ghcr.io/flaresolverr/flaresolverr:v3.3.21
+        imagePullPolicy: IfNotPresent
+        name: flaresolverr
+        ports:
+        - containerPort: 8191
+          name: http
+        resources:
+          limits:
+            cpu: "1"
+            memory: 1Gi
+          requests:
+            cpu: "0.5"
+            memory: 512Mi
+      restartPolicy: Always
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: media-server
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: jellyfin
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyfin
+  template:
+    metadata:
+      labels:
+        app: jellyfin
+        app.kubernetes.io/component: media-server
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: JELLYFIN_PublishedServerUrl
+          valueFrom:
+            configMapKeyRef:
+              key: JELLYFIN_URL
+              name: media-stack-env-bcgt456b96
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: docker.io/jellyfin/jellyfin:latest
+        imagePullPolicy: IfNotPresent
+        name: jellyfin
+        ports:
+        - containerPort: 8096
+          name: http
+        - containerPort: 8920
+          name: https
+        resources:
+          limits:
+            cpu: "2"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+        volumeMounts:
+        - mountPath: /data/movies
+          name: data
+          subPath: movies
+        - mountPath: /data/tv
+          name: data
+          subPath: tv
+        - mountPath: /data/music
+          name: data
+          subPath: music
+        - mountPath: /config
+          name: media-stack-config
+          subPath: jellyfin/config
+        - mountPath: /cache
+          name: media-stack-config
+          subPath: jellyfin/cache
+        - mountPath: /data/media
+          name: data
+          readOnly: true
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: media-server
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: jellyseerr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyseerr
+  template:
+    metadata:
+      labels:
+        app: jellyseerr
+        app.kubernetes.io/component: request-management
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: docker.io/fallenbagel/jellyseerr:2.5.1
+        imagePullPolicy: IfNotPresent
+        name: jellyseerr
+        ports:
+        - containerPort: 5055
+          name: http
+        resources:
+          limits:
+            cpu: 400m
+            memory: 512Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /data/movies
+          name: data
+          subPath: movies
+        - mountPath: /data/tv
+          name: data
+          subPath: tv
+        - mountPath: /data/music
+          name: data
+          subPath: music
+        - mountPath: /app/config
+          name: media-stack-config
+          subPath: jellyseerr/config
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: music-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: lidarr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: lidarr
+  template:
+    metadata:
+      labels:
+        app: lidarr
+        app.kubernetes.io/component: music-management
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: LIDARR__INSTANCE_NAME
+          value: Lidarr-Prod
+        - name: LIDARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: /downloads
+        - name: LIDARR__MEDIADIR
+          value: /data/music
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: lscr.io/linuxserver/lidarr:2.10.3
+        imagePullPolicy: IfNotPresent
+        name: lidarr
+        ports:
+        - containerPort: 8686
+          name: http
+        resources:
+          limits:
+            cpu: 400m
+            memory: 512Mi
+          requests:
+            cpu: 200m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /data/music
+          name: data
+          subPath: music
+        - mountPath: /downloads
+          name: data
+          subPath: downloads
+        - mountPath: /config
+          name: media-stack-config
+          subPath: lidarr/config
+        - mountPath: /data
+          name: data
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: indexer-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: prowlarr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: prowlarr
+  template:
+    metadata:
+      labels:
+        app: prowlarr
+        app.kubernetes.io/component: indexer-management
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: PROWLARR__INSTANCE_NAME
+          value: Prowlarr-Prod
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: lscr.io/linuxserver/prowlarr:1.32.2
+        imagePullPolicy: IfNotPresent
+        name: prowlarr
+        ports:
+        - containerPort: 9696
+          name: http
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /config
+          name: media-stack-config
+          subPath: prowlarr/config
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: download-client
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: qbittorrent
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent
+  strategy:
+    type: Recreate
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+        app.kubernetes.io/component: download-client
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: QBITTORRENT_CATEGORIES
+          value: movies=/downloads/movies,tv=/downloads/tv,music=/downloads/music,books=/downloads/books
+        - name: DOWNLOADS_LOCATION
+          value: /data/downloads
+        - name: VPN_ENABLED
+          value: "true"
+        - name: LAN_NETWORK
+          value: 192.168.0.0/24
+        - name: UMASK
+          value: "002"
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: lscr.io/linuxserver/qbittorrent:5.0.4
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+        name: qbittorrent
+        ports:
+        - containerPort: 8080
+          name: webui
+        - containerPort: 6881
+          name: tcp-torrent
+          protocol: TCP
+        - containerPort: 6881
+          name: udp-torrent
+          protocol: UDP
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+        volumeMounts:
+        - mountPath: /downloads
+          name: data
+          subPath: downloads
+        - mountPath: /config
+          name: media-stack-config
+          subPath: qbittorrent/config
+        - mountPath: /data
+          name: data
+      - env:
+        - name: DNS_SERVERS
+          value: 103.86.96.100,103.86.99.100
+        - name: DNS_PLAINTEXT
+          value: "on"
+        - name: DNS_UPDATE_PERIOD
+          value: 24h
+        - name: VPN_SERVICE_PROVIDER
+          value: nordvpn
+        - name: VPN_TYPE
+          value: openvpn
+        - name: OPENVPN_USER
+          valueFrom:
+            secretKeyRef:
+              key: OPENVPN_USER
+              name: nordvpn-credentials
+        - name: OPENVPN_PASSWORD
+          valueFrom:
+            secretKeyRef:
+              key: OPENVPN_PASSWORD
+              name: nordvpn-credentials
+        - name: SERVER_COUNTRIES
+          value: South Africa
+        - name: OPENVPN_CIPHER
+          value: AES-256-CBC
+        - name: OPENVPN_AUTH
+          value: SHA512
+        image: qmcgaw/gluetun
+        name: gluetun
+        resources:
+          limits:
+            cpu: 200m
+            memory: 256Mi
+          requests:
+            cpu: 100m
+            memory: 128Mi
+        securityContext:
+          capabilities:
+            add:
+            - NET_ADMIN
+            - SYS_MODULE
+          privileged: true
+        volumeMounts:
+        - mountPath: /gluetun
+          name: gluetun-config
+      dnsConfig:
+        nameservers:
+        - 103.86.96.100
+        - 103.86.99.100
+        searches:
+        - local
+      dnsPolicy: None
+      volumes:
+      - name: gluetun-config
+        persistentVolumeClaim:
+          claimName: gluetun-config
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: movie-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: radarr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: radarr
+  template:
+    metadata:
+      labels:
+        app: radarr
+        app.kubernetes.io/component: movie-management
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: RADARR__INSTANCE_NAME
+          value: Radarr-Prod
+        - name: RADARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: /downloads
+        - name: RADARR__MEDIADIR
+          value: /data/movies
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: lscr.io/linuxserver/radarr:5.21.1
+        imagePullPolicy: IfNotPresent
+        name: radarr
+        ports:
+        - containerPort: 7878
+          name: http
+        resources:
+          limits:
+            cpu: 512m
+            memory: 1Gi
+          requests:
+            cpu: 256m
+            memory: 512Mi
+        volumeMounts:
+        - mountPath: /data/movies
+          name: data
+          subPath: movies
+        - mountPath: /downloads
+          name: data
+          subPath: downloads
+        - mountPath: /config
+          name: media-stack-config
+          subPath: radarr/config
+        - mountPath: /data
+          name: data
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: book-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: readarr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: readarr
+  template:
+    metadata:
+      labels:
+        app: readarr
+        app.kubernetes.io/component: book-management
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: READARR__INSTANCE_NAME
+          value: Readarr-Prod
+        - name: READARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: /downloads
+        - name: READARR__MEDIADIR
+          value: /data/books
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: lscr.io/linuxserver/readarr:develop
+        imagePullPolicy: IfNotPresent
+        name: readarr
+        ports:
+        - containerPort: 8787
+          name: http
+        resources:
+          limits:
+            cpu: 200m
+            memory: 512Mi
+          requests:
+            cpu: 100m
+            memory: 256Mi
+        volumeMounts:
+        - mountPath: /data/books
+          name: data
+          subPath: books
+        - mountPath: /downloads
+          name: data
+          subPath: downloads
+        - mountPath: /config
+          name: media-stack-config
+          subPath: readarr/config
+        - mountPath: /data
+          name: data
+      securityContext:
+        fsGroup: 1000
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: tv-management
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: sonarr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: sonarr
+  template:
+    metadata:
+      labels:
+        app: sonarr
+        app.kubernetes.io/component: tv-management
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: SONARR__INSTANCE_NAME
+          value: Sonarr-Prod
+        - name: QBITTORRENT__HOST
+          value: qbittorrent
+        - name: QBITTORRENT__PORT
+          value: "8080"
+        - name: SONARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: /downloads
+        - name: SONARR__MEDIADIR
+          value: /data/tv
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: lscr.io/linuxserver/sonarr:4.0.14
+        imagePullPolicy: IfNotPresent
+        name: sonarr
+        ports:
+        - containerPort: 8989
+          name: http
+        resources:
+          limits:
+            cpu: 512m
+            memory: 1Gi
+          requests:
+            cpu: 256m
+            memory: 512Mi
+        volumeMounts:
+        - mountPath: /data/tv
+          name: data
+          subPath: tv
+        - mountPath: /downloads
+          name: data
+          subPath: downloads
+        - mountPath: /config
+          name: media-stack-config
+          subPath: sonarr/config
+        - mountPath: /data
+          name: data
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  labels:
+    app.kubernetes.io/component: media-processing
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: tdarr
+  namespace: media-stack
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: tdarr
+  template:
+    metadata:
+      labels:
+        app: tdarr
+        app.kubernetes.io/component: media-processing
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: ghcr.io/haveagitgat/tdarr:latest
+        imagePullPolicy: IfNotPresent
+        name: tdarr
+        ports:
+        - containerPort: 8265
+          name: http
+        - containerPort: 8266
+          name: websocket
+        resources:
+          limits:
+            cpu: "2"
+            memory: 2Gi
+          requests:
+            cpu: "1"
+            memory: 1Gi
+        volumeMounts:
+        - mountPath: /app/server
+          name: media-stack-config
+          subPath: tdarr/config
+        - mountPath: /opt/data/media
+          name: data
+        - mountPath: /temp
+          name: transcode-cache
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+      - emptyDir: {}
+        name: transcode-cache
+---
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  labels:
+    app.kubernetes.io/component: media-processing
+    app.kubernetes.io/managed-by: kustomize-v5.6.0
+    app.kubernetes.io/part-of: media-stack
+  name: tdarr-worker
+  namespace: media-stack
+spec:
+  selector:
+    matchLabels:
+      app: tdarr-worker
+  template:
+    metadata:
+      labels:
+        app: tdarr-worker
+        app.kubernetes.io/managed-by: kustomize-v5.6.0
+        app.kubernetes.io/part-of: media-stack
+    spec:
+      containers:
+      - env:
+        - name: nodeID
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: serverIP
+          value: tdarr
+        - name: serverPort
+          value: "8266"
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env-29d2d9thh9
+        image: ghcr.io/haveagitgat/tdarr_node:latest
+        name: tdarr-worker
+        resources:
+          limits:
+            cpu: "2"
+            memory: 4Gi
+          requests:
+            cpu: "1"
+            memory: 2Gi
+        volumeMounts:
+        - mountPath: /opt/data/media
+          name: data
+        - mountPath: /temp
+          name: transcode-cache
+      priorityClassName: high-priority
+      tolerations:
+      - effect: NoSchedule
+        key: gpu
+        operator: Exists
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+      - emptyDir: {}
+        name: transcode-cache

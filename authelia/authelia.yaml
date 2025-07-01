@@ -1,0 +1,46 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Authelia
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: authelia
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://charts.authelia.com
+              chart: authelia
+              targetRevision: 0.10.6
+              helm:
+                releaseName: authelia
+                valueFiles:
+                - $values/authelia/values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: main
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: zero-trust
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+
+            # ignoreDifferences:
+            # - group: ""
+            #   kind: PersistentVolumeClaim
+            #   jsonPointers:
+            #   - /status  # Ignore PVC status changes
+      tags: authelia

@@ -1,0 +1,58 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nginx-proxy-manager
+  labels:
+    app: nginx-proxy-manager
+spec:
+  selector:
+    matchLabels:
+      app: nginx-proxy-manager
+  template:
+    metadata:
+      labels:
+        app: nginx-proxy-manager
+    spec:
+      # securityContext:
+      #   fsGroup: 1000  # Sets the group ownership of volumes
+      containers:
+      - name: nginx-proxy-manager
+        env:
+        - name: TZ
+          value: "Etc/GMT-2"
+        # - name: PUID
+        #   value: "1000"
+        # - name: PGID
+        #   value: "1000"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: nginx-proxy-manager
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.57
+---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: nginx-proxy-manager-data
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 2Gi
+#   storageClassName: longhorn
+# ---
+# apiVersion: v1
+# kind: PersistentVolumeClaim
+# metadata:
+#   name: nginx-proxy-manager-letsencrypt-data
+# spec:
+#   accessModes:
+#     - ReadWriteOnce
+#   resources:
+#     requests:
+#       storage: 2Gi
+#   storageClassName: longhorn

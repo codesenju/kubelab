@@ -1,0 +1,19 @@
+---
+kind: Pod
+apiVersion: v1
+metadata:
+  name: nfs-in-a-pod
+spec:
+  containers:
+    - name: app
+      image: alpine
+      volumeMounts:
+        - name: nfs-volume
+          mountPath: /var/nfs
+      command: ["/bin/sh"]
+      args: ["-c", "sleep 500000"]
+  volumes:
+    - name: nfs-volume
+      nfs:
+        server: 192.168.0.15 # change me
+        path: /mnt/pool1/k8s/nfs

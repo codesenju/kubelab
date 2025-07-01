@@ -1,0 +1,58 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Create namespace in Kubernetes
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: cnpg-system
+
+    - name: Deploy cloudnative-postgresql
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: cloudnative-postgresql
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: cloudnative-pg
+              repoURL: https://cloudnative-pg.github.io/charts
+              targetRevision: 0.23.2
+              helm:
+                releaseName: cnpg
+                values: |
+                   #
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: cnpg-system
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Wait for CloudNativePG operator pods to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: cnpg-system
+        label_selectors:
+          - app.kubernetes.io/name=cloudnative-pg
+      register: operator_pods
+      until: 
+        - operator_pods.resources is defined
+        - operator_pods.resources | length > 0
+        - operator_pods.resources | map(attribute='status.phase') | list | intersect(['Running']) | length == operator_pods.resources | length
+      retries: 30
+      delay: 10

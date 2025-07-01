@@ -1,0 +1,46 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Headlamp
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: headlamp
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://kubernetes-sigs.github.io/headlamp/
+              chart: headlamp
+              targetRevision: "0.30.1"
+              helm:
+                releaseName: headlamp
+                valueFiles:
+                - $values/helm/headlamp_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: main
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: headlamp
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+
+            # ignoreDifferences:
+            # - group: ""
+            #   kind: PersistentVolumeClaim
+            #   jsonPointers:
+            #   - /status  # Ignore PVC status changes
+      tags: observability

@@ -1,0 +1,54 @@
+- hosts: k8s-control-plane-1
+  become: no
+  gather_facts: no
+  vars:
+    nfs_server_ip: 192.168.0.15
+    nfs_server_path: /mnt/pool1/AppData/stirlingpdf/
+  tasks:
+
+    - name: Deploy stirling-pdf
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: stirling-pdf
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: stirling-pdf-chart
+              repoURL: https://docs.stirlingpdf.com/Stirling-PDF-chart
+              targetRevision: 1.9.1
+              helm:
+                releaseName: stirling-pdf
+                values: |
+                  persistence:
+                    enabled: true
+                    accessMode: ReadWriteOnce
+                    size: 8Gi
+                    labels:
+                      {}
+                      # name: value
+                    path: /tmp
+                    pv:
+                      enabled: true
+                      pvname: "stirning-pdf-data"
+                      capacity:
+                        storage: 8Gi
+                      accessMode: ReadWriteOnce
+                      nfs:
+                        server: {{ nfs_server_ip  }}
+                        path: {{ nfs_server_path }}
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: pdf
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true

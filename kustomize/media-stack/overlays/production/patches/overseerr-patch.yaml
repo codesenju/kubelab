@@ -1,0 +1,30 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: overseerr
+spec:
+  template:
+    spec:
+      containers:
+      - name: overseerr
+        env:
+        - name: JELLYFIN_URL
+          value: "http://jellyfin:8096"
+        - name: JELLYFIN_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: jellyfin-secrets
+              key: api-key
+        - name: TMDB_API_KEY
+          valueFrom:
+            secretKeyRef:
+              name: overseerr-secrets
+              key: tmdb-api-key
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: overseerr
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.x

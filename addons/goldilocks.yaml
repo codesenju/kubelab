@@ -1,0 +1,37 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Deploy Goldilocks
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: goldilocks
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: goldilocks
+              repoURL: https://charts.fairwinds.com/stable
+              targetRevision: 9.0.1
+              helm:
+                releaseName: goldilocks
+                values: |
+                  vpa:
+                    # vpa.enabled -- If true, the vpa will be installed as a sub-chart
+                    enabled: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: goldilocks
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true

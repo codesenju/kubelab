@@ -1,0 +1,48 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no 
+  become: no
+  tasks:
+
+    - name: Deploy Pihole
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: pihole
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/pihole/overlays/prod
+              targetRevision: main
+              kustomize:
+                # Add these to your existing kustomize config
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                commonLabels:
+                  app.kubernetes.io/instance: pihole-prod
+          
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: pihole
+          
+            syncPolicy:
+              automated:
+                prune: false
+                selfHeal: false
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+
+            # ignoreDifferences:
+            # - group: ""
+            #   kind: PersistentVolumeClaim
+            #   jsonPointers:
+            #   - /status  # Ignore PVC status changes
+      tags: pihole

@@ -1,0 +1,8 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: shared-permissions
+data:
+  PUID: "0"
+  PGID: "0"
+  UMASK: "002"  # Ensures group write permissions

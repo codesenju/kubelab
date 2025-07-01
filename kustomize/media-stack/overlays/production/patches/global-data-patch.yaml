@@ -1,0 +1,6 @@
+# global-data-patch.yaml
+# Applies global data configurations (NFS mounts, env vars, resources) to deployments
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: global-data-patch

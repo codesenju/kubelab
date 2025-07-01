@@ -1,0 +1,16 @@
+services:
+  homeassistant:
+    container_name: homeassistant
+    image: ghcr.io/home-assistant/home-assistant:stable
+    volumes:
+      - ./config:/config
+      - /etc/localtime:/etc/localtime:ro
+      - /run/dbus:/run/dbus:ro
+    restart: always
+    devices:
+      - /dev/ttyUSB0:/dev/ttyUSB0
+    privileged: true
+    network_mode: host
+    expose:
+      - 8123
+networks: {}

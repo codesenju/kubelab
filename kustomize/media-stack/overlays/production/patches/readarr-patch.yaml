@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: readarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: readarr
+        env:
+        - name: READARR__INSTANCE_NAME
+          value: "Readarr-Prod"
+        - name: READARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: "/downloads"
+        - name: READARR__MEDIADIR
+          value: "/data/books"
+        volumeMounts:
+        - name: data
+          mountPath: /data/books
+          subPath: books
+        - name: data
+          mountPath: /downloads
+          subPath: downloads
+        resources:
+          requests:
+            cpu: 15m
+            memory: 164M
+          limits:
+            cpu: 15m
+            memory: 164M
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: readarr
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.86

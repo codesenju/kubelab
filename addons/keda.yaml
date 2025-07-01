@@ -1,0 +1,35 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy keda
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: keda
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: keda
+              repoURL: https://kedacore.github.io/charts
+              targetRevision: 2.17.1
+              helm:
+                releaseName: keda
+                # values: |
+                #   installCRDs: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: keda
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true

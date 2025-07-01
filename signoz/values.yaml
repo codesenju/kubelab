@@ -1,0 +1,12 @@
+global:
+  cloud: others
+  clusterName: kubelab-k8s
+  deploymentEnvironment: homelab
+otelCollectorEndpoint: 192.168.0.59:4317
+otelInsecure: true
+presets:
+  otlpExporter:
+    enabled: true
+  loggingExporter:
+    enabled: true
+    verbosity: normal

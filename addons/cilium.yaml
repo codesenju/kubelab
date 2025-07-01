@@ -1,0 +1,51 @@
+- name: Install Cilium CLI and Cilium
+  hosts: k8s-control-plane-1
+  become: true
+  vars:
+    cilium_version: "0.18.2"  # Explicitly set version instead of fetching
+  tasks:
+    - name: Download Cilium CLI
+      get_url:
+        url: "https://github.com/cilium/cilium-cli/releases/download/v{{ cilium_version }}/cilium-linux-amd64.tar.gz"
+        dest: /tmp/cilium-cli.tar.gz
+        mode: '0644'
+
+    - name: Create directory for Cilium CLI
+      file:
+        path: /tmp/cilium-cli
+        state: directory
+        mode: '0755'
+
+    - name: Extract Cilium CLI
+      unarchive:
+        src: /tmp/cilium-cli.tar.gz
+        dest: /tmp/cilium-cli
+        remote_src: yes
+
+    - name: Move Cilium CLI binary to /usr/local/bin
+      copy:
+        src: /tmp/cilium-cli/cilium
+        dest: /usr/local/bin/cilium
+        mode: '0755'
+        remote_src: yes
+
+    - name: Clean up temporary files
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /tmp/cilium-cli.tar.gz
+        - /tmp/cilium-cli
+
+    - name: Install Cilium
+      shell: cilium install --version 1.17.2
+      register: cilium_install
+      changed_when: cilium_install.rc == 0
+
+    - name: Wait for Cilium to be ready
+      shell: cilium status --wait
+      register: cilium_status
+      changed_when: false
+      retries: 30
+      delay: 10
+      until: cilium_status.rc == 0

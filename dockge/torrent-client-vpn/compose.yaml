@@ -1,0 +1,90 @@
+# torrent-client-vpn
+services:
+  nordlynx:
+    image: ghcr.io/bubuntux/nordlynx:2025-04-01
+    hostname: nordlynx
+    container_name: nordlynx
+    ports:
+      - 8089:8089 # qBittorrent
+      - 9091:9091 # Transmissioin
+      - 51413:51413 # Transmissioin
+      - 51413:51413/udp # Transmissioin
+    cap_add:
+      - NET_ADMIN
+      - SYS_MODULE
+    env_file: .env
+    environment:
+      - filters\[country_id\]=200
+      - NET_LOCAL=192.168.0.0/16,172.17.0.0/16,10.244.0.0/16
+      - TZ=Etc/GMT-2
+    sysctls:
+      - net.ipv4.conf.all.src_valid_mark=1
+      - net.ipv4.conf.all.rp_filter=2
+      - net.ipv6.conf.all.disable_ipv6=1
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 1G # Limit RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 512M # Guaranteed minimum RAM
+  qbittorrent:
+    image: linuxserver/qbittorrent:5.0.4
+    network_mode: service:nordlynx
+    container_name: qbittorrent-nord
+    depends_on:
+      - nordlynx
+    environment:
+      - WEBUI_PORT=8089
+      - PUID=1000
+      - PGID=0
+      - TZ=Etc/GMT-2
+    volumes:
+      - ./qbittorrent/config:/config
+      - /opt/media/downloads:/downloads
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 1G # Limit RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 512M # Guaranteed minimum RAM
+  transmission:
+    image: lscr.io/linuxserver/transmission:4.0.6
+    container_name: transmission-nord
+    network_mode: service:nordlynx
+    depends_on:
+      - nordlynx
+    environment:
+      - PUID=0
+      - PGID=0
+      - TZ=Arfica/Johannesburg
+      - TRANSMISSION_WEB_HOME=
+      - USER=
+      - PASS=
+      - WHITELIST=
+      - PEERPORT=
+      - HOST_WHITELIST=
+      - TRANSMISSION_DOWNLOAD_DIR=/downloads
+    volumes:
+      - ./config:/config
+      - /opt/media/downloads:/downloads
+      - ./watch:/watch
+    restart: unless-stopped
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 1G # Limit RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 512M # Guaranteed minimum RAM
+#    ports:
+#      - 9091:9091
+#      - 51413:51413
+#      - 51413:51413/udp
+networks: {}

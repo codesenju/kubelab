@@ -1,0 +1,156 @@
+- name: Configure Ubuntu 22.04 (Jammy) cloud server
+  hosts: ubuntu-server
+  become: yes
+  vars:
+    docker_users:
+      - ubuntu
+    vs_code: true     # Set to false to skip VS Code installation
+    nfs_enabled: true # Set to false to skip NFS tools
+
+  tasks: 
+  #   # Ensure cloud-init finished running first
+  #   - name: Wait for cloud-init to complete
+  #     shell: cloud-init status --wait
+  #     register: cloudinit_status
+  #     changed_when: false
+
+    # Update apt cache and upgrade all packages
+    - name: Update and upgrade apt packages
+      apt:
+        update_cache: yes
+        upgrade: dist
+        autoremove: yes
+
+    # Install essential system packages
+    - name: Install base packages
+      apt:
+        name:
+          - curl
+          - wget
+          - git
+          - htop
+          - tmux
+          - tree
+          - zip
+          - unzip
+          - net-tools
+          - dnsutils
+          - traceroute
+          - nmap
+          - tcpdump
+          - iftop
+          - jq
+          - gnupg
+          - software-properties-common
+          - apt-transport-https
+          - ca-certificates
+          - ufw
+          - openssh-server
+          - fail2ban
+        state: present
+
+    # Install NFS client tools if enabled
+    - name: Install NFS client packages
+      apt:
+        name:
+          - nfs-common
+          - rpcbind
+        state: present
+      when: nfs_enabled
+
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    # Install prerequisites
+    - name: Install required packages
+      apt:
+        name:
+          - ca-certificates
+          - curl
+          - gnupg
+          - software-properties-common
+        state: present
+
+    # Docker setup
+    - name: Add Docker GPG key (modern method)
+      ansible.builtin.apt_key:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        keyring: /usr/share/keyrings/docker-archive-keyring.gpg
+
+    - name: Add Docker repository (signed)
+      ansible.builtin.apt_repository:
+        repo: "deb [arch=amd64 signed-by=/usr/share/keyrings/docker-archive-keyring.gpg] https://download.docker.com/linux/ubuntu jammy stable"
+        filename: docker-ce
+        state: present
+
+    # Install packages
+    - name: Install Docker
+      apt:
+        name:
+          - docker-ce
+          - docker-ce-cli
+          - containerd.io
+          - docker-compose-plugin
+        state: present
+        update_cache: yes
+    
+    - name: Add users to docker group
+      user:
+        name: "{{ item }}"
+        groups: docker
+        append: yes
+      loop: "{{ docker_users }}"
+      when: docker_users | length > 0
+
+    - name: Configure Docker daemon
+      copy:
+        dest: /etc/docker/daemon.json
+        content: |
+          {
+            "exec-opts": ["native.cgroupdriver=systemd"],
+            "log-driver": "json-file",
+            "log-opts": {
+              "max-size": "100m"
+            },
+            "storage-driver": "overlay2"
+          }
+      notify:
+        - Restart Docker
+
+    # Configure firewall (UFW)
+    - name: Configure UFW
+      ufw:
+        rule: "{{ item.rule }}"
+        port: "{{ item.port }}"
+        proto: "{{ item.proto | default('tcp') }}"
+      loop:
+        - { rule: allow, port: 22, proto: tcp }   # SSH
+        - { rule: allow, port: 80, proto: tcp }   # HTTP
+        - { rule: allow, port: 443, proto: tcp }  # HTTPS
+      notify:
+        - Enable UFW
+
+    # Install development tools
+    - name: Install development tools
+      apt:
+        name:
+          - python3-pip
+          - python3-venv
+          - build-essential
+          - libssl-dev
+          - libffi-dev
+          - python3-dev
+          - python3-setuptools
+        state: present
+
+  handlers:
+    - name: Restart Docker
+      service:
+        name: docker
+        state: restarted
+        enabled: yes
+
+    - name: Enable UFW
+      ufw:
+        state: enabled
