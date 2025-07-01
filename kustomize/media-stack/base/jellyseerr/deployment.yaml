@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyseerr
+  labels:
+    app.kubernetes.io/component: request-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jellyseerr
+  template:
+    metadata:
+      labels:
+        app: jellyseerr
+        app.kubernetes.io/component: request-management
+    spec:
+      containers:
+      - name: jellyseerr
+        image: docker.io/fallenbagel/jellyseerr:2.5.1
+        imagePullPolicy: IfNotPresent
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        ports:
+        - containerPort: 5055
+          name: http
+        volumeMounts:
+        - name: media-stack-config
+          mountPath: /app/config
+          subPath: jellyseerr/config
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "256Mi"
+          limits:
+            cpu: "400m"
+            memory: "512Mi"
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config

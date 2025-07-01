@@ -1,0 +1,184 @@
+---
+- name: Set up CloudStack KVM Host (Agent Only)
+  hosts: kvm_hosts
+  become: yes
+  vars:
+    bridge_name: "cloudbr0"           # Bridge interface name
+    bridge_ip: "192.168.0.102"       # Host IP (adjust as needed)
+    bridge_gateway: "192.168.0.1"    # Default gateway
+    dns_servers: ["1.1.1.1", "8.8.8.8"]
+    cloudstack_version: "4.20"       # CloudStack agent version
+    nfs_secondary_path: "/export/secondary"  # NFS path for secondary storage
+
+  tasks:
+    # --- STEP 1: Add CloudStack Repository ---
+    - name: Add CloudStack APT repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/cloudstack.list
+        content: "deb https://download.cloudstack.org/ubuntu focal {{ cloudstack_version }}"
+        mode: '0644'
+
+    - name: Import CloudStack GPG key
+      ansible.builtin.shell: |
+        wget -O - https://download.cloudstack.org/release.asc | tee /etc/apt/trusted.gpg.d/cloudstack.asc
+      args:
+        executable: /bin/bash
+
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    # --- STEP 2: Install KVM & CloudStack Agent ---
+    - name: Install KVM and dependencies
+      ansible.builtin.apt:
+        name:
+          - qemu-kvm
+          - libvirt-daemon-system
+          - libvirt-clients
+          - bridge-utils
+          - cloudstack-agent
+        state: present
+
+    # --- STEP 3: Configure Networking (Bridge) ---
+    - name: Backup original netplan config
+      ansible.builtin.copy:
+        src: /etc/netplan/50-cloud-init.yaml
+        dest: /etc/netplan/50-cloud-init.yaml.bak
+        remote_src: yes
+
+    - name: Disable DHCP in netplan
+      ansible.builtin.replace:
+        path: /etc/netplan/50-cloud-init.yaml
+        regexp: '^([^#].*)$'
+        replace: '# \1'
+
+    - name: Configure bridge (cloudbr0) in netplan
+      ansible.builtin.copy:
+        dest: /etc/netplan/01-netcfg.yaml
+        content: |
+          network:
+            version: 2
+            renderer: networkd
+            ethernets:
+              eth0:
+                dhcp4: false
+                dhcp6: false
+                optional: true
+            bridges:
+              {{ bridge_name }}:
+                addresses: [{{ bridge_ip }}/24]
+                routes:
+                  - to: default
+                    via: {{ bridge_gateway }}
+                nameservers:
+                  addresses: {{ dns_servers }}
+                interfaces: [eth0]
+                dhcp4: false
+                dhcp6: false
+                parameters:
+                  stp: false
+                  forward-delay: 0
+        mode: '0644'
+
+    - name: Apply netplan changes
+      ansible.builtin.shell: |
+        netplan generate
+        netplan apply
+      args:
+        executable: /bin/bash
+
+    # --- STEP 4: Configure Libvirt for CloudStack ---
+    - name: Configure libvirtd to listen on TCP
+      ansible.builtin.lineinfile:
+        path: /etc/default/libvirtd
+        regexp: '^#?LIBVIRTD_ARGS=.*'
+        line: 'LIBVIRTD_ARGS="--listen"'
+
+    - name: Configure libvirtd.conf
+      ansible.builtin.blockinfile:
+        path: /etc/libvirt/libvirtd.conf
+        block: |
+          listen_tls = 0
+          listen_tcp = 1
+          auth_tcp = "none"
+          tcp_port = "16509"
+
+    - name: Mask unnecessary libvirt sockets
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        masked: yes
+      loop:
+        - libvirtd.socket
+        - libvirtd-ro.socket
+        - libvirtd-admin.socket
+        - libvirtd-tls.socket
+
+    - name: Restart libvirtd
+      ansible.builtin.service:
+        name: libvirtd
+        state: restarted
+
+    # --- STEP 5: Disable AppArmor for Libvirt ---
+    - name: Disable AppArmor profiles for libvirt
+      ansible.builtin.file:
+        src: "/etc/apparmor.d/{{ item.src }}"
+        dest: "/etc/apparmor.d/disable/{{ item.dest }}"
+        state: link
+      loop:
+        - { src: "usr.sbin.libvirtd", dest: "usr.sbin.libvirtd" }
+        - { src: "usr.lib.libvirt.virt-aa-helper", dest: "usr.lib.libvirt.virt-aa-helper" }
+
+    - name: Reload AppArmor
+      ansible.builtin.shell: |
+        systemctl restart apparmor
+      args:
+        executable: /bin/bash
+
+    # --- STEP 6: Set Up NFS for Secondary Storage ---
+    - name: Install NFS client
+      ansible.builtin.apt:
+        name: nfs-common
+        state: present
+
+    - name: Create secondary storage directory
+      ansible.builtin.file:
+        path: "{{ nfs_secondary_path }}"
+        state: directory
+        mode: '0755'
+
+    - name: Mount NFS secondary storage (add to fstab)
+      ansible.builtin.lineinfile:
+        path: /etc/fstab
+        line: "{{ nfs_server_ip }}:{{ nfs_export_path }} {{ nfs_secondary_path }} nfs auto,rsize=32768,wsize=32768 0 0"
+        state: present
+
+    - name: Mount NFS now
+      ansible.builtin.shell: |
+        mount -a
+      args:
+        executable: /bin/bash
+
+    # --- STEP 7: Configure CloudStack Agent ---
+    - name: Generate host UUID for CloudStack
+      ansible.builtin.shell: |
+        echo "host_uuid = \"$(uuidgen)\"" >> /etc/cloudstack/agent/agent.properties
+      args:
+        executable: /bin/bash
+
+    - name: Restart CloudStack Agent
+      ansible.builtin.service:
+        name: cloudstack-agent
+        state: restarted
+
+    # --- STEP 8: Verify KVM ---
+    - name: Check KVM virtualization support
+      ansible.builtin.shell: |
+        kvm-ok
+      args:
+        executable: /bin/bash
+      register: kvm_check
+      failed_when: kvm_check.rc != 0
+
+    - name: Debug KVM check
+      ansible.builtin.debug:
+        var: kvm_check.stdout

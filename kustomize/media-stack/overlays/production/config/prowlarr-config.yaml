@@ -1,0 +1,30 @@
+# overlays/prod/config/prowlarr-config.yaml
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: prowlarr-config
+  labels:
+    app.kubernetes.io/component: indexer-management
+data:
+  # Direct JSON content (not nested YAML)
+  appsettings.json: |-
+    {
+      "AnalyticsEnabled": false,
+      "Branch": "main",
+      "LogLevel": "Info",
+      "SslPort": 9696,
+      "AuthenticationMethod": "Forms"
+    }
+  # Direct XML content
+  logconfig.xml: |-
+    <log4net>
+      <root>
+        <level value="INFO" />
+        <appender-ref ref="LogFileAppender" />
+      </root>
+      <appender name="LogFileAppender" type="log4net.Appender.RollingFileAppender">
+        <file value="/config/logs/prowlarr.txt" />
+        <maximumFileSize value="10MB" />
+        <maxSizeRollBackups value="5" />
+      </appender>
+    </log4net>

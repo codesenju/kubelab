@@ -1,0 +1,22 @@
+services:
+  openvscode-server:
+    stdin_open: true
+    tty: true
+    init: true
+    ports:
+      - 3001:3000
+    volumes:
+      - ./workspace:/home/workspace:cached
+    # image: gitpod/openvscode-server:1.98.2
+    build:
+      context: .
+    restart: always
+    deploy:
+      resources:
+        limits:
+          cpus: "1" # Limit CPU core
+          memory: 1.5G # Limit RAM
+        reservations:
+          cpus: "0.5" # Guaranteed minimum CPU
+          memory: 1G # Guaranteed minimum RAM
+networks: {}

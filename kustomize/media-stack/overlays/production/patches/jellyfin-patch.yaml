@@ -1,0 +1,113 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jellyfin
+  labels:
+    app.kubernetes.io/component: media-server
+spec:
+  template:
+    spec:
+      dnsConfig:
+        nameservers:
+          - "103.86.96.100" # nordvpn
+          - "103.86.99.100" # nordvpn
+        searches:
+          - "local"
+      dnsPolicy: "None"  # Required for custom dnsConfig
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k8s-worker-1
+                - k8s-worker-2
+                - k8s-worker-3
+      containers:
+    # # Gluetun VPN container
+    #   - name: gluetun
+    #     image: ghcr.io/qdm12/gluetun
+    #     securityContext:
+    #       privileged: true  # Required for /dev/net/tun
+    #       capabilities:
+    #         add:
+    #           - NET_ADMIN
+    #           - SYS_MODULE  # For tun device creation
+    #     env:
+    #       - name: DNS_SERVERS
+    #         value: "103.86.96.100,103.86.99.100" # NordVPN DNS
+    #       - name: DNS_PLAINTEXT
+    #         value: "on" # Required for torrent clients
+    #       - name: DNS_UPDATE_PERIOD
+    #         value: "24h"
+    #       - name: VPN_SERVICE_PROVIDER
+    #         value: "nordvpn"
+    #       - name: VPN_TYPE
+    #         value: "wireguard"
+    #         # value: "openvpn"
+    #       # - name: OPENVPN_USER
+    #       #   valueFrom:
+    #       #     secretKeyRef:
+    #       #       name: nordvpn-credentials
+    #       #       key: OPENVPN_USER
+    #       # - name: OPENVPN_PASSWORD
+    #       #   valueFrom:
+    #       #     secretKeyRef:
+    #       #       name: nordvpn-credentials
+    #       #       key: OPENVPN_PASSWORD
+    #       - name: WIREGUARD_PRIVATE_KEY
+    #         valueFrom:
+    #           secretKeyRef:
+    #             name: nordvpn-credentials
+    #             key: WIREGUARD_PRIVATE_KEY
+    #       - name: SERVER_COUNTRIES
+    #         value: "South Africa" # change to location closest to you for faster downloads
+    #       # - name: OPENVPN_CIPHER
+    #       #   value: "AES-256-CBC"
+    #       # - name: OPENVPN_AUTH
+    #       #   value: "SHA512"
+    #     volumeMounts:
+    #       - name: media-stack-config
+    #         mountPath: /gluetun
+    #         subPath: gluetun/config
+    #     resources:
+    #       requests:
+    #         cpu: "100m"
+    #         memory: "256Mi"
+    #       limits:
+    #         cpu: "200m"
+    #         memory: "512Mi"
+        # Gluetun VPN container - END
+      - name: jellyfin
+        env:
+        - name: JELLYFIN_PublishedServerUrl
+          valueFrom:
+            configMapKeyRef:
+              name: media-stack-env
+              key: JELLYFIN_URL
+        volumeMounts:
+        - name: data
+          mountPath: /data/movies
+          subPath: movies
+        - name: data
+          mountPath: /data/tv
+          subPath: tv
+        - name: data
+          mountPath: /data/music
+          subPath: music
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: jellyfin
+  labels:
+    app.kubernetes.io/component: media-server
+spec:
+  type: ClusterIP
+  # loadBalancerIP: 192.168.0.55

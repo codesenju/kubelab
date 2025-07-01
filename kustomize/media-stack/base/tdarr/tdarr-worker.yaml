@@ -1,0 +1,80 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr-worker
+  labels:
+    app.kubernetes.io/component: media-processing
+spec:
+  replicas: 3
+  selector:
+    matchLabels:
+      app: tdarr-worker
+  template:
+    metadata:
+      labels:
+        app: tdarr-worker
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+            - matchExpressions:
+              - key: kubernetes.io/hostname
+                operator: In
+                values:
+                - k8s-worker-1
+                - k8s-worker-3
+                - k8s-worker-5
+        podAntiAffinity:
+          preferredDuringSchedulingIgnoredDuringExecution:
+          - weight: 100
+            podAffinityTerm:
+              labelSelector:
+                matchExpressions:
+                - key: app
+                  operator: In
+                  values:
+                  - tdarr-worker
+              topologyKey: "kubernetes.io/hostname"
+      containers:
+      - name: tdarr-worker
+        image: ghcr.io/haveagitgat/tdarr_node:latest
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        env:
+        - name: nodeID
+          valueFrom:
+            fieldRef:
+              fieldPath: spec.nodeName
+        - name: serverIP
+          value: "tdarr"
+        - name: serverPort
+          value: "8266"
+        volumeMounts:
+        - name: data
+          mountPath: /opt/data/media
+        - name: transcode-cache
+          mountPath: /temp
+        resources:
+          requests:
+            cpu: "512m"
+            memory: "1Gi"
+            # nvidia.com/gpu: 1  # Request GPU if available
+          limits:
+            cpu: "1"
+            memory: "2Gi"
+            # nvidia.com/gpu: 1
+      priorityClassName: high-priority
+      volumes:
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
+      - name: transcode-cache
+        emptyDir: {}
+      # tolerations:
+      # - key: "gpu"
+      #   operator: "Exists"
+      #   effect: "NoSchedule"

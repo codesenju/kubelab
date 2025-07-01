@@ -1,0 +1,67 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Kubeapps
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: kubeapps
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: kubeapps
+              repoURL: registry-1.docker.io/bitnamicharts
+              targetRevision: 17.1.1
+              helm:
+                releaseName: kubeapps
+                values: |
+                  global:
+                    imagePullSecrets: ["dockerhub-secret"]
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: kubeapps
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    # - name: Wait for kubeapps pods to be ready
+    #   kubernetes.core.k8s_info:
+    #     kind: Pod
+    #     namespace: kubeapps
+    #     label_selectors:
+    #       - app.kubernetes.io/name=kubeapps
+    #     wait: yes
+    #     wait_sleep: 10
+    #     wait_timeout: 300
+    #     wait_condition:
+    #       type: Ready
+    #       status: "True"
+
+    # - name: Get LoadBalancer IP
+    #   shell: kubectl -n kubeapps get svc kubeapps -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+    #   register: lb_ip
+    #   changed_when: false
+
+    # - name: Get LoadBalancer Port
+    #   shell: kubectl -n kubeapps get svc kubeapps -o jsonpath='{.spec.ports[0].port}'
+    #   register: lb_port
+    #   changed_when: false
+
+    # - name: Display Homar access information
+    #   ansible.builtin.debug:
+    #     msg:
+    #       - "----------------------------------------"
+    #       - "🚀 Kubeapps is deployed successfully!"
+    #       - "----------------------------------------"
+    #       - "📍 URL: http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+    #       - "----------------------------------------"

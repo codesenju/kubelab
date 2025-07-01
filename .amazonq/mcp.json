@@ -1,0 +1,14 @@
+{
+  "mcpServers": {
+    "kubernetes": {
+      "command": "npx",
+      "args": ["-y", "kubernetes-mcp-server@latest"],
+      "env": {},
+      "timeout": 120000
+    },
+     "git": {
+    "command": "uvx",
+    "args": ["mcp-server-git", "--repository", "/Users/jazziro/codesenju/repos/kubelab"]
+  }
+  }
+}

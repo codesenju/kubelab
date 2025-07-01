@@ -1,0 +1,46 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no 
+  become: no
+  tasks:
+
+    - name: Deploy nginx-proxy-manager
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: nginx-proxy-manager
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/nginx-proxy-manager/overlays/prod
+              targetRevision: main
+              kustomize:
+                # Add these to your existing kustomize config
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                commonLabels:
+                  app.kubernetes.io/instance: nginx-proxy-manager-prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: nginx-proxy-manager
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+
+            # ignoreDifferences:
+            # - group: ""
+            #   kind: PersistentVolumeClaim
+            #   jsonPointers:
+            #   - /status  # Ignore PVC status changes
+      tags: nginx-proxy-manager

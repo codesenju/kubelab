@@ -1,0 +1,77 @@
+- hosts: loadbalancer
+  become: yes
+  tasks:
+    - name: Update apt cache
+      apt:
+        update_cache: yes
+      when: ansible_os_family == "Debian"
+
+    - name: Install NGINX
+      apt:
+        name: nginx
+        state: present
+      when: ansible_os_family == "Debian"
+
+    - name: Create NGINX configuration directory
+      file:
+        path: /etc/nginx/tcpconf.d
+        state: directory
+        mode: '0755'
+
+    - name: Replace nginx.conf with minimal configuration
+      copy:
+        dest: /etc/nginx/nginx.conf
+        content: |
+          user www-data;
+          worker_processes auto;
+          pid /run/nginx.pid;
+          include /etc/nginx/modules-enabled/*.conf;
+
+          events {
+              worker_connections 768;
+          }
+
+          stream {
+              include /etc/nginx/tcpconf.d/*.conf;
+          }
+
+          http {
+              include /etc/nginx/mime.types;
+              default_type application/octet-stream;
+
+              access_log /var/log/nginx/access.log;
+              error_log /var/log/nginx/error.log;
+
+              include /etc/nginx/conf.d/*.conf;
+              include /etc/nginx/sites-enabled/*;
+          }
+
+    - name: Configure Kubernetes API Server load balancing
+      copy:
+        dest: /etc/nginx/tcpconf.d/kubernetes.conf
+        content: |
+          upstream kubernetes {
+              server {{ hostvars['k8s-control-plane-1']['ansible_host'] }}:6443;
+              server {{ hostvars['k8s-control-plane-2']['ansible_host'] }}:6443;
+          }
+
+          server {
+              listen 6443;
+              proxy_pass kubernetes;
+          }
+
+    - name: Validate NGINX configuration
+      command: /usr/sbin/nginx -t
+      register: nginx_validate
+      changed_when: false
+      ignore_errors: yes
+
+    - name: Fail if NGINX configuration is invalid
+      fail:
+        msg: "NGINX configuration test failed. Please check the configuration."
+      when: nginx_validate.rc != 0
+
+    - name: Restart NGINX
+      service:
+        name: nginx
+        state: restarted

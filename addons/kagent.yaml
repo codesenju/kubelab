@@ -1,0 +1,65 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy KAgent CRDs
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: kagent-crds
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: kagent-crds
+              repoURL: ghcr.io/kagent-dev/kagent/helm
+              targetRevision: 0.3.15
+              helm:
+                releaseName: kagent-crds
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: kagent
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Deploy KAgent
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: kagent
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: kagent
+              repoURL: ghcr.io/kagent-dev/kagent/helm
+              targetRevision: 0.3.15
+              helm:
+                releaseName: kagent
+                values: |
+                  providers:
+                    openAI:
+                      apiKey: "{{ lookup('env', 'OPENAI_API_KEY') }}"
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: kagent
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true

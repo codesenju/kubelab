@@ -1,0 +1,9 @@
+# Common files to ignore
+node_modules/
+*.log
+.DS_Store
+.env
+*ignore.*
+# No GitHub-specific ignores here
+# The files that are ignored in GitHub but should be included in Gitea
+# are NOT listed here

@@ -1,0 +1,10 @@
+apiVersion: platform.example.org/v1alpha1
+kind: Microservice
+metadata:
+  name: webserver1
+spec:
+  name: webserver1
+  image: httpd:alpine
+  domain: webserver.httpd.local
+  team: platform
+  port: 80

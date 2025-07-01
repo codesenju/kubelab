@@ -1,0 +1,24 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: tdarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: tdarr
+        resources:
+          requests:
+            cpu: 35m
+            memory: 298M
+          limits:
+            cpu: 35m
+            memory: 298M
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: tdarr
+spec:
+  type: LoadBalancer
+  loadBalancerIP: 192.168.0.58

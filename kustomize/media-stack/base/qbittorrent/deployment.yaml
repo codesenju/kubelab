@@ -1,0 +1,65 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+  labels:
+    app.kubernetes.io/component: download-client
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: qbittorrent
+  strategy:
+    type: Recreate  # Required for VPN connection stability
+  template:
+    metadata:
+      labels:
+        app: qbittorrent
+        app.kubernetes.io/component: download-client
+    spec:
+      containers:
+      - name: qbittorrent
+        image: lscr.io/linuxserver/qbittorrent:latest
+        securityContext:
+          capabilities:
+            add: ["NET_ADMIN"]  # Required for VPN
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        env:
+        - name: VPN_ENABLED
+          value: "true"
+        - name: LAN_NETWORK
+          value: "192.168.0.0/24"  # Adjust to your local network
+        - name: UMASK
+          value: "002"
+        ports:
+        - containerPort: 8080
+          name: webui
+        - containerPort: 6881
+          name: tcp-torrent
+          protocol: TCP
+        - containerPort: 6881
+          name: udp-torrent
+          protocol: UDP
+        volumeMounts:
+        - name: media-stack-config
+          mountPath: /config
+          subPath: qbittorrent/config
+        - name: data
+          mountPath: /data
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8080
+          initialDelaySeconds: 60
+          periodSeconds: 30
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data

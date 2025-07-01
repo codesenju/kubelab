@@ -1,0 +1,103 @@
+- name: Kubernetes Dependencies
+  hosts: workers 
+  become: yes
+  tasks:
+
+    - name: Updates
+      apt:
+        update_cache: yes
+      tags: prerequisites
+
+    - name: Install prerequisites
+      apt:
+        name:
+          - nfs-common
+          - open-iscsi
+        state: present
+        update_cache: yes
+      tags: prerequisites
+
+- hosts: k8s-control-plane-1
+  become: yes
+  gather_facts: no
+  tasks:
+    - name: Install longhorn
+      shell:  |-
+        set -e
+        kubectl apply -f https://raw.githubusercontent.com/longhorn/longhorn/v1.8.1/deploy/longhorn.yaml
+      args:
+        chdir: $HOME
+    
+    # Keep commented out if using nginx proxy manager
+    # - name: Patch longhorn frontend Service LoadBalancer IP
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     api_version: v1
+    #     kind: Service
+    #     name: longhorn-frontend
+    #     namespace: longhorn-system
+    #     definition:
+    #       spec:
+    #         type: LoadBalancer
+    #         loadBalancerIP: "{{ longhorn_static_ip }}"
+    #     merge_type: strategic-merge
+
+    - name: Deploy pvc test
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: longhorn-volv-pvc
+            namespace: default
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            storageClassName: longhorn
+            resources:
+              requests:
+                storage: 1Gi
+
+    - name: Deploy volume test app
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Pod
+          metadata:
+            name: volume-test
+            namespace: default
+          spec:
+            containers:
+            - name: volume-test
+              image: nginx:stable-alpine
+              imagePullPolicy: IfNotPresent
+              volumeMounts:
+              - name: volv
+                mountPath: /data
+              ports:
+              - containerPort: 80
+            volumes:
+            - name: volv
+              persistentVolumeClaim:
+                claimName: longhorn-volv-pvc
+
+    - name: Get LoadBalancer IP
+      shell: kubectl -n longhorn-system get svc longhorn-frontend -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      register: lb_ip
+      changed_when: false
+
+    - name: Get LoadBalancer Port
+      shell: kubectl -n longhorn-system get svc longhorn-frontend -o jsonpath='{.spec.ports[0].port}'
+      register: lb_port
+      changed_when: false
+
+    - name: Display Longhorn access information
+      ansible.builtin.debug:
+        msg:
+          - "----------------------------------------"
+          - "🚀 Longhorn deployed successfully!"
+          - "----------------------------------------"
+          - "📍 URL:  http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
+          - "----------------------------------------"

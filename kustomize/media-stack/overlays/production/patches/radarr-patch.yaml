@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: radarr
+spec:
+  template:
+    spec:
+      containers:
+      - name: radarr
+        env:
+        - name: RADARR__INSTANCE_NAME
+          value: "Radarr-Prod"
+        - name: RADARR__INSTANCE_NAME
+          value: "Radarr-Prod"
+        - name: RADARR__DOWNLOADCLIENT__1__DOWNLOADDIR
+          value: "/downloads"
+        - name: RADARR__MEDIADIR
+          value: "/data/movies"
+        volumeMounts:
+        - name: data
+          mountPath: /data/movies
+          subPath: movies
+        - name: data
+          mountPath: /downloads
+          subPath: downloads
+        resources:
+          requests:
+            cpu: 15m
+            memory: 352M
+          limits:
+            cpu: 15m
+            memory: 352M
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: radarr
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.82

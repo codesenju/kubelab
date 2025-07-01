@@ -1,0 +1,41 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: vaultwarden
+  labels:
+    app: vaultwarden
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: vaultwarden
+  template:
+    metadata:
+      labels:
+        app: vaultwarden
+    spec:
+      containers:
+        - name: vaultwarden
+          image: IMAGE_TEMPLATE
+          env:
+            - name: ADMIN_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secrets
+                  key: ADMIN_TOKEN
+            - name: DOMAIN
+              valueFrom:
+                secretKeyRef:
+                  name: vaultwarden-secrets
+                  key: DOMAIN
+          volumeMounts:
+            - name: vw-data
+              mountPath: /data/
+              subPath: vaultwarden
+          ports:
+            - containerPort: 80
+      restartPolicy: Always
+      volumes:
+      - name: vw-data
+        persistentVolumeClaim:
+          claimName: vw-data

@@ -1,0 +1,9 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+    - name: Allow volume expansion on default storage class
+      shell:  |-
+        set -e
+        DEFAULT_STORAGE_CLASS=$(kubectl get storageclass -o=jsonpath='{.items[?(@.metadata.annotations.storageclass\.kubernetes\.io/is-default-class=="true")].metadata.name}')
+        kubectl patch storageclass "$DEFAULT_STORAGE_CLASS" -p '{"allowVolumeExpansion": true}'
+      tags: enable_volume_expansion

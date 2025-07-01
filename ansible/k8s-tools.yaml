@@ -1,0 +1,129 @@
+- name: Install k9s
+  hosts: control-plane
+  become: yes
+  vars:
+    k8s_version: "1.30"
+  tasks:
+  
+  #===== k9s
+    - name: Check if k9s is already installed
+      command: which k9s
+      register: k9s_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Download k9s
+      get_url:
+        url: "https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz"
+        dest: /tmp/k9s.tar.gz
+        mode: '0755'
+      when: k9s_check.rc != 0
+
+    - name: Create k9s directory
+      file:
+        path: /tmp/k9s
+        state: directory
+        mode: '0755'
+      when: k9s_check.rc != 0
+
+    - name: Extract k9s
+      unarchive:
+        src: /tmp/k9s.tar.gz
+        dest: /tmp/k9s
+        remote_src: yes
+      when: k9s_check.rc != 0
+
+    - name: Move k9s binary to /usr/local/bin
+      copy:
+        src: /tmp/k9s/k9s
+        dest: /usr/local/bin/k9s
+        mode: '0755'
+        remote_src: yes
+      when: k9s_check.rc != 0
+
+    - name: Clean up temporary files
+      file:
+        path: "{{ item }}"
+        state: absent
+      with_items:
+        - /tmp/k9s.tar.gz
+        - /tmp/k9s
+      when: k9s_check.rc != 0
+
+#===== Helm
+    - name: Check current helm version
+      command: helm version --client
+      register: helm_check
+      ignore_errors: yes
+      changed_when: false
+
+    - name: Install Helm
+      unarchive:
+        src: https://get.helm.sh/helm-v3.13.3-linux-amd64.tar.gz
+        dest: /usr/local/bin
+        extra_opts: "--strip-components=1"
+        owner: root
+        group: root
+        mode: 0755
+        remote_src: true
+      args:
+        creates: /usr/local/bin/helm
+      when: helm_check.rc != 0
+
+#===== kube-bench
+    - name: Set kube-bench version
+      set_fact:
+        kube_bench_version: "0.10.1"
+
+    - name: Download kube-bench tarball
+      get_url:
+        url: "https://github.com/aquasecurity/kube-bench/releases/download/v{{ kube_bench_version }}/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+        dest: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+        mode: '0644'
+
+    - name: Create kube-bench config directory
+      file:
+        path: /opt/kube-bench
+        state: directory
+        mode: '0755'
+
+    - name: Extract kube-bench tarball to /opt/kube-bench
+      unarchive:
+        src: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+        dest: "/opt/kube-bench"
+        remote_src: yes
+        mode: '0755'
+
+    - name: Move kube-bench binary to /usr/local/bin
+      copy:
+        src: "/opt/kube-bench/kube-bench"
+        dest: /usr/local/bin/kube-bench
+        mode: '0755'
+        remote_src: yes
+
+    - name: Remove kube-bench tarball from /tmp
+      file:
+        path: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+        state: absent
+
+    - name: Print kube-bench usage instructions
+      debug:
+        msg:
+          - "----------------------------------------"
+          - "✅ Kube-bench is installed!"
+          - "----------------------------------------"
+          - "To run the CIS Kubernetes benchmark, use:"
+          - "  cis-benchmark"
+          - ""
+          - "(This runs: kube-bench --config-dir /opt/kube-bench/cfg --config /opt/kube-bench/cfg/config.yaml)"
+          - ""
+          - "For manual run:"
+          - "  kube-bench --config-dir /opt/kube-bench/cfg --config /opt/kube-bench/cfg/config.yaml"
+          - "----------------------------------------"
+
+    - name: Add cis-benchmark alias for all users
+      lineinfile:
+        path: /etc/profile.d/cis-benchmark.sh
+        line: "alias cis-benchmark='sudo kube-bench --config-dir /opt/kube-bench/cfg --config /opt/kube-bench/cfg/config.yaml'"
+        create: yes
+        mode: '0755'

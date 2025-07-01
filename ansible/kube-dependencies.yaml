@@ -1,0 +1,182 @@
+- name: Kubernetes Dependencies
+  hosts: control-plane, workers 
+  become: yes
+  vars:
+    k8s_version: "1.30"
+  tasks:
+
+    - name: Updates
+      apt:
+        update_cache: yes
+
+    - name: Install pip3
+      apt:
+        name: python3-pip
+        state: present
+        update_cache: yes
+
+    - name: Install required Python packages
+      pip:
+        name:
+          - kubernetes
+          - PyYAML
+          - jsonpatch
+        state: present
+        
+    - name: Install prerequisites
+      apt:
+        name:
+          - curl
+          - net-tools
+          - bind9-utils
+          - gnupg2
+          - apt-transport-https
+          - ca-certificates
+          - software-properties-common
+          - nfs-common
+          - open-iscsi
+        state: present
+        update_cache: yes
+
+    - name: Disable SWAP
+      shell: |
+        swapoff -a
+
+    - name: Disable SWAP in fstab
+      replace:
+        path: /etc/fstab
+        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
+        replace: '# \1'
+
+    - name: Create an empty file for the containerd module
+      copy:
+        content: ""
+        dest: /etc/modules-load.d/containerd.conf
+        force: no
+
+    - name: Configure modules for containerd
+      blockinfile:
+        path: /etc/modules-load.d/containerd.conf
+        block: |
+          overlay
+          br_netfilter
+
+    - name: Create an empty file for K8S sysctl parameters
+      copy:
+        content: ""
+        dest: /etc/sysctl.d/99-kubernetes-cri.conf
+        force: no
+
+    - name: Configure sysctl parameters for K8S
+      lineinfile:
+        path: /etc/sysctl.d/99-kubernetes-cri.conf
+        line: "{{ item }}"
+      with_items:
+        - "net.bridge.bridge-nf-call-iptables  = 1"
+        - "net.ipv4.ip_forward                 = 1"
+        - "net.bridge.bridge-nf-call-ip6tables = 1"
+
+    - name: Apply sysctl parameters
+      command: sysctl --system
+
+    - name: Install APT Transport HTTPS
+      apt:
+        name: apt-transport-https
+        state: present
+
+    - name: Add Docker apt-key
+      get_url:
+        url: https://download.docker.com/linux/ubuntu/gpg
+        dest: /etc/apt/keyrings/docker-apt-keyring.asc
+        mode: "0644"
+        force: true
+
+    - name: Add Docker's APT repo
+      apt_repository:
+        repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/docker-apt-keyring.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        state: present
+        update_cache: yes
+
+    - name: Add Kubernetes apt-key
+      get_url:
+        url: https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key
+        dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
+        mode: "0644"
+        force: true
+
+    - name: Add Kubernetes APT repository
+      apt_repository:
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /"
+        state: present
+        update_cache: yes
+
+    - name: Install containerd
+      apt:
+        name: containerd.io
+        state: present
+
+    - name: Create containerd directory
+      file:
+        path: /etc/containerd
+        state: directory
+
+    - name: Add containerd configuration
+      shell: /usr/bin/containerd config default > /etc/containerd/config.toml
+
+    - name: Configuring Systemd cgroup driver for containerd
+      lineinfile:
+        path: /etc/containerd/config.toml
+        regexp: "            SystemdCgroup = false"
+        line: "            SystemdCgroup = true"
+
+    - name: Enable the containerd service and start service
+      systemd:
+        name: containerd
+        state: restarted
+        enabled: yes
+        daemon-reload: yes
+
+    - name: Install Kubelet
+      apt:
+        name: kubelet={{ k8s_version }}.*
+        state: present
+        update_cache: true
+      tags:
+        - install_kubelet
+
+    - name: Install Kubeadm
+      apt:
+        name: kubeadm={{ k8s_version }}.*
+        state: present
+
+    - name: Enable the Kubelet service
+      service:
+        name: kubelet
+        enabled: yes
+
+    - name: Load br_netfilter kernel module
+      modprobe:
+        name: br_netfilter
+        state: present
+
+    - name: Set bridge-nf-call-iptables
+      sysctl:
+        name: net.bridge.bridge-nf-call-iptables
+        value: 1
+
+    - name: Set ip_forward
+      sysctl:
+        name: net.ipv4.ip_forward
+        value: 1
+
+    - name: Reboot
+      reboot:
+
+- hosts: control-plane
+  become: yes
+  tasks:
+    - name: Install Kubectl
+      apt:
+        name: kubectl={{ k8s_version }}.*
+        state: present
+        force: yes

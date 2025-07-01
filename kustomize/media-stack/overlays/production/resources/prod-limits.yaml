@@ -1,0 +1,36 @@
+apiVersion: v1
+kind: LimitRange
+metadata:
+  name: media-stack-resource-limits
+  namespace: media  # Replace with your namespace
+spec:
+  limits:
+  - type: Container
+    max:
+      cpu: "4"
+      memory: "8Gi"
+    min:
+      cpu: "10m"
+      memory: "10Mi"
+    default:
+      cpu: "500m"
+      memory: "512Mi"
+    defaultRequest:
+      cpu: "250m"
+      memory: "256Mi"
+    # maxLimitRequestRatio:
+    #   cpu: "2"
+    #   memory: "2"
+---
+apiVersion: v1
+kind: ResourceQuota
+metadata:
+  name: media-stack-resource-quota
+  namespace: media  # Replace with your namespace
+spec:
+  hard:
+    requests.cpu: "32"
+    requests.memory: "32Gi"
+    limits.cpu: "64"
+    limits.memory: "64Gi"
+    pods: "100"

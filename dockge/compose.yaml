@@ -1,0 +1,40 @@
+# Firefox
+services:
+  firefox:
+    image: fhriley/firefox
+    ports:
+      - 5800:5800
+    volumes:
+      - ./config:/config:rw
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+networks: {}
+
+# Portainer
+services:
+  portainer-ce:
+    ports:
+      - 8000:8000
+      - 10443:9443
+    container_name: portainer
+    restart: always
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - ./data:/data
+    image: portainer/portainer-ce:lts
+    deploy:
+      resources:
+        limits:
+          cpus: "0.5" # Limit to half a CPU core
+          memory: 512M # Limit to 512MB RAM
+        reservations:
+          cpus: "0.25" # Guaranteed minimum CPU
+          memory: 256M # Guaranteed minimum RAM
+networks: {}
+

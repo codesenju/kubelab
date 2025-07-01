@@ -1,0 +1,49 @@
+services:
+  headscale:
+    container_name: headscale
+    volumes:
+      - ./config:/etc/headscale/
+      - ./keys:/var/lib/headscale/
+    ports:
+      - 8084:8080
+      - 9090:9090
+    networks:
+      - net
+    image: headscale/headscale:0.25.1
+    command: serve
+    restart: unless-stopped
+  headplane:
+    # I recommend you pin the version to a specific release
+    image: ghcr.io/tale/headplane:0.5.10
+    container_name: headplane
+    restart: unless-stopped
+    ports:
+      - 3003:3000
+    networks:
+      - net
+    volumes:
+      - ./headplane-config:/etc/headplane/
+      # This should match headscale.config_path in your config.yaml
+      - ./config/config.yaml:/etc/headscale/config.yaml:ro
+      # Headplane stores its data in this directory
+      - ./headplane-data:/var/lib/headplane
+      # If you are using the Docker integration, mount the Docker socket
+      - /var/run/docker.sock:/var/run/docker.sock:ro
+  headscale-ui:
+    image: ghcr.io/gurucomputing/headscale-ui:latest
+    pull_policy: always
+    container_name: headscale-ui
+    restart: unless-stopped
+    ports:
+      - 5443:8443
+      - 8085:8080
+    networks:
+      - net
+  headscale-admin:
+    ports:
+      - 8000:80
+    image: goodieshq/headscale-admin:latest
+    networks:
+      - net
+networks:
+  net: {}

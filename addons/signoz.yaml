@@ -1,0 +1,110 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+    - name: Deploy Signoz
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: signoz
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: signoz
+              repoURL: https://charts.signoz.io
+              targetRevision: 0.76.1
+              helm:
+                releaseName: signoz
+                values: |
+                  global:
+                    storageClass: nfs-csi
+                    clusterName: "kubelab"
+                    clickhouse:
+                      installCustomStorageClass: true
+                  otelCollector:
+                    service:
+                      type: LoadBalancer
+                      loadBalancerIP: 192.168.0.59
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: signoz
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Deploy Signoz k8s-infra
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: signoz-k8s-infra
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: k8s-infra
+              repoURL: https://charts.signoz.io
+              targetRevision: 0.12.1
+              helm:
+                releaseName: signoz-k8s-infra
+                values: |
+                  global:
+                    cloud: others
+                    clusterName: "kubelab"
+                    storageClass: "nfs-csi"
+                    deploymentEnvironment: prod
+                  otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
+                  otelInsecure: true
+                  insecureSkipVerify: true
+                  presets:
+                    otlpExporter:
+                      enabled: true
+                    loggingExporter:
+                      enabled: false
+                    # hostMetrics:
+                    #   enabled: true
+                    #   collectionInterval: 30s
+                    # logsCollection:
+                    #   enabled: true
+                    #   blacklist:
+                    #     enabled: true
+                    #     namespaces: 
+                    #       - kube-system
+                    # kubeletMetrics:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
+                    # kubernetesAttributes:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
+                    # clusterMetrics:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
+                    # k8sEvents:
+                    #   enabled: true
+                    #   otelInsecure: true
+                    #   insecureSkipVerify: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: signoz
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true

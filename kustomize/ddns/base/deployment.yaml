@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudflare-ddns
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudflare-ddns
+  template:
+    metadata:
+      labels:
+        app: cloudflare-ddns
+    spec:
+      # hostNetwork: true  # Required for host networking (like Docker's network_mode: host)
+      containers:
+      - name: cloudflare-ddns
+        image: favonia/cloudflare-ddns:latest
+        envFrom:  # Load all variables from Secret and ConfigMap
+          - secretRef:
+              name: cloudflare-api-secret
+          - configMapRef:
+              name: cloudflare-config
+        securityContext:
+          runAsUser: 1000
+          runAsGroup: 1000
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
