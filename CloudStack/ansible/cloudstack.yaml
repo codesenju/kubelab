@@ -1,0 +1,312 @@
+---
+- name: Set up CloudStack on Ubuntu
+  hosts: cloudstack_hosts
+  become: yes
+  vars:
+    mysql_root_password: "cloud"  # Root password for MySQL
+    cloudstack_user: "cloud"      # CloudStack DB user
+    bridge_ip: "192.168.0.101"   # IP for cloudbr0
+    bridge_gateway: "192.168.0.1" # Default gateway
+    dns_servers: ["1.1.1.1", "8.8.8.8"]
+    cloudstack_version: "4.20"  # CloudStack version
+    root_password: "cloud"
+
+  tasks:
+    # --- STEP 1: Add CloudStack Repository & Update ---
+    - name: Add CloudStack APT repository
+      ansible.builtin.copy:
+        dest: /etc/apt/sources.list.d/cloudstack.list
+        content: "deb https://download.cloudstack.org/ubuntu focal {{ cloudstack_version }}"
+        mode: '0644'
+
+    - name: Import CloudStack GPG key
+      ansible.builtin.shell: |
+        wget -O - https://download.cloudstack.org/release.asc | tee /etc/apt/trusted.gpg.d/cloudstack.asc
+      args:
+        executable: /bin/bash
+
+    - name: Update APT cache
+      ansible.builtin.apt:
+        update_cache: yes
+
+    # --- STEP 2: Install Required Packages ---
+    - name: Install essential packages
+      ansible.builtin.apt:
+        name:
+          - bridge-utils
+          - vim
+          - htop
+          - chrony
+          - openjdk-8-jdk
+          - git
+        state: present
+
+    # --- STEP 3: Configure Netplan (Disable DHCP, Set Bridge) ---
+    - name: Backup original netplan config
+      ansible.builtin.copy:
+        src: /etc/netplan/50-cloud-init.yaml
+        dest: /etc/netplan/50-cloud-init.yaml.bak
+        remote_src: yes
+
+    - name: Comment out original netplan config
+      ansible.builtin.replace:
+        path: /etc/netplan/50-cloud-init.yaml
+        regexp: '^([^#].*)$'
+        replace: '# \1'
+
+    - name: Configure bridge (cloudbr0) in netplan
+      ansible.builtin.copy:
+        dest: /etc/netplan/01-netcfg.yaml
+        content: |
+          network:
+            version: 2
+            renderer: networkd
+            ethernets:
+              eth0:
+                dhcp4: false
+                dhcp6: false
+                optional: true
+            bridges:
+              cloudbr0:
+                addresses: [{{ bridge_ip }}/24]
+                routes:
+                  - to: default
+                    via: {{ bridge_gateway }}
+                nameservers:
+                  addresses: {{ dns_servers }}
+                interfaces: [eth0]
+                dhcp4: false
+                dhcp6: false
+                parameters:
+                  stp: false
+                  forward-delay: 0
+        mode: '0644'
+
+    - name: Apply netplan changes
+      ansible.builtin.shell: |
+        netplan generate
+        netplan apply
+      args:
+        executable: /bin/bash
+
+    # --- STEP 4: Enable Root SSH Login ---
+    - name: Configure SSH to allow root login
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?PermitRootLogin.*'
+        line: 'PermitRootLogin yes'
+        state: present
+
+    - name: Enable keyboard-interactive auth
+      ansible.builtin.lineinfile:
+        path: /etc/ssh/sshd_config
+        regexp: '^#?KbdInteractiveAuthentication.*'
+        line: 'KbdInteractiveAuthentication yes'
+        state: present
+
+    - name: Restart SSH service
+      ansible.builtin.service:
+        name: ssh
+        state: restarted
+
+    # --- STEP 5: Install CloudStack Management & MySQL ---
+    - name: Install CloudStack and MySQL
+      ansible.builtin.apt:
+        name:
+          - cloudstack-management
+          - mysql-server
+        state: present
+
+    - name: Create CloudStack MySQL config
+      ansible.builtin.copy:
+        dest: /etc/mysql/conf.d/cloudstack.cnf
+        content: |
+          [mysqld]
+          innodb_rollback_on_timeout=1
+          innodb_lock_wait_timeout=600
+          max_connections=350
+          log-bin=mysql-bin
+          binlog-format = 'ROW'
+        mode: '0644'
+
+    - name: Restart MySQL
+      ansible.builtin.service:
+        name: mysql
+        state: restarted
+
+    # --- STEP 7: Setup CloudStack Database ---
+    - name: Run CloudStack database setup
+      ansible.builtin.shell: |
+        cloudstack-setup-databases {{ cloudstack_user }}:{{ mysql_root_password }}@localhost --deploy-as=root -i {{ bridge_ip }}
+      args:
+        executable: /bin/bash
+      tags: init
+
+    # --- STEP 8: Configure NFS Storage ---
+    - name: Install NFS server & Quota
+      ansible.builtin.apt:
+        name:
+          - nfs-kernel-server
+          - quota
+        state: present
+
+    - name: Configure NFS exports
+      ansible.builtin.copy:
+        dest: /etc/exports
+        content: "/export  *(rw,async,no_root_squash,no_subtree_check)"
+        mode: '0644'
+
+    - name: Create NFS directories
+      ansible.builtin.file:
+        path: "{{ item }}"
+        state: directory
+      loop:
+        - /export/primary
+        - /export/secondary
+
+    - name: Apply NFS exports
+      ansible.builtin.shell: exportfs -a
+      args:
+        executable: /bin/bash
+
+    - name: Configure NFS kernel server options
+      ansible.builtin.replace:
+        path: /etc/default/nfs-kernel-server
+        regexp: '^RPCMOUNTDOPTS="--manage-gids"$'
+        replace: 'RPCMOUNTDOPTS="-p 892 --manage-gids"'
+
+    - name: Configure NFS common options
+      ansible.builtin.blockinfile:
+        path: /etc/default/nfs-common
+        block: |
+          STATDOPTS="--port 662 --outgoing-port 2020"
+          NEED_STATD=yes
+
+    - name: Configure quota options
+      ansible.builtin.replace:
+        path: /etc/default/quota
+        regexp: '^RPCRQUOTADOPTS=$'
+        replace: 'RPCRQUOTADOPTS="-p 875"'
+
+    - name: Restart NFS server & Quota
+      service:
+        name: "{{ item }}"
+        state: restarted
+      loop:
+        - nfs-kernel-server
+        - quota
+
+    # --- STEP 9: Setup KVM Hypervisor ---
+    - name: Install KVM and CloudStack agent
+      ansible.builtin.apt:
+        name:
+          - qemu-kvm
+          - cloudstack-agent
+        state: present
+
+    - name: Configure libvirtd to listen on TCP
+      ansible.builtin.lineinfile:
+        path: /etc/default/libvirtd
+        regexp: '^#?LIBVIRTD_ARGS=.*'
+        line: 'LIBVIRTD_ARGS="--listen"'
+
+    - name: Configure libvirtd.conf
+      ansible.builtin.blockinfile:
+        path: /etc/libvirt/libvirtd.conf
+        block: |
+          listen_tls=0
+          listen_tcp=0
+          tcp_port = "16509"
+          mdns_adv = 0
+          auth_tcp = "none"
+
+    - name: Mask libvirtd sockets
+      ansible.builtin.systemd:
+        name: "{{ item }}"
+        masked: yes
+      loop:
+        - libvirtd.socket
+        - libvirtd-ro.socket
+        - libvirtd-admin.socket
+        - libvirtd-tls.socket
+        - libvirtd-tcp.socket
+
+    - name: Restart libvirtd
+      ansible.builtin.service:
+        name: libvirtd
+        state: restarted
+
+    - name: Generate and set host UUID
+      ansible.builtin.shell: |
+        UUID=$(uuidgen)
+        echo "host_uuid = \"$UUID\"" >> /etc/libvirt/libvirtd.conf
+      args:
+        executable: /bin/bash
+
+    - name: Disable AppArmor for libvirtd
+      ansible.builtin.file:
+        src: "/etc/apparmor.d/{{ item.src }}"
+        dest: "/etc/apparmor.d/disable/{{ item.dest }}"
+        state: link
+      loop:
+        - { src: "usr.sbin.libvirtd", dest: "usr.sbin.libvirtd" }
+        - { src: "usr.lib.libvirt.virt-aa-helper", dest: "usr.lib.libvirt.virt-aa-helper" }
+
+    - name: Reload AppArmor profiles
+      ansible.builtin.shell: |
+        apparmor_parser -R /etc/apparmor.d/usr.sbin.libvirtd
+        apparmor_parser -R /etc/apparmor.d/usr.lib.libvirt.virt-aa-helper
+      args:
+        executable: /bin/bash
+
+    # --- STEP 10: Start CloudStack Management ---
+    - name: Run CloudStack management setup
+      ansible.builtin.shell: cloudstack-setup-management
+      args:
+        executable: /bin/bash
+      tags: init
+
+     # --- Downlaod template ---
+    - name: Download and install CloudStack system template
+      shell: >
+        /usr/share/cloudstack-common/scripts/storage/secondary/cloud-install-sys-tmplt 
+        -m /export/secondary 
+        -u http://download.cloudstack.org/systemvm/4.17/systemvmtemplate-4.17.0-kvm.qcow2.bz2 
+        -h kvm 
+        -F
+      args:
+        creates: /export/secondary/template/tmpl/1/1/systemvmtemplate-4.17.0-kvm.qcow2
+      register: template_result
+      ignore_errors: yes
+      tags: template-download
+
+    # --- Setup password less ssh ---
+    - name: Verify public key exists
+      ansible.builtin.stat:
+        path: /home/cloud/.ssh/id_rsa.pub
+      register: pubkey
+      tags: ssh-key-setup
+    
+    - name: Read cloud user's public key
+      slurp:
+        src: /home/cloud/.ssh/id_rsa.pub
+      register: cloud_ssh_key
+      become_user: cloud
+      tags: ssh-key-setup
+      
+    - name: Add cloud user's SSH key to root's authorized_keys
+      lineinfile:
+        path: /root/.ssh/authorized_keys
+        line: "{{ cloud_ssh_key.content | b64decode }}"
+        create: yes
+        mode: '0600'
+        owner: root
+        group: root
+      tags: ssh-key-setup
+    
+    - name: Set root password
+      user:
+        name: root
+        password: "{{ root_password | password_hash('sha512') }}"
+        update_password: always
+      tags: root-password-setup

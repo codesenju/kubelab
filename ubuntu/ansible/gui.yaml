@@ -1,0 +1,83 @@
+---
+- name: Install GUI on Ubuntu 22.04 Cloud Image
+  hosts: ubuntu-server
+  become: yes
+  vars:
+    gui_user: "ubuntu"  # Default cloud image user
+    remote_access: "x2go"  # Options: x2go, vnc, or none
+
+  tasks:
+    # Step 1: Enable universe repository
+    - name: Enable universe repository
+      apt_repository:
+        repo: "deb http://archive.ubuntu.com/ubuntu jammy universe"
+        state: present
+        filename: ubuntu-universe
+
+    # Step 2: Update package cache
+    - name: Update apt package index
+      apt:
+        update_cache: yes
+
+    # Step 3: Install Xfce and dependencies
+    - name: Install Xfce desktop environment
+      apt:
+        name:
+          - xfce4
+          - xfce4-goodies
+          - lightdm
+          - xorg
+          - dbus-x11
+        state: present
+
+    # Step 4: Install additional GUI components
+    - name: Install common GUI applications
+      apt:
+        name:
+          - firefox
+          - gnome-terminal
+          - mousepad
+          - thunar
+          - xfce4-terminal
+          - network-manager-gnome
+        state: present
+
+    # Step 5: Configure remote access (X2Go)
+    - name: Add X2Go repository
+      apt_repository:
+        repo: "ppa:x2go/stable"
+        state: present
+      when: remote_access == "x2go"
+
+    - name: Install X2Go server
+      apt:
+        name:
+          - x2goserver
+          - x2goserver-xsession
+        state: present
+        update_cache: yes
+      when: remote_access == "x2go"
+
+    # Step 6: Configure display manager
+    - name: Set Xfce as default session
+      copy:
+        dest: /etc/lightdm/lightdm.conf
+        content: |
+          [SeatDefaults]
+          user-session=xfce
+          greeter-session=lightdm-gtk-greeter
+
+    # Step 7: Enable graphical target
+    - name: Set default to graphical target
+      command: systemctl set-default graphical.target
+      changed_when: false
+      notify: Reboot server
+
+  handlers:
+    - name: Reboot server
+      reboot:
+        msg: "Rebooting to start GUI environment"
+        connect_timeout: 5
+        reboot_timeout: 600
+        pre_reboot_delay: 0
+        post_reboot_delay: 30

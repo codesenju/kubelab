@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: npm-data
+  labels:
+    service: npm-data   # This matches the PVC selector
+spec:
+  capacity:
+    storage: 1Gi
+  nfs:
+    server: 192.168.0.15 # change me
+    path: /mnt/pool1/AppData/
+  accessModes:
+    - ReadWriteOnce
+  mountOptions:
+    - noatime
+    - nfsvers=4.2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: npm-data
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 1Gi
+  selector:
+    matchLabels:
+      service: npm-data  # Add selector to match PV label
+  storageClassName: "" # This prevents dynamic provisioning

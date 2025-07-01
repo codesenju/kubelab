@@ -1,0 +1,190 @@
+- hosts: k8s-control-plane-1
+  become: no
+  vars:
+    minio_endpoint: "{{ s3_endpoint }}"
+  tasks:
+
+    - name: Deploy cloudnative-postgresql gitea cluster
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitea-database
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/gitea-database/overlays/prod
+              targetRevision: main
+              kustomize:
+                # Add these to your existing kustomize config
+                labels:
+                  app.kubernetes.io/instance: gitea-database
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: gitea
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
+
+    - name: Deploy Gitea
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitea
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://dl.gitea.com/charts/
+              chart: gitea
+              targetRevision: 12.0.0
+              helm:
+                releaseName: gitea
+                values: |
+                  global:
+                    storageClass: "nfs-csi"
+                  postgresql:
+                    enabled: false
+                  postgresql-ha:
+                    enabled: false
+                  gitea:
+                    config:
+                      attachment:
+                        STORAGE_TYPE: minio
+                      lfs:
+                        STORAGE_TYPE: minio
+                      picture:
+                        AVATAR_STORAGE_TYPE: minio
+                      "storage.packages":
+                        STORAGE_TYPE: minio
+                      repo-avatars:
+                        STORAGE_TYPE: minio
+                      "storage":
+                        STORAGE_TYPE: minio
+                        MINIO_ENDPOINT: {{ minio_endpoint }}
+                        MINIO_LOCATION: joburg-north-1
+                        MINIO_ACCESS_KEY_ID: {{ s3_access_key }}
+                        MINIO_SECRET_ACCESS_KEY: {{ s3_secret_key }}
+                        MINIO_BUCKET: gitea-storage
+                        MINIO_USE_SSL: true
+                        MINIO_INSECURE_SKIP_VERIFY: false
+                        SERVE_DIRECT: true
+                      "storage.minio":
+                        STORAGE_TYPE: minio
+                        MINIO_ENDPOINT: {{ minio_endpoint }}
+                        MINIO_LOCATION: joburg-north-1
+                        MINIO_ACCESS_KEY_ID: {{ s3_access_key }}
+                        MINIO_SECRET_ACCESS_KEY: {{ s3_secret_key }}
+                        MINIO_BUCKET: gitea-storage
+                        MINIO_USE_SSL: true
+                        MINIO_INSECURE_SKIP_VERIFY: false
+                        SERVE_DIRECT: true
+                      database:
+                        DB_TYPE: postgres
+                        HOST: gitea-postgres-rw.gitea.svc.cluster.local:5432
+                        NAME: {{ gitea_db_name }}
+                        USER: {{ gitea_db_user }}
+                        PASSWD: {{ gitea_db_password }}
+                    admin:
+                      # existingSecret: gitea-admin-secret
+                      existingSecret:
+                      username: {{ gitea_admin_username }}
+                      password: {{ gitea_admin_password }}
+                      email: {{ gitea_admin_email }}
+                      passwordMode: keepUpdated
+                  ingress:
+                    enabled: true
+                    className: "nginx"
+                    pathType: Prefix
+                    annotations: {}
+                    hosts:
+                      - host: {{ gitea_domain }}
+                        paths:
+                          - path: /
+                    tls: []
+                    #  - secretName: chart-example-tls
+                    #    hosts:
+                    #      - git.example.com
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: gitea
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Create gitea-runner-secret for Gitea runner
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: gitea-runner-secret
+            namespace: gitea
+          type: Opaque
+          stringData:
+            registration_token: "{{ gitea_registration_token }}"
+            instance_url: "{{ gitea_instance_url }}"
+
+    - name: Deploy gitea-runner
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitea-runner
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              # repoURL: https://github.com/codesenju/kubelab.git
+              repoURL: https://git.jazziro.com/kubelab/kubelab.git
+              path: kustomize/gitea-runner/overlays/prod
+              targetRevision: main
+              kustomize:
+                # Add these to your existing kustomize config
+                labels:
+                  app.kubernetes.io/instance: gitea-runner
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: gitea
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            # ignoreDifferences:
+            #   - group: "postgresql.cnpg.io"
+            #     kind: Cluster
+            #     jsonPointers:
+            #       - /spec/managed/roles

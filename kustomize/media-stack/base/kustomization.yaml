@@ -1,0 +1,40 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+# Shared resources across all apps
+resources:
+- _shared/data-volume.yaml
+- _shared/permissions-cm.yaml
+# - _shared/network-policy.yaml
+
+# Core media services
+- jellyfin/deployment.yaml
+- jellyfin/service.yaml
+# - jellyfin/hpa.yaml
+
+# Download client
+# - qbittorrent/deployment.yaml
+# - qbittorrent/service.yaml
+
+# *Arr applications
+- sonarr/deployment.yaml
+- sonarr/service.yaml
+- radarr/deployment.yaml
+- radarr/service.yaml
+- lidarr/deployment.yaml
+- lidarr/service.yaml
+- readarr/deployment.yaml
+- readarr/service.yaml
+- prowlarr/deployment.yaml
+- prowlarr/service.yaml
+
+# Additional components
+# - overseerr/deployment.yaml
+# - overseerr/service.yaml
+- tdarr/deployment.yaml
+- tdarr/service.yaml
+- tdarr/tdarr-worker.yaml
+- jellyseerr/deployment.yaml
+- jellyseerr/service.yaml
+- flaresolverr/deployment.yaml
+- flaresolverr/service.yaml

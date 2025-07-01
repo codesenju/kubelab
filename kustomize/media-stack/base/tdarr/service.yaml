@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: tdarr
+spec:
+  ports:
+  - name: http
+    port: 8265 
+    targetPort: 8265
+    protocol: TCP
+  - name: websocket
+    port: 8266 
+    targetPort: 8266
+    protocol: TCP
+  selector:
+    app: tdarr
