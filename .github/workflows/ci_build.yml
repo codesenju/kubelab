@@ -6,6 +6,7 @@ on:
   push:
     branches:
       - 'feat*/*'
+      - 'main'
 
 env:
   CLICOLOR: 1
