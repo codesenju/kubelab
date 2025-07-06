@@ -2,15 +2,6 @@
   gather_facts: no
   become: no
   tasks:
-
-    - name: Create namespace in Kubernetes
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-            name: zero-trust
   
     - name: Deploy Authentik postgresql pv
       kubernetes.core.k8s:
@@ -20,14 +11,14 @@
           kind: PersistentVolume
           metadata:
             name: authentik-db
-            namespace: zero-trust
+            namespace: zero-trusts
             labels:
               service: authentik-db  # This matches the PVC selector
           spec:
             capacity:
               storage: 8Gi
             nfs:
-              server: 192.168.0.15 # change me
+              server: 192.168.0.16 # change me
               path: /mnt/pool1/AppData/authentik/database
             accessModes:
               - ReadWriteOnce
@@ -54,6 +45,50 @@
               matchLabels:
                 service: authentik-db  # Add selector to match PV label
             volumeName: authentik-db
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Deploy Authentik redis pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: authentik-redis
+            namespace: zero-trust
+            labels:
+              service: authentik-redis  # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 8Gi
+            nfs:
+              server: 192.168.0.16 # change me
+              path: /mnt/pool1/AppData/authentik/redis
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy Authentik redis pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: authentik-redis
+            namespace: zero-trust
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 8Gi
+            selector:
+              matchLabels:
+                service: authentik-redis  # Add selector to match PV label
+            volumeName: authentik-redis
             storageClassName: "" # This prevents dynamic provisioning
 
     - name: Deploy Authentik
@@ -100,6 +135,10 @@
                         existingClaim: authentik-db
                   redis:
                     enabled: true
+                    master:
+                      persistence:
+                        enabled: true
+                        existingClaim: authentik-redis
             destination:
               server: https://kubernetes.default.svc
               namespace: zero-trust
