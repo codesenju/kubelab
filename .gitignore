@@ -34,3 +34,4 @@ secrets/
 config/local.json
 build/special/
 ansible/vault_password.txt
+ansible/ignore-vault-pass
