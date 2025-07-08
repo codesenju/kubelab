@@ -48,9 +48,9 @@ spec:
           volumeMounts:
             - name: runner-config
               mountPath: /config
-            - name: runner-data
-              mountPath: /data
-              subPath: gitea_runner
+            # - name: runner-data
+            #   mountPath: /data
+            #   subPath: gitea_runner
             - name: docker-bin
               mountPath: /usr/local/bin/docker
               subPath: docker
@@ -66,9 +66,9 @@ spec:
         - name: runner-config
           configMap:
             name: gitea-runner-config
-        - name: runner-data
-          persistentVolumeClaim:
-            claimName: gitea-runner-data
+        # - name: runner-data
+        #   persistentVolumeClaim:
+        #     claimName: gitea-runner-data
         - name: docker-graph-storage
           emptyDir: {}
         - name: docker-bin
