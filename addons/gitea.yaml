@@ -164,7 +164,6 @@
           spec:
             project: default
             source:
-              # repoURL: https://github.com/codesenju/kubelab.git
               repoURL: https://git.jazziro.com/kubelab/kubelab.git
               path: kustomize/gitea-runner/overlays/prod
               targetRevision: main
