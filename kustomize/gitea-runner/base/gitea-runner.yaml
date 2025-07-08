@@ -5,7 +5,7 @@ metadata:
   name: gitea-runner
   namespace: gitea
 spec:
-  replicas: 1
+  replicas: 3
   selector:
     matchLabels:
       app: gitea-runner
@@ -33,7 +33,9 @@ spec:
                   name: gitea-runner-secret
                   key: instance_url
             - name: GITEA_RUNNER_NAME
-              value: "static-runner"
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
             - name: GITEA_RUNNER_LABELS
               value: "static,linux,k8s,x86_64"
             - name: DOCKER_HOST
