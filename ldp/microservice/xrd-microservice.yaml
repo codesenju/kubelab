@@ -33,4 +33,3 @@ spec:
                   default: 80
                 team:
                   type: string
-
