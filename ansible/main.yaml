@@ -1,99 +1,16 @@
 ---
 - name: Import Nginx Load Balancer Playbook
   import_playbook: nginx-lb.yaml
-  tags:
-    - baseline
-    - all
-    - k8s
 
 - name: Import Kubernetes Dependencies Playbook
   import_playbook: kube-dependencies.yaml
-  tags:
-    - baseline
-    - all
-    - k8s
 
 - name: Import Kubernetes Cluster Setup Playbook
   import_playbook: kube-cluster.yaml
-  tags:
-    - baseline
-    - all
-    - k8s
 
 - name: Setup kubeconfig
   import_playbook: kubeconfig.yaml
-  tags:
-    - baseline
-    - all
-    - k8s
 
 - name: Setup k8s tools
   import_playbook: k8s-tools.yaml
-  tags:
-    - baseline
-    - all
-    - k8s
 
-- name: Setup Longhonrn
-  import_playbook: ../addons/longhorn.yaml
-  tags:
-    - baseline
-    - longhorn
-    - all
-
-- name: Setup MetalLB
-  import_playbook: ../addons/metallb.yaml
-  tags:
-    - baseline
-    - loadbalancer
-    - all
-
-- name: Setup Argocd
-  import_playbook: ../addons/argocd.yaml
-  tags:
-    - baseline
-    - gitops
-    - all
-    - argocd
-
-- name: Setup Metrics Server
-  import_playbook: ../addons/metrics-server.yaml
-  tags:
-    - baseline
-    - argocd-apps
-    - all
-    - metrics-server
-
-- name: Setup Cert Manager
-  import_playbook: ../addons/cert-manager.yaml
-  tags:
-    - baseline
-    - argocd-apps
-    - all
-    - cert-manager
-    
-- name: homarrr
-  import_playbook: ../addons/homarr.yaml
-  tags:
-    - argocd-apps
-    - all
-    - homarr
-
-- name: portainer
-  import_playbook: ../addons/portainer.yaml
-  tags:
-    - argocd-apps
-    - all
-    - portainer
-
-- name: adhoc
-  import_playbook: ../addons/adhoc.yaml
-  tags:
-    - adhoc
-
-- name: csi-driver-nfs
-  import_playbook: ../addons/csi-driver-nfs.yaml
-  tags:
-    - baseline
-    - all
-    - csi-driver-nfs

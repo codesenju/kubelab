@@ -57,7 +57,7 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
     user_account {
       username = "ubuntu"
       password = "ubuntu"
-      keys     = [file("./../kubelab.pub")]
+      keys     = [file("${local.public_key_file_path}")]
     }
   }
 
@@ -121,7 +121,7 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
     user_account {
       username = "ubuntu"
       password = "ubuntu"
-      keys     = [file("${local.private_key_file_path}")]
+      keys     = [file("${local.public_key_file_path}")]
     }
   }
 
@@ -184,7 +184,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
     user_account {
       username = local.vm_user
       password = local.vm_password
-      keys     = [file("${local.private_key_file_path}")]
+      keys     = [file("${local.public_key_file_path}")]
     }
   }
 

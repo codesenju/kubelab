@@ -2,7 +2,8 @@
   hosts: control-plane
   become: yes
   vars:
-    k8s_version: "1.30"
+    k8s_version: "1.31"
+    etcd_version: "v3.6.1"
   tasks:
   
   #===== k9s
@@ -127,3 +128,73 @@
         line: "alias cis-benchmark='sudo kube-bench --config-dir /opt/kube-bench/cfg --config /opt/kube-bench/cfg/config.yaml'"
         create: yes
         mode: '0755'
+
+#===== etcdutl
+    - name: Set etcd version
+      set_fact:
+        etcd_version: "v3.6.1"
+
+    - name: Remove old etcd tarball if exists
+      file:
+        path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        state: absent
+
+    - name: Remove old etcd download directory if exists
+      file:
+        path: /tmp/etcd-download-test
+        state: absent
+
+    - name: Create etcd download directory
+      file:
+        path: /tmp/etcd-download-test
+        state: directory
+        mode: '0755'
+
+    - name: Download etcd tarball
+      get_url:
+        url: "https://storage.googleapis.com/etcd/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        dest: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        mode: '0644'
+
+    - name: Extract etcd tarball
+      unarchive:
+        src: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        dest: /tmp/etcd-download-test
+        remote_src: yes
+        extra_opts:
+          - --strip-components=1
+          - --no-same-owner
+        mode: '0755'
+
+    - name: Remove etcd tarball after extraction
+      file:
+        path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        state: absent
+
+    - name: Move etcd, etcdctl, and etcdutl binaries to /usr/local/bin
+      copy:
+        src: "/tmp/etcd-download-test/{{ item }}"
+        dest: "/usr/local/bin/{{ item }}"
+        mode: '0755'
+        remote_src: yes
+      loop:
+        - etcd
+        - etcdctl
+        - etcdutl
+
+    - name: Remove etcd download directory
+      file:
+        path: /tmp/etcd-download-test
+        state: absent
+
+    - name: Print etcd, etcdctl, and etcdutl versions
+      shell: |
+        etcd --version
+        etcdctl version
+        etcdutl version
+      register: etcd_versions
+      changed_when: false
+
+    - name: Show etcd, etcdctl, and etcdutl versions
+      debug:
+        var: etcd_versions.stdout_lines
