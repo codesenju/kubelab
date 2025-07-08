@@ -31,7 +31,7 @@
     # Keep commented out if using nginx proxy manager
     # - name: Patch longhorn frontend Service LoadBalancer IP
     #   kubernetes.core.k8s:
-    #     state: present
+    #     state: absent
     #     api_version: v1
     #     kind: Service
     #     name: longhorn-frontend
@@ -44,7 +44,7 @@
 
     - name: Deploy pvc test
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -61,7 +61,7 @@
 
     - name: Deploy volume test app
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Pod
@@ -72,7 +72,7 @@
             containers:
             - name: volume-test
               image: nginx:stable-alpine
-              imagePullPolicy: IfNotPresent
+              imagePullPolicy: IfNotabsent
               volumeMounts:
               - name: volv
                 mountPath: /data
