@@ -1,0 +1,47 @@
+- name: Setup Longhonrn
+  import_playbook: ../addons/longhorn.yaml
+
+- name: Setup MetalLB
+  import_playbook: ../addons/metallb.yaml
+
+- name: Setup Argocd
+  import_playbook: ../addons/argocd.yaml
+
+- name: Setup Metrics Server
+  import_playbook: ../addons/metrics-server.yaml
+
+- name: Setup Cert Manager
+  import_playbook: ../addons/cert-manager.yaml
+
+- name: adhoc
+  import_playbook: ../addons/adhoc.yaml
+  
+- name: ingress-nginx
+  import_playbook: ../addons/ingress-nginx.yaml
+
+- name: cnpg
+  import_playbook: ../addons/cnpg.yaml
+
+- name: csi-driver-nfs
+  import_playbook: ../addons/csi-driver-nfs.yaml
+
+- name: media-stack
+  import_playbook: ../addons/media-stack.yaml
+
+- name: homarr
+  import_playbook: ../addons/homarr.yaml
+
+- name: ddns
+  import_playbook: ../addons/ddns.yaml
+
+- name: beszel-agent
+  import_playbook: ../addons/beszel-agent.yaml
+
+- name: vailtwarden
+  import_playbook: ../addons/vaultwarden.yaml
+
+- name: minio
+  import_playbook: ../addons/minio.yaml
+
+- name: kube-prometheus-stack
+  import_playbook: ../addons/kube-prometheus-stack.yaml
