@@ -48,6 +48,7 @@ spec:
               mountPath: /config
             - name: runner-data
               mountPath: /data
+              subPath: gitea_runner
             - name: docker-bin
               mountPath: /usr/local/bin/docker
               subPath: docker
