@@ -13,6 +13,8 @@ spec:
       labels:
         app: backstage
     spec:
+      imagePullSecrets:
+        - name: regcred-ghcr
       containers:
         - name: backstage
           image: IMAGE_NAME # Replace with the actual image name
