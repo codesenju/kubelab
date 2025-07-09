@@ -40,3 +40,18 @@
                 kind: Cluster
                 jsonPointers:
                   - /spec/managed/roles
+
+    - name: Create regcred secret for ghcr
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: regcred-ghcr
+            namespace: backstage
+          type: Opaque
+          stringData:
+            docker-server: "ghcr.io"  # Replace with your registry URL
+            docker-username: "{{ ghcr_username }}"  # Replace with your GitHub username
+            docker-password: "{{ ghcr_token}}"   # Replace with your GitHub token
