@@ -1,0 +1,79 @@
+- hosts: k8s-control-plane-1
+  become: no
+  tasks:
+
+
+    - name: Deploy minio provider
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: pkg.crossplane.io/v1
+          kind: Provider
+          metadata:
+            labels:
+              name: provider-minio
+            name: provider-minio
+          spec:
+            package: ghcr.io/vshn/provider-minio/provider:v0.4.0
+
+    - name: Wait for minio provider pod to be ready
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Pod
+        namespace: crossplane-system
+        label_selectors:
+          - "pkg.crossplane.io/provider=provider-minio"
+      register: minio_provider_pods
+
+    - name: Pause until minio provider pod is running
+      ansible.builtin.pause:
+        seconds: 5
+      when: minio_provider_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length == 0
+      register: pause_result
+      until: minio_provider_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
+      retries: 12
+      delay: 5
+
+    - name: Create minio provider secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: minio-secret
+            namespace: crossplane-system
+          stringData:
+            AWS_ACCESS_KEY_ID: "{{ s3_access_key }}"
+            AWS_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
+
+    - name: Create minio provider config
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: minio.crossplane.io/v1
+          kind: ProviderConfig
+          metadata:
+            name: provider-config
+          spec:
+            credentials:
+              apiSecretRef:
+                name: minio-secret
+                namespace: crossplane-system
+              source: InjectedIdentity
+            minioURL: "https://{{ s3_endpoint }}"
+
+    - name: Create bucket
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: minio.crossplane.io/v1
+          kind: Bucket
+          metadata:
+            name: myfirstbucket
+          spec:
+            forProvider:
+              bucketName: myfirstbucket
+              region: joburg-north-1
+            providerConfigRef:
+              name: provider-config
