@@ -3,30 +3,26 @@
   become: no
   tasks:
 
-    - name: Deploy backstage
+    - name: Deploy Kro
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: backstage
+            name: kro
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
           spec:
             project: default
             source:
-              repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/backstage/overlays/prod
-              targetRevision: main
-              kustomize:
-                # Add these to your existing kustomize config
-                labels:
-                  app.kubernetes.io/instance: backstage
+              repoURL: ghcr.io/kro-run/kro
+              chart: kro
+              targetRevision: 0.3.0
             destination:
               server: https://kubernetes.default.svc
-              namespace: backstage
+              namespace: kro
             syncPolicy:
               automated:
                 prune: true
@@ -35,8 +31,8 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
-            ignoreDifferences:
-              - group: "postgresql.cnpg.io"
-                kind: Cluster
-                jsonPointers:
-                  - /spec/managed/roles
+            # ignoreDifferences:
+            #   - group: "postgresql.cnpg.io"
+            #     kind: Cluster
+            #     jsonPointers:
+            #       - /spec/managed/roles

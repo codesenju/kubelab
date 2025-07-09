@@ -1,8 +1,58 @@
-# Kubelab
-HA Kubernetes running on Proxmox Virtual Environment
+# Kubernetes Cluster Architecture
+
+```mermaid
+graph TD
+    subgraph "Control Plane Nodes"
+        CP1[Control Plane Node 1<br/>192.168.0.41<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
+        CP2[Control Plane Node 2<br/>192.168.0.42<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
+    end
+
+    subgraph "Worker Nodes"
+        W1[Worker Node 1<br/>192.168.0.51<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
+        W2[Worker Node 2<br/>192.168.0.52<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
+    end
+
+    LB[Load Balancer<br/>192.168.0.40<br/>kube-apiserver:6443]
+
+    LB --> CP1
+    LB --> CP2
+    CP1 --- CP2
+    CP1 --> W1
+    CP1 --> W2
+    CP2 --> W1
+    CP2 --> W2
+
+```
+
+## Encrypting Secrets with Ansible Vault
+
+Before setting up the cluster, you need to create and encrypt your secrets file using Ansible Vault.
+
+1. **Create the secrets file**  
+   Place your secrets in `ansible/groups_vars/all/secrets.yaml` (see the variable examples below).
+
+2. **Encrypt the file with Ansible Vault**  
+   Run the following command and set a strong password when prompted:
+   ```bash
+   ansible-vault encrypt ansible/groups_vars/all/secrets.yaml
+   ```
+   _Alternatively, to use a password file:_
+   ```bash
+   ansible-vault encrypt ansible/groups_vars/all/secrets.yaml --vault-password-file <vault-password-file>
+   ```
+
+3. **Edit the encrypted file (optional):**
+   ```bash
+   ansible-vault edit ansible/groups_vars/all/secrets.yaml --vault-password-file <vault-password-file>
+   ```
+
+4. **Apply the Ansible playbook using your vault password file:**
+   ```bash
+   ansible-playbook main.yaml --vault-pass-file="<vault-password-file>"
+   ```
 
 ## Configuration Variables
-Before setting up the cluster, create a `vars.yaml` file in the ansible directory with your custom values. Below are the variables you can configure (reference from `ansible/vars.ignore.yaml`):
+Below are the variables you can configure in your `secrets.yaml`:
 
 ```yaml
 # ArgoCD Configuration
@@ -44,32 +94,6 @@ gitea_registration_token: "<your-gitea-registration-token>"
 gitea_instance_url: "<your-gitea-instance-url>"
 ```
 
-# Kubernetes Cluster Architecture
-
-```mermaid
-graph TD
-    subgraph "Control Plane Nodes"
-        CP1[Control Plane Node 1<br/>192.168.0.41<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
-        CP2[Control Plane Node 2<br/>192.168.0.42<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
-    end
-
-    subgraph "Worker Nodes"
-        W1[Worker Node 1<br/>192.168.0.51<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
-        W2[Worker Node 2<br/>192.168.0.52<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
-    end
-
-    LB[Load Balancer<br/>192.168.0.40<br/>kube-apiserver:6443]
-
-    LB --> CP1
-    LB --> CP2
-    CP1 --- CP2
-    CP1 --> W1
-    CP1 --> W2
-    CP2 --> W1
-    CP2 --> W2
-
-```
-
 - Prerequisites
   - [Proxmox](https://www.proxmox.com/en/products/proxmox-virtual-environment/get-started)
   - Download ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
@@ -94,7 +118,7 @@ dir: ansible
 ansible all -m ping
 ```
 ```bash
-ansible-playbook main.yaml --tags k8s
+ansible-playbook main.yaml --vault-pass-file="<vault-password-file>"
 ```
 ###  Setup kubeconfig on bastion
 ```bash
