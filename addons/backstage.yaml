@@ -3,9 +3,9 @@
   become: no
   tasks:
 
-    - name: Deploy cloudnative-postgresql cluster
+    - name: Deploy backstage
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -17,9 +17,9 @@
           spec:
             project: default
             source:
-              repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/backstage/overlays/prod
-              targetRevision: main
+              repoURL: ghcr.io/backstage/charts
+              chart: backstage
+              targetRevision: 2.5.3
               kustomize:
                 # Add these to your existing kustomize config
                 labels:
@@ -35,8 +35,8 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
-            ignoreDifferences:
-              - group: "postgresql.cnpg.io"
-                kind: Cluster
-                jsonPointers:
-                  - /spec/managed/roles
+            # ignoreDifferences:
+            #   - group: "postgresql.cnpg.io"
+            #     kind: Cluster
+            #     jsonPointers:
+            #       - /spec/managed/roles
