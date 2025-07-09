@@ -16,7 +16,7 @@ spec:
       containers:
         - name: backstage
           image: IMAGE_NAME # Replace with the actual image name
-          imagePullPolicy: IfNotPresent
+          imagePullPolicy: Always
           ports:
             - name: http
               containerPort: 7007
@@ -37,6 +37,6 @@ spec:
               value: "5432"
             - name: POSTGRES_DB
               value: backstage
-          envFrom:
-            - secretRef:
-                name: backstage-secrets
+          # envFrom:
+          #   - secretRef:
+          #       name: backstage-secrets
