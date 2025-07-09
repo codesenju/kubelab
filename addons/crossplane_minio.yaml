@@ -1,7 +1,7 @@
+# https://vshn.github.io/provider-minio/provider-minio/tutorials/getting-started.html
 - hosts: k8s-control-plane-1
   become: no
   tasks:
-
 
     - name: Deploy minio provider
       kubernetes.core.k8s:
