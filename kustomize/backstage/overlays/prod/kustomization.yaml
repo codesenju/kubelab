@@ -7,7 +7,7 @@ namespace: backstage
 imageTags:
   - name: IMAGE_NAME
     newName: "ghcr.io/codesenju/backstage"
-    newTag: "1005670"
+    newTag: "b8743bc"
 
 generatorOptions:
   disableNameSuffixHash: true
