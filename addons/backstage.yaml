@@ -19,7 +19,7 @@
             source:
               repoURL: https://github.com/codesenju/kubelab.git
               path: kustomize/backstage/overlays/prod
-              targetRevision: main
+              targetRevision: backstage
               kustomize:
                 # Add these to your existing kustomize config
                 labels:
@@ -55,3 +55,4 @@
             docker-server: "ghcr.io"  # Replace with your registry URL
             docker-username: "{{ ghcr_username }}"  # Replace with your GitHub username
             docker-password: "{{ ghcr_token}}"   # Replace with your GitHub token
+            docker-email: "{{ ghcr_email }}"  # Replace with your email address
