@@ -1,6 +1,8 @@
 - name: Kubernetes Dependencies
   hosts: workers 
   become: yes
+  vars:
+    k8s_version: "1.31"
   tasks:
 
     - name: Updates
@@ -97,14 +99,14 @@
 
     - name: Add Kubernetes apt-key
       get_url:
-        url: https://pkgs.k8s.io/core:/stable:/v1.29/deb/Release.key
+        url: https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/Release.key
         dest: /etc/apt/keyrings/kubernetes-apt-keyring.asc
         mode: "0644"
         force: true
 
     - name: Add Kubernetes APT repository
       apt_repository:
-        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v1.29/deb/ /"
+        repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /"
         state: present
         update_cache: yes
 
@@ -136,13 +138,15 @@
 
     - name: Install Kubelet
       apt:
-        name: kubelet=1.29.*
+        name: kubelet={{ k8s_version }}.*
         state: present
         update_cache: true
+      tags:
+        - install_kubelet
 
     - name: Install Kubeadm
       apt:
-        name: kubeadm=1.29.*
+        name: kubeadm={{ k8s_version }}.*
         state: present
 
     - name: Enable the Kubelet service
