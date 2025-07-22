@@ -12,11 +12,11 @@ spec:
           value: "Prowlarr-Prod"
         resources:
           requests:
-            cpu: 15m
+            cpu: 64m
             memory: 226M
           limits:
-            cpu: 15m
-            memory: 226M
+            cpu: 128m
+            memory: 512M
 # ---
 # apiVersion: v1
 # kind: Service
