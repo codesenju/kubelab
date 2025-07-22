@@ -23,8 +23,8 @@ resources:
 - radarr/service.yaml
 - lidarr/deployment.yaml
 - lidarr/service.yaml
-- readarr/deployment.yaml
-- readarr/service.yaml
+# - readarr/deployment.yaml # project retired
+# - readarr/service.yaml # project retired
 - prowlarr/deployment.yaml
 - prowlarr/service.yaml
 
