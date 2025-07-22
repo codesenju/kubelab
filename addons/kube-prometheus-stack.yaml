@@ -1,4 +1,5 @@
 - hosts: k8s-control-plane-1
+  gather_facts: no
   become: no
   tasks:
 
@@ -65,3 +66,30 @@
                 secret_key: {{ s3_secret_key }}
                 insecure: true
       tags: kube-prometheus-stack
+
+    - name: Wait for Grafana pod to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: kube-prometheus-stack
+        label_selectors:
+          - app.kubernetes.io/name=grafana
+      register: grafana_pod
+      until: grafana_pod.resources | length > 0 and grafana_pod.resources[0].status.phase == "Running"
+      retries: 30
+      delay: 10
+
+    - name: Get Grafana admin password
+      kubernetes.core.k8s_info:
+        api_version: v1
+        kind: Secret
+        name: kube-prometheus-stack-grafana
+        namespace: kube-prometheus-stack
+      register: grafana_secret
+
+    - name: Display Grafana login credentials
+      ansible.builtin.debug:
+        msg: >
+          Grafana Login Credentials:
+          URL: http://localhost:3000 (after port-forward)
+          Username: "{{ grafana_secret.resources[0].data['admin-user'] | b64decode }}"
+          Password: "{{ grafana_secret.resources[0].data['admin-password'] | b64decode }}"
