@@ -93,7 +93,7 @@ patches:
 - path: patches/jellyfin-patch.yaml
 - path: patches/sonarr-patch.yaml
 - path: patches/radarr-patch.yaml
-- path: patches/readarr-patch.yaml
+# - path: patches/readarr-patch.yaml # project retired
 - path: patches/lidarr-patch.yaml
 - path: patches/prowlarr-patch.yaml
 - path: patches/tdarr-patch.yaml
