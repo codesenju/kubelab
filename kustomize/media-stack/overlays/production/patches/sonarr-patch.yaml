@@ -27,11 +27,11 @@ spec:
           subPath: downloads
         resources:
           requests:
-            cpu: 23m
-            memory: 324M
+            cpu: 64m
+            memory: 256M
           limits:
-            cpu: 23m
-            memory: 324M
+            cpu: 128m
+            memory: 512M
 # ---
 # apiVersion: v1
 # kind: Service
