@@ -17,7 +17,7 @@ spec:
     spec:
       containers:
       - name: flaresolverr
-        image: ghcr.io/flaresolverr/flaresolverr:latest
+        image: ghcr.io/flaresolverr/flaresolverr:v3.3.25
         imagePullPolicy: IfNotPresent
         env:
         - name: LOG_LEVEL
