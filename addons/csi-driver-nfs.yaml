@@ -27,7 +27,7 @@
                     create: true
                     name: nfs-csi
                     parameters:
-                      server: 192.168.0.15
+                      server: 192.168.0.16
                       share: /mnt/pool1/k8s/nfs
                       mountPermissions: "0777" 
                     reclaimPolicy: Delete

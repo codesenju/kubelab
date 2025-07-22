@@ -2,10 +2,9 @@
   gather_facts: no
   become: no
   tasks:
-
     - name: Deploy Elastic Operator
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -22,9 +21,6 @@
               targetRevision: 3.0.0
               helm:
                 releaseName: elastic-operator
-                # values: |
-                #   args:
-                #     - --kubelet-insecure-tls
             destination:
               server: https://kubernetes.default.svc
               namespace: elastic-system
@@ -34,10 +30,11 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      tags: operator
 
     - name: Deploy Elasticsearch
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: elasticsearch.k8s.elastic.co/v1
           kind: Elasticsearch
@@ -62,24 +59,28 @@
                       limits:
                         memory: 4Gi
                         cpu: 4
+      tags: es
       register: previous_task_result
 
-    - name: Get Elasticsearch password
+    - name: Wait for Elasticsearch pod to be ready
       kubernetes.core.k8s_info:
-        kind: Secret
-        name: quickstart-es-elastic-user
+        kind: Pod
         namespace: elastic-system
-      register: es_secret
-      when: previous_task_result is not defined or previous_task_result.state != 'absent'
-
-    - name: Set password fact
-      set_fact:
-        elastic_password: "{{ es_secret.resources[0].data.elastic | b64decode }}"
-      when: previous_task_result is not defined or previous_task_result.state != 'absent'
+        label_selectors:
+          - "elasticsearch.k8s.elastic.co/cluster-name=quickstart"
+      register: es_pod
+      until: 
+        - es_pod.resources is defined 
+        - es_pod.resources | length > 0 
+        - es_pod.resources[0].status.phase == "Running"
+        - es_pod.resources[0].status.containerStatuses is defined
+        - es_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
+      retries: 15
+      delay: 20
 
     - name: Deploy Kibana
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: kibana.k8s.elastic.co/v1
           kind: Kibana
@@ -91,29 +92,46 @@
             count: 1
             elasticsearchRef:
               name: quickstart
+      tags: kibana
 
-    - name: Get Kibana password
+    - name: Wait for Kibana pod to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: elastic-system
+        label_selectors:
+          - "kibana.k8s.elastic.co/name=quickstart"
+      register: kb_pod
+      until: 
+        - kb_pod.resources is defined 
+        - kb_pod.resources | length > 0 
+        - kb_pod.resources[0].status.phase == "Running"
+        - kb_pod.resources[0].status.containerStatuses is defined
+        - kb_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
+      retries: 20
+      delay: 30
+
+    - name: Get Elasticsearch password
       kubernetes.core.k8s_info:
         kind: Secret
         name: quickstart-es-elastic-user
         namespace: elastic-system
-      register: kibana_secret
-      when: previous_task_result is not defined or previous_task_result.state != 'absent'
+      register: es_secret
+      tags: get-elastic-password
 
-    - name: Set Kibana password fact
+    - name: Set password fact
       set_fact:
-        kibana_password: "{{ kibana_secret.resources[0].data.elastic | b64decode }}"
-      when: previous_task_result is not defined or previous_task_result.state != 'absent'
-
+        elastic_password: "{{ es_secret.resources[0].data.elastic | b64decode }}"
+      tags: get-elastic-password
+  
     - name: Display Elasticsearch access information
       ansible.builtin.debug:
         msg:
           - "----------------------------------------"
-          - "🚀 Elasticsearch deployed successfully!"
+          - "🚀 Elasticsearch stack deployed successfully!"
           - "----------------------------------------"
-          - "📍 URL:       https://quickstart-es-http.elastic-system:9200"
-          - "👤 Username:  elastic"
-          - "🔑 Password:  {{ elastic_password }}"
+          - "📍 Elasticsearch URL: https://quickstart-es-http.elastic-system:9200"
+          - "📍 Kibana URL: http://quickstart-kb-http.elastic-system:5601"
+          - "👤 Username: elastic"
+          - "🔑 Password: {{ elastic_password }}"
           - "----------------------------------------"
-      when: previous_task_result is not defined or previous_task_result.state != 'absent'
-    
+      tags: get-elastic-password
