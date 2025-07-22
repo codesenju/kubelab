@@ -19,6 +19,13 @@ spec:
         - name: data
           mountPath: /data/music
           subPath: music
+        resources:
+          requests:
+            cpu: "400m"
+            memory: "256Mi"
+          limits:
+            cpu: "800m"
+            memory: "512Mi"
       volumes:
       - name: data
         persistentVolumeClaim:
