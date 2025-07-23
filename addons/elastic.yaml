@@ -88,6 +88,8 @@
             name: quickstart
             namespace: elastic-system
           spec:
+            config:
+              server.publicBaseUrl: "{{ kibana_publicBaseUrl }}"
             version: 8.16.1
             count: 1
             elasticsearchRef:
