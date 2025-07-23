@@ -1,0 +1,102 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-birds-view-dashboard
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/Kubernetes_Birds_View_Dashboard.json"
+  plugins:
+   - name: grafana-polystat-panel
+     version: 2.1.2
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name:  k8s-log-aggregator-with-loki
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/logs.json"
+  # plugins:
+  #  - name: grafana-polystat-panel
+  #    version: 2.1.2
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-litmus-experiments
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/litmus_experiments.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-views-global
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/Kubernetes_Views_Global_custom.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-system-api-server
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/Kubernetes_System_API_Server_custom.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name:  k8s-coredns
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/CoreDNS_custom.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k6-prometheus
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/grafana/xk6-output-prometheus-remote/main/grafana/dashboards/k6-prometheus.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: argocd
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/argoproj/argo-cd/master/examples/dashboard.json"
