@@ -22,7 +22,8 @@ global:
     enabled: true
     storageClass: "nfs-csi"
     size: 10Gi
-
+minio:
+  enabled: false
 # Configure ingress for Mimir
 nginx:
   enabled: true
