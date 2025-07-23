@@ -1,0 +1,93 @@
+global:
+  # Activity Tracker: For better visibility into component activity:
+  activityTracker:
+    enabled: true
+  # Pod Security Context: For enhanced security:
+  podSecurityContext:
+    fsGroup: 10001
+    runAsGroup: 10001
+    runAsNonRoot: true
+    runAsUser: 10001
+  # Use existing secret for configuration
+  useExternalConfig: true
+  configStorageType: Secret
+  externalConfigSecretName: mimir-config
+  
+  # Extra volumes for tenant overrides
+  extraVolumes:
+    - name: tenant-overrides
+      configMap:
+        name: mimir-tenant-overrides
+  
+  extraVolumeMounts:
+    - name: tenant-overrides
+      mountPath: /etc/mimir
+      readOnly: true
+  
+  # Connect to Prometheus for metrics
+  prometheusUrl: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc:9090
+  
+  # Storage configuration
+  persistence:
+    enabled: true
+    storageClass: "nfs-csi"
+    size: 10Gi
+
+# Configure Mimir
+minio:
+  enabled: false
+
+serviceMonitor:
+  enabled: true
+
+# Configure ingress for Mimir
+nginx:
+  enabled: true
+  ingress:
+    enabled: false
+
+# Configure resources
+distributor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+ingester:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+store_gateway:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+compactor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
