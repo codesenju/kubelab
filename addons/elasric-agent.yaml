@@ -1,0 +1,41 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  tasks:
+
+    - name: Deploy elastic agent
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: elastic-agent
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/elastic-agent/overlays/prod
+              targetRevision: main
+              kustomize:
+                # Add these to your existing kustomize config
+                labels:
+                  app.kubernetes.io/instance: elastic-agent
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: elastic-system
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            # ignoreDifferences:
+            #   - group: "postgresql.cnpg.io"
+            #     kind: Cluster
+            #     jsonPointers:
+            #       - /spec/managed/roles
