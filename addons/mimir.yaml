@@ -2,6 +2,22 @@
   gather_facts: no
   become: no
   tasks:
+    - name: Create MinIO S3 configuration secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: minio-s3-config
+            namespace: mimir
+          type: Opaque
+          stringData:
+            MINIO_ENDPOINT: "{{ s3_endpoint }}"
+            MINIO_REGION: "joburg-north-1"
+            MINIO_ACCESS_KEY_ID: "{{ s3_access_key }}"
+            MINIO_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
+      tags: mimir
 
     - name: Create Mimir tenant overrides ConfigMap
       kubernetes.core.k8s:
@@ -27,94 +43,6 @@
                   ingestion_burst_size: 20000
                   max_series_per_metric: 5000
                   max_series_per_query: 50000
-      tags: mimir
-
-    - name: Create Mimir configuration secret
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: mimir-config
-            namespace: mimir
-          type: Opaque
-          stringData:
-            mimir.yaml: |
-              multitenancy_enabled: true
-              
-              auth:
-                type: default
-                default:
-                  type: header
-                  header_name: X-Scope-OrgID
-              
-              limits:
-                # Global defaults
-                ingestion_rate: 25000
-                ingestion_burst_size: 50000
-                max_series_per_metric: 10000
-                max_series_per_query: 100000
-                max_samples_per_query: 1000000
-                ruler_max_rules_per_rule_group: 20
-                ruler_max_rule_groups_per_tenant: 70
-                
-                # Per-tenant overrides
-                per_tenant_override_config: /etc/mimir/tenant-overrides.yaml
-                per_tenant_override_period: 10s
-              
-              blocks_storage:
-                backend: s3
-                s3:
-                  bucket_name: mimir-blocks
-                  endpoint: {{ s3_endpoint }}
-                  access_key_id: {{ s3_access_key }}
-                  secret_access_key: {{ s3_secret_key }}
-                  insecure: true
-              
-              compactor:
-                data_dir: /tmp/mimir/compactor
-                sharding_ring:
-                  kvstore:
-                    store: memberlist
-              
-              distributor:
-                ring:
-                  kvstore:
-                    store: memberlist
-              
-              ingester:
-                ring:
-                  kvstore:
-                    store: memberlist
-                  replication_factor: 1
-              
-              ruler_storage:
-                backend: s3
-                s3:
-                  bucket_name: mimir-rules
-                  endpoint: {{ s3_endpoint }}
-                  access_key_id: {{ s3_access_key }}
-                  secret_access_key: {{ s3_secret_key }}
-                  insecure: true
-              
-              alertmanager_storage:
-                backend: s3
-                s3:
-                  bucket_name: mimir-alertmanager
-                  endpoint: {{ s3_endpoint }}
-                  access_key_id: {{ s3_access_key }}
-                  secret_access_key: {{ s3_secret_key }}
-                  insecure: true
-              
-              server:
-                http_listen_port: 8080
-                grpc_listen_port: 9095
-              
-              store_gateway:
-                sharding_ring:
-                  kvstore:
-                    store: memberlist
       tags: mimir
 
     - name: Deploy Mimir ArgoCD Application
