@@ -1000,7 +1000,7 @@ metadata:
 apiVersion: v1
 data:
   ca_trusted: '%CA_TRUSTED%'
-  host: 'https://es.local.jazziro.com'
+  host: 'https://es.local.jazziro.com:443'
 kind: ConfigMap
 metadata:
   name: elastic-agent-configs-k799f79hhb
