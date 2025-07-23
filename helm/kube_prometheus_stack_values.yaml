@@ -3836,6 +3836,7 @@ prometheus:
     ## Requires Kubernetes version 1.27.0+.
     ## Ref: https://kubernetes.io/docs/concepts/workloads/controllers/statefulset/#persistentvolumeclaim-retention
     persistentVolumeClaimRetentionPolicy: {}
+
     #  whenDeleted: Retain
     #  whenScaled: Retain
 
@@ -4230,7 +4231,16 @@ prometheus:
 
     ## The remote_write spec configuration for Prometheus.
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api-reference/api.md#remotewritespec
-    remoteWrite: []
+    # remoteWrite: []
+        ## Remote write configuration for Mimir
+    remoteWrite:
+      - url: http://mimir-nginx.mimir.svc:80/api/v1/push
+        headers:
+          X-Scope-OrgID: kube-prometheus-stack
+        writeRelabelConfigs:
+          - sourceLabels: [__name__]
+            regex: up|node_.*|kube_.*|container_.*
+            action: keep
     # - url: http://remote1/push
     ## additionalRemoteWrite is appended to remoteWrite
     additionalRemoteWrite: []
