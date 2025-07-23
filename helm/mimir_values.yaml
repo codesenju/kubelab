@@ -1,0 +1,76 @@
+global:
+  # Use existing secret for configuration
+  existingSecretForConfig: mimir-config
+  configStorageType: Secret
+  
+  # Extra volumes for tenant overrides
+  extraVolumes:
+    - name: tenant-overrides
+      configMap:
+        name: mimir-tenant-overrides
+  
+  extraVolumeMounts:
+    - name: tenant-overrides
+      mountPath: /etc/mimir
+      readOnly: true
+  
+  # Connect to Prometheus for metrics
+  prometheusUrl: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc:9090
+  
+  # Storage configuration
+  persistence:
+    enabled: true
+    storageClass: "nfs-csi"
+    size: 10Gi
+
+# Configure ingress for Mimir
+nginx:
+  enabled: true
+  ingress:
+    enabled: false
+
+# Configure resources
+distributor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 128Mi
+    limits:
+      memory: 256Mi
+
+ingester:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+querier:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+store_gateway:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi
+
+compactor:
+  replicas: 1
+  resources:
+    requests:
+      cpu: 100m
+      memory: 512Mi
+    limits:
+      memory: 1Gi

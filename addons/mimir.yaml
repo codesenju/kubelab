@@ -1,0 +1,154 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+
+    - name: Create Mimir tenant overrides ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: mimir-tenant-overrides
+            namespace: mimir
+          data:
+            tenant-overrides.yaml: |
+              overrides:
+                # Example tenant with higher limits
+                tenant1:
+                  ingestion_rate: 50000
+                  ingestion_burst_size: 100000
+                  max_series_per_metric: 20000
+                  max_series_per_query: 200000
+                # Example tenant with lower limits
+                tenant2:
+                  ingestion_rate: 10000
+                  ingestion_burst_size: 20000
+                  max_series_per_metric: 5000
+                  max_series_per_query: 50000
+      tags: mimir
+
+    - name: Create Mimir configuration secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: mimir-config
+            namespace: mimir
+          type: Opaque
+          stringData:
+            mimir.yaml: |
+              multitenancy_enabled: true
+              
+              auth:
+                type: default
+                default:
+                  type: header
+                  header_name: X-Scope-OrgID
+              
+              limits:
+                # Global defaults
+                ingestion_rate: 25000
+                ingestion_burst_size: 50000
+                max_series_per_metric: 10000
+                max_series_per_query: 100000
+                max_samples_per_query: 1000000
+                ruler_max_rules_per_rule_group: 20
+                ruler_max_rule_groups_per_tenant: 70
+                
+                # Per-tenant overrides
+                per_tenant_override_config: /etc/mimir/tenant-overrides.yaml
+                per_tenant_override_period: 10s
+              
+              blocks_storage:
+                backend: s3
+                s3:
+                  bucket_name: mimir-blocks
+                  endpoint: {{ s3_endpoint }}
+                  access_key_id: {{ s3_access_key }}
+                  secret_access_key: {{ s3_secret_key }}
+                  insecure: true
+              
+              compactor:
+                data_dir: /tmp/mimir/compactor
+                sharding_ring:
+                  kvstore:
+                    store: memberlist
+              
+              distributor:
+                ring:
+                  kvstore:
+                    store: memberlist
+              
+              ingester:
+                ring:
+                  kvstore:
+                    store: memberlist
+                  replication_factor: 1
+              
+              ruler_storage:
+                backend: s3
+                s3:
+                  bucket_name: mimir-rules
+                  endpoint: {{ s3_endpoint }}
+                  access_key_id: {{ s3_access_key }}
+                  secret_access_key: {{ s3_secret_key }}
+                  insecure: true
+              
+              alertmanager_storage:
+                backend: s3
+                s3:
+                  bucket_name: mimir-alertmanager
+                  endpoint: {{ s3_endpoint }}
+                  access_key_id: {{ s3_access_key }}
+                  secret_access_key: {{ s3_secret_key }}
+                  insecure: true
+              
+              server:
+                http_listen_port: 8080
+                grpc_listen_port: 9095
+              
+              store_gateway:
+                sharding_ring:
+                  kvstore:
+                    store: memberlist
+      tags: mimir
+
+    - name: Deploy Mimir ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: mimir
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://grafana.github.io/helm-charts
+              chart: mimir-distributed
+              targetRevision: "5.7.0"
+              helm:
+                releaseName: mimir
+                valueFiles:
+                - $values/helm/mimir_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: main
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: monitoring
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+      tags: mimir
