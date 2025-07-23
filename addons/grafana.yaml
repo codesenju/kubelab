@@ -1,32 +1,29 @@
 - hosts: k8s-control-plane-1
-  become: no
   gather_facts: no
+  become: no
   tasks:
-
-    - name: Deploy keda
+    - name: Deploy Grafana Operator
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: keda
+            name: grafana-operator
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
           spec:
             project: default
             source:
-              chart: keda
-              repoURL: https://kedacore.github.io/charts
-              targetRevision: 2.17.1
+              repoURL: https://grafana.github.io/helm-charts
+              chart: grafana-operator
+              targetRevision: v5.18.0
               helm:
-                releaseName: keda
-                # values: |
-                #   installCRDs: true
+                releaseName: grafana-operator
             destination:
               server: https://kubernetes.default.svc
-              namespace: keda
+              namespace: monitoring
             syncPolicy:
               automated:
                 prune: true
@@ -34,3 +31,4 @@
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
+      tags: grafana-operator
