@@ -24,9 +24,9 @@ spec:
                       name: grafana-credentials
   ingress:
       spec:
-        ingressClassName: "traefik"
+        ingressClassName: "nginx"
         rules:
-          - host: grafana.local
+          - host: grafana.jazziro.com
             http:
               paths:
                 - backend:
