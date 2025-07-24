@@ -101,6 +101,7 @@ ingester:
     requests:
       cpu: 500m
       memory: 1Gi
+  priorityClassName: "high-priority"
   topologySpreadConstraints: {}
   affinity:
     podAntiAffinity:
@@ -193,6 +194,7 @@ store_gateway:
     requests:
       cpu: 200m
       memory: 256Mi
+  priorityClassName: "high-priority"
   topologySpreadConstraints: {}
   affinity:
     podAntiAffinity:
