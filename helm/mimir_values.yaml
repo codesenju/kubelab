@@ -132,6 +132,7 @@ admin-cache:
 chunks-cache:
   enabled: true
   replicas: 1
+  priorityClassName: "high-priority"
 
 index-cache:
   enabled: true
