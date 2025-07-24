@@ -126,24 +126,24 @@ ingester:
     topologyKey: 'kubernetes.io/hostname'
 
 admin-cache:
-  enabled: true
+  enabled: false
   replicas: 1
 
 chunks-cache:
-  enabled: true
+  enabled: false
   replicas: 1
   priorityClassName: "high-priority"
 
 index-cache:
-  enabled: true
+  enabled: false
   replicas: 1
 
 metadata-cache:
-  enabled: true
+  enabled: false
   replicas: 1
 
 results-cache:
-  enabled: true
+  enabled: false
   replicas: 1
 
 minio:
