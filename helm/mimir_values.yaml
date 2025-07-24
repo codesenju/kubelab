@@ -62,7 +62,7 @@ mimir:
 alertmanager:
   persistentVolume:
     enabled: true
-  replicas: 2
+  replicas: 1
   resources:
     limits:
       memory: 1.4Gi
@@ -83,7 +83,7 @@ compactor:
       memory: 1.5Gi
 
 distributor:
-  replicas: 2
+  replicas: 1
   resources:
     limits:
       memory: 5.7Gi
@@ -94,7 +94,7 @@ distributor:
 ingester:
   persistentVolume:
     size: 50Gi
-  replicas: 3
+  replicas: 1
   resources:
     limits:
       memory: 12Gi
@@ -126,23 +126,23 @@ ingester:
 
 admin-cache:
   enabled: true
-  replicas: 3
+  replicas: 1
 
 chunks-cache:
   enabled: true
-  replicas: 3
+  replicas: 2
 
 index-cache:
   enabled: true
-  replicas: 3
+  replicas: 1
 
 metadata-cache:
   enabled: true
-  replicas: 3
+  replicas: 1
 
 results-cache:
   enabled: true
-  replicas: 3
+  replicas: 1
 
 minio:
   enabled: false
@@ -186,7 +186,7 @@ ruler:
 store_gateway:
   persistentVolume:
     size: 10Gi
-  replicas: 3
+  replicas: 1
   resources:
     limits:
       memory: 2.1Gi
