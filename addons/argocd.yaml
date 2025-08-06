@@ -27,24 +27,37 @@
                  g, ArgoCD Admins, role:admin
                  g, authentik Admins, role:admin
                  g, ArgoCD Viewers, role:readonly
+                 g, jazziro-kubelab:kubelab, role:readonly
             cm:
               admin.enabled: true
               exec.enabled: true
               dex.config: |
                 connectors:
-                - config:
+                # https://github.com/dexidp/website/blob/main/content/docs/connectors/github.md
+                - type: github
+                  id: github
+                  name: GitHub
+                  config:
+                    clientID: "{{ github_client_id }}"
+                    clientSecret: "{{ github_client_secret }}"
+                    orgs:
+                    - name: jazziro-kubelab
+                      teams:
+                      - kubelab
+                # Authentik OIDC connector configuration
+                - type: oidc
+                  name: authentik
+                  id: authentik
+                  config:
                     issuer: "{{ argocd_openid_issuer_url }}"
                     redirectURI: "{{ argocd_openid_redirect_uri }}"
                     clientID: argocd
-                    clientSecret: $dex.authentik.clientSecret
+                    clientSecret: "{{ argocd_openid_client_secret }}"
                     insecureEnableGroups: true
                     scopes:
                       - openid
                       - profile
                       - email
-                  name: authentik
-                  type: oidc
-                  id: authentik
             params:
               server.insecure: true
           server:
