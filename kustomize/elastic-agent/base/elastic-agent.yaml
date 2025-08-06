@@ -353,6 +353,73 @@ data:
       #hints.enabled: true
       #hints.default_container_logs: true
     inputs:
+      # Collect application traces: Collect application traces
+      - id: apmserver-apm
+        type: apm
+        apm-server:
+          auth:
+            anonymous:
+              enabled: true
+              allow_agent:
+                - rum-js
+                - js-base
+                - iOS/swift
+              rate_limit:
+                event_limit: 300
+                ip_limit: 1000
+              # allow_service:
+              #  - <ANONYMOUS_ALLOW_SERVICE> # undefined
+            api_key:
+              limit: 100
+              # enabled: <API_KEY_ENABLED> # undefined
+            # secret_token: <SECRET_TOKEN> # undefined
+          capture_personal_data: true
+          idle_timeout: 45s
+          host: 0.0.0.0:8200
+          max_event_size: 307200
+          max_header_size: 1048576
+          read_timeout: 3600s
+          response_headers: null
+          java_attacher:
+            discovery-rules: null
+            # enabled: <JAVA_ATTACHER_ENABLED> # undefined
+            # download-agent-version: <JAVA_ATTACHER_AGENT_VERSION> # undefined
+          rum:
+            enabled: true
+            allow_origins:
+              - '*'
+            exclude_from_grouping: ^/webpack
+            library_pattern: node_modules|bower_components|~
+            response_headers: null
+            # allow_headers:
+            #  - <RUM_ALLOW_HEADERS> # undefined
+          shutdown_timeout: 30s
+          ssl:
+            key_passphrase: null
+            supported_protocols:
+              - TLSv1.2
+              - TLSv1.3
+            # enabled: <TLS_ENABLED> # undefined
+            # certificate: <TLS_CERTIFICATE> # undefined
+            # key: <TLS_KEY> # undefined
+            # cipher_suites:
+            #  - <TLS_CIPHER_SUITES> # undefined
+            # curve_types:
+            #  - <TLS_CURVE_TYPES> # undefined
+          write_timeout: 30s
+          sampling:
+            tail:
+              interval: 1m
+              ttl: 30m
+              policies:
+                - sample_rate: 0.1
+              storage_limit: 0GB
+              # enabled: <TAIL_SAMPLING_ENABLED> # undefined
+              # discard_on_write_failure: <TAIL_SAMPLING_DISCARD_ON_WRITE_FAILURE> # undefined
+          # default_service_environment: <DEFAULT_SERVICE_ENVIRONMENT> # undefined
+          # expvar.enabled: <EXPVAR_ENABLED> # undefined
+          # pprof.enabled: <PPROF_ENABLED> # undefined
+          # max_connections: <MAX_CONNECTIONS> # undefined
       - id: kubernetes-cluster-metrics
         condition: ${kubernetes_leaderelection.leader} == true
         type: kubernetes/metrics
