@@ -1008,7 +1008,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  api_key: VC1lRE5wZ0J1LWFXV0FYSWl3ZW06NFBiV2h4VXJUbTZ5ZElkeTFsVS14QQ==
+  api_key: RzB0V2daZ0JZYWlWLV80NC1VSkU6bEJiQWhycE9BWUgybTFYMXcwMzVjZw==
 kind: Secret
 metadata:
   name: elastic-agent-creds-ht4th6hfkd
