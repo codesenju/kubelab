@@ -61,7 +61,7 @@
               type: s3
               config:
                 bucket: thanos-store
-                endpoint: {{ s3_endpoint }}
+                endpoint: {{ minio_endpoint }}
                 access_key: {{ s3_access_key }}
                 secret_key: {{ s3_secret_key }}
                 insecure: true
