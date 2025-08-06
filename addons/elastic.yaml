@@ -18,7 +18,7 @@
             source:
               chart: eck-operator
               repoURL: https://helm.elastic.co
-              targetRevision: 3.0.0
+              targetRevision: 3.1.0
               helm:
                 releaseName: elastic-operator
             destination:
@@ -42,7 +42,7 @@
             name: quickstart
             namespace: elastic-system
           spec:
-            version: 8.16.1
+            version: 9.1.0
             nodeSets:
             - name: default
               count: 1
@@ -90,7 +90,7 @@
           spec:
             config:
               server.publicBaseUrl: "{{ kibana_publicBaseUrl }}"
-            version: 8.16.1
+            version: 9.1.0
             count: 1
             elasticsearchRef:
               name: quickstart
