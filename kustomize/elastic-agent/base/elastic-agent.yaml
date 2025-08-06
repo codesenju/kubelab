@@ -13,7 +13,7 @@ metadata:
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: kube-state-metrics
-    app.kubernetes.io/version: 2.16.0
+    app.kubernetes.io/version: 2.15.0
   name: kube-state-metrics
   namespace: kube-system
 ---
@@ -146,7 +146,7 @@ metadata:
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: kube-state-metrics
-    app.kubernetes.io/version: 2.16.0
+    app.kubernetes.io/version: 2.15.0
   name: kube-state-metrics
 rules:
 - apiGroups:
@@ -316,7 +316,7 @@ metadata:
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: kube-state-metrics
-    app.kubernetes.io/version: 2.16.0
+    app.kubernetes.io/version: 2.15.0
   name: kube-state-metrics
 roleRef:
   apiGroup: rbac.authorization.k8s.io
@@ -529,7 +529,7 @@ data:
             processors:
             - add_fields:
                 fields:
-                  onboarding_id: '8b336730-986a-41a7-b346-e0afe0517c15'
+                  onboarding_id: '0e191571-87a0-4f47-8653-0710b9cbe238'
             # Openshift:
             # if to access 'kube-state-metrics' are used third party tools, like kube-rbac-proxy or similar, that perform RBAC authorization
             # and/or tls termination, then configuration below should be considered:
@@ -767,6 +767,7 @@ data:
               - normalized_percentages
             metricsets:
               - cpu
+            system.hostfs: '/hostfs'
           - data_stream:
               dataset: system.diskio
               type: metrics
@@ -774,12 +775,14 @@ data:
             diskio.include_devices: null
             metricsets:
               - diskio
+            system.hostfs: '/hostfs'
           - data_stream:
               dataset: system.filesystem
               type: metrics
             period: 1m
             metricsets:
               - filesystem
+            system.hostfs: '/hostfs'
             processors:
               - drop_event.when.regexp:
                   system.filesystem.mount_point: ^/(sys|cgroup|proc|dev|etc|host|lib|snap)($|/)
@@ -789,6 +792,7 @@ data:
             period: 1m
             metricsets:
               - fsstat
+            system.hostfs: '/hostfs'
             processors:
               - drop_event.when.regexp:
                   system.fsstat.mount_point: ^/(sys|cgroup|proc|dev|etc|host|lib|snap)($|/)
@@ -805,6 +809,7 @@ data:
             period: 10s
             metricsets:
               - memory
+            system.hostfs: '/hostfs'
           - data_stream:
               dataset: system.network
               type: metrics
@@ -825,19 +830,21 @@ data:
             process.include_cpu_ticks: false
             metricsets:
               - process
-            process.include_cpu_ticks: false
+            system.hostfs: '/hostfs'
           - data_stream:
               dataset: system.process_summary
               type: metrics
             period: 10s
             metricsets:
               - process_summary
+            system.hostfs: '/hostfs'
           - data_stream:
               dataset: system.socket_summary
               type: metrics
             period: 10s
             metricsets:
               - socket_summary
+            system.hostfs: '/hostfs'
           - data_stream:
               type: metrics
               dataset: system.uptime
@@ -1008,7 +1015,7 @@ metadata:
 ---
 apiVersion: v1
 data:
-  api_key: RzB0V2daZ0JZYWlWLV80NC1VSkU6bEJiQWhycE9BWUgybTFYMXcwMzVjZw==
+  api_key: SFV0WmdaZ0JZYWlWLV80NG5FTGs6WFdOYmVOa3dXSExLTFZQTmdGbkdEdw==
 kind: Secret
 metadata:
   name: elastic-agent-creds-ht4th6hfkd
@@ -1021,7 +1028,7 @@ metadata:
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: kube-state-metrics
-    app.kubernetes.io/version: 2.16.0
+    app.kubernetes.io/version: 2.15.0
   name: kube-state-metrics
   namespace: kube-system
 spec:
@@ -1042,7 +1049,7 @@ metadata:
   labels:
     app.kubernetes.io/component: exporter
     app.kubernetes.io/name: kube-state-metrics
-    app.kubernetes.io/version: 2.16.0
+    app.kubernetes.io/version: 2.15.0
   name: kube-state-metrics
   namespace: kube-system
 spec:
@@ -1055,11 +1062,11 @@ spec:
       labels:
         app.kubernetes.io/component: exporter
         app.kubernetes.io/name: kube-state-metrics
-        app.kubernetes.io/version: 2.16.0
+        app.kubernetes.io/version: 2.15.0
     spec:
       automountServiceAccountToken: true
       containers:
-      - image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.16.0
+      - image: registry.k8s.io/kube-state-metrics/kube-state-metrics:v2.15.0
         livenessProbe:
           httpGet:
             path: /livez
@@ -1146,7 +1153,7 @@ spec:
             configMapKeyRef:
               key: ca_trusted
               name: elastic-agent-configs-k799f79hhb
-        image: docker.elastic.co/beats/elastic-agent:8.16.6
+        image: docker.elastic.co/elastic-agent/elastic-agent:9.1.0
         name: elastic-agent-standalone
         resources:
           limits:
