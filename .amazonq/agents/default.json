@@ -29,14 +29,16 @@
     "fsReplace",
     "listDirectory",
     "fileSearch",
-    "executeBash"
+    "executeBash",
+    "codeReview"
   ],
   "allowedTools": [
     "fsRead",
     "fsWrite",
     "fsReplace",
     "listDirectory",
-    "fileSearch"
+    "fileSearch",
+    "codeReview"
   ],
   "toolsSettings": {
     "execute_bash": {
