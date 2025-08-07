@@ -2,14 +2,31 @@
   gather_facts: no
   tasks:
 
-    - name: Deploy elastic agent
+    - name: Create elastic-fleet-secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: elastic-fleet-secret
+            namespace: elastic-system
+          type: Opaque
+          stringData:
+            FLEET_URL: "{{ fleet_url }}"
+            FLEET_ENROLLMENT_TOKEN: "{{ fleet_enrollment_token }}"
+            KIBANA_HOST: "{{ kibana_host }}"
+            KIBANA_FLEET_USERNAME: "{{ kibana_fleet_username }}"
+            KIBANA_FLEET_PASSWORD: "{{ kibana_fleet_password }}"
+
+    - name: Deploy elastic agent managed fleet
+      kubernetes.core.k8s:
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: elastic-agent
+            name: elastic-agent-managed-fleet
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
@@ -17,7 +34,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/elastic-agent/overlays/prod
+              path: kustomize/elastic-agent-managed/overlays/prod
               targetRevision: main
               kustomize:
                 # Add these to your existing kustomize config
