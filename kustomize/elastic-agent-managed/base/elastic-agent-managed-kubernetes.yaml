@@ -298,20 +298,20 @@ metadata:
   labels:
     app.kubernetes.io/name: elastic-agent
 ---
-apiVersion: v1
-kind: Service
-metadata:
-  name: fleet-server
-  namespace: kube-system
-  labels:
-    app: fleet-server
-spec:
-  selector:
-    app: fleet-server
-  type: LoadBalancer
-  loadBalancerIP: 192.168.0.62 # 👈 Replace with an IP from your MetalLB pool
-  ports:
-    - name: https
-      port: 8220
-      targetPort: 8220
-      protocol: TCP
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: fleet-server
+#   namespace: kube-system
+#   labels:
+#     app: fleet-server
+# spec:
+#   selector:
+#     app: fleet-server
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.62 # 👈 Replace with an IP from your MetalLB pool
+#   ports:
+#     - name: https
+#       port: 8220
+#       targetPort: 8220
+#       protocol: TCP
