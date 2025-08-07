@@ -30,7 +30,8 @@
     "listDirectory",
     "fileSearch",
     "executeBash",
-    "codeReview"
+    "codeReview",
+    "displayFindings"
   ],
   "allowedTools": [
     "fsRead",
@@ -38,7 +39,8 @@
     "fsReplace",
     "listDirectory",
     "fileSearch",
-    "codeReview"
+    "codeReview",
+    "displayFindings"
   ],
   "toolsSettings": {
     "execute_bash": {
