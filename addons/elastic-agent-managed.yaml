@@ -4,7 +4,7 @@
 
     - name: Create elastic-fleet-secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -18,10 +18,14 @@
             KIBANA_HOST: "{{ kibana_host }}"
             KIBANA_FLEET_USERNAME: "{{ kibana_fleet_username }}"
             KIBANA_FLEET_PASSWORD: "{{ kibana_fleet_password }}"
+            FLEET_SERVER_ENABLED: "{{ fleet_server_enabled }}"
+            FLEET_SERVER_ELASTICSEARCH_HOST: "{{ fleet_server_es_host }}"
+            FLEET_SERVER_SERVICE_TOKEN: "{{ fleet_server_service_token }}"
+            
 
     - name: Deploy elastic agent managed fleet
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
