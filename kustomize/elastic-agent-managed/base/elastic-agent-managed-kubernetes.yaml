@@ -78,10 +78,10 @@ spec:
             #    - SYS_ADMIN
           resources:
             limits:
-              memory: 1200Mi
+              memory: 2400Mi
             requests:
               cpu: 100m
-              memory: 500Mi
+              memory: 1200Mi
           volumeMounts:
             - name: proc
               mountPath: /hostfs/proc
