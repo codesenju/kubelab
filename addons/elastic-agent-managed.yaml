@@ -21,6 +21,8 @@
             FLEET_SERVER_ENABLED: "{{ fleet_server_enabled }}"
             FLEET_SERVER_ELASTICSEARCH_HOST: "{{ fleet_server_es_host }}"
             FLEET_SERVER_SERVICE_TOKEN: "{{ fleet_server_service_token }}"
+            FLEET_ENROLL: "{{ fleet_enroll }}"
+            FLEET_INSECURE: "{{ fleet_insecure }}"
             
 
     - name: Deploy elastic agent managed fleet
