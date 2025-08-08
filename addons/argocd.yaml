@@ -12,16 +12,16 @@
         state: present
         chart_repo_url: https://argoproj.github.io/argo-helm
         chart_ref: argo-cd
-        chart_version: 8.1.2
+        chart_version: 8.2.5
         release_namespace: argocd
         create_namespace: true
         release_values:
           global:
             domain: "{{ argocd_domain }}"
           configs:
-            secret:
-              extra:
-                dex.authentik.clientSecret: "{{ argocd_openid_client_secret }}"
+            # secret:
+            #   extra:
+            #     dex.authentik.clientSecret: "{{ argocd_openid_client_secret }}"
             rbac:
               policy.csv: |
                  g, ArgoCD Admins, role:admin
