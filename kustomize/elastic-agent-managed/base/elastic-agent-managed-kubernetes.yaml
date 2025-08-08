@@ -27,7 +27,7 @@ spec:
       dnsPolicy: ClusterFirstWithHostNet
       containers:
         - name: elastic-agent
-          image: docker.elastic.co/elastic-agent/elastic-agent:9.1.0
+          image: docker.elastic.co/elastic-agent/elastic-agent-complete:9.1.0
           envFrom:
             - secretRef:
                 name: elastic-fleet-secret
