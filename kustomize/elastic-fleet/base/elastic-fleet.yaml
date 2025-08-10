@@ -1,0 +1,57 @@
+# For more information https://www.elastic.co/guide/en/fleet/current/running-on-kubernetes-managed-by-fleet.html
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastic-fleet
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: elastic-fleet
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: elastic-fleet
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: elastic-fleet
+    spec:
+      containers:
+        - name: elastic-fleet
+          image: docker.elastic.co/elastic-agent/elastic-agent-complete:9.1.0
+          envFrom:
+            - secretRef:
+                name: fleet-server-config
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 200m
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: elastic-fleet
+  namespace: elastic-system
+  labels:
+    app.kubernetes.io/name: elastic-fleet
+spec:
+  ports:
+    - name: http
+      port: 80
+      targetPort: 8220
+  selector:
+    app.kubernetes.io/name: elastic-fleet
+  type: ClusterIP
+---

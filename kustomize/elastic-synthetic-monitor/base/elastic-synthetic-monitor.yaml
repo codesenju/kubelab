@@ -1,0 +1,41 @@
+# For more information https://www.elastic.co/guide/en/fleet/current/running-on-kubernetes-managed-by-fleet.html
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: elastic-synthetic-monitor
+  namespace: kube-system
+  labels:
+    app.kubernetes.io/name: elastic-synthetic-monitor
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app.kubernetes.io/name: elastic-synthetic-monitor
+  template:
+    metadata:
+      labels:
+        app.kubernetes.io/name: elastic-synthetic-monitor
+    spec:
+      containers:
+        - name: elastic-synthetic-monitor
+          image: docker.elastic.co/elastic-agent/elastic-agent-complete:9.1.0
+          envFrom:
+            - secretRef:
+                name: elastic-synthetic-monitor-secret
+          env:
+            - name: NODE_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: spec.nodeName
+            - name: POD_NAME
+              valueFrom:
+                fieldRef:
+                  fieldPath: metadata.name
+          resources:
+            limits:
+              memory: 256Mi
+              cpu: 200m
+            requests:
+              cpu: 100m
+              memory: 128Mi
+---
