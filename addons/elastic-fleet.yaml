@@ -80,6 +80,9 @@
                 port:
                   value: [8220]
                   type: "integer"
+                tags:
+                  value: ["ansible-managed", "fleet-server", "default"]
+                  type: "yaml"
         return_content: yes
         status_code: [200, 201, 409, 400]
       register: fleet_server_integration
@@ -134,6 +137,10 @@
           metadata:
             name: fleet-server-config
             namespace: elastic-system
+            labels:
+              managed-by: ansible
+              component: fleet-server
+              app: elastic-stack
           type: Opaque
           stringData:
             FLEET_SERVER_ENABLE: "true"
