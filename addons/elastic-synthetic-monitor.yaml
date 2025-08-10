@@ -44,7 +44,7 @@
       loop: "{{ existing_policies.json['items'] }}"
       when: 
         - create_policy.status == 409
-        - item.name == '{{ synthetic_monitor_policy_name }}'
+        - item.name == synthetic_monitor_policy_name
 
     - name: Save agent policy details (new policy)
       set_fact:
@@ -55,6 +55,52 @@
     - name: Show policy status
       debug:
         msg: "Agent policy '{{ agent_policy_name }}' (ID: {{ agent_policy_id }}) - {{ 'Created' if create_policy.status in [200, 201] else 'Already exists' }}"
+
+    - name: Create synthetic private location
+      uri:
+        url: "{{ kibana_url }}/api/synthetics/private_locations"
+        method: POST
+        headers: "{{ kbn_headers }}"
+        body_format: json
+        body:
+          label: "synthetic-monitor-default"
+          agentPolicyId: "{{ agent_policy_id }}"
+          tags: ["ansible-managed", "synthetic-monitor", "default", "private"]
+          geo:
+            lat: 40.7128
+            lon: -74.0060
+        return_content: yes
+        status_code: [200, 201, 409]
+      register: private_location_response
+      failed_when: false
+
+    - name: Show private location creation status
+      debug:
+        msg: "Private location: {{ 'Created successfully' if private_location_response.status in [200, 201] else 'Already exists or failed' }}"
+
+    - name: Get private location details if created successfully
+      set_fact:
+        private_location_id: "{{ private_location_response.json.id }}"
+        private_location_label: "{{ private_location_response.json.label }}"
+      when: private_location_response.status in [200, 201]
+
+    - name: Get existing private locations if creation failed
+      uri:
+        url: "{{ kibana_url }}/api/synthetics/private_locations"
+        method: GET
+        headers: "{{ kbn_headers }}"
+        return_content: yes
+      register: existing_private_locations
+      when: private_location_response.status == 409
+
+    - name: Find existing private location by label
+      set_fact:
+        private_location_id: "{{ item.id }}"
+        private_location_label: "{{ item.label }}"
+      loop: "{{ existing_private_locations.json }}"
+      when: 
+        - private_location_response.status == 409
+        - item.label == 'synthetic-monitor-default'
 
     - name: Get enrollment token for the policy
       uri:
@@ -86,6 +132,10 @@
           metadata:
             name: synthetic-monitor-config
             namespace: elastic-system
+            labels:
+              managed-by: ansible
+              component: synthetic-monitor
+              app: elastic-stack
           type: Opaque
           stringData:
             FLEET_URL: "{{ fleet_server_default_url }}" # retreived from ansible/groups_vars/all/secrets.yaml
@@ -107,6 +157,10 @@
           metadata:
             name: elastic-synthetic-monitor
             namespace: argocd
+            labels:
+              managed-by: ansible
+              component: synthetic-monitor
+              app: elastic-stack
             finalizers:
               - resources-finalizer.argocd.argoproj.io
           spec:
@@ -134,6 +188,8 @@
       debug:
         msg:
           - "Agent Policy: {{ agent_policy_name }} ({{ 'Created' if create_policy.status in [200, 201] else 'Already exists' }})"
+          - "Private Location: {{ private_location_label | default('synthetic-monitor-default') }} ({{ 'Created' if private_location_response.status in [200, 201] else 'Already exists or failed' }})"
+          - "Location ID: {{ private_location_id | default('Not available') }}"
           - "Enrollment Token: Created"
           - "Kubernetes Secret: synthetic-monitor-config (elastic-system namespace)"
           - "ArgoCD Application: elastic-synthetic-monitor (deployed to elastic-system)"
