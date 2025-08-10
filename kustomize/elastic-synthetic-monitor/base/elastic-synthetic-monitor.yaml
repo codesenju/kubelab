@@ -21,7 +21,7 @@ spec:
           image: docker.elastic.co/elastic-agent/elastic-agent-complete:9.1.0
           envFrom:
             - secretRef:
-                name: elastic-synthetic-monitor-secret
+                name: synthetic-monitor-config
           env:
             - name: NODE_NAME
               valueFrom:
