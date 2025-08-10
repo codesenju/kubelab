@@ -1,0 +1,140 @@
+- name: Create Elastic Synthetic Monitor Agent Policy and ArgoCD Application
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    kbn_headers:
+      Content-Type: "application/json"
+      kbn-xsrf: "true"
+      Authorization: "ApiKey {{ fleet_manager_api_key }}"
+    es_headers:
+      Content-Type: "application/json"
+      Authorization: "ApiKey {{ fleet_manager_api_key }}"
+    synthetic_monitor_policy_name: "synthetic-monitor-policy-default"
+
+  tasks:
+    - name: Create synthetic monitor agent policy (ignore if exists)
+      uri:
+        url: "{{ kibana_url }}/api/fleet/agent_policies"
+        method: POST
+        headers: "{{ kbn_headers }}"
+        body_format: json
+        body:
+          name: "{{ synthetic_monitor_policy_name }}"
+          namespace: "default"
+          description: "Policy for Elastic Synthetic Monitor agents"
+        return_content: yes
+        status_code: [200, 201, 409]
+      register: create_policy
+      failed_when: false
+
+    - name: Get existing policy if creation failed due to conflict
+      uri:
+        url: "{{ kibana_url }}/api/fleet/agent_policies"
+        method: GET
+        headers: "{{ kbn_headers }}"
+        return_content: yes
+      register: existing_policies
+      when: create_policy.status == 409
+
+    - name: Find existing policy by name
+      set_fact:
+        agent_policy_id: "{{ item.id }}"
+        agent_policy_name: "{{ item.name }}"
+      loop: "{{ existing_policies.json['items'] }}"
+      when: 
+        - create_policy.status == 409
+        - item.name == '{{ synthetic_monitor_policy_name }}'
+
+    - name: Save agent policy details (new policy)
+      set_fact:
+        agent_policy_id: "{{ create_policy.json.item.id }}"
+        agent_policy_name: "{{ create_policy.json.item.name }}"
+      when: create_policy.status in [200, 201]
+
+    - name: Show policy status
+      debug:
+        msg: "Agent policy '{{ agent_policy_name }}' (ID: {{ agent_policy_id }}) - {{ 'Created' if create_policy.status in [200, 201] else 'Already exists' }}"
+
+    - name: Get enrollment token for the policy
+      uri:
+        url: "{{ kibana_url }}/api/fleet/enrollment_api_keys"
+        method: POST
+        headers: "{{ kbn_headers }}"
+        body_format: json
+        body:
+          name: "synthetic-monitor-enrollment-{{ ansible_date_time.epoch }}"
+          policy_id: "{{ agent_policy_id }}"
+        return_content: yes
+        status_code: [200, 201]
+      register: enrollment_token_response
+
+    - name: Save enrollment token
+      set_fact:
+        enrollment_token: "{{ enrollment_token_response.json.item.api_key }}"
+
+    - name: Show enrollment token created
+      debug:
+        msg: "Enrollment token created successfully"
+
+    - name: Create synthetic-monitor-config secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: synthetic-monitor-config
+            namespace: elastic-system
+          type: Opaque
+          stringData:
+            FLEET_URL: "{{ fleet_server_default_url }}" # retreived from ansible/groups_vars/all/secrets.yaml
+            FLEET_ENROLLMENT_TOKEN: "{{ enrollment_token }}" # retreived from previous task
+            FLEET_ENROLL: "1"
+            FLEET_INSECURE: "false"
+      register: k8s_secret_result
+
+    - name: Show Kubernetes secret creation result
+      debug:
+        msg: "Kubernetes secret 'synthetic-monitor-config' created in namespace 'elastic-system'"
+
+    - name: Create ArgoCD Application for Elastic Synthetic Monitor
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: elastic-synthetic-monitor
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              targetRevision: HEAD
+              path: kustomize/elastic-synthetic-monitor/overlays/prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: elastic-system
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+      register: argocd_app_result
+
+    - name: Show ArgoCD application creation result
+      debug:
+        msg: "ArgoCD application 'elastic-synthetic-monitor' created successfully"
+
+    - name: Summary
+      debug:
+        msg:
+          - "Agent Policy: {{ agent_policy_name }} ({{ 'Created' if create_policy.status in [200, 201] else 'Already exists' }})"
+          - "Enrollment Token: Created"
+          - "Kubernetes Secret: synthetic-monitor-config (elastic-system namespace)"
+          - "ArgoCD Application: elastic-synthetic-monitor (deployed to elastic-system)"
+          - "Fleet Server URL: {{ fleet_server_default_url }}"
