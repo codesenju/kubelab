@@ -1,0 +1,164 @@
+- name: Create Kibana Fleet Agent Policy and Kubernetes Secret
+  hosts: localhost
+  connection: local
+  gather_facts: true
+  vars:
+    kbn_headers:
+      Content-Type: "application/json"
+      kbn-xsrf: "true"
+      Authorization: "ApiKey {{ fleet_manager_api_key }}"
+    es_headers:
+      Content-Type: "application/json"
+      Authorization: "ApiKey {{ fleet_manager_api_key }}"
+
+  tasks:
+    - name: Create agent policy (ignore if exists)
+      uri:
+        url: "{{ kibana_url }}/api/fleet/agent_policies"
+        method: POST
+        headers: "{{ kbn_headers }}"
+        body_format: json
+        body:
+          name: "fleet-server-policy-default"
+          namespace: "default"
+          description: "Default Fleet Server policy"
+        return_content: yes
+        status_code: [200, 201, 409]
+      register: create_policy
+      failed_when: false
+
+    - name: Get existing policy if creation failed due to conflict
+      uri:
+        url: "{{ kibana_url }}/api/fleet/agent_policies"
+        method: GET
+        headers: "{{ kbn_headers }}"
+        return_content: yes
+      register: existing_policies
+      when: create_policy.status == 409
+
+    - name: Find existing policy by name
+      set_fact:
+        agent_policy_id: "{{ item.id }}"
+        agent_policy_name: "{{ item.name }}"
+      loop: "{{ existing_policies.json['items'] }}"
+      when: 
+        - create_policy.status == 409
+        - item.name == 'fleet-server-policy-default'
+
+    - name: Save agent policy details (new policy)
+      set_fact:
+        agent_policy_id: "{{ create_policy.json.item.id }}"
+        agent_policy_name: "{{ create_policy.json.item.name }}"
+      when: create_policy.status in [200, 201]
+
+    - name: Show policy status
+      debug:
+        msg: "Agent policy '{{ agent_policy_name }}' (ID: {{ agent_policy_id }}) - {{ 'Created' if create_policy.status in [200, 201] else 'Already exists' }}"
+
+    - name: Add Fleet Server integration to policy
+      uri:
+        url: "{{ kibana_url }}/api/fleet/package_policies"
+        method: POST
+        headers: "{{ kbn_headers }}"
+        body_format: json
+        body:
+          name: "fleet_server-default-policy"
+          namespace: "default"
+          policy_id: "{{ agent_policy_id }}"
+          enabled: true
+          package:
+            name: "fleet_server"
+            version: "1.6.0"
+          inputs:
+            - type: "fleet-server"
+              enabled: true
+              streams: []
+              vars:
+                host:
+                  value: ["0.0.0.0:8220"]
+                  type: "text"
+                port:
+                  value: [8220]
+                  type: "integer"
+        return_content: yes
+        status_code: [200, 201, 409, 400]
+      register: fleet_server_integration
+      failed_when: false
+
+    - name: Show Fleet Server integration status
+      debug:
+        msg: "Fleet Server integration: {{ 'Added successfully' if fleet_server_integration.status in [200, 201] else 'Failed or already exists' }}"
+
+    - name: Create Fleet server service token
+      uri:
+        url: "{{ elastic_endpoint }}/_security/service/elastic/fleet-server/credential/token/fleet-server-token-{{ ansible_date_time.epoch }}"
+        method: POST
+        headers: "{{ es_headers }}"
+        return_content: yes
+        status_code: [200, 201]
+      register: service_token_response
+
+    - name: Save service token
+      set_fact:
+        fleet_service_token: "{{ service_token_response.json.token.value }}"
+
+    - name: Show service token created
+      debug:
+        msg: "Fleet server service token created successfully"
+
+    - name: Create fleet-server-config secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: fleet-server-config
+            namespace: elastic-system
+          type: Opaque
+          stringData:
+            FLEET_SERVER_ENABLE: "true"
+            FLEET_SERVER_ELASTICSEARCH_HOST: "{{ elastic_endpoint }}"
+            FLEET_SERVER_SERVICE_TOKEN: "{{ fleet_service_token }}"
+      register: k8s_secret_result
+
+    - name: Show Kubernetes secret creation result
+      debug:
+        msg: "Kubernetes secret 'fleet-server-config' created in namespace 'elastic-system'"
+
+    - name: Summary
+      debug:
+        msg:
+          - "Agent Policy: {{ agent_policy_name }} ({{ 'Created' if create_policy.status in [200, 201] else 'Already exists' }})"
+          - "Fleet Server Integration: {{ 'Added successfully' if fleet_server_integration.status in [200, 201] else 'Already exists' }}"
+          - "Fleet Service Token: Created"
+          - "Kubernetes Secret: fleet-server-config (elastic-system namespace)"
+
+    - name: Deploy Elastic Fleet
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: elastic-fleet
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/elastic-fleet/overlays/prod
+              targetRevision: HEAD
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: elastic-system
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
