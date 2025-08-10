@@ -89,6 +89,25 @@
       debug:
         msg: "Fleet Server integration: {{ 'Added successfully' if fleet_server_integration.status in [200, 201] else 'Failed or already exists' }}"
 
+    - name: Add Fleet Server host
+      uri:
+        url: "{{ kibana_url }}/api/fleet/fleet_server_hosts"
+        method: POST
+        headers: "{{ kbn_headers }}"
+        body_format: json
+        body:
+          name: "elastic-fleet-server-default"
+          host_urls: ["{{ fleet_server_default_url }}"]
+          is_default: true
+        return_content: yes
+        status_code: [200, 201, 409]
+      register: fleet_server_host
+      failed_when: false
+
+    - name: Show Fleet Server host status
+      debug:
+        msg: "Fleet Server host: {{ 'Added successfully' if fleet_server_host.status in [200, 201] else 'Already exists or failed' }}"
+
     - name: Create Fleet server service token
       uri:
         url: "{{ elastic_endpoint }}/_security/service/elastic/fleet-server/credential/token/fleet-server-token-{{ ansible_date_time.epoch }}"
@@ -132,6 +151,7 @@
         msg:
           - "Agent Policy: {{ agent_policy_name }} ({{ 'Created' if create_policy.status in [200, 201] else 'Already exists' }})"
           - "Fleet Server Integration: {{ 'Added successfully' if fleet_server_integration.status in [200, 201] else 'Already exists' }}"
+          - "Fleet Server Host: {{ 'Added successfully' if fleet_server_host.status in [200, 201] else 'Already exists or failed' }}"
           - "Fleet Service Token: Created"
           - "Kubernetes Secret: fleet-server-config (elastic-system namespace)"
 
