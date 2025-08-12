@@ -127,6 +127,13 @@
                 values: |
                   template:
                     spec:
+                      initContainers:
+                      - name: install-docker-client
+                        image: docker:24-dind
+                        command: ["sh", "-c", "cp /usr/local/bin/docker /docker-bin/docker"]
+                        volumeMounts:
+                        - name: docker-bin
+                          mountPath: /docker-bin
                       containers:
                       - name: runner
                         image: ghcr.io/actions/actions-runner:latest
@@ -134,31 +141,33 @@
                         env:
                         - name: DOCKER_HOST
                           value: tcp://localhost:2375
+                        - name: DOCKER_TLS_CERTDIR
+                          value: ""
                         volumeMounts:
                         - name: work
                           mountPath: /home/runner/_work
-                        - name: docker-sock
-                          mountPath: /var/run
+                        - name: docker-bin
+                          mountPath: /usr/local/bin/docker
+                          subPath: docker
                       - name: dind
                         image: docker:24-dind
                         securityContext:
                           privileged: true
+                        args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
                         env:
                         - name: DOCKER_TLS_CERTDIR
                           value: ""
-                        - name: DOCKER_HOST
-                          value: tcp://0.0.0.0:2375
-                        ports:
-                        - containerPort: 2375
                         volumeMounts:
                         - name: work
                           mountPath: /home/runner/_work
-                        - name: docker-sock
-                          mountPath: /var/run
+                        - name: docker-graph-storage
+                          mountPath: /var/lib/docker
                       volumes:
                       - name: work
                         emptyDir: {}
-                      - name: docker-sock
+                      - name: docker-bin
+                        emptyDir: {}
+                      - name: docker-graph-storage
                         emptyDir: {}
             destination:
               server: https://kubernetes.default.svc
