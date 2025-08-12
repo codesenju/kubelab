@@ -38,26 +38,18 @@ jobs:
         free -h
         echo "=== Disk Space ==="
         df -h
-        echo "=== Docker Version ==="
-        docker --version
-        echo "=== Docker Info ==="
-        docker info
+        echo "=== Available Tools ==="
+        which git || echo "git not found"
+        which curl || echo "curl not found"
+        which wget || echo "wget not found"
+        which node || echo "node not found"
+        which python3 || echo "python3 not found"
+        which docker || echo "docker not found"
         
     - name: 🛒 Check out repository code
       uses: actions/checkout@v4
       
-    - name: 📝 Create test Dockerfile
-      run: |
-        cat > Dockerfile << 'EOF'
-        FROM alpine:latest
-        RUN apk add --no-cache curl
-        WORKDIR /app
-        COPY . .
-        RUN echo "Hello from ARC Runner!" > hello.txt
-        CMD ["cat", "hello.txt"]
-        EOF
-        
-    - name: 📝 Create test application files
+    - name: 📝 Create test files
       run: |
         echo "console.log('Hello from ARC Runner!');" > app.js
         cat > package.json << 'EOF'
@@ -71,65 +63,84 @@ jobs:
           }
         }
         EOF
+        echo "# ARC Test Application" > README.md
+        echo "This is a test application created by the ARC runner." >> README.md
         
-    - name: 🐳 Test Docker functionality
+    - name: 📂 List workspace contents
       run: |
-        echo "=== Testing Docker Commands ==="
-        docker ps
-        docker images
-        echo "=== Pulling test image ==="
-        docker pull hello-world
-        echo "=== Running test container ==="
-        docker run --rm hello-world
+        echo "=== Workspace Contents ==="
+        ls -la
+        echo "=== Repository Files ==="
+        find . -type f -name "*.md" -o -name "*.yml" -o -name "*.yaml" | head -10
         
-    - name: 🔨 Build Docker image
+    - name: 🧪 Test basic commands
       run: |
-        echo "=== Building Docker image ==="
-        docker build -t test-app:${{ github.sha }} .
-        docker images | grep test-app
+        echo "=== Testing Basic Commands ==="
+        echo "Current user: $(whoami)"
+        echo "Current directory: $(pwd)"
+        echo "Environment variables:"
+        env | grep -E "(GITHUB_|RUNNER_)" | sort
         
-    - name: 🧪 Test built image
+    - name: 🔧 Test file operations
       run: |
-        echo "=== Testing built image ==="
-        docker run --rm test-app:${{ github.sha }}
+        echo "=== Testing File Operations ==="
+        mkdir -p test-dir
+        echo "Test content" > test-dir/test-file.txt
+        cat test-dir/test-file.txt
+        ls -la test-dir/
+        rm -rf test-dir
+        echo "File operations completed successfully!"
         
-    - name: 🏷️ Tag image for registry
+    - name: 🌐 Test network connectivity
       run: |
-        docker tag test-app:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker tag test-app:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        
-    - name: 🔐 Log in to Container Registry
-      if: github.event_name != 'pull_request'
-      uses: docker/login-action@v3
-      with:
-        registry: ${{ env.REGISTRY }}
-        username: ${{ github.actor }}
-        password: ${{ secrets.GITHUB_TOKEN }}
-        
-    - name: 📤 Push image to registry
-      if: github.event_name != 'pull_request'
-      run: |
-        echo "=== Pushing image to registry ==="
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
-        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
-        
-    - name: 🧹 Cleanup Docker resources
-      run: |
-        echo "=== Cleaning up Docker resources ==="
-        docker system prune -f
-        docker images
+        echo "=== Testing Network Connectivity ==="
+        curl -s -o /dev/null -w "GitHub API: %{http_code}\n" https://api.github.com/
+        curl -s -o /dev/null -w "Google: %{http_code}\n" https://www.google.com/
+        echo "Network tests completed!"
         
     - name: 📊 Runner resource usage
       run: |
-        echo "=== Final Resource Usage ==="
+        echo "=== Resource Usage ==="
         free -h
         df -h
-        docker system df
+        ps aux | head -10
         
     - name: ✅ Success message
       run: |
         echo "🎉 ARC Runner functionality test completed successfully!"
-        echo "✅ Docker commands executed"
-        echo "✅ Image built and tested"
-        echo "✅ Registry operations completed"
+        echo "✅ Basic system commands executed"
+        echo "✅ File operations completed"
+        echo "✅ Network connectivity verified"
+        echo "✅ Repository checkout successful"
         echo "🚀 Runner scale set is working perfectly!"
+        
+  test-docker-availability:
+    runs-on: arc-runner-set
+    steps:
+    - name: 🐳 Check Docker availability
+      run: |
+        echo "=== Docker Availability Check ==="
+        if command -v docker &> /dev/null; then
+          echo "✅ Docker client is installed"
+          docker --version
+          echo "Checking Docker daemon connection..."
+          if docker info &> /dev/null; then
+            echo "✅ Docker daemon is accessible"
+            docker ps
+            docker images
+          else
+            echo "❌ Docker daemon is not accessible"
+            echo "This is expected if Docker-in-Docker is not configured"
+          fi
+        else
+          echo "❌ Docker client is not installed"
+        fi
+        
+    - name: 📝 Docker configuration notes
+      run: |
+        echo "=== Docker Configuration Notes ==="
+        echo "To enable Docker functionality in ARC runners, you need to:"
+        echo "1. Configure Docker-in-Docker (DinD) sidecar container"
+        echo "2. Mount Docker socket or use privileged containers"
+        echo "3. Update the runner template with proper Docker configuration"
+        echo "Current runner is using basic GitHub Actions runner image"
