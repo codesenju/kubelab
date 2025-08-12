@@ -1,0 +1,120 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  tasks:
+
+    - name: Deploy GitHub Actions Runner Controller
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gha-runner-scale-set-controller
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: ghcr.io/actions/actions-runner-controller-charts
+              chart: gha-runner-scale-set-controller
+              targetRevision: "0.12.1"
+              helm:
+                releaseName: gha-runner-scale-set-controller
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: arc-systems
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+
+    - name: Create additional RBAC permissions for cross-namespace access
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: gha-rs-controller-cross-namespace
+          rules:
+          - apiGroups: [""]
+            resources: ["serviceaccounts"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: [""]
+            resources: ["secrets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: ["rbac.authorization.k8s.io"]
+            resources: ["roles", "rolebindings"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+    - name: Bind additional RBAC permissions to controller service account
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: gha-rs-controller-cross-namespace
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: gha-rs-controller-cross-namespace
+          subjects:
+          - kind: ServiceAccount
+            name: gha-runner-scale-set-controller-gha-rs-controller
+            namespace: arc-systems
+
+    - name: Wait for controller deployment to be ready
+      kubernetes.core.k8s_info:
+        api_version: apps/v1
+        kind: Deployment
+        name: gha-runner-scale-set-controller-gha-rs-controller
+        namespace: arc-systems
+        wait: true
+        wait_condition:
+          type: Available
+          status: "True"
+        wait_timeout: 300
+
+    - name: Deploy GitHub Actions Runner Scale Set
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: arc-runner-set
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: ghcr.io/actions/actions-runner-controller-charts
+              chart: gha-runner-scale-set
+              targetRevision: "0.12.1"
+              helm:
+                releaseName: arc-runner-set
+                parameters:
+                  - name: githubConfigUrl
+                    value: "{{ github_config_url }}"
+                  - name: githubConfigSecret.github_token
+                    value: "{{ github_pat }}"
+                  - name: controllerServiceAccount.name
+                    value: "arc-gha-rs-controller"
+                  - name: controllerServiceAccount.namespace
+                    value: "arc-systems"
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: arc-runners
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
