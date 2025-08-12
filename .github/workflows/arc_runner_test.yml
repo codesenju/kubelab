@@ -38,109 +38,297 @@ jobs:
         free -h
         echo "=== Disk Space ==="
         df -h
-        echo "=== Available Tools ==="
-        which git || echo "git not found"
-        which curl || echo "curl not found"
-        which wget || echo "wget not found"
-        which node || echo "node not found"
-        which python3 || echo "python3 not found"
-        which docker || echo "docker not found"
         
     - name: 🛒 Check out repository code
       uses: actions/checkout@v4
+
+  test-docker-functionality:
+    runs-on: arc-runner-set
+    needs: test-arc-functionality
+    steps:
+    - name: 🛒 Check out repository code
+      uses: actions/checkout@v4
       
-    - name: 📝 Create test files
+    - name: ⏳ Wait for Docker daemon to be ready
       run: |
-        echo "console.log('Hello from ARC Runner!');" > app.js
+        echo "Waiting for Docker daemon to start..."
+        timeout=60
+        while [ $timeout -gt 0 ]; do
+          if docker info >/dev/null 2>&1; then
+            echo "✅ Docker daemon is ready!"
+            break
+          fi
+          echo "Waiting for Docker daemon... ($timeout seconds remaining)"
+          sleep 2
+          timeout=$((timeout-2))
+        done
+        if [ $timeout -le 0 ]; then
+          echo "❌ Docker daemon failed to start within 60 seconds"
+          exit 1
+        fi
+        
+    - name: 🐳 Test Docker version and info
+      run: |
+        echo "=== Docker Version ==="
+        docker --version
+        echo "=== Docker Info ==="
+        docker info
+        echo "=== Docker System Info ==="
+        docker system info --format "{{.ServerVersion}}"
+        
+    - name: 🧪 Test Docker run commands
+      run: |
+        echo "=== Testing Docker Run Commands ==="
+        
+        echo "1. Running hello-world container..."
+        docker run --rm hello-world
+        
+        echo "2. Running Alpine Linux with basic commands..."
+        docker run --rm alpine:latest echo "Hello from Alpine!"
+        
+        echo "3. Running Ubuntu with system info..."
+        docker run --rm ubuntu:latest bash -c "echo 'Ubuntu container:' && uname -a && cat /etc/os-release | head -5"
+        
+        echo "4. Testing volume mounts..."
+        docker run --rm -v /tmp:/host-tmp alpine:latest sh -c "echo 'Test file from container' > /host-tmp/test.txt && cat /host-tmp/test.txt"
+        
+        echo "5. Testing environment variables..."
+        docker run --rm -e TEST_VAR="Hello from Docker" alpine:latest sh -c "echo 'Environment variable: $TEST_VAR'"
+        
+    - name: 📝 Create test application files
+      run: |
+        echo "=== Creating Test Application ==="
+        
+        # Create a simple Node.js application
+        cat > app.js << 'EOF'
+        const http = require('http');
+        const os = require('os');
+        
+        const server = http.createServer((req, res) => {
+          const response = {
+            message: 'Hello from ARC Runner Docker Container!',
+            hostname: os.hostname(),
+            platform: os.platform(),
+            arch: os.arch(),
+            uptime: os.uptime(),
+            timestamp: new Date().toISOString(),
+            path: req.url
+          };
+          
+          res.writeHead(200, { 'Content-Type': 'application/json' });
+          res.end(JSON.stringify(response, null, 2));
+        });
+        
+        const port = process.env.PORT || 3000;
+        server.listen(port, () => {
+          console.log(`Server running on port ${port}`);
+          console.log(`Hostname: ${os.hostname()}`);
+          console.log(`Platform: ${os.platform()}`);
+        });
+        EOF
+        
+        # Create package.json
         cat > package.json << 'EOF'
         {
           "name": "arc-test-app",
           "version": "1.0.0",
-          "description": "Test application for ARC functionality",
+          "description": "Test application for ARC Docker functionality",
           "main": "app.js",
           "scripts": {
             "start": "node app.js"
+          },
+          "dependencies": {},
+          "engines": {
+            "node": ">=14"
           }
         }
         EOF
-        echo "# ARC Test Application" > README.md
-        echo "This is a test application created by the ARC runner." >> README.md
         
-    - name: 📂 List workspace contents
-      run: |
-        echo "=== Workspace Contents ==="
+        # Create Dockerfile
+        cat > Dockerfile << 'EOF'
+        FROM node:18-alpine
+        
+        # Set working directory
+        WORKDIR /app
+        
+        # Copy package files
+        COPY package*.json ./
+        
+        # Install dependencies (none in this case, but good practice)
+        RUN npm install --only=production
+        
+        # Copy application code
+        COPY app.js .
+        
+        # Create non-root user
+        RUN addgroup -g 1001 -S nodejs && \
+            adduser -S nodejs -u 1001
+        
+        # Change ownership of the app directory
+        RUN chown -R nodejs:nodejs /app
+        USER nodejs
+        
+        # Expose port
+        EXPOSE 3000
+        
+        # Health check
+        HEALTHCHECK --interval=30s --timeout=3s --start-period=5s --retries=3 \
+          CMD curl -f http://localhost:3000/ || exit 1
+        
+        # Start the application
+        CMD ["npm", "start"]
+        EOF
+        
+        # Create .dockerignore
+        cat > .dockerignore << 'EOF'
+        node_modules
+        npm-debug.log
+        .git
+        .gitignore
+        README.md
+        .env
+        .nyc_output
+        coverage
+        .nyc_output
+        EOF
+        
+        echo "✅ Application files created successfully!"
         ls -la
-        echo "=== Repository Files ==="
-        find . -type f -name "*.md" -o -name "*.yml" -o -name "*.yaml" | head -10
         
-    - name: 🧪 Test basic commands
+    - name: 🔨 Test Docker build commands
       run: |
-        echo "=== Testing Basic Commands ==="
-        echo "Current user: $(whoami)"
-        echo "Current directory: $(pwd)"
-        echo "Environment variables:"
-        env | grep -E "(GITHUB_|RUNNER_)" | sort
+        echo "=== Testing Docker Build Commands ==="
         
-    - name: 🔧 Test file operations
-      run: |
-        echo "=== Testing File Operations ==="
-        mkdir -p test-dir
-        echo "Test content" > test-dir/test-file.txt
-        cat test-dir/test-file.txt
-        ls -la test-dir/
-        rm -rf test-dir
-        echo "File operations completed successfully!"
+        echo "1. Building the test application image..."
+        docker build -t arc-test-app:latest .
         
-    - name: 🌐 Test network connectivity
-      run: |
-        echo "=== Testing Network Connectivity ==="
-        curl -s -o /dev/null -w "GitHub API: %{http_code}\n" https://api.github.com/
-        curl -s -o /dev/null -w "Google: %{http_code}\n" https://www.google.com/
-        echo "Network tests completed!"
+        echo "2. Building with custom tag..."
+        docker build -t arc-test-app:${{ github.sha }} .
         
-    - name: 📊 Runner resource usage
-      run: |
-        echo "=== Resource Usage ==="
-        free -h
-        df -h
-        ps aux | head -10
+        echo "3. Building with build arguments..."
+        docker build --build-arg NODE_ENV=production -t arc-test-app:prod .
         
-    - name: ✅ Success message
-      run: |
-        echo "🎉 ARC Runner functionality test completed successfully!"
-        echo "✅ Basic system commands executed"
-        echo "✅ File operations completed"
-        echo "✅ Network connectivity verified"
-        echo "✅ Repository checkout successful"
-        echo "🚀 Runner scale set is working perfectly!"
+        echo "4. Listing built images..."
+        docker images | grep arc-test-app
         
-  test-docker-availability:
-    runs-on: arc-runner-set
-    steps:
-    - name: 🐳 Check Docker availability
-      run: |
-        echo "=== Docker Availability Check ==="
-        if command -v docker &> /dev/null; then
-          echo "✅ Docker client is installed"
-          docker --version
-          echo "Checking Docker daemon connection..."
-          if docker info &> /dev/null; then
-            echo "✅ Docker daemon is accessible"
-            docker ps
-            docker images
-          else
-            echo "❌ Docker daemon is not accessible"
-            echo "This is expected if Docker-in-Docker is not configured"
-          fi
-        else
-          echo "❌ Docker client is not installed"
-        fi
+        echo "5. Inspecting the built image..."
+        docker inspect arc-test-app:latest | jq '.[0].Config.ExposedPorts, .[0].Config.Cmd'
         
-    - name: 📝 Docker configuration notes
+    - name: 🚀 Test running the built application
       run: |
-        echo "=== Docker Configuration Notes ==="
-        echo "To enable Docker functionality in ARC runners, you need to:"
-        echo "1. Configure Docker-in-Docker (DinD) sidecar container"
-        echo "2. Mount Docker socket or use privileged containers"
-        echo "3. Update the runner template with proper Docker configuration"
-        echo "Current runner is using basic GitHub Actions runner image"
+        echo "=== Testing Built Application ==="
+        
+        echo "1. Running the application container in background..."
+        docker run -d --name test-app -p 3000:3000 arc-test-app:latest
+        
+        echo "2. Waiting for application to start..."
+        sleep 5
+        
+        echo "3. Testing application endpoint..."
+        docker exec test-app curl -s http://localhost:3000/ | jq '.'
+        
+        echo "4. Checking container logs..."
+        docker logs test-app
+        
+        echo "5. Checking container stats..."
+        docker stats test-app --no-stream
+        
+        echo "6. Stopping and removing container..."
+        docker stop test-app
+        docker rm test-app
+        
+    - name: 🏷️ Test Docker tagging and registry operations
+      run: |
+        echo "=== Testing Docker Tagging ==="
+        
+        echo "1. Tagging for registry..."
+        docker tag arc-test-app:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker tag arc-test-app:latest ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        
+        echo "2. Listing all tagged images..."
+        docker images | grep -E "(arc-test-app|${{ env.IMAGE_NAME }})"
+        
+    - name: 🔐 Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📤 Test Docker push to registry
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "=== Testing Docker Push ==="
+        
+        echo "1. Pushing image with SHA tag..."
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        
+        echo "2. Pushing image with latest tag..."
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        
+        echo "✅ Images pushed successfully!"
+        
+    - name: 🧪 Test Docker multi-stage builds
+      run: |
+        echo "=== Testing Multi-stage Docker Build ==="
+        
+        # Create multi-stage Dockerfile
+        cat > Dockerfile.multistage << 'EOF'
+        # Build stage
+        FROM node:18-alpine AS builder
+        WORKDIR /app
+        COPY package*.json ./
+        RUN npm install
+        COPY app.js .
+        
+        # Production stage
+        FROM node:18-alpine AS production
+        WORKDIR /app
+        RUN addgroup -g 1001 -S nodejs && adduser -S nodejs -u 1001
+        COPY --from=builder /app .
+        RUN chown -R nodejs:nodejs /app
+        USER nodejs
+        EXPOSE 3000
+        CMD ["node", "app.js"]
+        EOF
+        
+        echo "Building multi-stage image..."
+        docker build -f Dockerfile.multistage -t arc-test-app:multistage .
+        
+        echo "Comparing image sizes..."
+        docker images | grep arc-test-app
+        
+    - name: 🧹 Test Docker cleanup commands
+      run: |
+        echo "=== Testing Docker Cleanup ==="
+        
+        echo "1. Current Docker usage..."
+        docker system df
+        
+        echo "2. Removing unused images..."
+        docker image prune -f
+        
+        echo "3. Removing all test images..."
+        docker rmi $(docker images "arc-test-app" -q) || true
+        docker rmi $(docker images "${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}" -q) || true
+        
+        echo "4. Final cleanup..."
+        docker system prune -f
+        
+        echo "5. Final Docker usage..."
+        docker system df
+        
+    - name: ✅ Docker functionality summary
+      run: |
+        echo "🎉 Docker Functionality Test Summary:"
+        echo "✅ Docker daemon connectivity"
+        echo "✅ Docker run commands with various options"
+        echo "✅ Docker build with Dockerfile"
+        echo "✅ Docker build with build arguments"
+        echo "✅ Docker multi-stage builds"
+        echo "✅ Container execution and interaction"
+        echo "✅ Docker tagging and registry operations"
+        echo "✅ Docker push to GitHub Container Registry"
+        echo "✅ Docker cleanup and system management"
+        echo "🚀 ARC Runner with Docker-in-Docker is fully functional!"
