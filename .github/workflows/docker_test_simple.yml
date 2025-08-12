@@ -44,6 +44,14 @@ jobs:
         for host in "tcp://localhost:2375" "tcp://localhost:2376" "unix:///var/run/docker.sock"; do
           echo "Testing Docker host: $host"
           export DOCKER_HOST=$host
+          
+          # Disable TLS verification for TCP connections
+          if [[ $host == tcp://* ]]; then
+            export DOCKER_TLS_VERIFY=""
+            export DOCKER_CERT_PATH=""
+            echo "Disabled TLS verification for TCP connection"
+          fi
+          
           if docker version >/dev/null 2>&1; then
             echo "✅ Docker is working with host: $host"
             echo "Running basic Docker test..."
