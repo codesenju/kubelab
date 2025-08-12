@@ -142,6 +142,8 @@
                         - name: docker-certs
                           mountPath: /certs/client
                           readOnly: true
+                        - name: work
+                          mountPath: /home/runner/_work
                       - name: dind
                         image: docker:24-dind
                         securityContext:
@@ -152,8 +154,12 @@
                         volumeMounts:
                         - name: docker-certs
                           mountPath: /certs/client
+                        - name: work
+                          mountPath: /home/runner/_work
                       volumes:
                       - name: docker-certs
+                        emptyDir: {}
+                      - name: work
                         emptyDir: {}
             destination:
               server: https://kubernetes.default.svc
