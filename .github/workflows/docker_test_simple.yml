@@ -1,0 +1,56 @@
+name: Simple Docker Test
+on:
+  workflow_dispatch:
+
+jobs:
+  test-docker-simple:
+    runs-on: arc-runner-set
+    steps:
+    - name: 🐳 Test Docker with manual host override
+      run: |
+        echo "=== Testing Docker with different hosts ==="
+        
+        echo "1. Testing with default DOCKER_HOST:"
+        echo "DOCKER_HOST: $DOCKER_HOST"
+        docker version || echo "Failed with default host"
+        
+        echo "2. Testing with port 2375 (non-TLS):"
+        export DOCKER_HOST=tcp://localhost:2375
+        echo "DOCKER_HOST: $DOCKER_HOST"
+        docker version || echo "Failed with port 2375"
+        
+        echo "3. Testing with port 2376 (TLS):"
+        export DOCKER_HOST=tcp://localhost:2376
+        echo "DOCKER_HOST: $DOCKER_HOST"
+        docker version || echo "Failed with port 2376"
+        
+        echo "4. Checking what's listening on Docker ports:"
+        netstat -tlnp | grep -E "(2375|2376)" || echo "No Docker ports found"
+        
+        echo "5. Checking processes:"
+        ps aux | grep docker || echo "No docker processes visible"
+        
+        echo "6. Checking /var/run directory:"
+        ls -la /var/run/ | grep docker || echo "No docker socket found"
+        
+        echo "7. Testing with Unix socket:"
+        export DOCKER_HOST=unix:///var/run/docker.sock
+        echo "DOCKER_HOST: $DOCKER_HOST"
+        docker version || echo "Failed with Unix socket"
+        
+    - name: 🧪 Test Docker commands if working
+      run: |
+        # Try different Docker hosts until one works
+        for host in "tcp://localhost:2375" "tcp://localhost:2376" "unix:///var/run/docker.sock"; do
+          echo "Testing Docker host: $host"
+          export DOCKER_HOST=$host
+          if docker version >/dev/null 2>&1; then
+            echo "✅ Docker is working with host: $host"
+            echo "Running basic Docker test..."
+            docker run --rm hello-world
+            echo "✅ Docker run test successful!"
+            break
+          else
+            echo "❌ Docker failed with host: $host"
+          fi
+        done
