@@ -139,12 +139,10 @@
               kind: AutoscalingRunnerSet
               jsonPointers:
               - /spec/template/spec/initContainers
-              - /spec/template/spec/containers/0/env
-              - /spec/template/spec/containers/0/volumeMounts
-              - /spec/template/spec/containers/1/args
-              - /spec/template/spec/containers/1/env
-              - /spec/template/spec/containers/1/volumeMounts
+              - /spec/template/spec/containers
               - /spec/template/spec/volumes
+              - /spec/template/spec/restartPolicy
+              - /spec/template/spec/serviceAccountName
 
     - name: Wait for AutoscalingRunnerSet to be created
       kubernetes.core.k8s_info:
@@ -158,7 +156,7 @@
     - name: Apply Docker-in-Docker configuration to AutoscalingRunnerSet
       kubernetes.core.k8s:
         state: present
-        merge_type: strategic-merge
+        merge_type: merge
         definition:
           apiVersion: actions.github.com/v1alpha1
           kind: AutoscalingRunnerSet
@@ -177,12 +175,16 @@
                     mountPath: /docker-bin
                 containers:
                 - name: runner
+                  command: ["/home/runner/run.sh"]
+                  image: ghcr.io/actions/actions-runner:latest
                   env:
                   - name: DOCKER_HOST
                     value: tcp://localhost:2375
                   - name: DOCKER_TLS_CERTDIR
                     value: ""
                   volumeMounts:
+                  - name: work
+                    mountPath: /home/runner/_work
                   - name: docker-bin
                     mountPath: /usr/local/bin/docker
                     subPath: docker
@@ -195,10 +197,16 @@
                   - name: DOCKER_TLS_CERTDIR
                     value: ""
                   volumeMounts:
+                  - name: work
+                    mountPath: /home/runner/_work
                   - name: docker-graph-storage
                     mountPath: /var/lib/docker
                 volumes:
+                - name: work
+                  emptyDir: {}
                 - name: docker-bin
                   emptyDir: {}
                 - name: docker-graph-storage
                   emptyDir: {}
+                restartPolicy: Never
+                serviceAccountName: arc-runner-set-gha-rs-no-permission
