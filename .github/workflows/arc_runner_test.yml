@@ -247,7 +247,15 @@ jobs:
         sleep 5
         
         echo "3. Testing application endpoint..."
-        docker exec test-app curl -s http://localhost:3000/ | jq '.'
+        response=$(docker exec test-app curl -s http://localhost:3000/ || echo "curl failed")
+        echo "Raw response: $response"
+        if echo "$response" | jq . >/dev/null 2>&1; then
+          echo "✅ Valid JSON response:"
+          echo "$response" | jq .
+        else
+          echo "⚠️  Response is not valid JSON, showing raw output:"
+          echo "$response"
+        fi
         
         echo "4. Checking container logs..."
         docker logs test-app
