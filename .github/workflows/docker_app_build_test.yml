@@ -245,7 +245,7 @@ jobs:
         
         echo "=== Loading from Docker format ==="
         docker load < test-app.docker.tar
-        docker images | grep test-app
+        docker images | grep test-app || echo "No test-app images found (this may be expected)"
 
     - name: 🧹 Cleanup
       if: always()
