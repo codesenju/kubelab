@@ -47,6 +47,9 @@
           - apiGroups: [""]
             resources: ["secrets"]
             verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: [""]
+            resources: ["pods"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
           - apiGroups: ["rbac.authorization.k8s.io"]
             resources: ["roles", "rolebindings"]
             verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
@@ -80,6 +83,19 @@
           status: "True"
         wait_timeout: 300
 
+    - name: Create GitHub token secret for runner scale set
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: arc-runner-set-gha-rs-github-secret
+            namespace: arc-runners
+          type: Opaque
+          data:
+            github_token: "{{ github_pat | b64encode }}"
+
     - name: Deploy GitHub Actions Runner Scale Set
       kubernetes.core.k8s:
         state: present
@@ -102,12 +118,43 @@
                 parameters:
                   - name: githubConfigUrl
                     value: "{{ github_config_url }}"
-                  - name: githubConfigSecret.github_token
-                    value: "{{ github_pat }}"
+                  - name: githubConfigSecret
+                    value: "arc-runner-set-gha-rs-github-secret"
                   - name: controllerServiceAccount.name
                     value: "arc-gha-rs-controller"
                   - name: controllerServiceAccount.namespace
                     value: "arc-systems"
+                values: |
+                  template:
+                    spec:
+                      containers:
+                      - name: runner
+                        image: ghcr.io/actions/actions-runner:latest
+                        command: ["/home/runner/run.sh"]
+                        env:
+                        - name: DOCKER_HOST
+                          value: tcp://localhost:2376
+                        - name: DOCKER_TLS_CERTDIR
+                          value: /certs
+                        - name: DOCKER_TLS_VERIFY
+                          value: "1"
+                        volumeMounts:
+                        - name: docker-certs
+                          mountPath: /certs/client
+                          readOnly: true
+                      - name: dind
+                        image: docker:24-dind
+                        securityContext:
+                          privileged: true
+                        env:
+                        - name: DOCKER_TLS_CERTDIR
+                          value: /certs
+                        volumeMounts:
+                        - name: docker-certs
+                          mountPath: /certs/client
+                      volumes:
+                      - name: docker-certs
+                        emptyDir: {}
             destination:
               server: https://kubernetes.default.svc
               namespace: arc-runners
