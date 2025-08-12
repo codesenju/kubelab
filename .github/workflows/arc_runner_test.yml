@@ -1,10 +1,135 @@
 name: Actions Runner Controller Demo
 on:
   workflow_dispatch:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+env:
+  REGISTRY: ghcr.io
+  IMAGE_NAME: ${{ github.repository }}/test-app
 
 jobs:
-  Explore-GitHub-Actions:
-    # You need to use the INSTALLATION_NAME from the previous step
+  test-arc-functionality:
     runs-on: arc-runner-set
+    permissions:
+      contents: read
+      packages: write
     steps:
-    - run: echo "🎉 This job uses runner scale set runners!"
+    - name: 🎉 Welcome message
+      run: echo "🎉 This job uses runner scale set runners!"
+      
+    - name: 🔍 Explore runner environment
+      run: |
+        echo "🖥️ The job was automatically triggered by a ${{ github.event_name }} event."
+        echo "🐧 This job is now running on a ${{ runner.os }} server hosted by GitHub!"
+        echo "🔎 The name of your branch is ${{ github.ref }} and your repository is ${{ github.repository }}."
+        echo "💡 Runner name: ${{ runner.name }}"
+        echo "🏠 Runner workspace: ${{ runner.workspace }}"
+        
+    - name: 📋 System information
+      run: |
+        echo "=== System Information ==="
+        uname -a
+        echo "=== CPU Information ==="
+        nproc
+        echo "=== Memory Information ==="
+        free -h
+        echo "=== Disk Space ==="
+        df -h
+        echo "=== Docker Version ==="
+        docker --version
+        echo "=== Docker Info ==="
+        docker info
+        
+    - name: 🛒 Check out repository code
+      uses: actions/checkout@v4
+      
+    - name: 📝 Create test Dockerfile
+      run: |
+        cat > Dockerfile << 'EOF'
+        FROM alpine:latest
+        RUN apk add --no-cache curl
+        WORKDIR /app
+        COPY . .
+        RUN echo "Hello from ARC Runner!" > hello.txt
+        CMD ["cat", "hello.txt"]
+        EOF
+        
+    - name: 📝 Create test application files
+      run: |
+        echo "console.log('Hello from ARC Runner!');" > app.js
+        cat > package.json << 'EOF'
+        {
+          "name": "arc-test-app",
+          "version": "1.0.0",
+          "description": "Test application for ARC functionality",
+          "main": "app.js",
+          "scripts": {
+            "start": "node app.js"
+          }
+        }
+        EOF
+        
+    - name: 🐳 Test Docker functionality
+      run: |
+        echo "=== Testing Docker Commands ==="
+        docker ps
+        docker images
+        echo "=== Pulling test image ==="
+        docker pull hello-world
+        echo "=== Running test container ==="
+        docker run --rm hello-world
+        
+    - name: 🔨 Build Docker image
+      run: |
+        echo "=== Building Docker image ==="
+        docker build -t test-app:${{ github.sha }} .
+        docker images | grep test-app
+        
+    - name: 🧪 Test built image
+      run: |
+        echo "=== Testing built image ==="
+        docker run --rm test-app:${{ github.sha }}
+        
+    - name: 🏷️ Tag image for registry
+      run: |
+        docker tag test-app:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker tag test-app:${{ github.sha }} ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        
+    - name: 🔐 Log in to Container Registry
+      if: github.event_name != 'pull_request'
+      uses: docker/login-action@v3
+      with:
+        registry: ${{ env.REGISTRY }}
+        username: ${{ github.actor }}
+        password: ${{ secrets.GITHUB_TOKEN }}
+        
+    - name: 📤 Push image to registry
+      if: github.event_name != 'pull_request'
+      run: |
+        echo "=== Pushing image to registry ==="
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:${{ github.sha }}
+        docker push ${{ env.REGISTRY }}/${{ env.IMAGE_NAME }}:latest
+        
+    - name: 🧹 Cleanup Docker resources
+      run: |
+        echo "=== Cleaning up Docker resources ==="
+        docker system prune -f
+        docker images
+        
+    - name: 📊 Runner resource usage
+      run: |
+        echo "=== Final Resource Usage ==="
+        free -h
+        df -h
+        docker system df
+        
+    - name: ✅ Success message
+      run: |
+        echo "🎉 ARC Runner functionality test completed successfully!"
+        echo "✅ Docker commands executed"
+        echo "✅ Image built and tested"
+        echo "✅ Registry operations completed"
+        echo "🚀 Runner scale set is working perfectly!"
