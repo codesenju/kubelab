@@ -42,6 +42,3 @@
 
 - name: minio
   import_playbook: ../addons/minio.yaml
-
-- name: kube-prometheus-stack
-  import_playbook: ../addons/kube-prometheus-stack.yaml
