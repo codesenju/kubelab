@@ -133,33 +133,32 @@
                         command: ["/home/runner/run.sh"]
                         env:
                         - name: DOCKER_HOST
-                          value: tcp://localhost:2376
-                        - name: DOCKER_TLS_CERTDIR
-                          value: /certs
-                        - name: DOCKER_TLS_VERIFY
-                          value: "1"
+                          value: tcp://localhost:2375
                         volumeMounts:
-                        - name: docker-certs
-                          mountPath: /certs/client
-                          readOnly: true
                         - name: work
                           mountPath: /home/runner/_work
+                        - name: docker-sock
+                          mountPath: /var/run
                       - name: dind
                         image: docker:24-dind
                         securityContext:
                           privileged: true
                         env:
                         - name: DOCKER_TLS_CERTDIR
-                          value: /certs
+                          value: ""
+                        - name: DOCKER_HOST
+                          value: tcp://0.0.0.0:2375
+                        ports:
+                        - containerPort: 2375
                         volumeMounts:
-                        - name: docker-certs
-                          mountPath: /certs/client
                         - name: work
                           mountPath: /home/runner/_work
+                        - name: docker-sock
+                          mountPath: /var/run
                       volumes:
-                      - name: docker-certs
-                        emptyDir: {}
                       - name: work
+                        emptyDir: {}
+                      - name: docker-sock
                         emptyDir: {}
             destination:
               server: https://kubernetes.default.svc
