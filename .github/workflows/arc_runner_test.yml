@@ -52,10 +52,13 @@ jobs:
     - name: ⏳ Wait for Docker daemon to be ready
       run: |
         echo "Waiting for Docker daemon to start..."
-        timeout=60
+        echo "Docker host: $DOCKER_HOST"
+        timeout=30
         while [ $timeout -gt 0 ]; do
-          if docker info >/dev/null 2>&1; then
+          echo "Checking Docker daemon connectivity..."
+          if docker version >/dev/null 2>&1; then
             echo "✅ Docker daemon is ready!"
+            docker version
             break
           fi
           echo "Waiting for Docker daemon... ($timeout seconds remaining)"
@@ -63,7 +66,15 @@ jobs:
           timeout=$((timeout-2))
         done
         if [ $timeout -le 0 ]; then
-          echo "❌ Docker daemon failed to start within 60 seconds"
+          echo "❌ Docker daemon failed to start within 30 seconds"
+          echo "Debugging information:"
+          echo "DOCKER_HOST: $DOCKER_HOST"
+          echo "Checking if Docker socket exists:"
+          ls -la /var/run/ | grep docker || echo "No docker socket found"
+          echo "Checking processes:"
+          ps aux | grep docker || echo "No docker processes found"
+          echo "Checking network connectivity:"
+          nc -zv localhost 2375 || echo "Cannot connect to Docker daemon on port 2375"
           exit 1
         fi
         
