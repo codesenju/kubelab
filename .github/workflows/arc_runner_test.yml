@@ -45,14 +45,23 @@ jobs:
   test-docker-functionality:
     runs-on: arc-runner-set
     needs: test-arc-functionality
+    env:
+      DOCKER_HOST: tcp://localhost:2375
+      DOCKER_TLS_CERTDIR: ""
+      DOCKER_TLS_VERIFY: ""
     steps:
     - name: 🛒 Check out repository code
       uses: actions/checkout@v4
       
     - name: ⏳ Wait for Docker daemon to be ready
+      env:
+        DOCKER_HOST: tcp://localhost:2375
+        DOCKER_TLS_CERTDIR: ""
+        DOCKER_TLS_VERIFY: ""
       run: |
         echo "Waiting for Docker daemon to start..."
         echo "Docker host: $DOCKER_HOST"
+        echo "TLS disabled: DOCKER_TLS_CERTDIR='$DOCKER_TLS_CERTDIR'"
         timeout=30
         while [ $timeout -gt 0 ]; do
           echo "Checking Docker daemon connectivity..."
@@ -69,12 +78,14 @@ jobs:
           echo "❌ Docker daemon failed to start within 30 seconds"
           echo "Debugging information:"
           echo "DOCKER_HOST: $DOCKER_HOST"
-          echo "Checking if Docker socket exists:"
-          ls -la /var/run/ | grep docker || echo "No docker socket found"
+          echo "DOCKER_TLS_CERTDIR: '$DOCKER_TLS_CERTDIR'"
+          echo "DOCKER_TLS_VERIFY: '$DOCKER_TLS_VERIFY'"
+          echo "Checking if Docker binary exists:"
+          which docker || echo "Docker binary not found"
+          echo "Checking Docker binary version:"
+          docker --version || echo "Cannot get Docker version"
           echo "Checking processes:"
           ps aux | grep docker || echo "No docker processes found"
-          echo "Checking network connectivity:"
-          nc -zv localhost 2375 || echo "Cannot connect to Docker daemon on port 2375"
           exit 1
         fi
         
