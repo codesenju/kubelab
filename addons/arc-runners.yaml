@@ -96,62 +96,6 @@
           data:
             github_token: "{{ github_pat | b64encode }}"
 
-    - name: Create Helm values ConfigMap for Docker-in-Docker configuration
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: arc-runner-set-values
-            namespace: argocd
-          data:
-            values.yaml: |
-              template:
-                spec:
-                  initContainers:
-                  - name: install-docker-client
-                    image: docker:24-dind
-                    command: ["sh", "-c", "cp /usr/local/bin/docker /docker-bin/docker"]
-                    volumeMounts:
-                    - name: docker-bin
-                      mountPath: /docker-bin
-                  containers:
-                  - name: runner
-                    image: ghcr.io/actions/actions-runner:latest
-                    command: ["/home/runner/run.sh"]
-                    env:
-                    - name: DOCKER_HOST
-                      value: tcp://localhost:2375
-                    - name: DOCKER_TLS_CERTDIR
-                      value: ""
-                    volumeMounts:
-                    - name: work
-                      mountPath: /home/runner/_work
-                    - name: docker-bin
-                      mountPath: /usr/local/bin/docker
-                      subPath: docker
-                  - name: dind
-                    image: docker:24-dind
-                    securityContext:
-                      privileged: true
-                    args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
-                    env:
-                    - name: DOCKER_TLS_CERTDIR
-                      value: ""
-                    volumeMounts:
-                    - name: work
-                      mountPath: /home/runner/_work
-                    - name: docker-graph-storage
-                      mountPath: /var/lib/docker
-                  volumes:
-                  - name: work
-                    emptyDir: {}
-                  - name: docker-bin
-                    emptyDir: {}
-                  - name: docker-graph-storage
-                    emptyDir: {}
-
     - name: Deploy GitHub Actions Runner Scale Set
       kubernetes.core.k8s:
         state: present
@@ -190,6 +134,17 @@
               syncOptions:
               - CreateNamespace=true
               - ServerSideApply=true
+            ignoreDifferences:
+            - group: actions.github.com
+              kind: AutoscalingRunnerSet
+              jsonPointers:
+              - /spec/template/spec/initContainers
+              - /spec/template/spec/containers/0/env
+              - /spec/template/spec/containers/0/volumeMounts
+              - /spec/template/spec/containers/1/args
+              - /spec/template/spec/containers/1/env
+              - /spec/template/spec/containers/1/volumeMounts
+              - /spec/template/spec/volumes
 
     - name: Wait for AutoscalingRunnerSet to be created
       kubernetes.core.k8s_info:
