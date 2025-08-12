@@ -62,3 +62,61 @@ jobs:
             echo "❌ Docker failed with host: $host"
           fi
         done
+
+    - name: 🏗️ Test Docker Buildx basics
+      run: |
+        echo "=== Testing Docker Buildx ==="
+        
+        echo "1. Buildx version:"
+        docker buildx version
+        
+        echo "2. Available builders:"
+        docker buildx ls
+        
+        echo "3. Current builder info:"
+        docker buildx inspect --bootstrap
+        
+        echo "4. Create simple test Dockerfile:"
+        cat > Dockerfile.test << 'EOF'
+        FROM alpine:latest
+        RUN echo "Hello from Buildx!" > /hello.txt
+        CMD cat /hello.txt
+        EOF
+        
+        echo "5. Build with Buildx:"
+        docker buildx build \
+          --platform linux/amd64 \
+          --tag buildx-test:latest \
+          --file Dockerfile.test \
+          --load \
+          .
+        
+        echo "6. Test the built image:"
+        docker run --rm buildx-test:latest
+        
+        echo "7. Clean up:"
+        docker rmi buildx-test:latest
+        rm Dockerfile.test
+        
+        echo "✅ Docker Buildx basic test successful!"
+
+    - name: 🌐 Test multi-platform build capability
+      run: |
+        echo "=== Testing Multi-platform Build ==="
+        
+        cat > Dockerfile.multiarch << 'EOF'
+        FROM alpine:latest
+        RUN uname -m > /arch.txt
+        CMD echo "Architecture: $(cat /arch.txt)"
+        EOF
+        
+        echo "Building for multiple platforms (without pushing):"
+        docker buildx build \
+          --platform linux/amd64,linux/arm64 \
+          --tag multiarch-test:latest \
+          --file Dockerfile.multiarch \
+          .
+        
+        echo "✅ Multi-platform build test successful!"
+        
+        rm Dockerfile.multiarch
