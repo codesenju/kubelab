@@ -46,7 +46,7 @@ jobs:
     runs-on: kubelab-runner-set
     needs: test-arc-functionality
     env:
-      DOCKER_HOST: tcp://localhost:2375
+      DOCKER_HOST: tcp://localhost:2376
       DOCKER_TLS_CERTDIR: ""
       DOCKER_TLS_VERIFY: ""
     steps:
@@ -55,7 +55,7 @@ jobs:
       
     - name: ⏳ Wait for Docker daemon to be ready
       env:
-        DOCKER_HOST: tcp://localhost:2375
+        DOCKER_HOST: tcp://localhost:2376
         DOCKER_TLS_CERTDIR: ""
         DOCKER_TLS_VERIFY: ""
       run: |
