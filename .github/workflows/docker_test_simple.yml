@@ -4,7 +4,7 @@ on:
 
 jobs:
   test-docker-simple:
-    runs-on: arc-runner-set
+    runs-on: kubelab-runner-set
     steps:
     - name: 🐳 Test Docker with manual host override
       run: |
