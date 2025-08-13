@@ -173,14 +173,12 @@
           spec:
             template:
               spec:
-                securityContext:
-                  fsGroup: 1001
                 containers:
                 - name: runner
                   image: ghcr.io/actions/actions-runner:latest
                   env:
                   - name: DOCKER_HOST
-                    value: tcp://127.0.0.1:2375
+                    value: tcp://localhost:2376
                   - name: DOCKER_TLS_CERTDIR
                     value: ""
                   - name: DOCKER_TLS_VERIFY
@@ -188,51 +186,27 @@
                   volumeMounts:
                   - name: work
                     mountPath: /home/runner/_work
-                  - name: docker-sock
-                    mountPath: /var/run
                 - name: dind
-                  image: docker:24-dind
+                  image: docker:dind
                   securityContext:
                     privileged: true
-                  command: ["dockerd"]
-                  args: 
-                  - "--host=tcp://0.0.0.0:2375"
-                  - "--host=unix:///var/run/docker.sock"
-                  - "--tls=false"
-                  - "--storage-driver=overlay2"
                   env:
                   - name: DOCKER_TLS_CERTDIR
                     value: ""
-                  - name: DOCKER_DRIVER
-                    value: overlay2
+                  args:
+                  - --host=tcp://0.0.0.0:2376
+                  - --tls=false
                   ports:
-                  - containerPort: 2375
-                    protocol: TCP
-                  readinessProbe:
-                    exec:
-                      command: ["docker", "info"]
-                    initialDelaySeconds: 10
-                    periodSeconds: 5
-                    timeoutSeconds: 5
-                  livenessProbe:
-                    exec:
-                      command: ["docker", "info"]
-                    initialDelaySeconds: 20
-                    periodSeconds: 10
-                    timeoutSeconds: 5
+                  - containerPort: 2376
                   volumeMounts:
                   - name: work
                     mountPath: /home/runner/_work
                   - name: docker-graph-storage
                     mountPath: /var/lib/docker
-                  - name: docker-sock
-                    mountPath: /var/run
                 volumes:
                 - name: work
                   emptyDir: {}
                 - name: docker-graph-storage
-                  emptyDir: {}
-                - name: docker-sock
                   emptyDir: {}
                 restartPolicy: Never
                 serviceAccountName: arc-runner-set-gha-rs-no-permission
