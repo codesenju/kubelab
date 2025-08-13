@@ -176,7 +176,7 @@
                 initContainers:
                 - name: install-docker-client
                   image: docker:24-dind
-                  command: ["sh", "-c", "cp /usr/local/bin/docker /docker-bin/docker"]
+                  command: ["sh", "-c", "cp /usr/local/bin/docker /docker-bin/docker && chmod +x /docker-bin/docker"]
                   volumeMounts:
                   - name: docker-bin
                     mountPath: /docker-bin
@@ -189,20 +189,31 @@
                     value: tcp://localhost:2375
                   - name: DOCKER_TLS_CERTDIR
                     value: ""
+                  - name: DOCKER_TLS_VERIFY
+                    value: ""
+                  - name: PATH
+                    value: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/docker-bin"
                   volumeMounts:
                   - name: work
                     mountPath: /home/runner/_work
                   - name: docker-bin
-                    mountPath: /usr/local/bin/docker
-                    subPath: docker
+                    mountPath: /docker-bin
                 - name: dind
                   image: docker:24-dind
                   securityContext:
                     privileged: true
-                  args: ["--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
+                  args: ["dockerd", "--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
                   env:
                   - name: DOCKER_TLS_CERTDIR
                     value: ""
+                  - name: DOCKER_DRIVER
+                    value: overlay2
+                  readinessProbe:
+                    exec:
+                      command: ["docker", "version"]
+                    initialDelaySeconds: 10
+                    periodSeconds: 5
+                    timeoutSeconds: 3
                   volumeMounts:
                   - name: work
                     mountPath: /home/runner/_work
