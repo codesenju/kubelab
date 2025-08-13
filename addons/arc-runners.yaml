@@ -127,6 +127,8 @@
                   controllerServiceAccount:
                     name: "arc-gha-rs-controller"
                     namespace: "arc-systems"
+                  containerMode:
+                    type: "dind" 
             destination:
               server: https://kubernetes.default.svc
               namespace: arc-runners
