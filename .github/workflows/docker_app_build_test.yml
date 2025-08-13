@@ -9,7 +9,7 @@ on:
 
 jobs:
   build-test-app:
-    runs-on: arc-runner-set
+    runs-on: kubelab-runner-set
     steps:
     - name: 🛒 Checkout code
       uses: actions/checkout@v4
