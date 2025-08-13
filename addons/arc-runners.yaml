@@ -125,6 +125,8 @@
                     value: "{{ github_config_url }}"
                   - name: githubConfigSecret
                     value: "arc-runner-set-gha-rs-github-secret"
+                  - name: runnerScaleSetName
+                    value: "kubelab-runner-set"
                   - name: controllerServiceAccount.name
                     value: "arc-gha-rs-controller"
                   - name: controllerServiceAccount.namespace
