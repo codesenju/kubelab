@@ -173,16 +173,8 @@
           spec:
             template:
               spec:
-                initContainers:
-                - name: install-docker-client
-                  image: docker:24-dind
-                  command: ["sh", "-c", "cp /usr/local/bin/docker /docker-bin/docker && chmod +x /docker-bin/docker"]
-                  volumeMounts:
-                  - name: docker-bin
-                    mountPath: /docker-bin
                 containers:
                 - name: runner
-                  command: ["/home/runner/run.sh"]
                   image: ghcr.io/actions/actions-runner:latest
                   env:
                   - name: DOCKER_HOST
@@ -191,28 +183,32 @@
                     value: ""
                   - name: DOCKER_TLS_VERIFY
                     value: ""
-                  - name: PATH
-                    value: "/usr/local/sbin:/usr/local/bin:/usr/sbin:/usr/bin:/sbin:/bin:/docker-bin"
                   volumeMounts:
                   - name: work
                     mountPath: /home/runner/_work
-                  - name: docker-bin
-                    mountPath: /docker-bin
                 - name: dind
                   image: docker:24-dind
                   securityContext:
                     privileged: true
-                  args: ["dockerd", "--host=tcp://0.0.0.0:2375", "--host=unix:///var/run/docker.sock", "--tls=false"]
                   env:
                   - name: DOCKER_TLS_CERTDIR
                     value: ""
                   - name: DOCKER_DRIVER
                     value: overlay2
+                  ports:
+                  - containerPort: 2375
+                    protocol: TCP
                   readinessProbe:
-                    exec:
-                      command: ["docker", "version"]
-                    initialDelaySeconds: 10
+                    tcpSocket:
+                      port: 2375
+                    initialDelaySeconds: 5
                     periodSeconds: 5
+                    timeoutSeconds: 3
+                  livenessProbe:
+                    tcpSocket:
+                      port: 2375
+                    initialDelaySeconds: 10
+                    periodSeconds: 10
                     timeoutSeconds: 3
                   volumeMounts:
                   - name: work
@@ -221,8 +217,6 @@
                     mountPath: /var/lib/docker
                 volumes:
                 - name: work
-                  emptyDir: {}
-                - name: docker-bin
                   emptyDir: {}
                 - name: docker-graph-storage
                   emptyDir: {}
