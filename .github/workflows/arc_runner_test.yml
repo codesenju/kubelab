@@ -44,49 +44,56 @@ jobs:
 
   test-docker-functionality:
     runs-on: kubelab-runner-set
-    # if: false  # Temporarily disabled until Docker-in-Docker is configured
     needs: test-arc-functionality
-    env:
-      DOCKER_HOST: tcp://localhost:2376
-      DOCKER_TLS_CERTDIR: ""
-      DOCKER_TLS_VERIFY: ""
     steps:
     - name: 🛒 Check out repository code
       uses: actions/checkout@v4
       
-    - name: ⏳ Wait for Docker daemon to be ready
-      env:
-        DOCKER_HOST: tcp://localhost:2376
-        DOCKER_TLS_CERTDIR: ""
-        DOCKER_TLS_VERIFY: ""
+    - name: ⏳ Detect and configure Docker daemon
       run: |
-        echo "Waiting for Docker daemon to start..."
-        echo "Docker host: $DOCKER_HOST"
-        echo "TLS disabled: DOCKER_TLS_CERTDIR='$DOCKER_TLS_CERTDIR'"
-        timeout=30
-        while [ $timeout -gt 0 ]; do
-          echo "Checking Docker daemon connectivity..."
-          if docker version >/dev/null 2>&1; then
-            echo "✅ Docker daemon is ready!"
-            docker version
-            break
+        echo "=== Detecting Docker configuration ==="
+        
+        # Try different Docker hosts until one works
+        for host in "" "tcp://localhost:2375" "tcp://localhost:2376" "unix:///var/run/docker.sock"; do
+          if [ -n "$host" ]; then
+            echo "Testing Docker host: $host"
+            export DOCKER_HOST=$host
+            
+            # Disable TLS verification for TCP connections
+            if [[ $host == tcp://* ]]; then
+              export DOCKER_TLS_VERIFY=""
+              export DOCKER_CERT_PATH=""
+              export DOCKER_TLS_CERTDIR=""
+            fi
+          else
+            echo "Testing with default Docker configuration"
+            unset DOCKER_HOST DOCKER_TLS_VERIFY DOCKER_CERT_PATH DOCKER_TLS_CERTDIR
           fi
-          echo "Waiting for Docker daemon... ($timeout seconds remaining)"
-          sleep 2
-          timeout=$((timeout-2))
+          
+          if docker version >/dev/null 2>&1; then
+            echo "✅ Docker is working with configuration:"
+            echo "  DOCKER_HOST: ${DOCKER_HOST:-default}"
+            echo "  DOCKER_TLS_VERIFY: ${DOCKER_TLS_VERIFY:-default}"
+            docker version
+            
+            # Export the working configuration for subsequent steps
+            echo "DOCKER_HOST=${DOCKER_HOST:-}" >> $GITHUB_ENV
+            echo "DOCKER_TLS_VERIFY=${DOCKER_TLS_VERIFY:-}" >> $GITHUB_ENV
+            echo "DOCKER_TLS_CERTDIR=${DOCKER_TLS_CERTDIR:-}" >> $GITHUB_ENV
+            break
+          else
+            echo "❌ Docker failed with this configuration"
+          fi
         done
-        if [ $timeout -le 0 ]; then
-          echo "❌ Docker daemon failed to start within 30 seconds"
+        
+        # Final verification
+        if ! docker version >/dev/null 2>&1; then
+          echo "❌ Docker is not working with any configuration"
           echo "Debugging information:"
-          echo "DOCKER_HOST: $DOCKER_HOST"
-          echo "DOCKER_TLS_CERTDIR: '$DOCKER_TLS_CERTDIR'"
-          echo "DOCKER_TLS_VERIFY: '$DOCKER_TLS_VERIFY'"
-          echo "Checking if Docker binary exists:"
-          which docker || echo "Docker binary not found"
-          echo "Checking Docker binary version:"
-          docker --version || echo "Cannot get Docker version"
-          echo "Checking processes:"
-          ps aux | grep docker || echo "No docker processes found"
+          echo "Available Docker hosts checked: default, tcp://localhost:2375, tcp://localhost:2376, unix:///var/run/docker.sock"
+          echo "Docker binary: $(which docker)"
+          echo "Docker version: $(docker --version)"
+          echo "Processes: $(ps aux | grep docker || echo 'No docker processes')"
           exit 1
         fi
         
