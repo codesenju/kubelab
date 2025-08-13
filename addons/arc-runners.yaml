@@ -126,49 +126,11 @@
                   - name: githubConfigSecret
                     value: "arc-runner-set-gha-rs-github-secret"
                   - name: runnerScaleSetName
-                    value: "kubelab-runner-set"
+                    value: "arc-runner-set"
                   - name: controllerServiceAccount.name
                     value: "arc-gha-rs-controller"
                   - name: controllerServiceAccount.namespace
                     value: "arc-systems"
-                values: |
-                  template:
-                    spec:
-                      containers:
-                      - name: runner
-                        image: ghcr.io/actions/actions-runner:latest
-                        env:
-                        - name: DOCKER_HOST
-                          value: tcp://localhost:2376
-                        - name: DOCKER_TLS_CERTDIR
-                          value: ""
-                        - name: DOCKER_TLS_VERIFY
-                          value: ""
-                        volumeMounts:
-                        - name: work
-                          mountPath: /home/runner/_work
-                      - name: dind
-                        image: docker:dind
-                        securityContext:
-                          privileged: true
-                        env:
-                        - name: DOCKER_TLS_CERTDIR
-                          value: ""
-                        args:
-                        - --host=tcp://0.0.0.0:2376
-                        - --tls=false
-                        ports:
-                        - containerPort: 2376
-                        volumeMounts:
-                        - name: work
-                          mountPath: /home/runner/_work
-                        - name: docker-graph-storage
-                          mountPath: /var/lib/docker
-                      volumes:
-                      - name: work
-                        emptyDir: {}
-                      - name: docker-graph-storage
-                        emptyDir: {}
             destination:
               server: https://kubernetes.default.svc
               namespace: arc-runners

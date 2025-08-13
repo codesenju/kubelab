@@ -12,7 +12,7 @@ env:
 
 jobs:
   test-arc-functionality:
-    runs-on: kubelab-runner-set
+    runs-on: arc-runner-set
     permissions:
       contents: read
       packages: write
@@ -43,7 +43,7 @@ jobs:
       uses: actions/checkout@v4
 
   test-docker-functionality:
-    runs-on: kubelab-runner-set
+    runs-on: arc-runner-set
     needs: test-arc-functionality
     env:
       DOCKER_HOST: tcp://localhost:2376
