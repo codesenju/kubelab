@@ -76,17 +76,17 @@
             name: gha-runner-scale-set-controller-gha-rs-controller
             namespace: arc-systems
 
-    - name: Wait for controller deployment to be ready
-      kubernetes.core.k8s_info:
-        api_version: apps/v1
-        kind: Deployment
-        name: gha-runner-scale-set-controller-gha-rs-controller
-        namespace: arc-systems
-        wait: true
-        wait_condition:
-          type: Available
-          status: "True"
-        wait_timeout: 300
+    # - name: Wait for controller deployment to be ready
+    #   kubernetes.core.k8s_info:
+    #     api_version: apps/v1
+    #     kind: Deployment
+    #     name: gha-runner-scale-set-controller-gha-rs-controller
+    #     namespace: arc-systems
+    #     wait: true
+    #     wait_condition:
+    #       type: Available
+    #       status: "True"
+    #     wait_timeout: 300
 
     - name: Create GitHub token secret for runner scale set
       kubernetes.core.k8s:
@@ -127,8 +127,59 @@
                   controllerServiceAccount:
                     name: "arc-gha-rs-controller"
                     namespace: "arc-systems"
-                  containerMode:
-                    type: "dind" 
+                  # containerMode:
+                  #   type: "dind" 
+                  template:
+                    spec:
+                      initContainers:
+                        - name: init-dind-externals
+                          image: ghcr.io/actions/actions-runner:latest
+                          command:
+                            ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+                          volumeMounts:
+                            - name: dind-externals
+                              mountPath: /home/runner/tmpDir
+                      containers:
+                        - name: runner
+                          image: ghcr.io/actions/actions-runner:latest
+                          command: ["/home/runner/run.sh"]
+                          env:
+                            - name: DOCKER_HOST
+                              value: tcp://localhost:2375
+                          volumeMounts:
+                            - name: work
+                              mountPath: /home/runner/_work
+                            - name: dind-sock
+                              mountPath: /var/run
+                        - name: dind
+                          image: docker:dind
+                          args:
+                            - dockerd
+                            - --tls=false
+                            - --host=tcp://0.0.0.0:2375
+                            - --host=unix:///var/run/docker.sock
+                            - --group=$(DOCKER_GROUP_GID)
+                          env:
+                            - name: DOCKER_GROUP_GID
+                              value: "123"
+                            - name: DOCKER_TLS_CERTDIR
+                              value: ""
+                          securityContext:
+                            privileged: true
+                          volumeMounts:
+                            - name: work
+                              mountPath: /home/runner/_work
+                            - name: dind-sock
+                              mountPath: /var/run
+                            - name: dind-externals
+                              mountPath: /home/runner/externals
+                      volumes:
+                        - name: work
+                          emptyDir: {}
+                        - name: dind-sock
+                          emptyDir: {}
+                        - name: dind-externals
+                          emptyDir: {}
             destination:
               server: https://kubernetes.default.svc
               namespace: arc-runners
@@ -149,11 +200,11 @@
               - /spec/template/spec/restartPolicy
               - /spec/template/spec/serviceAccountName
 
-    - name: Wait for AutoscalingRunnerSet to be created
-      kubernetes.core.k8s_info:
-        api_version: actions.github.com/v1alpha1
-        kind: AutoscalingRunnerSet
-        name: arc-runner-set
-        namespace: arc-runners
-        wait: true
-        wait_timeout: 120
+    # - name: Wait for AutoscalingRunnerSet to be created
+    #   kubernetes.core.k8s_info:
+    #     api_version: actions.github.com/v1alpha1
+    #     kind: AutoscalingRunnerSet
+    #     name: arc-runner-set
+    #     namespace: arc-runners
+    #     wait: true
+    #     wait_timeout: 120
