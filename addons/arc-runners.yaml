@@ -120,17 +120,13 @@
               targetRevision: "0.12.1"
               helm:
                 releaseName: arc-runner-set
-                parameters:
-                  - name: githubConfigUrl
-                    value: "{{ github_config_url }}"
-                  - name: githubConfigSecret
-                    value: "arc-runner-set-gha-rs-github-secret"
-                  - name: runnerScaleSetName
-                    value: "kubelab-runner-set"
-                  - name: controllerServiceAccount.name
-                    value: "arc-gha-rs-controller"
-                  - name: controllerServiceAccount.namespace
-                    value: "arc-systems"
+                values: |
+                  githubConfigUrl: "{{ github_config_url }}"
+                  githubConfigSecret: "arc-runner-set-gha-rs-github-secret"
+                  runnerScaleSetName: "kubelab-runner-set"
+                  controllerServiceAccount:
+                    name: "arc-gha-rs-controller"
+                    namespace: "arc-systems"
             destination:
               server: https://kubernetes.default.svc
               namespace: arc-runners
