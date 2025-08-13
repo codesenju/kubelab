@@ -44,7 +44,7 @@ jobs:
 
   test-docker-functionality:
     runs-on: kubelab-runner-set
-    if: false  # Temporarily disabled until Docker-in-Docker is configured
+    # if: false  # Temporarily disabled until Docker-in-Docker is configured
     needs: test-arc-functionality
     env:
       DOCKER_HOST: tcp://localhost:2376
