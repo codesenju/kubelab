@@ -23,7 +23,7 @@
                 releaseName: gha-runner-scale-set-controller
             destination:
               server: https://kubernetes.default.svc
-              namespace: arc-systems
+              namespace: arc-system
             syncPolicy:
               automated:
                 prune: true
@@ -58,6 +58,9 @@
           - apiGroups: ["rbac.authorization.k8s.io"]
             resources: ["roles", "rolebindings"]
             verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: ["actions.github.com"]
+            resources: ["ephemeralrunnersets", "autoscalingrunnersets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
 
     - name: Bind additional RBAC permissions to controller service account
       kubernetes.core.k8s:
@@ -74,14 +77,47 @@
           subjects:
           - kind: ServiceAccount
             name: gha-runner-scale-set-controller-gha-rs-controller
-            namespace: arc-systems
+            namespace: arc-system
+
+    - name: Create RBAC permissions for listener service accounts
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: gha-rs-listener-cross-namespace
+          rules:
+          - apiGroups: ["actions.github.com"]
+            resources: ["ephemeralrunnersets", "autoscalingrunnersets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: [""]
+            resources: ["pods", "secrets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+    - name: Bind listener RBAC permissions (this will catch dynamically created listener service accounts)
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: gha-rs-listener-cross-namespace
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: gha-rs-listener-cross-namespace
+          subjects:
+          - kind: Group
+            name: system:serviceaccounts:arc-system
+            apiGroup: rbac.authorization.k8s.io
 
     # - name: Wait for controller deployment to be ready
     #   kubernetes.core.k8s_info:
     #     api_version: apps/v1
     #     kind: Deployment
     #     name: gha-runner-scale-set-controller-gha-rs-controller
-    #     namespace: arc-systems
+    #     namespace: arc-system
     #     wait: true
     #     wait_condition:
     #       type: Available
@@ -126,7 +162,7 @@
                   runnerScaleSetName: "kubelab-runner-set"
                   controllerServiceAccount:
                     name: "arc-gha-rs-controller"
-                    namespace: "arc-systems"
+                    namespace: "arc-system"
                   # containerMode:
                   #   type: "dind" 
                   template:
