@@ -4,7 +4,7 @@
   tasks:
     - name: Deploy Grafana Operator
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -35,7 +35,7 @@
 
     - name: Deploy Grafana
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
