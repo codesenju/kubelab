@@ -5,7 +5,7 @@
 
     - name: Deploy Kube Prometheus Stack
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -48,7 +48,7 @@
 
     - name: Create Thanos S3 Secret (inline YAML, using stringData)
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
