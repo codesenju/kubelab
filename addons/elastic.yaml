@@ -189,21 +189,21 @@
       tags: es
       register: previous_task_result
 
-    # - name: Wait for Elasticsearch pod to be ready
-    #   kubernetes.core.k8s_info:
-    #     kind: Pod
-    #     namespace: elastic-system
-    #     label_selectors:
-    #       - "elasticsearch.k8s.elastic.co/cluster-name=quickstart"
-    #   register: es_pod
-    #   until: 
-    #     - es_pod.resources is defined 
-    #     - es_pod.resources | length > 0 
-    #     - es_pod.resources[0].status.phase == "Running"
-    #     - es_pod.resources[0].status.containerStatuses is defined
-    #     - es_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
-    #   retries: 15
-    #   delay: 20
+    - name: Wait for Elasticsearch pod to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: elastic-system
+        label_selectors:
+          - "elasticsearch.k8s.elastic.co/cluster-name=quickstart"
+      register: es_pod
+      until: 
+        - es_pod.resources is defined 
+        - es_pod.resources | length > 0 
+        - es_pod.resources[0].status.phase == "Running"
+        - es_pod.resources[0].status.containerStatuses is defined
+        - es_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
+      retries: 15
+      delay: 20
 
     - name: Deploy Kibana
       kubernetes.core.k8s:
