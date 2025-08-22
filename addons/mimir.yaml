@@ -4,7 +4,7 @@
   tasks:
     - name: Create MinIO S3 configuration secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -21,7 +21,7 @@
 
     - name: Create Mimir tenant overrides ConfigMap
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: ConfigMap
@@ -47,7 +47,7 @@
 
     - name: Deploy Mimir ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

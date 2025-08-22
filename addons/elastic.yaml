@@ -32,6 +32,99 @@
                 - CreateNamespace=true
       tags: operator
 
+ # 🔥 HOT STORAGE PV
+    - name: Deploy Elasticsearch Hot PV
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: es-hot-pv
+            labels:
+              storage: hot
+          spec:
+            capacity:
+              storage: 50Gi
+            nfs:
+              server: 192.168.0.16
+              path: /mnt/pool1/AppData/elastic/elasticsearch-hot
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+      tags: es
+
+    # ❄️ COLD STORAGE PV
+    - name: Deploy Elasticsearch Cold PV
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: es-cold-pv
+            labels:
+              storage: cold
+          spec:
+            capacity:
+              storage: 200Gi
+            nfs:
+              server: 192.168.0.15
+              path: /mnt/pool1/AppData/elastic/elasticsearch-cold
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+      tags: es
+
+    # 🔥 HOT PVC
+    - name: Deploy Elasticsearch Hot PVC
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: es-hot-pvc
+            namespace: elastic-system
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 50Gi
+            selector:
+              matchLabels:
+                storage: hot
+            volumeName: es-hot-pv
+            storageClassName: ""
+      tags: es
+
+    # ❄️ COLD PVC
+    - name: Deploy Elasticsearch Cold PVC
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: es-cold-pvc
+            namespace: elastic-system
+          spec:
+            accessModes: [ "ReadWriteOnce" ]
+            resources:
+              requests:
+                storage: 200Gi
+            selector:
+              matchLabels:
+                storage: cold
+            volumeName: es-cold-pv
+            storageClassName: ""
+      tags: es
+
+    # 🚀 Elasticsearch with hot + cold nodes
     - name: Deploy Elasticsearch
       kubernetes.core.k8s:
         state: present
@@ -44,14 +137,23 @@
           spec:
             version: 9.1.0
             nodeSets:
-            - name: default
+            # 🔥 HOT tier
+            - name: hot-nodes
               count: 1
               config:
+                node.roles: ["master","data_hot","ingest"]
                 node.store.allow_mmap: false
               podTemplate:
                 spec:
+                  volumes:
+                  - name: hot-storage
+                    persistentVolumeClaim:
+                      claimName: es-hot-pvc
                   containers:
                   - name: elasticsearch
+                    volumeMounts:
+                    - name: hot-storage
+                      mountPath: /usr/share/elasticsearch/data
                     resources:
                       requests:
                         memory: 2Gi
@@ -59,24 +161,49 @@
                       limits:
                         memory: 4Gi
                         cpu: 4
+
+            # ❄️ COLD tier
+            - name: cold-nodes
+              count: 1
+              config:
+                node.roles: ["data_cold"]
+                node.store.allow_mmap: false
+              podTemplate:
+                spec:
+                  volumes:
+                  - name: cold-storage
+                    persistentVolumeClaim:
+                      claimName: es-cold-pvc
+                  containers:
+                  - name: elasticsearch
+                    volumeMounts:
+                    - name: cold-storage
+                      mountPath: /usr/share/elasticsearch/data
+                    resources:
+                      requests:
+                        memory: 2Gi
+                        cpu: 1
+                      limits:
+                        memory: 3Gi
+                        cpu: 2
       tags: es
       register: previous_task_result
 
-    - name: Wait for Elasticsearch pod to be ready
-      kubernetes.core.k8s_info:
-        kind: Pod
-        namespace: elastic-system
-        label_selectors:
-          - "elasticsearch.k8s.elastic.co/cluster-name=quickstart"
-      register: es_pod
-      until: 
-        - es_pod.resources is defined 
-        - es_pod.resources | length > 0 
-        - es_pod.resources[0].status.phase == "Running"
-        - es_pod.resources[0].status.containerStatuses is defined
-        - es_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
-      retries: 15
-      delay: 20
+    # - name: Wait for Elasticsearch pod to be ready
+    #   kubernetes.core.k8s_info:
+    #     kind: Pod
+    #     namespace: elastic-system
+    #     label_selectors:
+    #       - "elasticsearch.k8s.elastic.co/cluster-name=quickstart"
+    #   register: es_pod
+    #   until: 
+    #     - es_pod.resources is defined 
+    #     - es_pod.resources | length > 0 
+    #     - es_pod.resources[0].status.phase == "Running"
+    #     - es_pod.resources[0].status.containerStatuses is defined
+    #     - es_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
+    #   retries: 15
+    #   delay: 20
 
     - name: Deploy Kibana
       kubernetes.core.k8s:
