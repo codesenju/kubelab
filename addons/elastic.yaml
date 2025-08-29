@@ -141,7 +141,7 @@
             - name: hot-nodes
               count: 1
               config:
-                node.roles: ["master","data_hot","ingest"]
+                node.roles: ["master","data_hot","ingest","remote_cluster_client"]
                 node.store.allow_mmap: false
               podTemplate:
                 spec:
@@ -166,7 +166,7 @@
             - name: cold-nodes
               count: 1
               config:
-                node.roles: ["data_cold"]
+                node.roles: ["data_cold","remote_cluster_client"]
                 node.store.allow_mmap: false
               podTemplate:
                 spec:
@@ -217,6 +217,10 @@
           spec:
             config:
               server.publicBaseUrl: "{{ kibana_publicBaseUrl }}"
+              # 🔑 Enable monitoring UI
+              monitoring.ui.enabled: true
+              # ✅ Enable cross-cluster monitoring if you’ll monitor multiple clusters
+              monitoring.ui.ccs.enabled: true
             version: 9.1.0
             count: 1
             elasticsearchRef:
