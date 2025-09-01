@@ -3,6 +3,11 @@
   become: no
   tasks:
 
+    - name: Install Traefik CRDs
+      kubernetes.core.k8s:
+        state: present
+        src: https://raw.githubusercontent.com/traefik/traefik/v3.0/docs/content/reference/dynamic-configuration/kubernetes-crd-definition-v1.yml
+
     - name: Create cloudflare-api-key secret
       kubernetes.core.k8s:
         state: present
@@ -46,6 +51,19 @@
                         secretKeyRef:
                           name: cloudflare-api-key
                           key: apiToken
+                  sources:
+                  - service
+                  - ingress
+                  - traefik-proxy
+                  extraArgs:
+                  - --traefik-disable-legacy
+                  # - --dns01-recursive-nameservers=1.1.1.1:53,9.9.9.9:53
+                  # - --dns01-recursive-nameservers-only
+                  podDnsPolicy: None
+                  podDnsConfig:
+                    nameservers:
+                      - 1.1.1.1
+                      - 9.9.9.9
             destination:
               server: https://kubernetes.default.svc
               namespace: external-dns

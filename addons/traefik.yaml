@@ -2,6 +2,35 @@
   gather_facts: no
   tasks:
 
+    # To create the base64 string for Traefik dashboard authentication:
+    # 1. Generate htpasswd entry: htpasswd -nb admin your_password
+    # 2. Base64 encode the output: echo "traefik:$apr1$7vp3oQAD$0Z3QJGrAI3.lKMRSZsuA60" | base64
+    - name: Create Traefik dashboard auth secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: traefik-dashboard-auth
+            namespace: traefik
+          type: Opaque
+          data:
+            users: dHJhZWZpazokYXByMSQ3dnAzb1FBRCQwWjNRSkdyQUkzLmxLTVJTWnN1QTYwCgo=
+
+    - name: Create Traefik dashboard basicauth middleware
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: Middleware
+          metadata:
+            name: traefik-dashboard-basicauth
+            namespace: traefik
+          spec:
+            basicAuth:
+              secret: traefik-dashboard-auth
+
     - name: Deploy Traefik
       kubernetes.core.k8s:
         state: present
@@ -37,3 +66,30 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
+
+    - name: Create Traefik dashboard IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: traefik-dashboard
+            namespace: traefik
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`{{ traefik_domain }}`)
+                kind: Rule
+                middlewares:
+                  - name: traefik-dashboard-basicauth
+                    namespace: traefik
+                services:
+                  - name: api@internal
+                    kind: TraefikService
+            # tls:
+            #   secretName: local-example-com-staging-tls
