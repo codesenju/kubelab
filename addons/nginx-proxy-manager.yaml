@@ -20,7 +20,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/nginx-proxy-manager/overlays/prod
+              path: kustomize/ngix-proxy-manager/overlays/prod
               targetRevision: main
               kustomize:
                 # Add these to your existing kustomize config
@@ -87,6 +87,6 @@
                 services:
                   - name: nginx-proxy-manager
                     kind: Service
-                    port: 80
+                    port: 81
             tls:
               secretName: local-jazziro-com-tls

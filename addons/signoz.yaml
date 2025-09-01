@@ -1,5 +1,8 @@
 - hosts: k8s-control-plane-1
   become: no
+  gather_facts: no
+  vars:
+    namespace: signoz
   tasks:
 
     - name: Deploy Signoz
@@ -29,8 +32,7 @@
                       installCustomStorageClass: true
                   otelCollector:
                     service:
-                      type: LoadBalancer
-                      loadBalancerIP: 192.168.0.59
+                      type: ClusterIP
             destination:
               server: https://kubernetes.default.svc
               namespace: signoz
@@ -67,8 +69,7 @@
                     clusterName: "kubelab"
                     storageClass: "nfs-csi"
                     deploymentEnvironment: prod
-                  # otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
-                  otelCollectorEndpoint: 192.168.0.55:4317
+                  otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
                   otelInsecure: true
                   insecureSkipVerify: true
                   presets:
@@ -110,3 +111,72 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: '{{ namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+
+    - name: Create signoz IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: signoz
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`signoz.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: signoz
+                    kind: Service
+                    port: 8080
+            tls:
+              secretName: local-jazziro-com-tlså
+
+    - name: Create signoz-otel-collector IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: signoz-otel-collector
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`signoz-otel-collector.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: signoz-otel-collector
+                    kind: Service
+                    port: 4318
+            tls:
+              secretName: local-jazziro-com-tls
