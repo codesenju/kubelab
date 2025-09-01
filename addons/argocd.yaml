@@ -1,9 +1,9 @@
 - name: Install k9s
   hosts: k8s-control-plane-1
-  vars_files:
-  - ../ansible/vars.ignore.yaml
   become: no
   gather_facts: false
+  vars:
+    namespace: argocd
   tasks:
 # kubectl get crd -o name | grep argoproj.io | xargs kubectl delete
     - name: Deploy Argocd
@@ -13,7 +13,7 @@
         chart_repo_url: https://argoproj.github.io/argo-helm
         chart_ref: argo-cd
         chart_version: 8.2.5
-        release_namespace: argocd
+        release_namespace: '{{ namespace }}'
         create_namespace: true
         release_values:
           global:
@@ -106,6 +106,50 @@
       shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
       register: lb_ip
       changed_when: false
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: '{{ namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+
+    - name: Create Traefik dashboard IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: argocd-server
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`argocd.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: argocd-server
+                    kind: Service
+                    port: 80
+            tls:
+              secretName: local-jazziro-com-tls
 
     - name: Display Argo CD access information
       ansible.builtin.debug:

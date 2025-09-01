@@ -1,6 +1,8 @@
 - hosts: k8s-control-plane-1
   gather_facts: no 
   become: no
+  vars:
+    namespace: nginx-proxy-manager
   tasks:
 
     - name: Deploy nginx-proxy-manager
@@ -44,3 +46,47 @@
             #   jsonPointers:
             #   - /status  # Ignore PVC status changes
       tags: nginx-proxy-manager
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: '{{ namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+
+    - name: Create nginx proxy manager IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: nginx-proxy-manager
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`jellyfin.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: nginx-proxy-manager
+                    kind: Service
+                    port: 80
+            tls:
+              secretName: local-jazziro-com-tls

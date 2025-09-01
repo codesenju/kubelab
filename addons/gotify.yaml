@@ -38,6 +38,44 @@
               - RespectIgnoreDifferences=true
       tags: gotify
 
+    - name: Create local wildcar certificate - staging
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-staging
+            namespace: gotify
+          spec:
+            secretName: local-jazziro-com-staging-tls
+            issuerRef:
+              name: letsencrypt-staging
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: gotify
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+
     - name: Create gotify ingress
       kubernetes.core.k8s:
         state: present
@@ -49,13 +87,13 @@
             namespace: gotify
             annotations:
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              # cert-manager.io/cluster-issuer: letsencrypt-staging
+              cert-manager.io/cluster-issuer: letsencrypt-staging
           spec:
             ingressClassName: traefik
-            # tls:
-            # - hosts:
-            #   - "{{ gotify_domain }}"
-            #   secretName: gotify-tls
+            tls:
+            - hosts:
+              - "{{ gotify_domain }}"
+              secretName: local-jazziro-com-tls
             rules:
             - host: "{{ gotify_domain }}"
               http:
