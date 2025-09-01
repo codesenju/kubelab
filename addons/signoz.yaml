@@ -4,7 +4,7 @@
 
     - name: Deploy Signoz
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -18,7 +18,7 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.76.1
+              targetRevision: 0.89.1
               helm:
                 releaseName: signoz
                 values: |
@@ -40,10 +40,11 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      tags: signoz
 
     - name: Deploy Signoz k8s-infra
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -57,7 +58,7 @@
             source:
               chart: k8s-infra
               repoURL: https://charts.signoz.io
-              targetRevision: 0.12.1
+              targetRevision: 0.14.1
               helm:
                 releaseName: signoz-k8s-infra
                 values: |
@@ -66,7 +67,8 @@
                     clusterName: "kubelab"
                     storageClass: "nfs-csi"
                     deploymentEnvironment: prod
-                  otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
+                  # otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
+                  otelCollectorEndpoint: 192.168.0.55:4317
                   otelInsecure: true
                   insecureSkipVerify: true
                   presets:
@@ -74,31 +76,31 @@
                       enabled: true
                     loggingExporter:
                       enabled: false
-                    # hostMetrics:
-                    #   enabled: true
-                    #   collectionInterval: 30s
-                    # logsCollection:
-                    #   enabled: true
-                    #   blacklist:
-                    #     enabled: true
-                    #     namespaces: 
-                    #       - kube-system
-                    # kubeletMetrics:
-                    #   enabled: true
-                    #   otelInsecure: true
-                    #   insecureSkipVerify: true
-                    # kubernetesAttributes:
-                    #   enabled: true
-                    #   otelInsecure: true
-                    #   insecureSkipVerify: true
-                    # clusterMetrics:
-                    #   enabled: true
-                    #   otelInsecure: true
-                    #   insecureSkipVerify: true
-                    # k8sEvents:
-                    #   enabled: true
-                    #   otelInsecure: true
-                    #   insecureSkipVerify: true
+                    hostMetrics:
+                      enabled: true
+                      collectionInterval: 30s
+                    logsCollection:
+                      enabled: true
+                      blacklist:
+                        enabled: true
+                        namespaces: 
+                          - kube-system
+                    kubeletMetrics:
+                      enabled: true
+                      otelInsecure: true
+                      insecureSkipVerify: true
+                    kubernetesAttributes:
+                      enabled: true
+                      otelInsecure: true
+                      insecureSkipVerify: true
+                    clusterMetrics:
+                      enabled: true
+                      otelInsecure: true
+                      insecureSkipVerify: true
+                    k8sEvents:
+                      enabled: true
+                      otelInsecure: true
+                      insecureSkipVerify: true
             destination:
               server: https://kubernetes.default.svc
               namespace: signoz
