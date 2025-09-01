@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: gotify
+  labels:
+    app: gotify
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: gotify
+  template:
+    metadata:
+      labels:
+        app: gotify
+    spec:
+      containers:
+        - name: gotify
+          image: IMAGE_TEMPLATE
+          env:
+            - name: GOTIFY_DEFAULTUSER_PASS
+              valueFrom:
+                secretKeyRef:
+                  name: gotify-secrets
+                  key: GOTIFY_DEFAULTUSER_PASS
+          volumeMounts:
+            - name: gotify-data
+              mountPath: /app/data
+              subPath: gotify
+          ports:
+            - containerPort: 80
+          securityContext:
+            runAsUser: 1234
+            runAsGroup: 1234
+      volumes:
+      - name: gotify-data
+        persistentVolumeClaim:
+          claimName: gotify-data
