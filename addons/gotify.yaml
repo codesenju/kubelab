@@ -47,10 +47,11 @@
           metadata:
             name: gotify
             namespace: gotify
-            # annotations:
-            #   cert-manager.io/cluster-issuer: letsencrypt-staging
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-staging
           spec:
-            ingressClassName: nginx
+            ingressClassName: traefik
             # tls:
             # - hosts:
             #   - "{{ gotify_domain }}"
@@ -78,5 +79,6 @@
             namespace: gotify
           type: Opaque
           stringData:
-            GOTIFY_DEFAULTUSER_PASS: "{{ gotify_admin_password }}"
+            GOTIFY_DEFAULTUSER_PASS: "{{ gotify_admin_password}}"
       tags: gotify
+    
