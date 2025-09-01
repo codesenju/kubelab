@@ -7,7 +7,7 @@
 
     - name: Deploy nginx-proxy-manager
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -82,7 +82,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`jellyfin.{{ dns_name_1 }}`)
+              - match: Host(`npm.{{ dns_name_1 }}`)
                 kind: Rule
                 services:
                   - name: nginx-proxy-manager
