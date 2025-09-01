@@ -47,8 +47,14 @@
           metadata:
             name: gotify
             namespace: gotify
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-staging
           spec:
             ingressClassName: nginx
+            # tls:
+            # - hosts:
+            #   - "{{ gotify_domain }}"
+            #   secretName: gotify-tls
             rules:
             - host: "{{ gotify_domain }}"
               http:
@@ -60,4 +66,17 @@
                       name: gotify
                       port:
                         number: 80
+
+    - name: Create gotify secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: gotify-secrets
+            namespace: gotify
+          type: Opaque
+          stringData:
+            GOTIFY_DEFAULTUSER_PASS: "{{ gotify_admin_password }}"
       tags: gotify
