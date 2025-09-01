@@ -23,6 +23,8 @@ spec:
                 secretKeyRef:
                   name: gotify-secrets
                   key: GOTIFY_DEFAULTUSER_PASS
+            - name: GOTIFY_SERVER_PORT
+              value: "8080"
           volumeMounts:
             - name: gotify-data
               mountPath: /app/data
