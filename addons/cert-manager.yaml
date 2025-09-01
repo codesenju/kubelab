@@ -18,7 +18,7 @@
             source:
               chart: cert-manager
               repoURL: https://charts.jetstack.io
-              targetRevision: v1.17.0
+              targetRevision: v1.18.2
               helm:
                 releaseName: cert-manager
                 values: |
@@ -32,3 +32,50 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+
+    - name: Create letsencrypt-prod ClusterIssuer
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt-prod
+          spec:
+            acme:
+              server: https://acme-v02.api.letsencrypt.org/directory
+              email: "{{ letsencrypt_email }}"
+              privateKeySecretRef:
+                name: letsencrypt-prod
+              solvers:
+              - http01:
+                  ingress:
+                    ingressTemplate:
+                      metadata:
+                        annotations:
+                          nginx.ingress.kubernetes.io/whitelist-source-range: "0.0.0.0/0"
+      tags: cert-manager
+
+    - name: Create letsencrypt-staging ClusterIssuer
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: ClusterIssuer
+          metadata:
+            name: letsencrypt-staging
+          spec:
+            acme:
+              server: https://acme-staging-v02.api.letsencrypt.org/directory
+              email: "{{ letsencrypt_email }}"
+              privateKeySecretRef:
+                name: letsencrypt-staging
+              solvers:
+              - http01:
+                  ingress:
+                    ingressTemplate:
+                      metadata:
+                        annotations:
+                          nginx.ingress.kubernetes.io/whitelist-source-range: "0.0.0.0/0"
+      tags: cert-manager
+

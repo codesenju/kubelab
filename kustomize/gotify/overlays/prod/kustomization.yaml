@@ -11,10 +11,5 @@ images:
 generatorOptions:
   disableNameSuffixHash: true
 
-secretGenerator:
-- name: gotify-secrets
-  literals:
-  - GOTIFY_DEFAULTUSER_PASS=admin
-
 resources:
 - ../../base
