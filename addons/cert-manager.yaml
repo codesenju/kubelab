@@ -35,7 +35,7 @@
 
     - name: Create letsencrypt-prod ClusterIssuer
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: ClusterIssuer
@@ -58,7 +58,7 @@
 
     - name: Create letsencrypt-staging ClusterIssuer
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: ClusterIssuer

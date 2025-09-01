@@ -1,0 +1,39 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  tasks:
+
+    - name: Deploy Traefik
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: traefik
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://traefik.github.io/charts
+              chart: traefik
+              targetRevision: "37.0.0"
+              helm:
+                releaseName: traefik
+                valueFiles:
+                - $values/helm/traefik_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: main
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: traefik
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
