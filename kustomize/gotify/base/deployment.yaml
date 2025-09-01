@@ -28,7 +28,7 @@ spec:
               mountPath: /app/data
               subPath: gotify
           ports:
-            - containerPort: 80
+            - containerPort: 8080
           securityContext:
             runAsUser: 1234
             runAsGroup: 1234
