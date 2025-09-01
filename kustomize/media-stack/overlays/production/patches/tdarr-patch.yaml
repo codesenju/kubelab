@@ -14,11 +14,11 @@ spec:
           limits:
             cpu: 35m
             memory: 298M
----
-apiVersion: v1
-kind: Service
-metadata:
-  name: tdarr
-spec:
-  type: LoadBalancer
-  loadBalancerIP: 192.168.0.58
+# ---
+# apiVersion: v1
+# kind: Service
+# metadata:
+#   name: tdarr
+# spec:
+#   type: LoadBalancer
+#   loadBalancerIP: 192.168.0.58
