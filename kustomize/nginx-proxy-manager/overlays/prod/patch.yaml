@@ -30,8 +30,7 @@ kind: Service
 metadata:
   name: nginx-proxy-manager
 spec:
-  type: LoadBalancer
-  loadBalancerIP: 192.168.0.57
+  type: ClusterIP
 ---
 # apiVersion: v1
 # kind: PersistentVolumeClaim
