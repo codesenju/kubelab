@@ -67,6 +67,25 @@
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
 
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: traefik
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+
     - name: Create Traefik dashboard IngressRoute
       kubernetes.core.k8s:
         state: present
@@ -91,5 +110,5 @@
                 services:
                   - name: api@internal
                     kind: TraefikService
-            # tls:
-            #   secretName: local-example-com-staging-tls
+            tls:
+              secretName: local-jazziro-com-tls
