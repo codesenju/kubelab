@@ -47,8 +47,8 @@
           metadata:
             name: gotify
             namespace: gotify
-            annotations:
-              cert-manager.io/cluster-issuer: letsencrypt-staging
+            # annotations:
+            #   cert-manager.io/cluster-issuer: letsencrypt-staging
           spec:
             ingressClassName: nginx
             # tls:
