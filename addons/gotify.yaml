@@ -37,3 +37,27 @@
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
       tags: gotify
+
+    - name: Create gotify ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: gotify
+            namespace: gotify
+          spec:
+            ingressClassName: nginx
+            rules:
+            - host: "{{ gotify_domain }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: gotify
+                      port:
+                        number: 80
+      tags: gotify
