@@ -186,6 +186,87 @@ kubectl create secret docker-registry dockerhub-secret \
   --docker-password=<your-dockerhub-password> \
   --docker-email=<your-email>
 ```
+# Edot
+### Annotate a specific deployement:
+```bash
+# Nodejs
+export app_name=myapp
+kubectl patch deployment $app_name -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-nodejs":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
+
+# Dotnet
+export app_name=myapp
+kubectl patch deployment $app_name -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-dotnet":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
+
+# Python
+kubectl patch deployment flaresolverr -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-python":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
+
+# Go
+kubectl patch deployment cloudflared -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-go":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
+```
+### entire namepsace:
+```bash
+ kubectl annotate namespace jellyfin instrumentation.opentelemetry.io/inject-dotnet="opentelemetry-operator-system/elastic-instrumentation"
+
+ # remove
+ kubectl annotate namespace media-stack instrumentation.opentelemetry.io/inject-dotnet-
+
+```
+# otel-cli
+### Installing
+- https://github.com/equinix-labs/otel-cli?tab=readme-ov-file#getting-started
+### Usage
+```bash
+export OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
+```
+#### Linux
+```bash
+otel-cli span \
+    --service "otel-cli" \
+    --name "send data to the server" \
+    --start $(date -d '5 minutes ago' -u +%Y-%m-%dT%H:%M:%SZ) \
+    --end $(date +%s.%N) \
+    --attrs "os.kernel=$(uname -r)" \
+    --tp-print \
+    --verbose
+```
+#### MacOS
+```bash
+otel-cli span \
+    --service "otel-cli" \
+    --name "send data to the server" \
+    --start $(date -v-5M -u +%Y-%m-%dT%H:%M:%SZ) \
+    --end $(date +%s.%N) \
+    --attrs "os.kernel=$(uname -r)" \
+    --tp-print \
+    --verbose
+```
+### Context propogation
+```bash
+
+# Create parent span and capture the TRACEPARENT from --tp-print output
+TRACEPARENT=$(otel-cli span \
+    --service "frontend-service" \
+    --name "handle-request" \
+    --start $(date -v-2M -u +%Y-%m-%dT%H:%M:%SZ) \
+    --end $(date -v-1M -u +%Y-%m-%dT%H:%M:%SZ) \
+    --attrs "http.method=GET,http.url=/api/users" \
+    --tp-print | grep TRACEPARENT | cut -d'=' -f2)
+
+export TRACEPARENT
+echo "Parent trace: $TRACEPARENT"
+
+
+# The TRACEPARENT env var is automatically picked up
+otel-cli span \
+    --service "backend-service" \
+    --name "database-query" \
+    --start $(date -v-1M -u +%Y-%m-%dT%H:%M:%SZ) \
+    --end $(date +%s.%N) \
+    --attrs "db.operation=SELECT,db.table=users" \
+    --tp-print \
+    --verbose
+
+```bash
 # Issues
 ***Error***
 
