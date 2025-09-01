@@ -1,0 +1,60 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no 
+  become: no
+  tasks:
+
+    - name: Create cloudflare-api-key secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: cloudflare-api-key
+            namespace: external-dns
+          type: Opaque
+          stringData:
+            apiToken: "{{ cloudflare_api_token }}"
+      tags: external-dns
+
+    - name: Deploy external-dns
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: external-dns
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://kubernetes-sigs.github.io/external-dns/
+              chart: external-dns
+              targetRevision: 1.18.0
+              helm:
+                values: |
+                  domainFilters:
+                    - {{ domain_name_filter }}
+                  provider:
+                    name: cloudflare
+                  env:
+                    - name: CF_API_TOKEN
+                      valueFrom:
+                        secretKeyRef:
+                          name: cloudflare-api-key
+                          key: apiToken
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: external-dns
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+      tags: external-dns
