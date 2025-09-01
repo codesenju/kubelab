@@ -262,10 +262,9 @@
               - match: Host(`tdarr.{{ dns_name_1 }}`)
                 kind: Rule
                 services:
-                - name: external-service
-                  kind: TraefikService
-                  servers:
-                    - url: "http://192.168.0.58:8265"
+                  - name: tdarr
+                    kind: Service
+                    port: 8265
             tls:
               secretName: local-jazziro-com-tls
 
