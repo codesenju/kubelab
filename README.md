@@ -173,6 +173,19 @@ mount -o nolock -o mtype=hard <NFS-Server-IP>:/<share-name> <drive-letter>:
 ```powershell
 New-PSDrive -Name "Z" -PSProvider FileSystem -Root "\\<NFS-Server-IP>\<share-name>" -Persist
 ```
+# Testing Gotify Notifications
+
+After deploying Gotify, you can send a test alert using:
+
+```bash
+curl "https://gotify.example.com/message?token=my-srecret-token" \
+  -F "title=test-alert" \
+  -F "message=this is a test alert" \
+  -F "priority=5"
+```
+
+Replace `my-srecret-token` with your actual Gotify
+
 # adhoc
 ### Enable volume expansion
 ```bash
