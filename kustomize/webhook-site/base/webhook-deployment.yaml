@@ -1,0 +1,70 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: webhook-site
+  labels:
+    app: webhook-site
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: webhook-site
+  template:
+    metadata:
+      labels:
+        app: webhook-site
+    spec:
+      containers:
+        - name: webhook
+          image: webhooksite/webhook.site
+          command: ["php", "artisan", "queue:work", "--daemon", "--tries=3", "--timeout=10"]
+          env:
+            - name: APP_ENV
+              value: dev
+            - name: APP_DEBUG
+              value: "true"
+            - name: APP_URL
+              value: http://localhost:8084
+            - name: APP_LOG
+              value: errorlog
+            - name: DB_CONNECTION
+              value: sqlite
+            - name: REDIS_HOST
+              value: redis
+            - name: BROADCAST_DRIVER
+              value: redis
+            - name: CACHE_DRIVER
+              value: redis
+            - name: QUEUE_DRIVER
+              value: redis
+            - name: ECHO_HOST_MODE
+              value: path
+          ports:
+            - containerPort: 80
+              name: http-webhook
+        - name: redis
+          image: redis:alpine
+        - name: laravel-echo-server
+          image: webhooksite/laravel-echo-server
+          command: ["exec", "laravel-echo-server", "start", "--force"]
+          env:
+            - name: LARAVEL_ECHO_SERVER_AUTH_HOST
+              value: http://localhost
+            - name: LARAVEL_ECHO_SERVER_HOST
+              value: 0.0.0.0
+            - name: LARAVEL_ECHO_SERVER_PORT
+              value: "6001"
+            - name: ECHO_REDIS_PORT
+              value: "6379"
+            - name: ECHO_REDIS_HOSTNAME
+              value: redis
+            - name: ECHO_PROTOCOL
+              value: http
+            - name: ECHO_ALLOW_CORS
+              value: "true"
+            - name: ECHO_ALLOW_ORIGIN
+              value: "*"
+            - name: ECHO_ALLOW_METHODS
+              value: "*"
+            - name: ECHO_ALLOW_HEADERS
+              value: "*"

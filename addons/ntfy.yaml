@@ -1,3 +1,4 @@
+- hosts: k8s-control-plane-1
   gather_facts: no
   become: no
   vars:
@@ -16,7 +17,7 @@
           stringData:
             NTFY_BASE_URL: "{{ ntfy_base_url }}"
       tags: ntfy
-      
+
     - name: Deploy ntfy ArgoCD Application
       kubernetes.core.k8s:
         state: present
@@ -32,7 +33,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/ntfy/base
+              path: kustomize/ntfy/overlays/prod
               targetRevision: main
               kustomize:
                 commonAnnotations:
