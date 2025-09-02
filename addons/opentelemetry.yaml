@@ -20,7 +20,7 @@
             source:
               repoURL: 'https://github.com/codesenju/kubelab.git'
               targetRevision: HEAD
-              path: kustomize/opentelemetry-operator/overlays/prod
+              path: kustomize/opentelemetry/overlays/prod
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ namespace }}'
@@ -30,3 +30,44 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+
+    - name: Create OpenTelemetryCollector resource
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: opentelemetry.io/v1alpha1
+          kind: OpenTelemetryCollector
+          metadata:
+            name: otel-collector
+            namespace: opentelemetry-operator
+          spec:
+            mode: deployment
+            config: |
+              receivers:
+                otlp:
+                  protocols:
+                    grpc:
+                      endpoint: 0.0.0.0:4317
+                    http:
+                      endpoint: 0.0.0.0:4318
+              processors:
+                batch: {}
+                resource/env:
+                  attributes:
+                  - key: deployment.environment
+                    value: prod # can be dev, prod, staging etc. based on your environment
+                    action: upsert
+              exporters:
+                debug: {}
+                otlp:
+                  endpoint: "{{ signoz_otel_endpoint }}" # replace <region> with your region of SigNoz Cloud
+                  # tls:
+                  #   insecure: false
+                  # headers:
+                  #   "signoz-ingestion-key": "<your-ingestion-key>" # Obtain from https://{your-signoz-tenant-url}/settings/ingestion-settings
+              service:
+                pipelines:
+                  traces:
+                    receivers: [otlp]
+                    processors: [batch, resource/env]
+                    exporters: [otlp]
