@@ -255,7 +255,6 @@ otel-cli span \
 ```
 ### Context propogation
 ```bash
-
 # Create parent span and capture the TRACEPARENT from --tp-print output
 TRACEPARENT=$(otel-cli span \
     --service "frontend-service" \
@@ -279,7 +278,7 @@ otel-cli span \
     --tp-print \
     --verbose
 
-```bash
+```
 # Issues
 ***Error***
 

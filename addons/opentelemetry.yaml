@@ -2,7 +2,7 @@
   gather_facts: no
   become: no
   vars:
-    namespace: opentelemetry
+    namespace: opentelemetry-operator-system
   tasks:
     - name: Create ArgoCD Application for OpenTelemetry Operator
       kubernetes.core.k8s:
