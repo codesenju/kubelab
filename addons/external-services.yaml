@@ -1,0 +1,298 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    namespace: external-services
+  tasks:
+
+  # Create external-services namespace
+    - name: Create namespace
+      kubernetes.core.k8s:
+        state: present
+        definition: 
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: '{{ namespace }}'
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: '{{ namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+    
+    - name: Create webhook-site service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1  
+          kind: Service
+          metadata:
+            name: webhook-site
+            namespace: '{{ namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.31
+            ports:
+            - name: http
+              port: 8086
+              protocol: TCP
+              targetPort: 8086
+
+    - name: Create webhook-site IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: webhook-site
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`webhook.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: webhook-site
+                    kind: Service
+                    port: 8086
+            tls:
+              secretName: local-jazziro-com-tls
+
+  # Dockge external service and ingressroute
+    - name: Create dockge service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: dockge
+            namespace: '{{ namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.31
+            ports:
+            - name: http
+              port: 5001
+              protocol: TCP
+              targetPort: 5001
+
+    - name: Create dockge IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: dockge
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`dockge.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: dockge
+                    kind: Service
+                    port: 5001
+            tls:
+              secretName: local-jazziro-com-tls
+
+  # Proxmox external service and ingressroute
+    - name: Create proxmox service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: proxmox
+            namespace: '{{ namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.11
+            ports:
+            - name: https
+              port: 8006
+              protocol: TCP
+              targetPort: 8006
+
+    - name: Create proxmox IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: proxmox
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`pve.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: proxmox
+                    kind: Service
+                    port: 8006
+            tls:
+              secretName: local-jazziro-com-tls
+
+  # HomeAssistant external service and ingressroute
+    - name: Create homeassistant service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: homeassistant
+            namespace: '{{ namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.31
+            ports:
+            - name: http
+              port: 8123
+              protocol: TCP
+              targetPort: 8123
+
+    - name: Create homeassistant IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: homeassistant
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`smarthome.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: homeassistant
+                    kind: Service
+                    port: 8123
+            tls:
+              secretName: local-jazziro-com-tls
+
+  # Pi-hole external service and ingressroute
+    - name: Create pihole service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: pihole
+            namespace: '{{ namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.31
+            ports:
+            - name: http
+              port: 80
+              protocol: TCP
+              targetPort: 80
+
+    - name: Create pihole IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: pihole
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`pihole.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: pihole
+                    kind: Service
+                    port: 80
+            tls:
+              secretName: local-jazziro-com-tls
+
+  # CloudBeaver external service and ingressroute
+    - name: Create cloudbeaver service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: cloudbeaver
+            namespace: '{{ namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.31
+            ports:
+            - name: http
+              port: 8978
+              protocol: TCP
+              targetPort: 8978
+
+    - name: Create cloudbeaver IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: cloudbeaver
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`cloudbeaver.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: cloudbeaver
+                    kind: Service
+                    port: 8978
+            tls:
+              secretName: local-jazziro-com-tls
