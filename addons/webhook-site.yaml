@@ -2,30 +2,16 @@
   gather_facts: no
   become: no
   vars:
-    namespace: ntfy
+    namespace: webhook-site
   tasks:
-    - name: Create ntfy secrets
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: ntfy-secrets
-            namespace: ntfy
-          type: Opaque
-          stringData:
-            NTFY_BASE_URL: "{{ ntfy_base_url }}"
-      tags: ntfy
-
-    - name: Deploy ntfy ArgoCD Application
+    - name: Deploy webhook-site ArgoCD Application
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: ntfy
+            name: webhook-site
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
@@ -33,13 +19,13 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/ntfy/overlays/prod
+              path: kustomize/webhook-site/overlays/prod
               targetRevision: main
               kustomize:
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 commonLabels:
-                  app.kubernetes.io/instance: ntfy-prod
+                  app.kubernetes.io/instance: webhook-site-prod
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ namespace }}'
@@ -51,7 +37,7 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
-      tags: ntfy
+      tags: webhook-site
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
@@ -72,15 +58,15 @@
             - "{{ dns_name_1 }}"
             - "{{ dns_name_2 }}"
 
-    - name: Create ntfy IngressRoute
+    - name: Create webhook-site IngressRoute
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
           metadata:
-            name: ntfy
-            namespace: '{{ namespace }}'
+            name: webhook-site
+            namespace: webhook-site
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -88,10 +74,10 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`ntfy.{{ dns_name_1 }}`)
+              - match: Host(`webhook.{{ dns_name_1 }}`)
                 kind: Rule
                 services:
-                  - name: ntfy-svc
+                  - name: webhook-site
                     kind: Service
                     port: 80
             tls:
