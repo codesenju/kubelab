@@ -57,7 +57,7 @@ spec:
             - name: ECHO_REDIS_PORT
               value: "6379"
             - name: ECHO_REDIS_HOSTNAME
-              value: redis
+              value: localhost
             - name: ECHO_PROTOCOL
               value: http
             - name: ECHO_ALLOW_CORS
