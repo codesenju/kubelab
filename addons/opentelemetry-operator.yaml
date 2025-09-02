@@ -1,0 +1,32 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    namespace: opentelemetry
+  tasks:
+    - name: Create ArgoCD Application for OpenTelemetry Operator
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: opentelemetry-operator
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: HEAD
+              path: kustomize/opentelemetry-operator/overlays/kubelab
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
