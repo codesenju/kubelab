@@ -1,0 +1,97 @@
+  gather_facts: no
+  become: no
+  vars:
+    namespace: ntfy
+  tasks:
+    - name: Create ntfy secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: ntfy-secrets
+            namespace: ntfy
+          type: Opaque
+          stringData:
+            NTFY_BASE_URL: "{{ ntfy_base_url }}"
+      tags: ntfy
+      
+    - name: Deploy ntfy ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: ntfy
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/ntfy/base
+              targetRevision: main
+              kustomize:
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                commonLabels:
+                  app.kubernetes.io/instance: ntfy-prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags: ntfy
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: '{{ namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+
+    - name: Create ntfy IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: ntfy
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`ntfy.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: ntfy-svc
+                    kind: Service
+                    port: 80
+            tls:
+              secretName: local-jazziro-com-tls

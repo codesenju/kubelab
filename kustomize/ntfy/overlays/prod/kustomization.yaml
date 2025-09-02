@@ -1,0 +1,17 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: ntfy
+
+images:
+- name: IMAGE_PLACEHOLDER
+  newName: binwiederhier/ntfy
+  newTag: v1.28.0
+
+configMapGenerator: # will parse config from raw config to configmap,it allows for dynamic reload of application if additional app is deployed ie https://github.com/stakater/Reloader
+    - name: server-config
+      files: 
+        - ./server.yml
+
+resources:
+  - ../../base
