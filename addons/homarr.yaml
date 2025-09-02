@@ -1,5 +1,8 @@
 - hosts: k8s-control-plane-1
+  gather_facts: no
   become: no
+  vars:
+    namespace: homarr
   tasks:
 
     - name: Create Homarr namespace
@@ -155,33 +158,48 @@
               syncOptions:
                 - CreateNamespace=true
 
-    # - name: Patch Homarr Service LoadBalancer IP
-    #   kubernetes.core.k8s:
-    #     state: present
-    #     api_version: v1
-    #     kind: Service
-    #     name: homarr
-    #     namespace: homarr
-    #     definition:
-    #       spec:
-    #         loadBalancerIP: "{{ homarr_static_ip }}"
-    #     merge_type: strategic-merge
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com
+            namespace: '{{ namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ dns_name_2 }}"
+            dnsNames:
+            - "{{ dns_name_1 }}"
+            - "{{ dns_name_2 }}"
+      tags: homarr-tls
 
-    # - name: Get LoadBalancer IP
-    #   shell: kubectl -n homarr get svc homarr -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
-    #   register: lb_ip
-    #   changed_when: false
-
-    # - name: Get LoadBalancer Port
-    #   shell: kubectl -n homarr get svc homarr -o jsonpath='{.spec.ports[0].port}'
-    #   register: lb_port
-    #   changed_when: false
-
-    # - name: Display Homar access information
-    #   ansible.builtin.debug:
-    #     msg:
-    #       - "----------------------------------------"
-    #       - "🚀 Homarr has been deployed successfully!"
-    #       - "----------------------------------------"
-    #       - "📍 URL:       http://{{ lb_ip.stdout }}:{{ lb_port.stdout }}"
-    #       - "----------------------------------------"
+    - name: Create homarr IngressRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: homarr
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`homarr.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: homarr
+                    kind: Service
+                    port: 7575
+            tls:
+              secretName: local-jazziro-com-tls
+      tags: homarr-tls
