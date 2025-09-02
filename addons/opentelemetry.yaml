@@ -20,7 +20,7 @@
             source:
               repoURL: 'https://github.com/codesenju/kubelab.git'
               targetRevision: HEAD
-              path: kustomize/opentelemetry-operator/overlays/kubelab
+              path: kustomize/opentelemetry-operator/overlays/prod
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ namespace }}'
