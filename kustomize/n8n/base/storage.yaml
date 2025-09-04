@@ -11,7 +11,7 @@ spec:
     server: 192.168.0.16 # change me
     path: /mnt/pool1/AppData/
   accessModes:
-    - ReadWriteMany
+    - ReadWriteOnce
   mountOptions:
     - noatime
     - nfsvers=4.2
