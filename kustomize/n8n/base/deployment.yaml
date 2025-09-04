@@ -22,7 +22,7 @@ spec:
             - name: GENERIC_TIMEZONE
               value: "UTC"
             - name: TZ
-              value: "UTC"
+              value: "Etc/GMT-2"
             - name: N8N_ENFORCE_SETTINGS_FILE_PERMISSIONS
               value: "true"
             - name: N8N_RUNNERS_ENABLED
