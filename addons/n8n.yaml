@@ -1,4 +1,4 @@
-  hosts: k8s-control-plane-1
+- hosts: k8s-control-plane-1
   become: true
   gather_facts: false
   vars:
@@ -19,7 +19,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/n8n
+              path: kustomize/n8n/overlays/prod
               targetRevision: main
               kustomize:
                 labels:
