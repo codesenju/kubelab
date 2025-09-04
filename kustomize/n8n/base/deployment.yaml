@@ -48,7 +48,6 @@ spec:
             - name: n8n-data
               mountPath: /home/node/.n8n
       volumes:
-        - name: n8n-data
-          hostPath:
-            path: /var/lib/docker/volumes/n8n_data/_data
-            type: DirectoryOrCreate
+      - name: n8n-data
+        persistentVolumeClaim:
+          claimName: n8n-data
