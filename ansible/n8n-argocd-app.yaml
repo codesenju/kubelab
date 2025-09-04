@@ -1,0 +1,9 @@
+- name: Deploy n8n ArgoCD Application
+  hosts: k8s-control-plane-1
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Apply n8n ArgoCD Application manifest
+      kubernetes.core.k8s:
+        state: present
+        src: ../addons/n8n.yaml

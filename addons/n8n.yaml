@@ -1,0 +1,42 @@
+  hosts: k8s-control-plane-1
+  become: true
+  gather_facts: false
+  vars:
+    namespace: n8n
+  tasks:
+    - name: Deploy n8n ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: n8n
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/n8n
+              targetRevision: main
+              kustomize:
+                labels:
+                  app.kubernetes.io/instance: n8n
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
