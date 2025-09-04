@@ -17,7 +17,7 @@
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
@@ -296,3 +296,55 @@
                     port: 8978
             tls:
               secretName: local-jazziro-com-tls
+
+    - name: Create beszel service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: beszel
+            namespace: '{{ namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.31
+            ports:
+            - name: http
+              port: 8090
+              protocol: TCP
+              targetPort: 8090
+      tags: 
+      - beszel
+
+    - name: Create beszel ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: beszel
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+            - hosts:
+              - "beszel.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "beszel.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: beszel
+                      port:
+                        number: 8090
+      tags: 
+      - beszel

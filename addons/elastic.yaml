@@ -1,6 +1,8 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
   become: no
+  vars:
+    namespace: elastic-system
   tasks:
     - name: Deploy Elastic Operator
       kubernetes.core.k8s:
@@ -268,3 +270,88 @@
           - "🔑 Password: {{ elastic_password }}"
           - "----------------------------------------"
       tags: get-elastic-password
+
+    - name: Create kibana IngressRoute
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: kibana
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`kibana.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: quickstart-kb-http
+                    kind: Service
+                    port: 5601s
+            tls:
+              secretName: local-jazziro-com-tls
+      tags: ingressroute
+
+    - name: Create elasticsearch IngressRoute
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: IngressRoute
+          metadata:
+            name: elasticsearch
+            namespace: '{{ namespace }}'
+            annotations:
+              kubernetes.io/ingress.class: traefik
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+          spec:
+            entryPoints:
+              - websecure
+            routes:
+              - match: Host(`elasticsearch.{{ dns_name_1 }}`)
+                kind: Rule
+                services:
+                  - name: quickstart-es-http
+                    kind: Service
+                    port: 9200
+            tls:
+              secretName: local-jazziro-com-tls
+      tags: ingressroute
+
+    - name: Create kibana ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: kibana
+            namespace: '{{ namespace }}'
+            annotations:
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+            - hosts:
+              - "kibana.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "kibana.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: quickstart-kb-http
+                      port:
+                        number: 5601
+      tags: 
+      - ingress
