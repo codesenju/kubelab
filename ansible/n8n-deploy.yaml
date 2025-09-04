@@ -1,0 +1,50 @@
+- name: Deploy n8n with CNPG Postgres via ArgoCD
+  hosts: k8s-control-plane-1
+  become: true
+  gather_facts: false
+  vars:
+    namespace: n8n
+    postgres_db: n8n
+    postgres_user: n8n
+    postgres_password: "{{ lookup('password', '/dev/null length=16 chars=ascii_letters') }}"
+    postgres_host: n8n-postgres-rw
+    postgres_port: 5432
+    postgres_schema: public
+    timezone: "UTC"
+  tasks:
+    - name: Create n8n namespace
+      kubernetes.core.k8s:
+        api_version: v1
+        kind: Namespace
+        name: "{{ namespace }}"
+        state: present
+
+    - name: Create CNPG Postgres cluster for n8n
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'kustomize/n8n/base/postgres.yaml') }}"
+
+    - name: Create Postgres secret for n8n
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'kustomize/n8n/base/postgres-secret.yaml') }}"
+
+    - name: Create n8n Deployment manifest
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'kustomize/n8n/base/deployment.yaml') }}"
+
+    - name: Create n8n Service manifest
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'kustomize/n8n/base/service.yaml') }}"
+
+    - name: Create ArgoCD Application for n8n
+      kubernetes.core.k8s:
+        state: present
+        definition: "{{ lookup('file', 'kustomize/n8n/base/argocd-app.yaml') }}"
+
+    - name: Create Docker volume for n8n data
+      shell: docker volume create n8n_data
+      delegate_to: localhost
+      changed_when: "'n8n_data' in result.stdout"

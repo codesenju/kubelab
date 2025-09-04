@@ -224,6 +224,25 @@ kubectl patch deployment cloudflared -p '{"spec":{"template":{"metadata":{"annot
  kubectl annotate namespace media-stack instrumentation.opentelemetry.io/inject-dotnet-
 
 ```
+# Opentelemtry
+```bash
+export service_name=jellyseerr
+export deployment_name=jellyseerr
+kubectl patch deployment $deployment_name  \
+  --type='json' \
+  -p='[
+    {
+      "op": "add",
+      "path": "/spec/template/metadata/annotations/instrumentation.opentelemetry.io~1inject-nodejs",
+      "value": "true"
+    },
+    {
+      "op": "add",
+      "path": "/spec/template/metadata/annotations/resource.opentelemetry.io~1service.name",
+      "value": '${service_name}'
+    }
+  ]'
+```
 # otel-cli
 ### Installing
 - https://github.com/equinix-labs/otel-cli?tab=readme-ov-file#getting-started

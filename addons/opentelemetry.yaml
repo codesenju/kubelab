@@ -38,7 +38,7 @@
           apiVersion: opentelemetry.io/v1alpha1
           kind: OpenTelemetryCollector
           metadata:
-            name: otel-collector
+            name: signoz-otel
             namespace: '{{ namespace }}'
           spec:
             mode: deployment
@@ -58,11 +58,12 @@
                     value: prod # can be dev, prod, staging etc. based on your environment
                     action: upsert
               exporters:
-                debug: {}
+                debug:
+                  verbosity: detailed
                 otlp:
                   endpoint: "{{ signoz_otel_endpoint }}" # replace <region> with your region of SigNoz Cloud
-                  # tls:
-                  #   insecure: false
+                  tls:
+                    insecure: false
                   # headers:
                   #   "signoz-ingestion-key": "<your-ingestion-key>" # Obtain from https://{your-signoz-tenant-url}/settings/ingestion-settings
               service:
@@ -70,4 +71,35 @@
                   traces:
                     receivers: [otlp]
                     processors: [batch, resource/env]
-                    exporters: [otlp]
+                    exporters: [otlp,debug]
+
+    - name: Create Instrumentation resource for nodejs-instrumentation
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: opentelemetry.io/v1alpha1
+          kind: Instrumentation
+          metadata:
+            name: traces-instrumentation
+            namespace: media-stack
+          spec:
+            exporter:
+              endpoint: "{{ signoz_otel_endpoint }}"
+              # endpoint:  http://signoz-otel-collector.opentelemetry-operator-system.svc.cluster.local:4317
+            env:
+              # - name: OTEL_EXPORTER_OTLP_HEADERS
+              #   value: signoz-ingestion-key="<signoz-token>"  # Obtain from https://{your-signoz-url}/settings/ingestion-settings
+              - name: OTEL_EXPORTER_OTLP_INSECURE
+                value: "false"
+              - name: OTEL_RESOURCE_ATTRIBUTES
+                value: "deployment.environment=prod" # can be dev, prod, staging etc. based on your environment 
+            propagators:
+              - tracecontext
+              - baggage
+              - b3
+            sampler:
+              type: parentbased_traceidratio
+              argument: "1"
+            nodejs:
+              image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
+
