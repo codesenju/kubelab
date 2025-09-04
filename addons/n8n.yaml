@@ -40,3 +40,34 @@
                 kind: Cluster
                 jsonPointers:
                   - /spec/managed/roles
+
+    - name: Create n8n ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: n8n
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-staging
+          spec:
+            ingressClassName: nginx
+            tls:
+            - hosts:
+              - "n8n.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "n8n.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: n8n
+                      port:
+                        number: 5678
+      tags: ingress
