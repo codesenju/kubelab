@@ -47,6 +47,7 @@ spec:
           volumeMounts:
             - name: n8n-data
               mountPath: /home/node/.n8n
+              subPath: n8n
       volumes:
       - name: n8n-data
         persistentVolumeClaim:
