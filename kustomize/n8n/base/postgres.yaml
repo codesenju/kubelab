@@ -1,0 +1,26 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: n8n-postgres
+  namespace: n8n
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:16.2
+  instances: 1
+  managed:
+    roles:
+      - name: n8n
+        superuser: true
+        login: true
+  bootstrap:
+    initdb:
+      database: n8n
+      owner: n8n
+      secret:
+        name: n8n-postgres-secrets
+  storage:
+    size: 1Gi
+    pvcTemplate:
+      accessModes: [ReadWriteOnce]
+      resources:
+        requests:
+          storage: 1Gi

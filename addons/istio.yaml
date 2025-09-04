@@ -4,6 +4,7 @@
   gather_facts: false
   vars:
     istio_version: "1.27.0"
+    namespace: istio-system
   tasks:
     - name: Download Istio
       get_url:
@@ -187,3 +188,35 @@
           - "📚 Bookinfo application deployed"
           - "🌐 Gateway API CRDs installed"
           - "Use 'kubectl get pods -n istio-system' to check Istio components"
+
+    - name: Create kiali ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: kiali
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+            - hosts:
+              - "kiali.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "kiali.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: kiali
+                      port:
+                        number: 20001
+      tags: 
+      - ingress
