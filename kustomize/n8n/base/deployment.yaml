@@ -44,6 +44,26 @@ spec:
                 secretKeyRef:
                   name: n8n-postgres-secrets
                   key: password
+            - name: N8N_HOST
+              valueFrom:
+                configMapKeyRef:
+                  name: n8n-env
+                  key: N8N_HOST
+            - name: N8N_PORT
+              valueFrom:
+                configMapKeyRef:
+                  name: n8n-env
+                  key: N8N_PORT
+            - name: N8N_PROTOCOL
+              valueFrom:
+                configMapKeyRef:
+                  name: n8n-env
+                  key: N8N_PROTOCOL
+            - name: WEBHOOK_URL
+              valueFrom:
+                configMapKeyRef:
+                  name: n8n-env
+                  key: WEBHOOK_URL
           volumeMounts:
             - name: n8n-data
               mountPath: /home/node/.n8n
