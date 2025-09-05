@@ -5,7 +5,7 @@
 
     - name: Deploy Cloudflared deployment
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: apps/v1
           kind: Deployment
@@ -73,7 +73,7 @@
 
     - name: Deploy Cloudflared configmap
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: ConfigMap
