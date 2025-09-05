@@ -6,7 +6,7 @@
   tasks:
     - name: Deploy Elastic Operator
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -37,7 +37,7 @@
  # 🔥 HOT STORAGE PV
     - name: Deploy Elasticsearch Hot PV
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -61,7 +61,7 @@
     # ❄️ COLD STORAGE PV
     - name: Deploy Elasticsearch Cold PV
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -85,7 +85,7 @@
     # 🔥 HOT PVC
     - name: Deploy Elasticsearch Hot PVC
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -107,7 +107,7 @@
     # ❄️ COLD PVC
     - name: Deploy Elasticsearch Cold PVC
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -129,7 +129,7 @@
     # 🚀 Elasticsearch with hot + cold nodes
     - name: Deploy Elasticsearch
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: elasticsearch.k8s.elastic.co/v1
           kind: Elasticsearch
@@ -209,7 +209,7 @@
 
     - name: Deploy Kibana
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: kibana.k8s.elastic.co/v1
           kind: Kibana
@@ -325,7 +325,7 @@
 
     - name: Create kibana ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress

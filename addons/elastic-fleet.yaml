@@ -130,7 +130,7 @@
 
     - name: Create fleet-server-config secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -164,7 +164,7 @@
 
     - name: Deploy Elastic Fleet
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
