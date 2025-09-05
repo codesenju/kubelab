@@ -1,5 +1,8 @@
 - hosts: k8s-control-plane-1
   become: no
+  gather_facts: false
+  vars:
+    namespace: minio-s3
   tasks:
 
     - name: Deploy Minio
@@ -78,3 +81,69 @@
                   - /spec/managed/roles
       tags:
         - tenant
+
+    - name: Create minio-s3 ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: minio-s3
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+            - hosts:
+              - "minio.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "minio.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: minio-s3-console
+                      port:
+                        number: 9443
+      tags: 
+      - ingress
+
+    - name: Create minio-s3 endpoint ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: minio-s3-endpoint
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+            - hosts:
+              - "s3.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "s3.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: minio
+                      port:
+                        number: 443
+      tags: 
+      - ingress

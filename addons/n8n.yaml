@@ -41,6 +41,21 @@
                 jsonPointers:
                   - /spec/managed/roles
 
+    - name: Create n8n configmap for env vars
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: n8n-env
+            namespace: "{{ namespace }}"
+          data:
+            N8N_HOST: "{{ n8n_domain }}"
+            N8N_PORT: "443"
+            N8N_PROTOCOL: "https"
+            WEBHOOK_URL: "https://{{ n8n_domain }}/"
+
     - name: Create n8n ingress
       kubernetes.core.k8s:
         state: present
