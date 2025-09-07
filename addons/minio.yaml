@@ -1,10 +1,13 @@
 ---
 - hosts: k8s-control-plane-1
   gather_facts: no
+  become: no
+  vars:
+    namespace: minio
   tasks:
     - name: Deploy minio
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -24,7 +27,7 @@
                   app.kubernetes.io/instance: minio
             destination:
               server: https://kubernetes.default.svc
-              namespace: minio
+              namespace: '{{ namespace }}'
             syncPolicy:
               automated:
                 prune: true
@@ -33,4 +36,16 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
-     
+
+    - name: Create minio-env secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: minio-env
+            namespace: '{{ namespace }}'
+          stringData:
+            MINIO_ROOT_USER: minio
+            MINIO_ROOT_PASSWORD: '{{ minio_password }}'
