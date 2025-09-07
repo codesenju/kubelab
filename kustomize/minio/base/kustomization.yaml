@@ -4,6 +4,4 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - pvc.yaml
   - storage.yaml
-  - images.yaml
