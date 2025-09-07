@@ -1,149 +1,36 @@
+---
 - hosts: k8s-control-plane-1
-  become: no
-  gather_facts: false
-  vars:
-    namespace: minio-s3
+  gather_facts: no
   tasks:
-
-    - name: Deploy Minio
+    - name: Deploy minio
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: minio-operator
+            name: minio
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
           spec:
             project: default
-            sources:
-            - repoURL: https://operator.min.io/
-              chart: operator
-              targetRevision: 7.1.1
-              helm:
-                releaseName: minio-operator
-                # values: |
-                #   $values/helm/minio_operator_values.yaml
-            # - repoURL: 'https://github.com/codesenju/kubelab.git'
-            #   targetRevision: main
-            #   ref: values
-            destination:
-              server: https://kubernetes.default.svc
-              namespace: minio-operator
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-              syncOptions:
-                - CreateNamespace=true
-      tags:
-        - operator
-
-    - name: Deploy Minio S3 Tenant
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: minio-s3
-            namespace: argocd
-            finalizers:
-              - resources-finalizer.argocd.argoproj.io
-          spec:
-            project: default
-            sources:
-            - repoURL: https://operator.min.io
-              chart: tenant
-              targetRevision: 7.1.1
-              helm:
-                releaseName: minio-s3
-                valueFiles:
-                - $values/helm/minio_s3_tenant_values.yaml
-            - repoURL: 'https://github.com/codesenju/kubelab.git'
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/minio/overlays/prod
               targetRevision: main
-              ref: values
+              kustomize:
+                labels:
+                  app.kubernetes.io/instance: minio
             destination:
               server: https://kubernetes.default.svc
-              namespace: minio-s3
+              namespace: minio
             syncPolicy:
               automated:
                 prune: true
                 selfHeal: true
               syncOptions:
-                - CreateNamespace=true
-            ignoreDifferences:
-              - group: "postgresql.cnpg.io"
-                kind: Cluster
-                jsonPointers:
-                  - /spec/managed/roles
-      tags:
-        - tenant
-
-    - name: Create minio-s3 ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: minio-s3
-            namespace: '{{ namespace }}'
-            annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: nginx
-            tls:
-            - hosts:
-              - "minio.{{ dns_name_1 }}"
-              secretName: local-jazziro-com-tls
-            rules:
-            - host: "minio.{{ dns_name_1 }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: minio-s3-console
-                      port:
-                        number: 9443
-      tags: 
-      - ingress
-
-    - name: Create minio-s3 endpoint ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: minio-s3-endpoint
-            namespace: '{{ namespace }}'
-            annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: nginx
-            tls:
-            - hosts:
-              - "s3.{{ dns_name_1 }}"
-              secretName: local-jazziro-com-tls
-            rules:
-            - host: "s3.{{ dns_name_1 }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: minio
-                      port:
-                        number: 443
-      tags: 
-      - ingress
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+     
