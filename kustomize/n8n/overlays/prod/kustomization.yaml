@@ -5,7 +5,7 @@ namespace: n8n
 
 images:
 - name: n8n_image
-  newName: n8nio/n8n
+  newName: codesenju/n8n
   newTag: 1.110.1
 
 resources:
