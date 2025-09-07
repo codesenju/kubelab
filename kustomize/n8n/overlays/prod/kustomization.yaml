@@ -5,7 +5,7 @@ namespace: n8n
 
 images:
 - name: n8n_image
-  newName: codesenju/n8n
+  newName: docker.io/codesenju/n8n
   newTag: 1.110.1
 
 resources:
