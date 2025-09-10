@@ -1,17 +1,19 @@
 #!/bin/bash
 
 # Default values
+WATERMARK_TOP="false"
+TOP_SPACING="400"
 INPUT_FILE="input.mp4"
 WATERMARK_FILE="escape925.png"
 OUTPUT_FILE="output_with_watermark.mp4"
 BLUR_INTENSITY="20:10"
 OUTPUT_WIDTH="1080"
 OUTPUT_HEIGHT="1920"
-CROP_PERCENTAGE="0.85"
+CROP_PERCENTAGE="0.75"
 CROP_POSITION="0.075"
 WATERMARK_OPACITY="0.9"
 WATERMARK_SCALE="0.3"
-BOTTOM_SPACING="150"
+BOTTOM_SPACING="400"
 CRF_VALUE="23"
 
 # Help function
@@ -35,7 +37,9 @@ Options:
   
   --wm-opacity DECIMAL      Watermark opacity (0.0-1.0) (default: $WATERMARK_OPACITY)
   --wm-scale DECIMAL        Watermark scale factor (default: $WATERMARK_SCALE)
-  --wm-spacing PIXELS       Watermark spacing from bottom (default: $BOTTOM_SPACING)
+    --wm-spacing PIXELS       Watermark spacing from bottom (default: $BOTTOM_SPACING)
+    --wm-top                  Place watermark at top center (default: bottom center)
+    --wm-top-spacing PIXELS   Watermark spacing from top (default: $TOP_SPACING)
   
   --crf VALUE               Video quality CRF value (default: $CRF_VALUE)
   -h, --help                Show this help message
@@ -94,6 +98,14 @@ while [[ $# -gt 0 ]]; do
             BOTTOM_SPACING="$2"
             shift 2
             ;;
+        --wm-top)
+            WATERMARK_TOP="true"
+            shift 1
+            ;;
+        --wm-top-spacing)
+            TOP_SPACING="$2"
+            shift 2
+            ;;
         --crf)
             CRF_VALUE="$2"
             shift 2
@@ -130,18 +142,32 @@ echo "Output: $OUTPUT_FILE"
 echo "Resolution: ${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}"
 echo "Blur: $BLUR_INTENSITY"
 echo "Crop: ${CROP_PERCENTAGE} (keep), position: ${CROP_POSITION}"
-echo "Watermark: scale ${WATERMARK_SCALE}, opacity ${WATERMARK_OPACITY}, spacing ${BOTTOM_SPACING}px"
+if [[ "$WATERMARK_TOP" == "true" ]]; then
+    echo "Watermark: scale ${WATERMARK_SCALE}, opacity ${WATERMARK_OPACITY}, top spacing ${TOP_SPACING}px"
+else
+    echo "Watermark: scale ${WATERMARK_SCALE}, opacity ${WATERMARK_OPACITY}, bottom spacing ${BOTTOM_SPACING}px"
+fi
 echo "Quality: CRF $CRF_VALUE"
 echo "======================================"
 
 # Run FFmpeg command
+if [[ "$WATERMARK_TOP" == "true" ]]; then
+    WM_OVERLAY="(W-w)/2:${TOP_SPACING}"
+else
+    WM_OVERLAY="(W-w)/2:H-h-${BOTTOM_SPACING}"
+fi
+
 ffmpeg -i "$INPUT_FILE" -i "$WATERMARK_FILE" -filter_complex "
     [0:v]split=2[blur_source][crop_source];
     [blur_source]scale=${OUTPUT_WIDTH}:${OUTPUT_HEIGHT},boxblur=${BLUR_INTENSITY}[blurred_bg];
     [crop_source]crop=iw:ih*${CROP_PERCENTAGE}:0:ih*${CROP_POSITION},scale=${OUTPUT_WIDTH}:-1[main];
     [blurred_bg][main]overlay=(W-w)/2:(H-h)/2[base];
+    [base]colorbalance=rs=-0.1:gs=-0.1:bs=0.15,
+          hue=s=0.5,
+          colorlevels=rimin=0.03:gimin=0.03:bimin=0.01,
+          unsharp=5:5:0.7[filtered];
     [1:v]scale=iw*${WATERMARK_SCALE}:-1,format=rgba,colorchannelmixer=aa=${WATERMARK_OPACITY}[watermark];
-    [base][watermark]overlay=(W-w)/2:H-h-${BOTTOM_SPACING}
+    [filtered][watermark]overlay=${WM_OVERLAY}
 " -c:a copy -c:v libx264 -crf "$CRF_VALUE" "$OUTPUT_FILE"
 
 # Check if successful
