@@ -37,3 +37,4 @@ ansible/vault_password.txt
 ansible/ignore-vault-pass
 ansible/vault-pass.txt
 ansible/cert-secret.yaml
+Automation/n8n/output_with_watermark.mp4
