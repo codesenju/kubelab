@@ -8,7 +8,7 @@ RUN wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin
 
 # Install ffmpeg (includes ffprobe) on Alpine
 RUN apk update && \
-    apk add --no-cache ffmpeg curl
+    apk add --no-cache ffmpeg curl bash
 
 # Optional: switch back to node user for security
 USER node
