@@ -1,6 +1,8 @@
 #!/bin/bash
 
 # Default values
+BLUE_TINT="0.02"
+FILTER_STRENGTH="0.15"
 WATERMARK_TOP="false"
 TOP_SPACING="400"
 INPUT_FILE="input.mp4"
@@ -9,10 +11,10 @@ OUTPUT_FILE="output_with_watermark.mp4"
 BLUR_INTENSITY="20:10"
 OUTPUT_WIDTH="1080"
 OUTPUT_HEIGHT="1920"
-CROP_PERCENTAGE="0.75"
-CROP_POSITION="0.075"
+CROP_PERCENTAGE="0.80"
+CROP_POSITION="0.0"
 WATERMARK_OPACITY="0.9"
-WATERMARK_SCALE="0.3"
+WATERMARK_SCALE="0.2"
 BOTTOM_SPACING="400"
 CRF_VALUE="23"
 
@@ -41,7 +43,9 @@ Options:
     --wm-top                  Place watermark at top center (default: bottom center)
     --wm-top-spacing PIXELS   Watermark spacing from top (default: $TOP_SPACING)
   
-  --crf VALUE               Video quality CRF value (default: $CRF_VALUE)
+    --blue-tint VALUE         Blue tint strength (default: $BLUE_TINT)
+    --filter-strength VALUE   Filter strength (0.0-1.0, default: $FILTER_STRENGTH)
+    --crf VALUE               Video quality CRF value (default: $CRF_VALUE)
   -h, --help                Show this help message
 
 Examples:
@@ -54,6 +58,23 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
+        --wm-top)
+            WATERMARK_TOP="true"
+            shift 1
+            ;;
+        --wm-top-spacing)
+            TOP_SPACING="$2"
+            shift 2
+            ;;
+
+        --blue-tint)
+            BLUE_TINT="$2"
+            shift 2
+            ;;
+        --filter-strength)
+            FILTER_STRENGTH="$2"
+            shift 2
+            ;;
         -i|--input)
             INPUT_FILE="$2"
             shift 2
@@ -157,12 +178,16 @@ else
     WM_OVERLAY="(W-w)/2:H-h-${BOTTOM_SPACING}"
 fi
 
-ffmpeg -i "$INPUT_FILE" -i "$WATERMARK_FILE" -filter_complex "
+BLUR_H=$(echo "$BLUR_INTENSITY" | cut -d: -f1)
+BLUR_V=$(echo "$BLUR_INTENSITY" | cut -d: -f2)
+BLUR_H=$(awk "BEGIN {print $BLUR_H * $FILTER_STRENGTH}")
+BLUR_V=$(awk "BEGIN {print $BLUR_V * $FILTER_STRENGTH}")
+ffmpeg -y -i "$INPUT_FILE" -i "$WATERMARK_FILE" -filter_complex "
     [0:v]split=2[blur_source][crop_source];
-    [blur_source]scale=${OUTPUT_WIDTH}:${OUTPUT_HEIGHT},boxblur=${BLUR_INTENSITY}[blurred_bg];
+    [blur_source]scale=${OUTPUT_WIDTH}:${OUTPUT_HEIGHT},boxblur=${BLUR_H}:${BLUR_V}[blurred_bg];
     [crop_source]crop=iw:ih*${CROP_PERCENTAGE}:0:ih*${CROP_POSITION},scale=${OUTPUT_WIDTH}:-1[main];
     [blurred_bg][main]overlay=(W-w)/2:(H-h)/2[base];
-    [base]colorbalance=rs=-0.1:gs=-0.1:bs=0.15,
+    [base]colorbalance=rs=-0.1:gs=-0.1:bs=${BLUE_TINT},
           hue=s=0.5,
           colorlevels=rimin=0.03:gimin=0.03:bimin=0.01,
           unsharp=5:5:0.7[filtered];
