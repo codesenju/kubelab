@@ -3,8 +3,8 @@
 # Default values
 BLUE_TINT="0.02"
 FILTER_STRENGTH="0.15"
-WATERMARK_TOP="false"
-TOP_SPACING="400"
+WATERMARK_POSITION="bottom"
+WM_SPACING="400"
 INPUT_FILE="input.mp4"
 WATERMARK_FILE="escape925.png"
 OUTPUT_FILE="output_with_watermark.mp4"
@@ -15,7 +15,7 @@ CROP_PERCENTAGE="0.80"
 CROP_POSITION="0.0"
 WATERMARK_OPACITY="0.9"
 WATERMARK_SCALE="0.2"
-BOTTOM_SPACING="400"
+
 CRF_VALUE="23"
 
 # Help function
@@ -39,9 +39,8 @@ Options:
   
   --wm-opacity DECIMAL      Watermark opacity (0.0-1.0) (default: $WATERMARK_OPACITY)
   --wm-scale DECIMAL        Watermark scale factor (default: $WATERMARK_SCALE)
-    --wm-spacing PIXELS       Watermark spacing from bottom (default: $BOTTOM_SPACING)
-    --wm-top                  Place watermark at top center (default: bottom center)
-    --wm-top-spacing PIXELS   Watermark spacing from top (default: $TOP_SPACING)
+  --wm-spacing PIXELS       Watermark spacing (default: $WM_SPACING)
+  --wm-position POSITION    Watermark position: top|bottom (default: bottom)
   
     --blue-tint VALUE         Blue tint strength (default: $BLUE_TINT)
     --filter-strength VALUE   Filter strength (0.0-1.0, default: $FILTER_STRENGTH)
@@ -58,15 +57,10 @@ EOF
 # Parse command line arguments
 while [[ $# -gt 0 ]]; do
     case $1 in
-        --wm-top)
-            WATERMARK_TOP="true"
-            shift 1
-            ;;
-        --wm-top-spacing)
-            TOP_SPACING="$2"
+        --wm-position)
+            WATERMARK_POSITION="$2"
             shift 2
             ;;
-
         --blue-tint)
             BLUE_TINT="$2"
             shift 2
@@ -116,15 +110,7 @@ while [[ $# -gt 0 ]]; do
             shift 2
             ;;
         --wm-spacing)
-            BOTTOM_SPACING="$2"
-            shift 2
-            ;;
-        --wm-top)
-            WATERMARK_TOP="true"
-            shift 1
-            ;;
-        --wm-top-spacing)
-            TOP_SPACING="$2"
+            WM_SPACING="$2"
             shift 2
             ;;
         --crf)
@@ -163,19 +149,15 @@ echo "Output: $OUTPUT_FILE"
 echo "Resolution: ${OUTPUT_WIDTH}x${OUTPUT_HEIGHT}"
 echo "Blur: $BLUR_INTENSITY"
 echo "Crop: ${CROP_PERCENTAGE} (keep), position: ${CROP_POSITION}"
-if [[ "$WATERMARK_TOP" == "true" ]]; then
-    echo "Watermark: scale ${WATERMARK_SCALE}, opacity ${WATERMARK_OPACITY}, top spacing ${TOP_SPACING}px"
-else
-    echo "Watermark: scale ${WATERMARK_SCALE}, opacity ${WATERMARK_OPACITY}, bottom spacing ${BOTTOM_SPACING}px"
-fi
+echo "Watermark: scale ${WATERMARK_SCALE}, opacity ${WATERMARK_OPACITY}, ${WATERMARK_POSITION} spacing ${WM_SPACING}px"
 echo "Quality: CRF $CRF_VALUE"
 echo "======================================"
 
 # Run FFmpeg command
-if [[ "$WATERMARK_TOP" == "true" ]]; then
-    WM_OVERLAY="(W-w)/2:${TOP_SPACING}"
+if [[ "$WATERMARK_POSITION" == "top" ]]; then
+    WM_OVERLAY="(W-w)/2:${WM_SPACING}"
 else
-    WM_OVERLAY="(W-w)/2:H-h-${BOTTOM_SPACING}"
+    WM_OVERLAY="(W-w)/2:H-h-${WM_SPACING}"
 fi
 
 BLUR_H=$(echo "$BLUR_INTENSITY" | cut -d: -f1)
