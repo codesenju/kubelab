@@ -17,9 +17,10 @@ RUN ARCH=$(uname -m) && \
     mkdir -p /home/node/input/ && \
     chown -R node:node /home/node/output/
 
-# Install ffmpeg (includes ffprobe) on Alpine
+# Install ffmpeg (includes ffprobe) and yt-dlp on Alpine
 RUN apk update && \
-    apk add --no-cache ffmpeg curl bash
+    apk add --no-cache ffmpeg curl bash python3 py3-pip && \
+    pip3 install --break-system-packages yt-dlp
 
 # Optional: switch back to node user for security
 USER node
