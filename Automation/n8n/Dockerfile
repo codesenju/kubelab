@@ -14,7 +14,8 @@ RUN ARCH=$(uname -m) && \
     chmod +x ./video_editor.sh && \
     chown node:node ./video_editor.sh && \
     mkdir -p /home/node/output/ && \
-    mkdir -p /home/node/input/
+    mkdir -p /home/node/input/ && \
+    chown -R node:node /home/node/output/
 
 # Install ffmpeg (includes ffprobe) on Alpine
 RUN apk update && \
