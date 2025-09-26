@@ -15,7 +15,7 @@ RUN ARCH=$(uname -m) && \
     chown node:node ./video_editor.sh && \
     mkdir -p /home/node/output/ && \
     mkdir -p /home/node/input/ && \
-    chown -R node:node /home/node/output/
+    chown -R node:node /home/node/
 
 # Install ffmpeg (includes ffprobe) and yt-dlp on Alpine
 RUN apk update && \
