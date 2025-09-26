@@ -1,5 +1,5 @@
 {
-  "name": "amazon_q_default",
+  "name": "q_ide_default",
   "description": "Default agent configuration",
   "mcpServers": {
     "kubernetes": {
@@ -64,7 +64,7 @@
   ],
   "prompt": "",
   "toolAliases": {},
-  "useLegacyMcpJson": false,
+  "useLegacyMcpJson": true,
   "hooks": {
     "agentSpawn": [],
     "userPromptSubmit": []
