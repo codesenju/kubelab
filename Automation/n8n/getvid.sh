@@ -78,18 +78,46 @@ fi
 # Download logic
 if [ "$platform" = "youtube" ]; then
   if [ "$audio_only" = true ]; then
-    yt-dlp -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 "$url"
-    filename=$(yt-dlp --get-filename -f bestaudio "$url" -o "%(title)s.%(ext)s")
+    if [ "$quiet" = true ]; then
+      yt-dlp -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 "$url" >/dev/null 2>&1
+    else
+      yt-dlp -f bestaudio --extract-audio --audio-format mp3 --audio-quality 0 "$url"
+    fi
+    if [ "$quiet" = true ]; then
+      filename=$(yt-dlp --get-filename -f bestaudio "$url" -o "%(title)s.%(ext)s" 2>/dev/null)
+    else
+      filename=$(yt-dlp --get-filename -f bestaudio "$url" -o "%(title)s.%(ext)s")
+    fi
   else
-    yt-dlp -f "best[ext=mp4]" "$url" -o "%(title)s.%(ext)s"
-    filename=$(yt-dlp --get-filename -f "best[ext=mp4]" "$url" -o "%(title)s.%(ext)s")
+    if [ "$quiet" = true ]; then
+      yt-dlp -f "best[ext=mp4]" "$url" -o "%(title)s.%(ext)s" >/dev/null 2>&1
+    else
+      yt-dlp -f "best[ext=mp4]" "$url" -o "%(title)s.%(ext)s"
+    fi
+    if [ "$quiet" = true ]; then
+      filename=$(yt-dlp --get-filename -f "best[ext=mp4]" "$url" -o "%(title)s.%(ext)s" 2>/dev/null)
+    else
+      filename=$(yt-dlp --get-filename -f "best[ext=mp4]" "$url" -o "%(title)s.%(ext)s")
+    fi
   fi
 elif [ "$platform" = "tiktok" ]; then
-  yt-dlp -f best "$url" -o "%(title)s.%(ext)s"
-  filename=$(yt-dlp --get-filename -f best "$url" -o "%(title)s.%(ext)s")
+  if [ "$quiet" = true ]; then
+    yt-dlp -f best "$url" -o "%(title)s.%(ext)s" >/dev/null 2>&1
+  else
+    yt-dlp -f best "$url" -o "%(title)s.%(ext)s"
+  fi
+  if [ "$quiet" = true ]; then
+    filename=$(yt-dlp --get-filename -f best "$url" -o "%(title)s.%(ext)s" 2>/dev/null)
+  else
+    filename=$(yt-dlp --get-filename -f best "$url" -o "%(title)s.%(ext)s")
+  fi
   if [ "$audio_only" = true ]; then
     mp3name="${filename%.*}.mp3"
-    ffmpeg -y -i "$filename" -q:a 0 -map a "$mp3name"
+    if [ "$quiet" = true ]; then
+      ffmpeg -y -i "$filename" -q:a 0 -map a "$mp3name" >/dev/null 2>&1
+    else
+      ffmpeg -y -i "$filename" -q:a 0 -map a "$mp3name"
+    fi
     rm -f "$filename"
     filename="$mp3name"
     if [ "$quiet" = false ]; then
