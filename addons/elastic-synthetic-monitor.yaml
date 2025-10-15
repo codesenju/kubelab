@@ -125,7 +125,7 @@
 
     - name: Create synthetic-monitor-config secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -138,10 +138,11 @@
               app: elastic-stack
           type: Opaque
           stringData:
-            FLEET_URL: "{{ fleet_server_default_url }}" # retreived from ansible/groups_vars/all/secrets.yaml
+            # FLEET_URL: "{{ fleet_server_default_url }}" # retreived from ansible/groups_vars/all/secrets.yaml
+            FLEET_URL: "http://elastic-fleet.elastic-system.svc.cluster.local:8220"
             FLEET_ENROLLMENT_TOKEN: "{{ enrollment_token }}" # retreived from previous task
             FLEET_ENROLL: "1"
-            FLEET_INSECURE: "false"
+            FLEET_INSECURE: "true"
       register: k8s_secret_result
 
     - name: Show Kubernetes secret creation result
@@ -150,7 +151,7 @@
 
     - name: Create ArgoCD Application for Elastic Synthetic Monitor
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

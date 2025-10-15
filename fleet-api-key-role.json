@@ -1,0 +1,23 @@
+{
+  "fleet-manager-role": {
+    "cluster": [
+      "manage_security",
+      "manage_service_account",
+      "manage_token",
+      "manage_api_key"
+    ],
+    "indices": [
+      {
+        "names": ["*"],
+        "privileges": ["all"]
+      }
+    ],
+    "applications": [
+      {
+        "application": "kibana-.kibana",
+        "privileges": ["all"],
+        "resources": ["*"]
+      }
+    ]
+  }
+}
