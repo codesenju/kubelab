@@ -6,7 +6,7 @@
   tasks:
     - name: Deploy Elastic Operator
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -34,10 +34,10 @@
                 - CreateNamespace=true
       tags: operator
 
- # 🔥 HOT STORAGE PV
+    # 🔥 HOT STORAGE PV
     - name: Deploy Elasticsearch Hot PV
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -56,12 +56,14 @@
             mountOptions:
               - noatime
               - nfsvers=4.2
-      tags: es
+      tags:
+        - es-hot
+        - es
 
     # ❄️ COLD STORAGE PV
     - name: Deploy Elasticsearch Cold PV
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -74,18 +76,20 @@
               storage: 200Gi
             nfs:
               server: 192.168.0.15
-              path: /mnt/pool1/AppData/elastic/elasticsearch-cold
+              path: /mnt/pool1/k8s/nfs/elastic/elasticsearch-cold
             accessModes:
               - ReadWriteOnce
             mountOptions:
               - noatime
               - nfsvers=4.2
-      tags: es
+      tags:
+        - es
+        - es-cold
 
     # 🔥 HOT PVC
     - name: Deploy Elasticsearch Hot PVC
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -102,12 +106,14 @@
                 storage: hot
             volumeName: es-hot-pv
             storageClassName: ""
-      tags: es
+      tags:
+        - es
+        - es-hot
 
     # ❄️ COLD PVC
     - name: Deploy Elasticsearch Cold PVC
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -124,12 +130,14 @@
                 storage: cold
             volumeName: es-cold-pv
             storageClassName: ""
-      tags: es
+      tags:
+        - es
+        - es-cold
 
     # 🚀 Elasticsearch with hot + cold nodes
     - name: Deploy Elasticsearch
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: elasticsearch.k8s.elastic.co/v1
           kind: Elasticsearch
@@ -137,79 +145,64 @@
             name: quickstart
             namespace: elastic-system
           spec:
-            version: 9.1.0
+            version: 9.1.3
             nodeSets:
-            # 🔥 HOT tier
-            - name: hot-nodes
-              count: 1
-              config:
-                node.roles: ["master","data_hot","ingest","remote_cluster_client"]
-                node.store.allow_mmap: false
-              podTemplate:
-                spec:
-                  volumes:
-                  - name: hot-storage
-                    persistentVolumeClaim:
-                      claimName: es-hot-pvc
-                  containers:
-                  - name: elasticsearch
-                    volumeMounts:
-                    - name: hot-storage
-                      mountPath: /usr/share/elasticsearch/data
-                    resources:
-                      requests:
-                        memory: 2Gi
-                        cpu: 2
-                      limits:
-                        memory: 4Gi
-                        cpu: 4
+              # 🔥 HOT tier
+              - name: hot-nodes
+                count: 1
+                config:
+                  node.roles: ["master","data_hot","data_content","ingest","remote_cluster_client","ml","transform"]
+                  node.store.allow_mmap: false
+                podTemplate:
+                  spec:
+                    volumes:
+                      - name: hot-storage
+                        persistentVolumeClaim:
+                          claimName: es-hot-pvc
+                    containers:
+                      - name: elasticsearch
+                        volumeMounts:
+                          - name: hot-storage
+                            mountPath: /usr/share/elasticsearch/data
+                        resources:
+                          requests:
+                            memory: 2Gi
+                            cpu: 1
+                          limits:
+                            memory: 3Gi
+                            cpu: 2
 
-            # ❄️ COLD tier
-            - name: cold-nodes
-              count: 1
-              config:
-                node.roles: ["data_cold","remote_cluster_client"]
-                node.store.allow_mmap: false
-              podTemplate:
-                spec:
-                  volumes:
-                  - name: cold-storage
-                    persistentVolumeClaim:
-                      claimName: es-cold-pvc
-                  containers:
-                  - name: elasticsearch
-                    volumeMounts:
-                    - name: cold-storage
-                      mountPath: /usr/share/elasticsearch/data
-                    resources:
-                      requests:
-                        memory: 2Gi
-                        cpu: 1
-                      limits:
-                        memory: 3Gi
-                        cpu: 2
-      tags: es
-      register: previous_task_result
-
-    - name: Wait for Elasticsearch pod to be ready
-      kubernetes.core.k8s_info:
-        kind: Pod
-        namespace: elastic-system
-        label_selectors:
-          - "elasticsearch.k8s.elastic.co/cluster-name=quickstart"
-      register: es_pod
-      until: 
-        - es_pod.resources is defined 
-        - es_pod.resources | length > 0 
-        - es_pod.resources[0].status.phase == "Running"
-        - es_pod.resources[0].status.containerStatuses is defined
-        - es_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
-      retries: 15
-      delay: 20
+              # ❄️ COLD tier
+              - name: cold-nodes
+                count: 1
+                config:
+                  node.roles: ["data_cold","remote_cluster_client"]
+                  node.store.allow_mmap: false
+                podTemplate:
+                  spec:
+                    volumes:
+                      - name: cold-storage
+                        persistentVolumeClaim:
+                          claimName: es-cold-pvc
+                    containers:
+                      - name: elasticsearch
+                        volumeMounts:
+                          - name: cold-storage
+                            mountPath: /usr/share/elasticsearch/data
+                        resources:
+                          requests:
+                            memory: 1Gi
+                            cpu: 1
+                          limits:
+                            memory: 2Gi
+                            cpu: 1
+      tags:
+        - es
+        - es-hot
 
     - name: Deploy Kibana
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: kibana.k8s.elastic.co/v1
           kind: Kibana
@@ -223,27 +216,13 @@
               monitoring.ui.enabled: true
               # ✅ Enable cross-cluster monitoring if you’ll monitor multiple clusters
               monitoring.ui.ccs.enabled: true
-            version: 9.1.0
+            version: 9.1.3
             count: 1
             elasticsearchRef:
               name: quickstart
-      tags: kibana
-
-    - name: Wait for Kibana pod to be ready
-      kubernetes.core.k8s_info:
-        kind: Pod
-        namespace: elastic-system
-        label_selectors:
-          - "kibana.k8s.elastic.co/name=quickstart"
-      register: kb_pod
-      until: 
-        - kb_pod.resources is defined 
-        - kb_pod.resources | length > 0 
-        - kb_pod.resources[0].status.phase == "Running"
-        - kb_pod.resources[0].status.containerStatuses is defined
-        - kb_pod.resources[0].status.containerStatuses | selectattr('ready') | list | length > 0
-      retries: 20
-      delay: 30
+      tags:
+        - kibana
+        - es-hot
 
     - name: Get Elasticsearch password
       kubernetes.core.k8s_info:
@@ -251,13 +230,17 @@
         name: quickstart-es-elastic-user
         namespace: elastic-system
       register: es_secret
-      tags: get-elastic-password
+      tags:
+        - get-elastic-password
+        - es-hot
 
     - name: Set password fact
       set_fact:
         elastic_password: "{{ es_secret.resources[0].data.elastic | b64decode }}"
-      tags: get-elastic-password
-  
+      tags:
+        - get-elastic-password
+        - es-hot
+
     - name: Display Elasticsearch access information
       ansible.builtin.debug:
         msg:
@@ -269,11 +252,13 @@
           - "👤 Username: elastic"
           - "🔑 Password: {{ elastic_password }}"
           - "----------------------------------------"
-      tags: get-elastic-password
+      tags:
+        - get-elastic-password
+        - es-hot
 
     - name: Create kibana IngressRoute
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -292,14 +277,14 @@
                 services:
                   - name: quickstart-kb-http
                     kind: Service
-                    port: 5601s
+                    port: 5601
             tls:
               secretName: local-jazziro-com-tls
       tags: ingressroute
 
     - name: Create elasticsearch IngressRoute
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -321,11 +306,12 @@
                     port: 9200
             tls:
               secretName: local-jazziro-com-tls
-      tags: ingressroute
+      tags:
+        - ingressroute
 
     - name: Create kibana ingress
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
@@ -339,19 +325,54 @@
           spec:
             ingressClassName: nginx
             tls:
-            - hosts:
-              - "kibana.{{ dns_name_1 }}"
-              secretName: local-jazziro-com-tls
+              - hosts:
+                  - "kibana.{{ dns_name_1 }}"
+                secretName: local-jazziro-com-tls
             rules:
-            - host: "kibana.{{ dns_name_1 }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: quickstart-kb-http
-                      port:
-                        number: 5601
-      tags: 
-      - ingress
+              - host: "kibana.{{ dns_name_1 }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: quickstart-kb-http
+                          port:
+                            number: 5601
+      tags:
+        - ingress
+        - es-hot
+
+    - name: Create es ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: es
+            namespace: '{{ namespace }}'
+            annotations:
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+              - hosts:
+                  - "es.{{ dns_name_1 }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "es.{{ dns_name_1 }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: quickstart-es-http
+                          port:
+                            number: 9200
+      tags:
+        - ingress
+        - es-hot
