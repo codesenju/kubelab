@@ -10,6 +10,7 @@
     es_headers:
       Content-Type: "application/json"
       Authorization: "ApiKey {{ fleet_manager_api_key }}"
+    namespace: elastic-system
 
   tasks:
     - name: Create agent policy (ignore if exists)
@@ -48,7 +49,7 @@
     - name: Save agent policy details (new policy)
       set_fact:
         agent_policy_id: "{{ create_policy.json.item.id }}"
-        agent_policy_name: "{{ create_policy.json.item.name }}"
+        agent_policy_name: "fleet-server-policy-default"
       when: create_policy.status in [200, 201]
 
     - name: Show policy status
@@ -130,7 +131,7 @@
 
     - name: Create fleet-server-config secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -164,7 +165,7 @@
 
     - name: Deploy Elastic Fleet
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -190,3 +191,38 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
+      tags:
+      - elastic-fleet
+
+    - name: Create fleet ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: fleet
+            namespace: '{{ namespace }}'
+            annotations:
+              # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+              - hosts:
+                  - "elastic-fleet.{{ dns_name_1 }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "elastic-fleet.{{ dns_name_1 }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: elastic-fleet
+                          port:
+                            number: 80
+      tags:
+        - ingress
