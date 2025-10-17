@@ -125,7 +125,7 @@
 
     - name: Create synthetic-monitor-config secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -138,8 +138,7 @@
               app: elastic-stack
           type: Opaque
           stringData:
-            FLEET_URL: "{{ fleet_server_default_url }}:443" # external URL - causes issues
-            # FLEET_URL: "http://elastic-fleet.elastic-system.svc.cluster.local:80"
+            FLEET_URL: "{{ fleet_server_default_url }}" # external URL
             FLEET_ENROLLMENT_TOKEN: "{{ synthetic_monitor_enrollment_token }}" # retreived from previous task
             FLEET_ENROLL: "1"
             FLEET_INSECURE: "false"
@@ -151,7 +150,7 @@
 
     - name: Create ArgoCD Application for Elastic Synthetic Monitor
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

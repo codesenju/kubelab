@@ -94,4 +94,4 @@
                         key: apiToken
                   selector:
                     dnsZones:
-                      - "{{ domain_name_filter}}"
+                      - "{{ domain_name_filter }}"

@@ -6,7 +6,7 @@
   tasks:
     - name: Deploy Elastic Operator
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -37,7 +37,7 @@
     # 🔥 HOT STORAGE PV
     - name: Deploy Elasticsearch Hot PV
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -59,11 +59,12 @@
       tags:
         - es-hot
         - es
+        - storage
 
     # ❄️ COLD STORAGE PV
     - name: Deploy Elasticsearch Cold PV
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -76,7 +77,7 @@
               storage: 200Gi
             nfs:
               server: 192.168.0.16
-              path: /mnt/pool1/k8s/nfs/elastic/elasticsearch-cold
+              path: /mnt/pool1/AppData/elastic/elasticsearch-cold
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -85,11 +86,12 @@
       tags:
         - es
         - es-cold
+        - storage
 
     # 🔥 HOT PVC
     - name: Deploy Elasticsearch Hot PVC
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -109,11 +111,12 @@
       tags:
         - es
         - es-hot
+        - storage
 
     # ❄️ COLD PVC
     - name: Deploy Elasticsearch Cold PVC
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -133,11 +136,12 @@
       tags:
         - es
         - es-cold
+        - storage
 
     # 🚀 Elasticsearch with hot + cold nodes
     - name: Deploy Elasticsearch
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: elasticsearch.k8s.elastic.co/v1
           kind: Elasticsearch
@@ -151,7 +155,7 @@
               - name: hot-nodes
                 count: 1
                 config:
-                  node.roles: ["master","data_hot","data_content","ingest","remote_cluster_client","ml","transform"]
+                  # node.roles: ["master","data_hot","data_content","ingest","remote_cluster_client","ml","transform"]
                   node.store.allow_mmap: false
                 podTemplate:
                   spec:
@@ -172,37 +176,37 @@
                             memory: 3Gi
                             cpu: 2
 
-              # ❄️ COLD tier
-              - name: cold-nodes
-                count: 1
-                config:
-                  node.roles: ["data_cold","remote_cluster_client"]
-                  node.store.allow_mmap: false
-                podTemplate:
-                  spec:
-                    volumes:
-                      - name: cold-storage
-                        persistentVolumeClaim:
-                          claimName: es-cold-pvc
-                    containers:
-                      - name: elasticsearch
-                        volumeMounts:
-                          - name: cold-storage
-                            mountPath: /usr/share/elasticsearch/data
-                        resources:
-                          requests:
-                            memory: 1Gi
-                            cpu: 1
-                          limits:
-                            memory: 2Gi
-                            cpu: 1
+              # # ❄️ COLD tier
+              # - name: cold-nodes
+              #   count: 1
+              #   config:
+              #     node.roles: ["data_cold","remote_cluster_client"]
+              #     node.store.allow_mmap: false
+              #   podTemplate:
+              #     spec:
+              #       volumes:
+              #         - name: cold-storage
+              #           persistentVolumeClaim:
+              #             claimName: es-cold-pvc
+              #       containers:
+              #         - name: elasticsearch
+              #           volumeMounts:
+              #             - name: cold-storage
+              #               mountPath: /usr/share/elasticsearch/data
+              #           resources:
+              #             requests:
+              #               memory: 1Gi
+              #               cpu: 1
+              #             limits:
+              #               memory: 2Gi
+              #               cpu: 1
       tags:
         - es
         - es-hot
 
     - name: Deploy Kibana
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: kibana.k8s.elastic.co/v1
           kind: Kibana
@@ -223,6 +227,20 @@
       tags:
         - kibana
         - es-hot
+
+    # Wait for Elasticsearch pods to be ready
+    - name: Wait for Elasticsearch pods to be ready
+      kubernetes.core.k8s_info:
+        kind: Pod
+        namespace: elastic-system
+        label_selectors:
+          - elasticsearch.k8s.elastic.co/cluster-name=quickstart
+        field_selectors:
+          - status.phase=Running
+      register: es_pods
+      until: es_pods.resources | length > 0 and (es_pods.resources | map(attribute='status.containerStatuses') | flatten | map(attribute='ready') | select('equalto', false) | list | length == 0)
+      retries: 30
+      delay: 10
 
     - name: Get Elasticsearch password
       kubernetes.core.k8s_info:
@@ -256,62 +274,62 @@
         - get-elastic-password
         - es-hot
 
-    - name: Create kibana IngressRoute
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: kibana
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`kibana.{{ dns_name_1 }}`)
-                kind: Rule
-                services:
-                  - name: quickstart-kb-http
-                    kind: Service
-                    port: 5601
-            tls:
-              secretName: local-jazziro-com-tls
-      tags: ingressroute
+    # - name: Create kibana IngressRoute
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: traefik.io/v1alpha1
+    #       kind: IngressRoute
+    #       metadata:
+    #         name: kibana
+    #         namespace: '{{ namespace }}'
+    #         annotations:
+    #           kubernetes.io/ingress.class: traefik
+    #           external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+    #       spec:
+    #         entryPoints:
+    #           - websecure
+    #         routes:
+    #           - match: Host(`kibana.{{ dns_name_1 }}`)
+    #             kind: Rule
+    #             services:
+    #               - name: quickstart-kb-http
+    #                 kind: Service
+    #                 port: 5601
+    #         tls:
+    #           secretName: local-jazziro-com-tls
+    #   tags: ingressroute
 
-    - name: Create elasticsearch IngressRoute
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: elasticsearch
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`elasticsearch.{{ dns_name_1 }}`)
-                kind: Rule
-                services:
-                  - name: quickstart-es-http
-                    kind: Service
-                    port: 9200
-            tls:
-              secretName: local-jazziro-com-tls
-      tags:
-        - ingressroute
+    # - name: Create elasticsearch IngressRoute
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: traefik.io/v1alpha1
+    #       kind: IngressRoute
+    #       metadata:
+    #         name: elasticsearch
+    #         namespace: '{{ namespace }}'
+    #         annotations:
+    #           kubernetes.io/ingress.class: traefik
+    #           external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+    #       spec:
+    #         entryPoints:
+    #           - websecure
+    #         routes:
+    #           - match: Host(`elasticsearch.{{ dns_name_1 }}`)
+    #             kind: Rule
+    #             services:
+    #               - name: quickstart-es-http
+    #                 kind: Service
+    #                 port: 9200
+    #         tls:
+    #           secretName: local-jazziro-com-tls
+    #   tags:
+    #     - ingressroute
 
     - name: Create kibana ingress
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
@@ -345,7 +363,7 @@
 
     - name: Create es ingress
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
