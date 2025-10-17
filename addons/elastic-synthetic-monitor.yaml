@@ -117,7 +117,7 @@
 
     - name: Save enrollment token
       set_fact:
-        enrollment_token: "{{ enrollment_token_response.json.item.api_key }}"
+        synthetic_monitor_enrollment_token: "{{ enrollment_token_response.json.item.api_key }}"
 
     - name: Show enrollment token created
       debug:
@@ -138,11 +138,11 @@
               app: elastic-stack
           type: Opaque
           stringData:
-            # FLEET_URL: "{{ fleet_server_default_url }}" # retreived from ansible/groups_vars/all/secrets.yaml
-            FLEET_URL: "http://elastic-fleet.elastic-system.svc.cluster.local:8220"
-            FLEET_ENROLLMENT_TOKEN: "{{ enrollment_token }}" # retreived from previous task
+            FLEET_URL: "{{ fleet_server_default_url }}:443" # external URL - causes issues
+            # FLEET_URL: "http://elastic-fleet.elastic-system.svc.cluster.local:80"
+            FLEET_ENROLLMENT_TOKEN: "{{ synthetic_monitor_enrollment_token }}" # retreived from previous task
             FLEET_ENROLL: "1"
-            FLEET_INSECURE: "true"
+            FLEET_INSECURE: "false"
       register: k8s_secret_result
 
     - name: Show Kubernetes secret creation result
