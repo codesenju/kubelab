@@ -145,7 +145,8 @@
           type: Opaque
           stringData:
             FLEET_SERVER_ENABLE: "true"
-            FLEET_SERVER_ELASTICSEARCH_HOST: "{{ fleet_server_es_host }}" # retreived from ansible/groups_vars/all/secrets.yaml
+            FLEET_SERVER_ELASTICSEARCH_HOST: "http://quickstart-es-http.elastic-system.svc.cluster.local:9200"
+            # FLEET_SERVER_ELASTICSEARCH_HOST: "{{ fleet_server_es_host }}" # retreived from ansible/groups_vars/all/secrets.yaml
             FLEET_SERVER_SERVICE_TOKEN: "{{ fleet_service_token }}" # retreived from previous task
             FLEET_SERVER_POLICY_ID: "{{ agent_policy_id }}" # retreived from previous task
       register: k8s_secret_result
@@ -204,7 +205,7 @@
             name: fleet
             namespace: '{{ namespace }}'
             annotations:
-              # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
               external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
               # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
