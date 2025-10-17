@@ -4,25 +4,27 @@
   gather_facts: true
 
   tasks:
-    - name: Create apm-agent-config secret
+    - name: Create apm-server-config ConfigMap
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: v1
-          kind: Secret
+          kind: ConfigMap
           metadata:
-            name: apm-agent-config
+            name: apm-server-config
             namespace: elastic-system
             labels:
               managed-by: ansible
               component: apm-agent
               app: elastic-stack
-          type: Opaque
-          stringData:
-            FLEET_URL: "{{ fleet_server_default_url }}"
-            FLEET_ENROLLMENT_TOKEN: "{{ apm_agent_enrollment_token }}"
-            FLEET_ENROLL: "1"
-            FLEET_INSECURE: "false"
+          data:
+            apm-server.yml: |
+              apm-server:
+                host: "0.0.0.0:8200"
+              output.elasticsearch:
+                hosts: ["quickstart-es-http:9200"]
+                username: "elastic"
+                password: "{{ elastic_password }}"
 
     - name: Create ArgoCD Application for Elastic APM Agent
       kubernetes.core.k8s:
