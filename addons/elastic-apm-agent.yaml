@@ -40,7 +40,7 @@
             source:
               repoURL: https://github.com/codesenju/kubelab.git
               targetRevision: main
-              path: kustomize/elastic-apm-agent/overlays/dev
+              path: kustomize/elastic-apm-agent/overlays/prod
             destination:
               server: https://kubernetes.default.svc
               namespace: elastic-system
