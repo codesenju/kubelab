@@ -22,7 +22,7 @@
               apm-server:
                 host: "0.0.0.0:8200"
               output.elasticsearch:
-                hosts: ["quickstart-es-http:9200"]
+                hosts: ["{{ fleet_server_es_host}}"]
                 username: "elastic"
                 password: "{{ elastic_password }}"
 
