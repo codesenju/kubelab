@@ -19,12 +19,30 @@
               app: elastic-stack
           data:
             apm-server.yml: |
+              apm-server.ssl.enabled: true
+              apm-server.ssl.certificate: "/etc/apm-server/certs/tls.crt"
+              apm-server.ssl.key: "/etc/apm-server/certs/tls.key"
+
               apm-server:
                 host: "0.0.0.0:8200"
+
               output.elasticsearch:
                 hosts: ["{{ fleet_server_es_host }}"]
                 username: "elastic"
                 password: "{{ elastic_password }}"
+              apm-server.secret_token: "92abc8567d2292cfea0f7a21"
+
+    - name: Ensure TLS secret is available (local-jazziro-com-tls)
+      kubernetes.core.k8s_info:
+        kind: Secret
+        namespace: elastic-system
+        name: local-jazziro-com-tls
+      register: tls_secret_result
+
+    - name: Fail if TLS secret not found
+      ansible.builtin.fail:
+        msg: "TLS secret local-jazziro-com-tls not found in namespace elastic-system"
+      when: tls_secret_result.resources | length == 0
 
     - name: Create ArgoCD Application for Elastic APM Agent
       kubernetes.core.k8s:
