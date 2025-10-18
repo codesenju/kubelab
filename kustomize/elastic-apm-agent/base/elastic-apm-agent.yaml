@@ -27,6 +27,9 @@ spec:
             - name: config
               mountPath: /usr/share/apm-server/apm-server.yml
               subPath: apm-server.yml
+            - name: apm-tls
+              mountPath: /etc/apm-server/certs
+              readOnly: true
           # readinessProbe:
           #   httpGet:
           #     path: /
@@ -44,6 +47,9 @@ spec:
         - name: config
           configMap:
             name: apm-server-config
+        - name: apm-tls
+          secret:
+            secretName: local-jazziro-com-tls
 ---
 apiVersion: v1
 kind: Service
