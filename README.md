@@ -200,7 +200,7 @@ kubectl create secret docker-registry dockerhub-secret \
   --docker-email=<your-email>
 ```
 # Edot
-### Annotate a specific deployement:
+### Annotate a specific deployment:
 ```bash
 # Nodejs
 export app_name=myapp
@@ -216,7 +216,7 @@ kubectl patch deployment flaresolverr -p '{"spec":{"template":{"metadata":{"anno
 # Go
 kubectl patch deployment cloudflared -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-go":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
 ```
-### entire namepsace:
+### entire namespace:
 ```bash
  kubectl annotate namespace jellyfin instrumentation.opentelemetry.io/inject-dotnet="opentelemetry-operator-system/elastic-instrumentation"
 
@@ -272,7 +272,7 @@ otel-cli span \
     --tp-print \
     --verbose
 ```
-### Context propogation
+### Context propagation
 ```bash
 # Create parent span and capture the TRACEPARENT from --tp-print output
 TRACEPARENT=$(otel-cli span \
