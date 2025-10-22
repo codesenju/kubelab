@@ -22,15 +22,24 @@
               apm-server.ssl.enabled: true
               apm-server.ssl.certificate: "/etc/apm-server/certs/tls.crt"
               apm-server.ssl.key: "/etc/apm-server/certs/tls.key"
-
               apm-server:
                 host: "0.0.0.0:8200"
-
               output.elasticsearch:
                 hosts: ["{{ fleet_server_es_host }}"]
                 username: "elastic"
                 password: "{{ elastic_password }}"
-              apm-server.secret_token: "92abc8567d2292cfea0f7a21"
+              apm-server.instrumentation:
+                enabled: true
+              apm-server.rum:
+                enabled: true
+              opentelemetry:
+                grpc:
+                  enabled: true
+                  host: "0.0.0.0:4317"
+                http:
+                  enabled: true
+                  host: "0.0.0.0:4318"
+              # apm-server.secret_token: "92abc8567d2292cfea0f7a21"
 
     - name: Ensure TLS secret is available (local-jazziro-com-tls)
       kubernetes.core.k8s_info:
@@ -81,7 +90,7 @@
             name: apm
             namespace: elastic-system
             annotations:
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTP"
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
               external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
           spec:
             ingressClassName: nginx
