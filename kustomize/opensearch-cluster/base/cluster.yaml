@@ -31,40 +31,40 @@ spec:
         minAvailable: 1
       replicas: 3
       diskSize: "30Gi"
-      nodeSelector:
+      nodeSelector: {}
       resources:
-         requests:
-            memory: "2Gi"
-            cpu: "500m"
-         limits:
-            memory: "2Gi"
-            cpu: "500m"
+        requests:
+          memory: "2Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "500m"
       roles:
         - "cluster_manager"
         - "data"
     - component: nodes
       replicas: 3
       diskSize: "30Gi"
-      nodeSelector:
+      nodeSelector: {}
       resources:
-         requests:
-            memory: "2Gi"
-            cpu: "500m"
-         limits:
-            memory: "2Gi"
-            cpu: "500m"
+        requests:
+          memory: "2Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "500m"
       roles:
         - "data"
     - component: coordinators
       replicas: 3
       diskSize: "30Gi"
-      nodeSelector:
+      nodeSelector: {}
       resources:
-         requests:
-            memory: "2Gi"
-            cpu: "500m"
-         limits:
-            memory: "2Gi"
-            cpu: "500m"
+        requests:
+          memory: "2Gi"
+          cpu: "500m"
+        limits:
+          memory: "2Gi"
+          cpu: "500m"
       roles:
         - "ingest"
