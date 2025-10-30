@@ -29,7 +29,7 @@ spec:
       pdb:
         enable: true
         minAvailable: 1
-      replicas: 3
+      replicas: 2
       diskSize: "30Gi"
       nodeSelector: {}
       resources:
@@ -43,7 +43,7 @@ spec:
         - "cluster_manager"
         - "data"
     - component: nodes
-      replicas: 3
+      replicas: 2
       diskSize: "30Gi"
       nodeSelector: {}
       resources:
@@ -56,7 +56,7 @@ spec:
       roles:
         - "data"
     - component: coordinators
-      replicas: 3
+      replicas: 2
       diskSize: "30Gi"
       nodeSelector: {}
       resources:
