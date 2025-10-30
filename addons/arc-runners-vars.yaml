@@ -1,0 +1,15 @@
+---
+# Define the array of ARC runner sets
+arc_runner_sets:
+  - name: kubelab
+    github_config_url: "https://github.com/codesenju/kubelab"
+  - name: frontend
+    github_config_url: "https://github.com/codesenju/frontend-app"
+  - name: backend
+    github_config_url: "https://github.com/codesenju/backend-api"
+  - name: infra
+    github_config_url: "https://github.com/codesenju/infrastructure"
+
+# Default values
+github_config_url: "https://github.com/codesenju/kubelab"
+github_pat: "{{ github_token }}"
