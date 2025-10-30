@@ -1,14 +1,14 @@
 apiVersion: opensearch.opster.io/v1
 kind: OpenSearchCluster
 metadata:
-  name: os-domain
+  name: os_domain
   namespace: default
 spec:
   general:
     version: 2.14.0
     httpPort: 9200
     vendor: opensearch
-    serviceName: os-domain
+    serviceName: os_domain
     monitoring:
      enable: true
   dashboards:
