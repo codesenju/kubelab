@@ -20,7 +20,7 @@
             source:
               chart: eck-operator
               repoURL: https://helm.elastic.co
-              targetRevision: 3.1.0
+              targetRevision: 3.2.0
               helm:
                 releaseName: elastic-operator
             destination:
@@ -149,7 +149,7 @@
             name: quickstart
             namespace: elastic-system
           spec:
-            version: 9.1.3
+            version: 9.2.0
             nodeSets:
               # 🔥 HOT tier
               - name: hot-nodes
@@ -220,7 +220,7 @@
               monitoring.ui.enabled: true
               # ✅ Enable cross-cluster monitoring if you’ll monitor multiple clusters
               monitoring.ui.ccs.enabled: true
-            version: 9.1.3
+            version: 9.2.0
             count: 1
             elasticsearchRef:
               name: quickstart

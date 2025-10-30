@@ -17,7 +17,7 @@ crds:
 defaultCRConfig:
   image:
     repository: "docker.elastic.co/elastic-agent/elastic-agent"
-    tag: "9.1.6"
+    tag: "9.2.0"
   targetAllocator:
     enabled: false # Enable/disable the Operator's Target allocator.
     # Refer to: https://github.com/open-telemetry/opentelemetry-operator/tree/main/cmd/otel-allocator
@@ -26,6 +26,10 @@ clusterRole:
     - apiGroups: [""]
       resources: ["configmaps"]
       verbs: ["get"]
+    # Required by the k8s_events receiver
+    - apiGroups: [""]
+      resources: ["events"]
+      verbs: ["get", "list", "watch"]
 # `clusterName` specifies the name of the Kubernetes cluster. It sets the 'k8s.cluster.name' field.
 # Cluster Name is automatically detected for EKS/GKE/AKS. Add the below value in environments where cluster name cannot be detected.
 clusterName: kubelab
@@ -109,7 +113,10 @@ collectors:
               - "service.name"
               - "service.version"
       receivers:
+        # [K8s Events Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/k8seventsreceiver)
+        k8s_events:
         # [K8s Objects Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/k8sobjectsreceiver)
+        # NOTE: The k8sobjects receiver for K8s Events collection is being replaced by the k8s_events receiver, it might be removed in future versions of this configuration
         k8sobjects:
           objects:
             - name: events
@@ -157,6 +164,7 @@ collectors:
           logs:
             receivers:
               - k8sobjects
+              - k8s_events
             processors:
               - resourcedetection/eks
               - resourcedetection/gcp
@@ -171,9 +179,6 @@ collectors:
   daemon:
     fullnameOverride: "opentelemetry-kube-stack-daemon"
     env:
-      # Work around for open /mounts error: https://github.com/open-telemetry/opentelemetry-collector-contrib/issues/35990
-      - name: HOST_PROC_MOUNTINFO
-        value: ""
       - name: ELASTIC_AGENT_OTEL
         value: '"true"'
     presets:
@@ -535,13 +540,6 @@ collectors:
         value: "1025MiB"
     config:
       connectors:
-        routing:
-          default_pipelines: [metrics/otel]
-          error_mode: ignore
-          table:
-            - context: metric
-              statement: route() where instrumentation_scope.name == "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/kubeletstatsreceiver" or IsMatch(instrumentation_scope.name, "github.com/open-telemetry/opentelemetry-collector-contrib/receiver/hostmetricsreceiver/internal/scraper/*")
-              pipelines: [metrics/infra/ecs, metrics/otel]
         # [Elastic APM Connector](https://github.com/elastic/opentelemetry-collector-components/tree/main/connector/elasticapmconnector)
         elasticapm: {}
       receivers:
@@ -552,24 +550,6 @@ collectors:
             http:
               endpoint: ${env:MY_POD_IP}:4318
       processors:
-        # [Elastic Infra Metrics Processor](https://github.com/elastic/opentelemetry-collector-components/tree/main/processor/elasticinframetricsprocessor)
-        # DEPRECATED: The elasticinframetrics processor is deprecated and will be removed in 9.2.0.
-        elasticinframetrics:
-          add_system_metrics: true
-          add_k8s_metrics: true
-          drop_original: true
-        # [Attributes Processor](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/processor/attributesprocessor)
-        attributes/dataset:
-          actions:
-            - key: event.dataset
-              from_attribute: data_stream.dataset
-              action: upsert
-        resource/process:
-          attributes:
-            - key: process.executable.name
-              action: delete
-            - key: process.executable.path
-              action: delete
         batch:
           send_batch_size: 1000
           timeout: 1s
@@ -578,9 +558,9 @@ collectors:
           # explicitly set send_batch_max_size to 0, as splitting metrics requests may cause version_conflict_engine_exception in TSDB
           send_batch_max_size: 0
           timeout: 1s
-        # [Elastic Trace Processor](https://github.com/elastic/opentelemetry-collector-components/tree/main/processor/elastictraceprocessor)
+        # [Elastic APM Processor](https://github.com/elastic/opentelemetry-collector-components/tree/main/processor/elasticapmprocessor)
         # The processor enriches traces with elastic specific requirements.
-        elastictrace: {}
+        elasticapm: {}
       exporters:
         debug: {}
         # [Elasticsearch exporter](https://github.com/open-telemetry/opentelemetry-collector-contrib/blob/main/exporter/elasticsearchexporter/README.md)
@@ -593,28 +573,11 @@ collectors:
           #   insecure_skip_verify: true
           mapping:
             mode: otel
-        elasticsearch/ecs:
-          endpoints:
-            - ${env:ELASTIC_ENDPOINT}
-          api_key: ${env:ELASTIC_API_KEY}
-          mapping:
-            mode: ecs
       service:
         pipelines:
           metrics:
             receivers: [otlp]
-            exporters: [routing]
-          metrics/infra/ecs:
-            receivers: [routing]
-            processors:
-              - elasticinframetrics
-              - attributes/dataset
-              - resource/process
-              - batch/metrics
-            exporters: [debug, elasticsearch/ecs]
-          metrics/otel:
-            receivers: [routing]
-            processors: [batch]
+            processors: [batch/metrics]
             exporters: [debug, elasticsearch/otel]
           logs:
             receivers: [otlp]
@@ -622,7 +585,7 @@ collectors:
             exporters: [debug, elasticapm, elasticsearch/otel]
           traces:
             receivers: [otlp]
-            processors: [batch, elastictrace]
+            processors: [batch, elasticapm]
             exporters: [debug, elasticapm, elasticsearch/otel]
           metrics/aggregated-otel-metrics:
             receivers:
@@ -650,7 +613,7 @@ instrumentation:
   nodejs:
     image: docker.elastic.co/observability/elastic-otel-node:1.5.0
   dotnet:
-    image: docker.elastic.co/observability/elastic-otel-dotnet:1.0.2
+    image: docker.elastic.co/observability/elastic-otel-dotnet:1.1.0
   python:
     image: docker.elastic.co/observability/elastic-otel-python:1.9.0
   go:
