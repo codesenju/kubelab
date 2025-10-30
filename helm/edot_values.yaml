@@ -178,13 +178,6 @@ collectors:
   #  Auto-instrumentation SDKs will use this endpoint.
   daemon:
     fullnameOverride: "opentelemetry-kube-stack-daemon"
-    resources:
-      limits:
-        cpu: 1500m
-        memory: 3000Mi
-      requests:
-        cpu: 100m
-        memory: 1000Mi
     env:
       - name: ELASTIC_AGENT_OTEL
         value: '"true"'

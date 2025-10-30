@@ -46,7 +46,7 @@
               helm:
                 releaseName: opentelemetry-kube-stack
                 valueFiles:
-                - $values/helm/otel_operator_values.yaml
+                - $values/helm/edot_values.yaml
             - repoURL: 'https://github.com/codesenju/kubelab.git'
               targetRevision: main
               ref: values
