@@ -30,6 +30,16 @@ clusterRole:
     - apiGroups: [""]
       resources: ["events"]
       verbs: ["get", "list", "watch"]
+    # Allow k8sattributes and other receivers to query k8s objects for enrichment
+    - apiGroups: [""]
+      resources: ["pods","nodes","services","endpoints"]
+      verbs: ["get","list","watch"]
+    - apiGroups: ["apps"]
+      resources: ["deployments","replicasets","statefulsets","daemonsets"]
+      verbs: ["get","list","watch"]
+    - apiGroups: ["batch"]
+      resources: ["jobs","cronjobs"]
+      verbs: ["get","list","watch"]
 # `clusterName` specifies the name of the Kubernetes cluster. It sets the 'k8s.cluster.name' field.
 # Cluster Name is automatically detected for EKS/GKE/AKS. Add the below value in environments where cluster name cannot be detected.
 clusterName: kubelab
@@ -105,6 +115,7 @@ collectors:
               - "k8s.cronjob.name"
               - "k8s.job.name"
               - "k8s.node.name"
+              - "container.id"
               - "k8s.pod.name"
               - "k8s.pod.ip"
               - "k8s.pod.uid"
@@ -113,7 +124,7 @@ collectors:
               - "service.name"
               - "service.version"
       receivers:
-        # [K8s Objects Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/k8sobjectsreceiver)
+        # [K8s Objects Receiver]
         # NOTE: The k8sobjects receiver for K8s Events collection is being replaced by the k8s_events receiver, it might be removed in future versions of this configuration
         k8sobjects:
           objects:
@@ -122,28 +133,61 @@ collectors:
               group: "events.k8s.io"
               exclude_watch_type:
                 - "DELETED"
-        # [K8s Cluster Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/k8sclusterreceiver)
-        k8s_cluster:
+
+        # [K8s Events Receiver] - provides structured event payload fields (body.structured.object.*) expected by Elastic dashboards
+        k8s_events:
+          auth_type: serviceAccount
+          mode: watch
+          collection_interval: 30s
+          include_sources: ["kube-api"]
+          # You can tune filters/namespace if needed
+          # namespaces: []
+          # label_selector: ""
+          # The receiver will populate body.structured.object.* fields for events
+          # (keeps k8sobjects for backward compatibility)
+
+        # [Kubelet Stats Receiver]
+        kubeletstats:
+          auth_type: serviceAccount # Authentication mechanism with the Kubelet endpoint
           collection_interval: 60s
-          auth_type: serviceAccount # Determines how to authenticate to the K8s API server. This can be one of none (for no auth), serviceAccount (to use the standard service account token provided to the agent pod), or kubeConfig to use credentials from ~/.kube/config.
-          node_conditions_to_report:
-            - Ready
-            - MemoryPressure
-          allocatable_types_to_report:
-            - cpu
-            - memory
+          endpoint: ${env:OTEL_K8S_NODE_NAME}:10250
+          node: '${env:OTEL_K8S_NODE_NAME}'
+          # Required to work for all CSPs without an issue
+          insecure_skip_verify: true
+          k8s_api_config:
+            auth_type: serviceAccount
           metrics:
-            k8s.pod.status_reason:
+            k8s.pod.memory.node.utilization:
               enabled: true
-          resource_attributes:
-            k8s.kubelet.version:
+            k8s.pod.cpu.node.utilization:
               enabled: true
-            os.description:
+            k8s.container.cpu_limit_utilization:
               enabled: true
-            os.type:
+            k8s.pod.cpu_limit_utilization:
               enabled: true
-            k8s.container.status.last_terminated_reason:
+            k8s.container.cpu_request_utilization:
               enabled: true
+            k8s.container.memory_limit_utilization:
+              enabled: true
+            k8s.pod.memory_limit_utilization:
+              enabled: true
+            k8s.container.memory_request_utilization:
+              enabled: true
+            k8s.node.uptime:
+              enabled: true
+            k8s.node.cpu.usage:
+              enabled: true
+            k8s.pod.cpu.usage:
+              enabled: true
+            # Enable raw/container/node metrics that Elastic dashboards often map to
+            k8s.container.cpu_limit:
+              enabled: true
+            k8s.container.cpu_request:
+              enabled: true
+            k8s.node.allocatable_cpu:
+              enabled: true
+          extra_metadata_labels:
+            - container.id
       # [Service Section](https://opentelemetry.io/docs/collector/configuration/#service)
       service:
         pipelines:
@@ -162,6 +206,7 @@ collectors:
           logs:
             receivers:
               - k8sobjects
+              - k8s_events
             processors:
               - resourcedetection/eks
               - resourcedetection/gcp
@@ -178,6 +223,11 @@ collectors:
     env:
       - name: ELASTIC_AGENT_OTEL
         value: '"true"'
+      # Make the node name available to kubeletstats and k8sattributes processors
+      - name: OTEL_K8S_NODE_NAME
+        valueFrom:
+          fieldRef:
+            fieldPath: spec.nodeName
     presets:
       logsCollection:
         enabled: true # Enable/disable the collection of node's logs.
@@ -306,6 +356,7 @@ collectors:
               - "k8s.cronjob.name"
               - "k8s.job.name"
               - "k8s.node.name"
+              - "container.id"
               - "k8s.pod.name"
               - "k8s.pod.ip"
               - "k8s.pod.uid"
@@ -438,6 +489,13 @@ collectors:
             k8s.node.cpu.usage:
               enabled: true
             k8s.pod.cpu.usage:
+              enabled: true
+            # Enable raw/container/node metrics that Elastic dashboards often map to:
+            k8s.container.cpu_limit:
+              enabled: true
+            k8s.container.cpu_request:
+              enabled: true
+            k8s.node.allocatable_cpu:
               enabled: true
           extra_metadata_labels:
             - container.id
