@@ -1,5 +1,12 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
+  vars:
+    arc_runner_sets:
+      - name: kubelab
+        github_config_url: "https://github.com/codesenju/kubelab"
+      - name: synthetic-monitor-gitops
+        github_config_url: "https://github.com/codesenju/synthetic-monitor-gitops"
+    namespace: arc-system
   tasks:
 
     - name: Deploy GitHub Actions Runner Controller
@@ -23,7 +30,7 @@
                 releaseName: gha-runner-scale-set-controller
             destination:
               server: https://kubernetes.default.svc
-              namespace: arc-system
+              namespace: "{{ namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -124,27 +131,27 @@
     #       status: "True"
     #     wait_timeout: 300
 
-    - name: Create GitHub token secret for runner scale set
+    - name: Create shared GitHub token secret for all runner scale sets
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: v1
           kind: Secret
           metadata:
-            name: arc-runner-set-gha-rs-github-secret
-            namespace: arc-runners
+            name: arc-runner-github-secret
+            namespace: "{{ namespace }}"
           type: Opaque
           data:
             github_token: "{{ github_pat | b64encode }}"
 
-    - name: Deploy GitHub Actions Runner Scale Set
+    - name: Deploy GitHub Actions Runner Scale Sets
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: arc-runner-set
+            name: "arc-runner-set-{{ item.name }}"
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
@@ -155,16 +162,14 @@
               chart: gha-runner-scale-set
               targetRevision: "0.12.1"
               helm:
-                releaseName: arc-runner-set
+                releaseName: "arc-runner-set-{{ item.name }}"
                 values: |
-                  githubConfigUrl: "{{ github_config_url }}"
-                  githubConfigSecret: "arc-runner-set-gha-rs-github-secret"
-                  runnerScaleSetName: "kubelab-runner-set"
+                  githubConfigUrl: "{{ item.github_config_url }}"
+                  githubConfigSecret: "arc-runner-github-secret"
+                  runnerScaleSetName: "{{ item.name }}-runner-set"
                   controllerServiceAccount:
                     name: "arc-gha-rs-controller"
                     namespace: "arc-system"
-                  # containerMode:
-                  #   type: "dind" 
                   template:
                     spec:
                       initContainers:
@@ -218,7 +223,7 @@
                           emptyDir: {}
             destination:
               server: https://kubernetes.default.svc
-              namespace: arc-runners
+              namespace: "{{ namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -235,12 +240,6 @@
               - /spec/template/spec/volumes
               - /spec/template/spec/restartPolicy
               - /spec/template/spec/serviceAccountName
-
-    # - name: Wait for AutoscalingRunnerSet to be created
-    #   kubernetes.core.k8s_info:
-    #     api_version: actions.github.com/v1alpha1
-    #     kind: AutoscalingRunnerSet
-    #     name: arc-runner-set
-    #     namespace: arc-runners
-    #     wait: true
-    #     wait_timeout: 120
+      loop: "{{ arc_runner_sets }}"
+      tags:
+        - arc-runners
