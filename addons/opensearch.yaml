@@ -40,6 +40,22 @@
                 jsonPointers:
                   - /spec/managed/roles
 
+    - name: Create admin credentials secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: admin-credentials-secret
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          data:
+            # admin
+            username: YWRtaW4=
+            # admin123
+            password: YWRtaW4xMjM=
+
     - name: Deploy OpenSearch Cluster CRD
       kubernetes.core.k8s:
         state: present
