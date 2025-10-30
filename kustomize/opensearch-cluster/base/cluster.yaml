@@ -1,84 +1,53 @@
+#Minimal configuration of a cluster with version 2.X of the operator.
+#Note the replacement of 'master' role with 'cluster_manager' on line 49
 apiVersion: opensearch.opster.io/v1
 kind: OpenSearchCluster
 metadata:
   name: os-domain
   namespace: default
 spec:
-  general:
-    version: 2.14.0
-    httpPort: 9200
-    vendor: opensearch
-    serviceName: os-domain
-    monitoring:
-     enable: true
   security:
     config:
-    ## take a look at opensearch-k8s-operator/docs/userguide/main.md (Custom admin user)
-      adminCredentialsSecret:
-        name: admin-credentials-secret
-      # securityConfigSecret:
-      #  name: securityconfig-secret
     tls:
-      transport:
-        generate: true
-      http:
-        generate: true
+       http:
+         generate: true 
+       transport:
+         generate: true
+         perNode: true
+  general:
+    httpPort: 9200
+    serviceName: os-domain
+    version: 2.14.0
+    pluginsList: ["repository-s3"]
+    drainDataNodes: true
   dashboards:
-    opensearchCredentialsSecret:
-      name: admin-credentials-secret
+    tls:
+      enable: true
+      generate: true
     version: 2.14.0
     enable: true
     replicas: 1
     resources:
       requests:
-         memory: "1Gi"
-         cpu: "500m"
+         memory: "512Mi"
+         cpu: "200m"
       limits:
-         memory: "1Gi"
-         cpu: "500m"
+         memory: "512Mi"
+         cpu: "200m"
   confMgmt:
     smartScaler: true
   nodePools:
     - component: masters
-      pdb:
-        enable: true
-        minAvailable: 1
-      replicas: 2
-      diskSize: "30Gi"
-      nodeSelector: {}
+      replicas: 3
       resources:
-        requests:
-          memory: "2Gi"
-          cpu: "500m"
-        limits:
-          memory: "2Gi"
-          cpu: "500m"
+         requests:
+            memory: "4Gi"
+            cpu: "1000m"
+         limits:
+            memory: "4Gi"
+            cpu: "1000m"
       roles:
+        - "data"
         - "cluster_manager"
-        - "data"
-    - component: nodes
-      replicas: 2
-      diskSize: "30Gi"
-      nodeSelector: {}
-      resources:
-        requests:
-          memory: "2Gi"
-          cpu: "500m"
-        limits:
-          memory: "2Gi"
-          cpu: "500m"
-      roles:
-        - "data"
-    - component: coordinators
-      replicas: 2
-      diskSize: "30Gi"
-      nodeSelector: {}
-      resources:
-        requests:
-          memory: "2Gi"
-          cpu: "500m"
-        limits:
-          memory: "2Gi"
-          cpu: "500m"
-      roles:
-        - "ingest"
+      persistence:
+         emptyDir: {}
