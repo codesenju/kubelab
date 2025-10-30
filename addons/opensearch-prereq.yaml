@@ -1,0 +1,18 @@
+- hosts: k8s-worker-1,k8s-worker-2,k8s-worker-3
+  become: true
+  gather_facts: false
+  tasks:
+    - name: Persist vm.max_map_count in sysctl.d
+      ansible.builtin.copy:
+        dest: /etc/sysctl.d/99-opensearch.conf
+        content: |
+          # required by OpenSearch/Elasticsearch
+          vm.max_map_count=262144
+        owner: root
+        group: root
+        mode: '0644'
+
+    - name: Reload sysctl settings
+      become: true
+      ansible.builtin.command: sysctl --system
+      changed_when: false
