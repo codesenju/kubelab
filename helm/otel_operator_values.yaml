@@ -591,7 +591,6 @@ collectors:
             receivers:
               - elasticapm
             processors:
-              - batch/metrics
             exporters:
               - debug
               - elasticsearch/otel
@@ -600,7 +599,6 @@ collectors:
 instrumentation:
   name: elastic-instrumentation
   enabled: true # Enable/disable auto-instrumentation.
-  env: []
   exporter:
     endpoint: http://opentelemetry-kube-stack-daemon-collector.opentelemetry-operator-system.svc.cluster.local:4318 # The daemonset OpenTelemetry Collector endpoint where telemetry data will be exported.
   propagators:
