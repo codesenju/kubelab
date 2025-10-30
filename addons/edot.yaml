@@ -42,7 +42,7 @@
             sources:
             - repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
               chart: opentelemetry-kube-stack
-              targetRevision: "0.6.3"
+              targetRevision: "0.10.5"
               helm:
                 releaseName: opentelemetry-kube-stack
                 valueFiles:
