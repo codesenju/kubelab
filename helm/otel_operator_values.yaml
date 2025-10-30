@@ -207,7 +207,7 @@ collectors:
         debug:
           verbosity: basic
         otlp/gateway:
-          endpoint: "http://otel-collector-collector:4317"
+          endpoint: "http://opentelemetry-kube-stack-gateway-collector-headless:4317"
           tls:
             insecure: true
       processors:
