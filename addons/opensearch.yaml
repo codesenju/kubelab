@@ -1,0 +1,78 @@
+- hosts: k8s-control-plane-1
+  become: true
+  gather_facts: false
+  vars:
+    target_namespace: opensearch-operator-system
+  tasks:
+    - name: Deploy OpenSearch Operator ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: opensearch-operator
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: opensearch-operator
+              repoURL: https://opensearch-project.github.io/opensearch-k8s-operator
+              targetRevision: 2.8.0
+              helm:
+                releaseName: opensearch-operator
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
+
+    - name: Deploy OpenSearch Cluster CRD
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: opensearch-cluster
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/opensearch-cluster/overlays/prod
+              targetRevision: main
+              kustomize:
+                labels:
+                  app.kubernetes.io/instance: opensearch-cluster
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
