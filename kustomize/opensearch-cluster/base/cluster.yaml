@@ -23,7 +23,7 @@ spec:
     tls:
       enable: true
       generate: true
-    version: 3.3.2
+    version: 3.3.0
     enable: true
     replicas: 1
     resources:
