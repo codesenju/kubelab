@@ -21,8 +21,6 @@
     }
   },
   "tools": [
-    "@kubernetes",
-    "@git",
     "fsRead",
     "fsWrite",
     "fsReplace",
@@ -30,7 +28,11 @@
     "fileSearch",
     "executeBash",
     "codeReview",
-    "displayFindings"
+    "displayFindings",
+    "@git",
+    "@github",
+    "@kubernetes",
+    "@iterm-mcp"
   ],
   "allowedTools": [
     "fsRead",
@@ -39,7 +41,15 @@
     "listDirectory",
     "fileSearch",
     "codeReview",
-    "displayFindings"
+    "displayFindings",
+    "@kubernetes/pods_get",
+    "@kubernetes/pods_list",
+    "@kubernetes/pods_log",
+    "@kubernetes/resources_get",
+    "@kubernetes/resources_list",
+    "@iterm-mcp/write_to_terminal",
+    "@iterm-mcp/read_terminal_output",
+    "@iterm-mcp/send_control_character"
   ],
   "toolsSettings": {
     "execute_bash": {
