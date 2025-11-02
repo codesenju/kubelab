@@ -136,8 +136,8 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
 resource "proxmox_virtual_environment_vm" "k8s_worker" {
   count       = 3
   name        = "k8s-worker-${count.index + 1}"
-  node_name   = "kubelab-1"
-  description = "Kubernetes Worker Node ${count.index + 1}"
+  node_name   = "kubelab-1" # All workers on kubelab-1
+  # node_name   = count.index < 2 ? "kubelab-1" : "kubelab-2"  # Distributes workers: 0,1 on kubelab-1, worker 2 on kubelab-2
   vm_id       = 5000 + count.index + 1 # Unique VM ID for each worker node
 
   cpu {
@@ -152,7 +152,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
 
   disk {
     datastore_id = "local-lvm"
-    file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
+    # file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
     interface    = "virtio0"
     iothread     = true
     discard      = "on"
