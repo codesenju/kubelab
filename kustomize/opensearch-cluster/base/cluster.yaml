@@ -16,14 +16,14 @@ spec:
   general:
     httpPort: 9200
     serviceName: opensearch-domain
-    version: 2.14.0
+    version: 3.3.2
     pluginsList: ["repository-s3"]
     drainDataNodes: true
   dashboards:
     tls:
       enable: true
       generate: true
-    version: 2.14.0
+    version: 3.3.2
     enable: true
     replicas: 1
     resources:
