@@ -6,7 +6,7 @@
   tasks:
     - name: Create ArgoCD Application for OpenTelemetry Operator
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -33,7 +33,7 @@
 
     - name: Create OpenTelemetryCollector resource
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: opentelemetry.io/v1alpha1
           kind: OpenTelemetryCollector
@@ -70,12 +70,12 @@
                 pipelines:
                   traces:
                     receivers: [otlp]
-                    processors: [batch, resource/env]
+                    processors: [batch2, resource/env]
                     exporters: [otlp,debug]
 
     - name: Create Instrumentation resource for nodejs-instrumentation
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: opentelemetry.io/v1alpha1
           kind: Instrumentation
@@ -102,4 +102,3 @@
               argument: "1"
             nodejs:
               image: ghcr.io/open-telemetry/opentelemetry-operator/autoinstrumentation-nodejs:latest
-

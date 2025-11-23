@@ -5,7 +5,7 @@
 
     - name: Create OpenTelemetry operator namespace
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Namespace
@@ -14,7 +14,7 @@
 
     - name: Create Elastic secret for OpenTelemetry
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -28,7 +28,7 @@
 
     - name: Deploy OpenTelemetry Kube Stack ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

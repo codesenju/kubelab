@@ -1,11 +1,14 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
   become: no
+  vars:
+    target_namespace: kube-prometheus-stack
+
   tasks:
 
     - name: Deploy Kube Prometheus Stack
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -29,7 +32,7 @@
               ref: values
             destination:
               server: https://kubernetes.default.svc
-              namespace: kube-prometheus-stack
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -48,13 +51,13 @@
 
     - name: Create Thanos S3 Secret (inline YAML, using stringData)
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
           metadata:
             name: thanos-s3
-            namespace: kube-prometheus-stack
+            namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
             objstore.yaml: |
@@ -70,7 +73,7 @@
     - name: Wait for Grafana pod to be ready
       kubernetes.core.k8s_info:
         kind: Pod
-        namespace: kube-prometheus-stack
+        namespace: "{{ target_namespace }}"
         label_selectors:
           - app.kubernetes.io/name=grafana
       register: grafana_pod
@@ -83,8 +86,9 @@
         api_version: v1
         kind: Secret
         name: kube-prometheus-stack-grafana
-        namespace: kube-prometheus-stack
+        namespace: "{{ target_namespace }}"
       register: grafana_secret
+      tags: get-creds
 
     - name: Display Grafana login credentials
       ansible.builtin.debug:
@@ -93,3 +97,37 @@
           URL: http://localhost:3000 (after port-forward)
           Username: "{{ grafana_secret.resources[0].data['admin-user'] | b64decode }}"
           Password: "{{ grafana_secret.resources[0].data['admin-password'] | b64decode }}"
+      tags: get-creds
+
+    - name: Create kube-prometheus-stack grafana ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: kube-prometheus-stack-grafana
+            namespace: '{{ target_namespace }}'
+            annotations:
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "kps-grafana.{{ dns_name_1 }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "kps-grafana.{{ dns_name_1 }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: kube-prometheus-stack-grafana
+                          port:
+                            number: 80
+      tags:
+        - ingress
