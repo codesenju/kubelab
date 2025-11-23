@@ -1,3 +1,5 @@
+- import_playbook: opensearch-prereq.yaml
+
 - hosts: k8s-control-plane-1
   become: true
   gather_facts: false
@@ -6,7 +8,7 @@
   tasks:
     - name: Deploy OpenSearch Operator ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -42,7 +44,7 @@
 
     - name: Create admin credentials secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -58,7 +60,7 @@
 
     - name: Deploy OpenSearch Cluster CRD
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
