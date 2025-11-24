@@ -7,9 +7,12 @@ data:
     discovery:
       instrument:
         - containers_only: true
+          service_name_source: k8s.pod.name
     log_level: INFO
     otel_traces_export:
       endpoint: http://opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4318
+    resource_attributes:
+      deployment.environment: prod
     prometheus_export:
       port: 8999
       path: /metrics
