@@ -38,7 +38,7 @@
         - /tmp/cilium-cli
 
     - name: Install Cilium
-      shell: cilium install --version 1.17.2
+      shell: cilium install --version 1.17.2 --set bpf.tc.priority=2
       register: cilium_install
       changed_when: cilium_install.rc == 0
 
