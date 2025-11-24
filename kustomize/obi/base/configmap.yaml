@@ -15,7 +15,7 @@ data:
       path: /metrics
       features: [network, application]
     ebpf:
-      context_propagation: all
+      context_propagation: headers
       traffic_control_backend: tcx
       disable_blackbox_cp: true
-      track_request_headers: true 
+      track_request_headers: true
