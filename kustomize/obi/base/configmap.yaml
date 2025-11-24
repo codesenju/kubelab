@@ -6,7 +6,7 @@ data:
   obi-config.yml: |
     discovery:
       instrument:
-        - k8s_namespace: media-stack
+        - containers_only: true
     log_level: INFO
     otel_traces_export:
       endpoint: http://opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4318
