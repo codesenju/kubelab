@@ -25,8 +25,8 @@ spec:
         image: "otel/ebpf-instrument:main"
         imagePullPolicy: "Always"
         env:
-          - name: OTEL_EXPORTER_OTLP_ENDPOINT
-            value: "http://opentelemetry-kube-stack-gateway-collector.opensearch-operator-system.svc.cluster.local:4317"
+          # - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          #   value: "http://opentelemetry-kube-stack-gateway-collector.opensearch-operator-system.svc.cluster.local:4317"
           - name: OBI_KUBE_METADATA_ENABLE
             value: "autodetect"
           - name: OTEL_EBPF_CONFIG_PATH
