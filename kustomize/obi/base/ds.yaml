@@ -20,7 +20,7 @@ spec:
       - name: obi
         resources:
           limits:
-            memory: 256Mi
+            memory: 512Mi
         terminationMessagePolicy: FallbackToLogsOnError
         image: "otel/ebpf-instrument:main"
         imagePullPolicy: "Always"
