@@ -30,3 +30,5 @@ spec:
           env:
             - name: OBI_CONFIG_PATH
               value: '/config/obi-config.yml'
+            - name: OTEL_EBPF_METRIC_FEATURES
+              value: 'network,application'
