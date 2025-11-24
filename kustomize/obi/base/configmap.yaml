@@ -5,14 +5,11 @@ metadata:
 data:
   obi-config.yml: |
     discovery:
-      services:
-        - name: ".*"
-          namespace: ".*"
+      instrument:
+        - k8s_namespace: "*"
     log_level: INFO
     otel_traces_export:
       endpoint: http://opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4318
-    resource_attributes:
-      deployment.environment: prod
     prometheus_export:
       port: 8999
       path: /metrics
