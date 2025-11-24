@@ -29,6 +29,8 @@ spec:
             value: "http://otelcol:4318"
           - name: OBI_KUBE_METADATA_ENABLE
             value: "autodetect"
+          - name: OTEL_EBPF_CONFIG_PATH
+            value: "/config/obi-config.yml"
         securityContext:
           privileged: true
           runAsUser: 0
