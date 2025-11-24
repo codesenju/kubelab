@@ -15,10 +15,11 @@ spec:
       serviceAccountName: obi
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      containers:
+      volumes:
         - name: obi-config
           configMap:
             name: obi-config
+      containers:
         - name: obi
           image: otel/ebpf-instrument:main
           securityContext:
