@@ -5,7 +5,7 @@
 
     - name: Create OpenTelemetry operator namespace
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Namespace
@@ -14,7 +14,7 @@
 
     - name: Create Elastic secret for OpenTelemetry
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -28,7 +28,7 @@
 
     - name: Deploy OpenTelemetry Kube Stack ArgoCD Application
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -42,7 +42,7 @@
             sources:
             - repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
               chart: opentelemetry-kube-stack
-              targetRevision: "0.6.3"
+              targetRevision: "0.10.5"
               helm:
                 releaseName: opentelemetry-kube-stack
                 valueFiles:

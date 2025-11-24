@@ -1,0 +1,22 @@
+
+
+- name: Deploy otelcol secret
+  hosts: k8s-control-plane-1
+  become: true
+  gather_facts: false
+  vars:
+    # namespace is optional; set this to target a specific namespace
+    target_namespace: obi
+  tasks:
+    - name: Apply otelcol Secret manifest (inline)
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: otelcol-secret
+            namespace: "{{ target_namespace: }}"
+          type: Opaque
+          stringData:
+            headers: "Authorization=Bearer abcdefghijklmnopqrstuvwxyz"
