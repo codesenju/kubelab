@@ -5,9 +5,9 @@ metadata:
 data:
   obi-config.yml: |
     discovery:
-      instrument:
-        - containers_only: true
-          service_name_source: k8s.pod.name
+      services:
+        - name: ".*"
+          namespace: ".*"
     log_level: INFO
     otel_traces_export:
       endpoint: http://opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4318
