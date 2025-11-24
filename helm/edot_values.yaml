@@ -115,6 +115,11 @@ collectors:
       receivers:
         # [K8s Events Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/k8seventsreceiver)
         k8s_events:
+          # auth_type: Determines how to authenticate to the K8s API server.
+          # Options: none | serviceAccount | kubeConfig
+          auth_type: serviceAccount
+          # namespaces: list of namespaces to watch; omit or set to ["all"] to watch all namespaces
+          namespaces: ["all"]
         # [K8s Objects Receiver](https://github.com/open-telemetry/opentelemetry-collector-contrib/tree/main/receiver/k8sobjectsreceiver)
         # NOTE: The k8sobjects receiver for K8s Events collection is being replaced by the k8s_events receiver, it might be removed in future versions of this configuration
         k8sobjects:
