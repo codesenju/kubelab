@@ -14,3 +14,5 @@ data:
       port: 8999
       path: /metrics
       features: [network, application]
+    ebpf:
+      context_propagation: 'all'
