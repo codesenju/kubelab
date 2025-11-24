@@ -12,25 +12,50 @@ spec:
       labels:
         instrumentation: obi
     spec:
-      serviceAccountName: obi
+      serviceAccount: obi
+      hostPID: true
       hostNetwork: true
       dnsPolicy: ClusterFirstWithHostNet
-      volumes:
-        - name: obi-config
-          configMap:
-            name: obi-config
       containers:
-        - name: obi
-          image: otel/ebpf-instrument:main
-          securityContext:
-            privileged: true
-          volumeMounts:
-            - mountPath: /config
-              name: obi-config
-          env:
-            - name: OTEL_EBPF_CONFIG_PATH
-              value: '/config/obi-config.yml'
-            - name: OTEL_EBPF_KUBE_METADATA_ENABLE
-              value: 'true'
-            - name: OTEL_EBPF_KUBE_CLUSTER_NAME
-              value: 'kubelab'
+      - name: obi
+        resources:
+          limits:
+            memory: 256Mi
+        terminationMessagePolicy: FallbackToLogsOnError
+        image: "otel/ebpf-instrument:main"
+        imagePullPolicy: "Always"
+        env:
+          - name: OTEL_EXPORTER_OTLP_ENDPOINT
+            value: "http://otelcol:4318"
+          - name: OBI_KUBE_METADATA_ENABLE
+            value: "autodetect"
+        securityContext:
+          privileged: true
+          runAsUser: 0
+          readOnlyRootFilesystem: true
+          capabilities:
+            add:
+              - BPF
+              - SYS_PTRACE
+              - NET_RAW
+              - CHECKPOINT_RESTORE
+              - DAC_READ_SEARCH
+              - PERFMON
+              - NET_ADMIN
+        volumeMounts:
+          - name: cgroup
+            mountPath: /sys/fs/cgroup
+          - mountPath: /config
+            name: obi-config
+      tolerations:
+      - effect: NoSchedule
+        operator: Exists
+      - effect: NoExecute
+        operator: Exists
+      volumes:
+      - name: obi-config
+        configMap:
+          name: obi-config
+      - name: cgroup
+        hostPath:
+          path: /sys/fs/cgroup
