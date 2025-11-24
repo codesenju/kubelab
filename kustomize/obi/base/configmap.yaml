@@ -18,5 +18,6 @@ data:
     otel_metrics_export:
       endpoint: opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4317
       protocol: grpc
+      features: [network, application]
     logging:
       level: INFO
