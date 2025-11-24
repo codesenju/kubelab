@@ -31,6 +31,8 @@ spec:
             value: "autodetect"
           - name: OTEL_EBPF_CONFIG_PATH
             value: "/config/obi-config.yml"
+          - name: OTEL_EBPF_KUBE_CLUSTER_NAME
+            value: "kubelab"
         securityContext:
           privileged: true
           runAsUser: 0
