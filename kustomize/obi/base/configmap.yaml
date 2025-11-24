@@ -7,17 +7,10 @@ data:
     discovery:
       instrument:
         - k8s_namespace: media-stack
-    network:
-      enable: true
-    attributes:
-      kubernetes:
-        enable: true
+    log_level: INFO
     otel_traces_export:
-      endpoint: opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4317
-      protocol: grpc
-    otel_metrics_export:
-      endpoint: opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4317
-      protocol: grpc
+      endpoint: http://opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4318
+    prometheus_export:
+      port: 8999
+      path: /metrics
       features: [network, application]
-    logging:
-      level: INFO
