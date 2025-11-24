@@ -1,22 +1,38 @@
-
-
-- name: Deploy otelcol secret
-  hosts: k8s-control-plane-1
-  become: true
-  gather_facts: false
+---
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
   vars:
-    # namespace is optional; set this to target a specific namespace
-    target_namespace: obi
+    target_namespace: obi-system
   tasks:
-    - name: Apply otelcol Secret manifest (inline)
+    - name: Deploy OBI
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: v1
-          kind: Secret
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
           metadata:
-            name: otelcol-secret
-            namespace: "{{ target_namespace: }}"
-          type: Opaque
-          stringData:
-            headers: "Authorization=Bearer abcdefghijklmnopqrstuvwxyz"
+            name: obi
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/obi/overlays/prod
+              targetRevision: main
+              kustomize:
+                labels:
+                  app.kubernetes.io/instance: obi
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
