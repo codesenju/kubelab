@@ -33,4 +33,4 @@ spec:
             - name: OTEL_EBPF_KUBE_METADATA_ENABLE
               value: 'true'
             - name: OTEL_EBPF_KUBE_CLUSTER_NAME
-              value: 'kubelab
+              value: 'kubelab'
