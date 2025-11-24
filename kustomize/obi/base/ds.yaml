@@ -32,7 +32,7 @@ spec:
           - name: OTEL_EBPF_KUBE_CLUSTER_NAME
             value: "kubelab"
           - name: OTEL_RESOIRCE_ATTRIBUTES
-            value: "developer.environment=prod"
+            value: "development.environment=prod"
         securityContext:
           privileged: true
           runAsUser: 0
