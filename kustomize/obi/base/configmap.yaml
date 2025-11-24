@@ -14,6 +14,9 @@ data:
     otel_metrics_export:
       endpoint: http://opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4317
       protocol: grpc
+    otel_logs_export:
+      endpoint: http://opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4317
+      protocol: grpc
     prometheus_export:
       port: 8999
       path: /metrics
