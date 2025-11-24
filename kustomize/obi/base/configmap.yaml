@@ -13,4 +13,10 @@ data:
       kubernetes:
         enable: true
     otel_traces_export:
-      endpoint: http://localhost:4318
+      endpoint: opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4317
+      protocol: grpc
+    otel_metrics_export:
+      endpoint: opentelemetry-kube-stack-gateway-collector.opentelemetry-operator-system.svc.cluster.local:4317
+      protocol: grpc
+    logging:
+      level: INFO
