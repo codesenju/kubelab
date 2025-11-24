@@ -28,7 +28,7 @@ spec:
             - mountPath: /config
               name: obi-config
           env:
-            - name: OBI_CONFIG_PATH
+            - name: OTEL_EBPF_CONFIG_PATH
               value: '/config/obi-config.yml'
-            - name: OTEL_EBPF_METRIC_FEATURES
-              value: 'network,application'
+            - name: OTEL_EBPF_KUBE_METADATA_ENABLE
+              value: 'true'
