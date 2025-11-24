@@ -1,0 +1,16 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: obi-config
+data:
+  obi-config.yml: |
+    discovery:
+      instrument:
+        - k8s_namespace: media-stack
+    network:
+      enable: true
+    attributes:
+      kubernetes:
+        enable: true
+    otel_traces_export:
+      endpoint: http://localhost:4318

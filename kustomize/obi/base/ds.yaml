@@ -1,0 +1,31 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  namespace: obi
+  name: obi
+spec:
+  selector:
+    matchLabels:
+      instrumentation: obi
+  template:
+    metadata:
+      labels:
+        instrumentation: obi
+    spec:
+      serviceAccountName: obi
+      hostNetwork: true
+      dnsPolicy: ClusterFirstWithHostNet
+      containers:
+        - name: obi-config
+          configMap:
+            name: obi-config
+        - name: obi
+          image: otel/ebpf-instrument:main
+          securityContext:
+            privileged: true
+          volumeMounts:
+            - mountPath: /config
+              name: obi-config
+          env:
+            - name: OBI_CONFIG_PATH
+              value: '/config/obi-config.yml'
