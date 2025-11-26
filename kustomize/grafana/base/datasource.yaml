@@ -31,13 +31,10 @@ spec:
     name: Tempo
     type: tempo
     access: proxy
-    orgId: 1
-    url: http://tempo-gateway.grafana-system.svc.cluster.local
+    url: http://tempo-gateway.tempo-system.svc.cluster.local
     basicAuth: false
-    isDefault: true
-    version: 1
+    isDefault: false
     editable: false
-    apiVersion: 1
     uid: tempo
 # ---
 # apiVersion: grafana.integreatly.org/v1beta1
