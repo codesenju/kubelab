@@ -15,10 +15,10 @@ spec:
     basicAuth: false
     url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local:9090
     isDefault: true
+    editable: true
     jsonData:
       'tlsSkipVerify': false
       'timeInterval': "5s"
-    editable: false
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
@@ -35,8 +35,8 @@ spec:
     access: proxy
     url: http://tempo-gateway.grafana-system.svc.cluster.local
     basicAuth: false
-    isDefault: false
-    editable: false
+    isDefault: true
+    editable: true
     jsonData:
       httpMethod: GET
       serviceMap:
