@@ -31,7 +31,7 @@ spec:
     name: Tempo
     type: tempo
     access: proxy
-    url: http://tempo-gateway.tempo-system.svc.cluster.local
+    url: http://tempo-gateway.grafana-system.svc.cluster.local
     basicAuth: false
     isDefault: false
     editable: false
