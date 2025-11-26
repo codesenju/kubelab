@@ -10,7 +10,7 @@ spec:
   datasource:
     name: Prometheus
     type: prometheus
-    uid: prometheus
+    # uid: prometheus
     access: proxy
     basicAuth: false
     url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local:9090
