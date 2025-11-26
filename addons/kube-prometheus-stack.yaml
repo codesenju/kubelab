@@ -131,3 +131,36 @@
                             number: 80
       tags:
         - ingress
+
+    - name: Create kube-prometheus-stack prometheus ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: kube-prometheus-stack-prometheus
+            namespace: '{{ target_namespace }}'
+            annotations:
+              # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "prometheus.{{ dns_name_1 }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "prometheus.{{ dns_name_1 }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: kube-prometheus-stack-prometheus
+                          port:
+                            number: 9090
+      tags:
+        - ingress
