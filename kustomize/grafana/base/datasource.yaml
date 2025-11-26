@@ -10,6 +10,7 @@ spec:
   datasource:
     name: Prometheus
     type: prometheus
+    uid: prometheus
     access: proxy
     basicAuth: false
     url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local:9090
@@ -30,12 +31,16 @@ spec:
   datasource:
     name: Tempo
     type: tempo
+    uid: tempo
     access: proxy
     url: http://tempo-gateway.grafana-system.svc.cluster.local
     basicAuth: false
     isDefault: false
     editable: false
-    uid: tempo
+    jsonData:
+      httpMethod: GET
+      serviceMap:
+        datasourceUid: 'prometheus'
 # ---
 # apiVersion: grafana.integreatly.org/v1beta1
 # kind: GrafanaDatasource
