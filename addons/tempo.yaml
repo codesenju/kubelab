@@ -1,0 +1,95 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: grafana-system
+  tasks:
+
+    - name: Deploy Tempo
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: tempo
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://grafana.github.io/helm-charts
+              chart: tempo-distributed
+              targetRevision: 1.15.4
+              helm:
+                releaseName: tempo
+                values: |
+                  global:
+                    clusterDomain: 'cluster.local'
+                  gateway:
+                    enabled: true
+                  minio:
+                    enabled: false
+                  storage:
+                    trace:
+                      backend: s3
+                      s3:
+                        access_key: "{{ minio_local_access_key }}"
+                        secret_key: "{{ minio_local_secret_key }}"
+                        bucket: 'tempo-traces'
+                        endpoint: "{{ minio_local_endpoint }}"
+                        insecure: false
+                  traces:
+                    otlp:
+                      http:
+                        enabled: true
+                      grpc:
+                        enabled: true
+                  distributor:
+                    config:
+                      log_received_spans:
+                        enabled: true
+                      log_discarded_spans:
+                        enabled: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+
+    # - name: Create Tempo ingress
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: networking.k8s.io/v1
+    #       kind: Ingress
+    #       metadata:
+    #         name: tempo-gateway
+    #         namespace: '{{ target_namespace }}'
+    #         annotations:
+    #           external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+    #       spec:
+    #         ingressClassName: traefik
+    #         tls:
+    #           - hosts:
+    #               - "tempo.{{ dns_name_1 }}"
+    #             secretName: local-jazziro-com-tls
+    #         rules:
+    #           - host: "tempo.{{ dns_name_1 }}"
+    #             http:
+    #               paths:
+    #                 - path: /
+    #                   pathType: Prefix
+    #                   backend:
+    #                     service:
+    #                       name: tempo-gateway
+    #                       port:
+    #                         number: 80
+    #   tags:
+    #     - ingress
