@@ -40,7 +40,7 @@ spec:
     jsonData:
       httpMethod: GET
       serviceMap:
-        datasourceUid: 'prometheus'
+        datasourceUid: 'Prometheus'
 # ---
 # apiVersion: grafana.integreatly.org/v1beta1
 # kind: GrafanaDatasource
