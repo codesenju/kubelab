@@ -59,28 +59,28 @@ buildMetadata:
 # Image versions (pinned for prod)
 images:
 - name: lscr.io/linuxserver/jellyfin
-  newTag: "10.10.7"
+  newTag: "10.11.3"
 # - name: lscr.io/linuxserver/qbittorrent
 #   newTag: "5.0.4"
 - name: lscr.io/linuxserver/sonarr
-  newTag: "4.0.15"
+  newTag: "4.0.16"
 - name: lscr.io/linuxserver/radarr
-  newTag: "5.26.2"
+  newTag: "6.0.4"
 - name: lscr.io/linuxserver/lidarr
-  newTag: "2.10.3"
+  newTag: "3.1.0"
 - name: lscr.io/linuxserver/prowlarr
-  newTag: "1.33.3"
+  newTag: "2.3.0"
 - name: ghcr.io/haveagitgat/tdarr
-  newTag: "2.37.01"
+  newTag: "2.58.01"
 - name: ghcr.io/haveagitgat/tdarr_node
-  newTag: "2.37.01"
+  newTag: "2.58.01"
 - name: docker.io/fallenbagel/jellyseerr
-  newTag: "2.7.2"
+  newTag: "2.7.3"
 - name: lscr.io/linuxserver/readarr
   newTag: "develop-version-0.4.14.2782"
 - name: ghcr.io/flaresolverr/flaresolverr
   newName: ghcr.io/flaresolverr/flaresolverr
-  newTag: "v3.3.21"
+  newTag: "v3.4.5"
 
 # Strategic merge patches
 patches:
