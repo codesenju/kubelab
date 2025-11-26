@@ -18,6 +18,27 @@ spec:
       'tlsSkipVerify': false
       'timeInterval': "5s"
     editable: false
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDatasource
+metadata:
+  name: tempo-ds
+spec:
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  datasource:
+    name: Tempo
+    type: tempo
+    access: proxy
+    orgId: 1
+    url: http://tempo-gateway.grafana-system.svc.cluster.local
+    basicAuth: false
+    isDefault: true
+    version: 1
+    editable: false
+    apiVersion: 1
+    uid: tempo
 # ---
 # apiVersion: grafana.integreatly.org/v1beta1
 # kind: GrafanaDatasource
