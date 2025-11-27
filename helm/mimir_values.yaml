@@ -37,6 +37,7 @@ mimir:
       storage:
         backend: s3
         s3:
+          bucket_name: mimir
           endpoint: "${MINIO_ENDPOINT}" # This is a secret injected via an environment variable
           region: "${MINIO_REGION}"
           secret_access_key: "${MINIO_SECRET_ACCESS_KEY}"
