@@ -1,0 +1,72 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: grafana-system
+  tasks:
+
+    - name: Deploy Grafana Alloy
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: alloy
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: https://grafana.github.io/helm-charts
+              chart: alloy
+              targetRevision: 1.4.0
+              helm:
+                releaseName: alloy
+                valueFiles:
+                - $values/helm/alloy_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: main
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+
+    # - name: Create Tempo ingress
+    #   kubernetes.core.k8s:
+    #     state: present
+    #     definition:
+    #       apiVersion: networking.k8s.io/v1
+    #       kind: Ingress
+    #       metadata:
+    #         name: tempo-gateway
+    #         namespace: '{{ target_namespace }}'
+    #         annotations:
+    #           external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+    #       spec:
+    #         ingressClassName: traefik
+    #         tls:
+    #           - hosts:
+    #               - "tempo.{{ dns_name_1 }}"
+    #             secretName: local-jazziro-com-tls
+    #         rules:
+    #           - host: "tempo.{{ dns_name_1 }}"
+    #             http:
+    #               paths:
+    #                 - path: /
+    #                   pathType: Prefix
+    #                   backend:
+    #                     service:
+    #                       name: tempo-gateway
+    #                       port:
+    #                         number: 80
+    #   tags:
+    #     - ingress
