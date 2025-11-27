@@ -147,9 +147,6 @@ results-cache:
   enabled: false
   replicas: 1
 
-minio:
-  enabled: false
-
 overrides_exporter:
   replicas: 1
   resources:
