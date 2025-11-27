@@ -13,6 +13,7 @@
             namespace: mimir
           type: Opaque
           stringData:
+            MINIO_BUCKET_NAME: "mimir"
             MINIO_ENDPOINT: "{{ minio_local_endpoint }}"
             MINIO_REGION: "joburg-north-1"
             MINIO_ACCESS_KEY_ID: "{{ minio_local_access_key }}"
