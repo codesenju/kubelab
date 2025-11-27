@@ -64,10 +64,10 @@
               type: s3
               config:
                 bucket: thanos-store
-                endpoint: {{ minio_endpoint }}
-                access_key: {{ s3_access_key }}
-                secret_key: {{ s3_secret_key }}
-                insecure: true
+                endpoint: {{ minio_local_endpoint }}
+                access_key: {{ minio_local_access_key }}
+                secret_key: {{ minio_local_secret_key }}
+                insecure: false
       tags: kube-prometheus-stack
 
     - name: Wait for Grafana pod to be ready

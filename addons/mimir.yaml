@@ -4,7 +4,7 @@
   tasks:
     - name: Create MinIO S3 configuration secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -13,15 +13,15 @@
             namespace: mimir
           type: Opaque
           stringData:
-            MINIO_ENDPOINT: "{{ s3_endpoint }}"
+            MINIO_ENDPOINT: "{{ minio_local_endpoint }}"
             MINIO_REGION: "joburg-north-1"
-            MINIO_ACCESS_KEY_ID: "{{ s3_access_key }}"
-            MINIO_SECRET_ACCESS_KEY: "{{ s3_secret_key }}"
+            MINIO_ACCESS_KEY_ID: "{{ minio_local_access_key }}"
+            MINIO_SECRET_ACCESS_KEY: "{{ minio_local_secret_key }}"
       tags: mimir
 
     - name: Create Mimir tenant overrides ConfigMap
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: ConfigMap
@@ -47,7 +47,7 @@
 
     - name: Deploy Mimir ArgoCD Application
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
