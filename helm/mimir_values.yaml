@@ -47,13 +47,13 @@ mimir:
 
     blocks_storage:
       s3:
-        bucket_name: mimir-blocks
+        bucket_name: mimir
     alertmanager_storage:
       s3:
-        bucket_name: mimir-alertmanager
+        bucket_name: mimir
     ruler_storage:
       s3:
-        bucket_name: mimir-ruler
+        bucket_name: mimir
 
     # The following admin_client configuration only applies to Grafana Enterprise Metrics deployments:
     #admin_client:
