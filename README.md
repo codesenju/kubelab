@@ -1,339 +1,196 @@
-# Kubernetes Cluster Architecture
+# Kubelab - Production Kubernetes Homelab
+
+A production-grade Kubernetes homelab environment with GitOps, observability, and automation.
+
+## 📚 Documentation
+
+### Getting Started
+- [Architecture Overview](docs/architecture.md) - System architecture and component relationships
+- [Prerequisites](docs/setup/prerequisites.md) - Required tools and dependencies
+- [Installation Guide](docs/setup/installation.md) - Step-by-step cluster deployment
+- [Configuration](docs/setup/configuration.md) - Secrets and variables setup
+
+### Guides
+- [Ansible Playbooks](docs/guides/ansible-playbooks.md) - Using Ansible for deployment
+- [ArgoCD Applications](docs/guides/argocd-applications.md) - Managing applications with GitOps
+- [Monitoring Setup](docs/guides/monitoring-setup.md) - Prometheus, Mimir, Grafana configuration
+- [Storage Configuration](docs/guides/storage-configuration.md) - NFS and persistent volumes
+- [Prometheus ServiceMonitor](docs/prometheus-servicemonitor-guide.md) - Creating custom metrics
+- [ArgoCD Metrics](docs/prometheus-argocd-metrics.md) - Monitoring ArgoCD
+
+### Reference
+- [Available Applications](docs/applications.md) - List of deployable applications
+- [Network Configuration](docs/reference/network-configuration.md) - IP addresses and networking
+- [Elasticsearch Fleet API](docs/elasticsearch-fleet-api-key-creation.md) - Fleet server setup
+
+### Troubleshooting
+- [Common Issues](docs/troubleshooting.md) - Solutions to frequent problems
+- [Debugging Guide](docs/troubleshooting/debugging.md) - Troubleshooting techniques
+
+## 🚀 Quick Start
+
+### 1. Clone Repository
+```bash
+git clone https://github.com/codesenju/kubelab.git
+cd kubelab
+```
+
+### 2. Configure Secrets
+```bash
+# Create and encrypt secrets file
+ansible-vault create ansible/group_vars/all/secrets.yaml
+```
+
+### 3. Deploy Infrastructure
+```bash
+# Deploy VMs with OpenTofu
+cd tofu
+tofu init && tofu apply
+
+# Deploy Kubernetes cluster
+cd ../ansible
+ansible-playbook main.yaml --vault-pass-file=vault-pass.txt
+```
+
+### 4. Verify Installation
+```bash
+# Copy kubeconfig
+ssh ubuntu@192.168.0.41 cat ~/.kube/config > ~/.kube/config
+
+# Check cluster
+kubectl get nodes
+kubectl get pods -A
+```
+
+## 🏗️ Architecture
 
 ```mermaid
 graph TD
-    subgraph "Control Plane Nodes"
-        CP1[Control Plane Node 1<br/>192.168.0.41<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
-        CP2[Control Plane Node 2<br/>192.168.0.42<br/>- API Server<br/>- etcd<br/>- Controller Manager<br/>- Scheduler]
+    subgraph "Control Plane"
+        CP1[Control Plane 1<br/>192.168.0.41]
+        CP2[Control Plane 2<br/>192.168.0.42]
     end
 
-    subgraph "Worker Nodes"
-        W1[Worker Node 1<br/>192.168.0.51<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
-        W2[Worker Node 2<br/>192.168.0.52<br/>- kubelet<br/>- kube-proxy<br/>- Container Runtime]
+    subgraph "Workers"
+        W1[Worker 1<br/>192.168.0.51]
+        W2[Worker 2<br/>192.168.0.52]
     end
 
-    LB[Load Balancer<br/>192.168.0.40<br/>kube-apiserver:6443]
-
+    LB[Load Balancer<br/>192.168.0.40]
+    
     LB --> CP1
     LB --> CP2
-    CP1 --- CP2
     CP1 --> W1
     CP1 --> W2
     CP2 --> W1
     CP2 --> W2
-
 ```
 
-## Encrypting Secrets with Ansible Vault
+## 🔧 Core Components
 
-Before setting up the cluster, you need to create and encrypt your secrets file using Ansible Vault.
+| Component | Purpose | Documentation |
+|-----------|---------|---------------|
+| **ArgoCD** | GitOps continuous delivery | [Guide](docs/guides/argocd-applications.md) |
+| **Prometheus Stack** | Metrics collection | [Guide](docs/guides/monitoring-setup.md) |
+| **Mimir** | Long-term metrics storage | [Architecture](docs/architecture.md#mimir) |
+| **Grafana** | Observability dashboards | [Guide](docs/guides/monitoring-setup.md) |
+| **Traefik** | Ingress controller | [Reference](docs/reference/network-configuration.md) |
+| **MinIO** | S3-compatible storage | [Architecture](docs/architecture.md#minio) |
+| **Cert Manager** | TLS certificate automation | [Setup](docs/setup/installation.md) |
 
-1. **Create the secrets file**  
-   Place your secrets in `ansible/groups_vars/all/secrets.yaml` (see the variable examples below).
+## 📦 Available Applications
 
-2. **Encrypt the file with Ansible Vault**  
-   Run the following command and set a strong password when prompted:
-   ```bash
-   ansible-vault encrypt ansible/groups_vars/all/secrets.yaml
-   ```
-   _Alternatively, to use a password file:_
-   ```bash
-   ansible-vault encrypt ansible/groups_vars/all/secrets.yaml --vault-password-file <vault-password-file>
-   ```
-
-3. **Edit the encrypted file (optional):**
-   ```bash
-   ansible-vault edit ansible/groups_vars/all/secrets.yaml --vault-password-file <vault-password-file>
-   ```
-
-4. **Apply the Ansible playbook using your vault password file:**
-   ```bash
-   ansible-playbook main.yaml --vault-pass-file="<vault-password-file>"
-   ```
-
-## Configuration Variables
-Below are the variables you can configure in your `secrets.yaml`:
-
-```yaml
-# ArgoCD Configuration
-argocd_openid_client_secret: "<your-client-secret>"
-argocd_openid_issuer_url: "<your-openid-issuer-url>"
-argocd_openid_redirect_uri: "<your-redirect-uri>"
-argocd_domain: "<your-argocd-domain>"
-
-# Cloudflared Configuration
-cloudflared_hostname_1: "<hostname-1>"
-cloudflared_hostname_2: "<hostname-2>"
-cloudflared_hostname_3: "<hostname-3>"
-cloudflared_hostname_4: "<hostname-4>"
-cloudflared_hostname_5: "<hostname-5>"
-
-# Database and Security
-db_encryption_key: "<your-encryption-key>"
-authentik_secret_key: "<your-authentik-secret-key>"
-authentik_postgresql_password: "<your-postgresql-password>"
-
-# S3 Configuration
-s3_access_key: "<your-s3-access-key>"
-s3_secret_key: "<your-s3-secret-key>"
-s3_endpoint: "<your-s3-endpoint>"
-
-# Ingress Configuration
-ingress_httpd_test_host: "<your-httpd-test-host>"
-
-# Gitea Configuration
-gitea_db_name: "<your-gitea-db-name>"
-gitea_db_password: "<your-gitea-db-password>"
-gitea_db_user: "<your-gitea-db-user>"
-gitea_db_repmgr_password: "<your-gitea-repmgr-password>"
-gitea_admin_username: "<your-gitea-admin-username>"
-gitea_admin_password: "<your-gitea-admin-password>"
-gitea_admin_email: "<your-gitea-admin-email>"
-gitea_domain: "<your-gitea-domain>"
-gitea_registration_token: "<your-gitea-registration-token>"
-gitea_instance_url: "<your-gitea-instance-url>"
-```
-
-- Prerequisites
-  - [Proxmox](https://www.proxmox.com/en/products/proxmox-virtual-environment/get-started)
-  - Download ubuntu cloud init image and upload to proxmox nodes - https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img
-  - If your home network is not `192.168.0.0/24`, modify the configs where necessary in the following files:
-    - opentofu/local.tf
-    - ansible/inventory.ini
-  - [Ansible](https://docs.ansible.com/)
-  - [OpenTofu](https://opentofu.org/docs/intro/install/)
-## Setup Infrastructure on Proxmox
-dir: tofu
-```
-tofu init
-tofu plan -out=plan
-tofu apply "plan"
-```
-- For a detailed documentation on the infrastructure
-
-   - 📁 [Opentofu](./opentofu/README.MD) ← Click to view
-## Setup K8s
-dir: ansible
-```bash
-ansible all -m ping
-```
-```bash
-ansible-playbook main.yaml --vault-pass-file="<vault-password-file>"
-```
-###  Setup kubeconfig on bastion
-```bash
-ssh -i ../kubelab ubuntu@192.168.0.41 cat /home/ubuntu/.kube/config > ~/.kube/config
-```
-
-### Verify that cluster is up and running
-```bash
-kubectl get no
-kubectl get all -A
-kubectl get sc
-```
-
-# Addons
- Argocd
-```bash
-ansible-playbook ../addons/argocd.yaml
-```
-Other Applications
-```bash
-ansible-playbook ../addons/<application>.yaml
-```
-## TrueNAS NFS settings (compatible with macos)
-
-Go to your TrueNAS web UI:
-
-- Services → NFS → Configure the share (/mnt/pool1/k8s/nfs)
-- Ensure the following settings are applied:
-   - Enabled: ✔️
-   - Network: 192.168.0.0/24 (or your subnet)
-   - Maproot User: root (if needed for macOS compatibility)
-   - Maproot Group: wheel (macOS equivalent of root group)
-   - Security: sys (for compatibility)
-   - Enabled NFSv4: ❌ (macOS often works better with NFSv3)
-
-Mount commands
-- Macos
+Deploy applications using Ansible playbooks:
 
 ```bash
-mount -t nfs -o vers=3,resvport,noatime,nolocks,locallocks 192.168.0.15:/mnt/pool1/k8s/nfs ~/nfs-test
-```
-- Ubuntu
+# Core infrastructure
+ansible-playbook addons/argocd.yaml
+ansible-playbook addons/cert-manager.yaml
+ansible-playbook addons/traefik.yaml
 
+# Observability
+ansible-playbook addons/kube-prometheus-stack.yaml
+ansible-playbook addons/mimir.yaml
+ansible-playbook addons/grafana.yaml
+
+# Applications
+ansible-playbook addons/<application>.yaml
+```
+
+See [Available Applications](docs/applications.md) for the complete list.
+
+## 🛠️ Common Tasks
+
+### Deploy New Application
 ```bash
-sudo mount 192.168.0.15:/mnt/pool1/k8s/nfs nfs-test/
+ansible-playbook addons/<app-name>.yaml --vault-pass-file=vault-pass.txt
 ```
--  Windows
-  - dism /online /enable-feature /featurename:ServicesForNFS-ClientOnly /all
-```powershell
-mount -o nolock -o mtype=hard <NFS-Server-IP>:/<share-name> <drive-letter>:
-```
-```powershell
-New-PSDrive -Name "Z" -PSProvider FileSystem -Root "\\<NFS-Server-IP>\<share-name>" -Persist
-```
-# Testing Gotify Notifications
 
-After deploying Gotify, you can send a test alert using:
-
+### Update Cluster
 ```bash
-curl "https://gotify.example.com/message?token=my-srecret-token" \
-  -F "title=test-alert" \
-  -F "message=this is a test alert" \
-  -F "priority=5"
+ansible-playbook main.yaml --tags k8s --vault-pass-file=vault-pass.txt
 ```
 
-Replace `my-srecret-token` with your actual Gotify
-
-# adhoc
-### Enable volume expansion
+### Enable Volume Expansion
 ```bash
 ansible-playbook main.yaml --tags adhoc,enable_volume_expansion
 ```
-# Creating an Image Pull Secret for Docker Hub
+
+### Create Docker Registry Secret
 ```bash
 kubectl create secret docker-registry dockerhub-secret \
   --docker-server=https://index.docker.io/v1/ \
-  --docker-username=<your-dockerhub-username> \
-  --docker-password=<your-dockerhub-password> \
-  --docker-email=<your-email>
+  --docker-username=<username> \
+  --docker-password=<password> \
+  --docker-email=<email>
 ```
-# Edot
-### Annotate a specific deployment:
+
+## 🔍 Monitoring & Observability
+
+Access dashboards:
+- **Grafana**: https://grafana.local.jazziro.com
+- **Prometheus**: https://prometheus.local.jazziro.com
+- **ArgoCD**: https://argocd.local.jazziro.com
+
+## 🐛 Troubleshooting
+
+### Pods Not Starting
 ```bash
-# Nodejs
-export app_name=myapp
-kubectl patch deployment $app_name -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-nodejs":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
-
-# Dotnet
-export app_name=myapp
-kubectl patch deployment $app_name -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-dotnet":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
-
-# Python
-kubectl patch deployment flaresolverr -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-python":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
-
-# Go
-kubectl patch deployment cloudflared -p '{"spec":{"template":{"metadata":{"annotations":{"instrumentation.opentelemetry.io/inject-go":"opentelemetry-operator-system/elastic-instrumentation"}}}}}'
+kubectl describe pod <pod-name> -n <namespace>
+kubectl logs <pod-name> -n <namespace>
 ```
-### entire namespace:
+
+### ArgoCD Sync Issues
 ```bash
- kubectl annotate namespace jellyfin instrumentation.opentelemetry.io/inject-dotnet="opentelemetry-operator-system/elastic-instrumentation"
-
- # remove
- kubectl annotate namespace media-stack instrumentation.opentelemetry.io/inject-dotnet-
-
+kubectl get applications -n argocd
+kubectl describe application <app-name> -n argocd
 ```
-# Opentelemtry
+
+### Certificate Problems
 ```bash
-export service_name=jellyseerr
-export deployment_name=jellyseerr
-kubectl patch deployment $deployment_name  \
-  --type='json' \
-  -p='[
-    {
-      "op": "add",
-      "path": "/spec/template/metadata/annotations/instrumentation.opentelemetry.io~1inject-nodejs",
-      "value": "true"
-    },
-    {
-      "op": "add",
-      "path": "/spec/template/metadata/annotations/resource.opentelemetry.io~1service.name",
-      "value": '${service_name}'
-    }
-  ]'
+kubectl get certificates -A
+kubectl describe certificate <cert-name> -n <namespace>
 ```
-# otel-cli
-### Installing
-- https://github.com/equinix-labs/otel-cli?tab=readme-ov-file#getting-started
-### Usage
-```bash
-export OTEL_EXPORTER_OTLP_ENDPOINT=localhost:4317
-```
-#### Linux
-```bash
-otel-cli span \
-    --service "otel-cli" \
-    --name "send data to the server" \
-    --start $(date -d '5 minutes ago' -u +%Y-%m-%dT%H:%M:%SZ) \
-    --end $(date +%s.%N) \
-    --attrs "os.kernel=$(uname -r)" \
-    --tp-print \
-    --verbose
-```
-#### MacOS
-```bash
-otel-cli span \
-    --service "otel-cli" \
-    --name "send data to the server" \
-    --start $(date -v-5M -u +%Y-%m-%dT%H:%M:%SZ) \
-    --end $(date +%s.%N) \
-    --attrs "os.kernel=$(uname -r)" \
-    --tp-print \
-    --verbose
-```
-### Context propagation
-```bash
-# Create parent span and capture the TRACEPARENT from --tp-print output
-TRACEPARENT=$(otel-cli span \
-    --service "frontend-service" \
-    --name "handle-request" \
-    --start $(date -v-2M -u +%Y-%m-%dT%H:%M:%SZ) \
-    --end $(date -v-1M -u +%Y-%m-%dT%H:%M:%SZ) \
-    --attrs "http.method=GET,http.url=/api/users" \
-    --tp-print | grep TRACEPARENT | cut -d'=' -f2)
 
-export TRACEPARENT
-echo "Parent trace: $TRACEPARENT"
+See [Troubleshooting Guide](docs/troubleshooting.md) for more solutions.
 
+## 📝 Contributing
 
-# The TRACEPARENT env var is automatically picked up
-otel-cli span \
-    --service "backend-service" \
-    --name "database-query" \
-    --start $(date -v-1M -u +%Y-%m-%dT%H:%M:%SZ) \
-    --end $(date +%s.%N) \
-    --attrs "db.operation=SELECT,db.table=users" \
-    --tp-print \
-    --verbose
+1. Fork the repository
+2. Create a feature branch
+3. Make your changes
+4. Submit a pull request
 
-```
-# Issues
-***Error***
+## 📄 License
 
-k8s-worker-1 | UNREACHABLE! => {
-    "changed": false,
-    "msg": "Failed to connect to the host via ssh: Warning: Permanently added '192.168.0.51' (ED25519) to the list of known hosts.\r\nubuntu@192.168.x.xx: Permission denied (publickey,password).",
-    "unreachable": true
-}
+This project is licensed under the MIT License.
 
-***Solution***
+## 🙏 Acknowledgments
 
-mv  ~/.ssh/known_hosts  ~/.ssh/known_hosts.bkp
-
----
-
-***Error***
-
-CRDs stuck in terminating state
-
-***Solution***
-
-kubectl get crd | grep longhorn | awk '{print $1}'
-kubectl get crd | grep longhorn | awk '{print $1}' 
-kubectl patch crd backuptargets.longhorn.io -p '{"metadata":{"finalizers":[]}}' --type=merge
-
-
-***Error***
-
-TASK [Wait for ArgoCD pods to be ready] *******************************************************************************************************************************************************************
-An exception occurred during task execution. To see the full traceback, use -vvv. The error was: AttributeError: 'NoneType' object has no attribute 'status'
-fatal: [k8s-control-plane-1]: FAILED! => {"changed": false, "module_stderr": "Shared connection to 192.168.0.41 closed.\r\n", "module_stdout": "Traceback (most recent call last):\r\n
-
---- omitted --
-
- File \"/tmp/ansible_kubernetes.core.k8s_info_payload_a2wp4_ji/ansible_kubernetes.core.k8s_info_payload.zip/ansible_collections/kubernetes/core/plugins/module_utils/k8s/waiter.py\", line 86, in custom_condition\r\nAttributeError: 'NoneType' object has no attribute 'status'\r\n", "msg": "MODULE FAILURE: No start of json char found\nSee stdout/stderr for the exact error", "rc": 1}
-
-***Solution***
-
-Try deploying again.
+Built with:
+- [Kubernetes](https://kubernetes.io/)
+- [ArgoCD](https://argo-cd.readthedocs.io/)
+- [Prometheus](https://prometheus.io/)
+- [Grafana](https://grafana.com/)
+- [OpenTofu](https://opentofu.org/)
+- [Ansible](https://www.ansible.com/)
