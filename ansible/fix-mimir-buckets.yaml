@@ -1,0 +1,34 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  tasks:
+    - name: Create MinIO buckets for Mimir
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: batch/v1
+          kind: Job
+          metadata:
+            name: create-mimir-buckets
+            namespace: mimir
+          spec:
+            ttlSecondsAfterFinished: 300
+            template:
+              spec:
+                restartPolicy: OnFailure
+                containers:
+                - name: mc
+                  image: minio/mc:latest
+                  envFrom:
+                  - secretRef:
+                      name: minio-s3-config
+                  command:
+                  - /bin/sh
+                  - -c
+                  - |
+                    mc alias set minio https://${MINIO_ENDPOINT} ${MINIO_ACCESS_KEY_ID} ${MINIO_SECRET_ACCESS_KEY} --insecure
+                    mc mb minio/mimir-blocks --ignore-existing --insecure
+                    mc mb minio/mimir-alertmanager --ignore-existing --insecure
+                    mc mb minio/mimir-ruler --ignore-existing --insecure
+                    echo "Buckets created successfully"
+      tags: mimir
