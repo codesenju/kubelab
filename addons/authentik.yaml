@@ -125,7 +125,9 @@
                   postgresql:
                     enabled: true
                     image:
-                      tag: 16.6.0-debian-12-r1
+                      registry: docker.io
+                      repository: library/postgres
+                      tag: "16.6-bookworm"
                     auth:
                       password: {{ authentik_postgresql_password }}
                     primary:
