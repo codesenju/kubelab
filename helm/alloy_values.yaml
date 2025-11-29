@@ -86,6 +86,16 @@ alloy:
           target_label = "__name__"
           replacement = "traces_spanmetrics_duration_seconds_$1"
         }
+        
+        rule {
+          source_labels = ["service_name"]
+          target_label = "service"
+        }
+        
+        rule {
+          source_labels = ["span_name"]
+          target_label = "operation"
+        }
       }
       
       prometheus.remote_write "mimir" {
