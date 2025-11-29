@@ -67,7 +67,18 @@ alloy:
       }
       
       otelcol.exporter.prometheus "default" {
+        forward_to = [prometheus.relabel.spanmetrics.receiver]
+      }
+      
+      prometheus.relabel "spanmetrics" {
         forward_to = [prometheus.remote_write.mimir.receiver]
+        
+        rule {
+          source_labels = ["__name__"]
+          regex = "traces_span_metrics_(.*)"
+          target_label = "__name__"
+          replacement = "traces_spanmetrics_$1"
+        }
       }
       
       prometheus.remote_write "mimir" {
