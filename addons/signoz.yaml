@@ -21,7 +21,7 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.89.1
+              targetRevision: 0.103.0
               helm:
                 releaseName: signoz
                 values: |
