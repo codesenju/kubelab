@@ -72,6 +72,16 @@
                   otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
                   otelInsecure: true
                   insecureSkipVerify: true
+                  otelAgent:
+                    ports:
+                      otlp:
+                        hostPort: ""
+                      otlp-http:
+                        hostPort: ""
+                      metrics:
+                        hostPort: ""
+                      health-check:
+                        hostPort: ""
                   presets:
                     otlpExporter:
                       enabled: true

@@ -34,14 +34,14 @@
                   opentelemetry-collector:
                     config:
                       exporters:
-                        otlp/tempo:
-                          endpoint: tempo-distributor.grafana-system.svc.cluster.local:4317
+                        otlp:
+                          endpoint: otel-fanout-collector.otel-system.svc.cluster.local:4317
                           tls:
                             insecure: true
                       service:
                         pipelines:
                           traces:
-                            exporters: [spanmetrics, otlp/tempo]
+                            exporters: [spanmetrics, otlp]
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
