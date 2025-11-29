@@ -37,25 +37,81 @@
               targetRevision: 0.103.0
               helm:
                 releaseName: signoz
-                parameters:
-                  - name: global.storageClass
-                    value: nfs-csi
-                  - name: global.clusterName
-                    value: kubelab
-                  - name: imagePullSecrets[0]
-                    value: dockerhub-secret
-                  - name: clickhouse.installCustomStorageClass
-                    value: "true"
-                  - name: clickhouse.imagePullSecrets[0]
-                    value: dockerhub-secret
-                  - name: signoz.imagePullSecrets[0]
-                    value: dockerhub-secret
-                  - name: otelCollector.imagePullSecrets[0]
-                    value: dockerhub-secret
-                  - name: otelCollector.service.type
-                    value: ClusterIP
+                values: |
+                  global:
+                    storageClass: nfs-csi
+                    clusterName: kubelab
+                  imagePullSecrets:
+                    - dockerhub-secret
+                  
+                  # ClickHouse optimization
+                  clickhouse:
+                    installCustomStorageClass: true
+                    imagePullSecrets:
+                      - dockerhub-secret
+                    persistence:
+                      size: 50Gi
+                    resources:
+                      requests:
+                        cpu: 2000m
+                        memory: 4Gi
+                      limits:
+                        cpu: 4000m
+                        memory: 8Gi
+                    # Increase write buffer and merge settings
+                    configOverride: |
+                      <clickhouse>
+                        <max_concurrent_queries>200</max_concurrent_queries>
+                        <max_table_size_to_drop>0</max_table_size_to_drop>
+                        <max_partition_size_to_drop>0</max_partition_size_to_drop>
+                        <merge_tree>
+                          <max_bytes_to_merge_at_max_space_in_pool>161061273600</max_bytes_to_merge_at_max_space_in_pool>
+                          <parts_to_throw_insert>3000</parts_to_throw_insert>
+                          <parts_to_delay_insert>1000</parts_to_delay_insert>
+                        </merge_tree>
+                      </clickhouse>
+                  
+                  # OTel Collector optimization
+                  otelCollector:
+                    imagePullSecrets:
+                      - dockerhub-secret
                     service:
                       type: ClusterIP
+                    resources:
+                      requests:
+                        cpu: 500m
+                        memory: 1Gi
+                      limits:
+                        cpu: 2000m
+                        memory: 4Gi
+                    config:
+                      exporters:
+                        clickhousetraces:
+                          timeout: 30s
+                          sending_queue:
+                            enabled: true
+                            num_consumers: 20
+                            queue_size: 5000
+                          retry_on_failure:
+                            enabled: true
+                            initial_interval: 5s
+                            max_interval: 30s
+                            max_elapsed_time: 300s
+                        clickhouselogsexporter:
+                          timeout: 30s
+                          sending_queue:
+                            enabled: true
+                            num_consumers: 20
+                            queue_size: 5000
+                      processors:
+                        batch:
+                          timeout: 5s
+                          send_batch_size: 10000
+                          send_batch_max_size: 20000
+                  
+                  signoz:
+                    imagePullSecrets:
+                      - dockerhub-secret
             destination:
               server: https://kubernetes.default.svc
               namespace: signoz
