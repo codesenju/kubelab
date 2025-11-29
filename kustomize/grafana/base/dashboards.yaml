@@ -13,7 +13,7 @@ spec:
   plugins:
    - name: grafana-polystat-panel
      version: 2.1.2
----
+#---
 #apiVersion: grafana.integreatly.org/v1beta1
 #kind: GrafanaDashboard
 #metadata:
@@ -44,7 +44,7 @@ spec:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: k8s-views-global
+  name: k8s-views-global-custom
 spec:
   resyncPeriod: 5m
   folder: "Custom"
@@ -56,7 +56,7 @@ spec:
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
 metadata:
-  name: k8s-system-api-server
+  name: k8s-system-api-server-custom
 spec:
   resyncPeriod: 5m
   folder: "Custom"
