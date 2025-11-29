@@ -15,5 +15,5 @@ spec:
   volumes:
     - name: nfs-volume
       nfs:
-        server: 192.168.0.15 # change me
+        server: 192.168.0.16 # change me
         path: /mnt/pool1/k8s/nfs

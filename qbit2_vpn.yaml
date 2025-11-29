@@ -19,7 +19,7 @@ spec:
   capacity:
     storage: 50Gi
   nfs:
-    server: 192.168.0.15 # change me
+    server: 192.168.0.16 # change me
     path: /mnt/pool1/jellyfin/media
   accessModes:
     - ReadWriteMany
