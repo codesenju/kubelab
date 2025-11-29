@@ -1,0 +1,35 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: test-tracing-app
+  namespace: default
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: test-tracing-app
+  template:
+    metadata:
+      labels:
+        app: test-tracing-app
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/grafana/xk6-client-tracing:v0.0.9
+        env:
+        - name: ENDPOINT
+          value: "alloy.grafana-system.svc.cluster.local:4317"
+        - name: INSECURE
+          value: "true"
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: test-tracing-app
+  namespace: default
+spec:
+  selector:
+    app: test-tracing-app
+  ports:
+  - port: 80
+    targetPort: 8080
