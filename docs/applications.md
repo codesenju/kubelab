@@ -9,7 +9,7 @@ This document provides an overview of the applications deployed in the Kubelab K
 [ArgoCD](https://argoproj.github.io/cd/) is the GitOps continuous delivery tool used to manage application deployments.
 
 - **Namespace**: `argocd`
-- **Access**: https://argocd.local.jazziro.com
+- **Access**: https://argocd.local.example.com
 - **Authentication**: Integrated with Authentik
 
 ### Ingress NGINX

@@ -464,16 +464,16 @@ Add these variables to your Ansible vault (`group_vars/all/secrets.yaml`):
 fleet_manager_api_key: "YOUR_ENCODED_API_KEY"
 
 # Fleet Server URL
-fleet_server_default_url: "https://elastic-fleet.local.jazziro.com:443"
+fleet_server_default_url: "https://elastic-fleet.local.example.com:443"
 
 # Kibana URL
-kibana_url: "https://kibana.local.jazziro.com"
+kibana_url: "https://kibana.local.example.com"
 
 # Elasticsearch URL
-elastic_endpoint: "https://es.local.jazziro.com"
+elastic_endpoint: "https://es.local.example.com"
 
 # Gitea instance URL (for ArgoCD)
-gitea_instance_url: "https://git.jazziro.com"
+gitea_instance_url: "https://git.example.com"
 ```
 
 ## Deployment Architecture

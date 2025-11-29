@@ -108,9 +108,9 @@ Traefik Ingress (LoadBalancer)
     ↓
 ┌─────────────────────────────────────┐
 │  Internal Services                  │
-│  - grafana.local.jazziro.com       │
-│  - prometheus.local.jazziro.com    │
-│  - argocd.local.jazziro.com        │
+│  - grafana.local.example.com       │
+│  - prometheus.local.example.com    │
+│  - argocd.local.example.com        │
 └─────────────────────────────────────┘
     ↓
 Pod Network (Cilium CNI)

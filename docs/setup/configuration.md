@@ -47,16 +47,16 @@ ansible-vault edit group_vars/all/secrets.yaml --vault-password-file vault-pass.
 argocd_openid_client_secret: "<your-client-secret>"
 argocd_openid_issuer_url: "<your-openid-issuer-url>"
 argocd_openid_redirect_uri: "<your-redirect-uri>"
-argocd_domain: "argocd.local.jazziro.com"
+argocd_domain: "argocd.local.example.com"
 ```
 
 ### Cloudflared Configuration
 ```yaml
-cloudflared_hostname_1: "*.local.jazziro.com"
-cloudflared_hostname_2: "grafana.local.jazziro.com"
-cloudflared_hostname_3: "prometheus.local.jazziro.com"
-cloudflared_hostname_4: "argocd.local.jazziro.com"
-cloudflared_hostname_5: "minio.local.jazziro.com"
+cloudflared_hostname_1: "*.local.example.com"
+cloudflared_hostname_2: "grafana.local.example.com"
+cloudflared_hostname_3: "prometheus.local.example.com"
+cloudflared_hostname_4: "argocd.local.example.com"
+cloudflared_hostname_5: "minio.local.example.com"
 ```
 
 ### Database Configuration
@@ -70,12 +70,12 @@ authentik_postgresql_password: "<strong-password>"
 ```yaml
 s3_access_key: "<minio-access-key>"
 s3_secret_key: "<minio-secret-key>"
-s3_endpoint: "s3.local.jazziro.com"
+s3_endpoint: "s3.local.example.com"
 ```
 
 ### Ingress Configuration
 ```yaml
-ingress_httpd_test_host: "test.local.jazziro.com"
+ingress_httpd_test_host: "test.local.example.com"
 ```
 
 ### Gitea Configuration
@@ -86,10 +86,10 @@ gitea_db_user: "gitea"
 gitea_db_repmgr_password: "<strong-password>"
 gitea_admin_username: "admin"
 gitea_admin_password: "<strong-password>"
-gitea_admin_email: "admin@local.jazziro.com"
-gitea_domain: "gitea.local.jazziro.com"
+gitea_admin_email: "admin@local.example.com"
+gitea_domain: "gitea.local.example.com"
 gitea_registration_token: "<generate-token>"
-gitea_instance_url: "https://gitea.local.jazziro.com"
+gitea_instance_url: "https://gitea.local.example.com"
 ```
 
 ## Generating Secure Values
