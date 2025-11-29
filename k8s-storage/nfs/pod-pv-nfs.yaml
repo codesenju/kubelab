@@ -15,7 +15,7 @@ spec:
     - nfsvers=4.1
   nfs:
     path: /mnt/pool1/jellyfin/media    # Replace with your NFS share path
-    server: 192.168.0.15                  # Replace with your NFS server IP
+    server: 192.168.0.16                  # Replace with your NFS server IP
 ---
 apiVersion: v1
 kind: PersistentVolumeClaim

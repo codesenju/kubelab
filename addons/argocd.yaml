@@ -107,11 +107,15 @@
       shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
       register: argocd_password
       changed_when: false
+      tags:
+        - get_credentials
 
     - name: Get LoadBalancer IP
       shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
       register: lb_ip
       changed_when: false
+      tags:
+        - get_credentials
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
@@ -239,3 +243,5 @@
           - "👤 Username:  admin"
           - "🔑 Password:  {{ argocd_password.stdout }}"
           - "----------------------------------------"
+      tags:
+        - get_credentials
