@@ -33,7 +33,30 @@ alloy:
     # -- Create a new ConfigMap for the config file.
     create: true
     # -- Content to assign to the new ConfigMap.  This is passed into `tpl` allowing for templating from values.
-    content: ''
+    content: |
+      otelcol.receiver.otlp "default" {
+        grpc {
+          endpoint = "0.0.0.0:4317"
+        }
+        http {
+          endpoint = "0.0.0.0:4318"
+        }
+        output {
+          traces = [otelcol.processor.batch.default.input]
+        }
+      }
+      
+      otelcol.processor.batch "default" {
+        output {
+          traces = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+      
+      otelcol.exporter.otlp "tempo" {
+        client {
+          endpoint = "http://tempo-distributor.grafana-system.svc.cluster.local:4317"
+        }
+      }
 
     # -- Name of existing ConfigMap to use. Used when create is false.
     name: null
@@ -94,12 +117,15 @@ alloy:
   extraArgs: []
 
   # -- Extra ports to expose on the Alloy container.
-  extraPorts: []
-  # - name: "faro"
-  #   port: 12347
-  #   targetPort: 12347
-  #   protocol: "TCP"
-  #   appProtocol: "h2c"
+  extraPorts:
+  - name: "otlp-grpc"
+    port: 4317
+    targetPort: 4317
+    protocol: "TCP"
+  - name: "otlp-http"
+    port: 4318
+    targetPort: 4318
+    protocol: "TCP"
 
   # -- Host aliases to add to the Alloy container.
   hostAliases: []
