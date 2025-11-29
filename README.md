@@ -15,6 +15,8 @@ A production-grade Kubernetes homelab environment with GitOps, observability, an
 - [ArgoCD Applications](docs/guides/argocd-applications.md) - Managing applications with GitOps
 - [Monitoring Setup](docs/guides/monitoring-setup.md) - Prometheus, Mimir, Grafana configuration
 - [Storage Configuration](docs/guides/storage-configuration.md) - NFS and persistent volumes
+- [Kubernetes Upgrade](docs/upgrade_k8s.md) - Cluster upgrade procedures
+- [OptiPlex NVMe Notes](docs/optiplex_nvme_doc.md) - NVMe/USB adapter notes for OptiPlex
 - [Prometheus ServiceMonitor](docs/prometheus-servicemonitor-guide.md) - Creating custom metrics
 - [ArgoCD Metrics](docs/prometheus-argocd-metrics.md) - Monitoring ArgoCD
 
