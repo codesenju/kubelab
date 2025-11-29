@@ -1,0 +1,50 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: data-prepper-config
+  namespace: opensearch-system
+data:
+  pipelines.yaml: |
+    entry-pipeline:
+      source:
+        otel_trace_source:
+          ssl: false
+          port: 21890
+      processor:
+        - otel_trace_raw:
+      sink:
+        - pipeline:
+            name: "raw-pipeline"
+        - pipeline:
+            name: "service-map-pipeline"
+    
+    raw-pipeline:
+      source:
+        pipeline:
+          name: "entry-pipeline"
+      processor:
+        - otel_traces:
+      sink:
+        - opensearch:
+            hosts: ["https://opensearch-domain:9200"]
+            username: "admin"
+            password: "admin"
+            insecure: true
+            index_type: trace-analytics-raw
+    
+    service-map-pipeline:
+      source:
+        pipeline:
+          name: "entry-pipeline"
+      processor:
+        - service_map:
+      sink:
+        - opensearch:
+            hosts: ["https://opensearch-domain:9200"]
+            username: "admin"
+            password: "admin"
+            insecure: true
+            index_type: trace-analytics-service-map
+  
+  data-prepper-config.yaml: |
+    ssl: false
