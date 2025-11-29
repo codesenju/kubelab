@@ -1,0 +1,35 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: opentelemetry-operator-system
+  tasks:
+    - name: Deploy OpenTelemetry Operator
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: opentelemetry-operator
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: opentelemetry-operator
+              repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+              targetRevision: 0.72.0
+              helm:
+                releaseName: opentelemetry-operator
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
