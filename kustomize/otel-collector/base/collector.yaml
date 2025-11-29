@@ -55,13 +55,27 @@ spec:
           initial_interval: 5s
           max_interval: 30s
           max_elapsed_time: 300s
+      
+      otlp/data-prepper:
+        endpoint: data-prepper.opensearch-system.svc.cluster.local:21890
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: true
+          num_consumers: 10
+          queue_size: 1000
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
     
     service:
       pipelines:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/alloy, otlp/signoz]
+          exporters: [otlp/alloy, otlp/signoz, otlp/data-prepper]
         metrics:
           receivers: [otlp]
           processors: [batch]
