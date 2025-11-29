@@ -1,0 +1,54 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: otel-demo
+  tasks:
+
+    - name: Deploy OpenTelemetry Demo
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: otel-demo
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
+              chart: opentelemetry-demo
+              targetRevision: 0.33.8
+              helm:
+                releaseName: otel-demo
+                values: |
+                  grafana:
+                    enabled: false
+                  prometheus:
+                    enabled: false
+                  jaeger:
+                    enabled: false
+                  opentelemetry-collector:
+                    config:
+                      exporters:
+                        otlp/tempo:
+                          endpoint: tempo-distributor.grafana-system.svc.cluster.local:4317
+                          tls:
+                            insecure: true
+                      service:
+                        pipelines:
+                          traces:
+                            exporters: [spanmetrics, otlp/tempo]
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
