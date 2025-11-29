@@ -4,6 +4,14 @@ metadata:
   name: otel-fanout
 spec:
   mode: deployment
+  replicas: 2
+  resources:
+    requests:
+      cpu: 500m
+      memory: 1Gi
+    limits:
+      cpu: 1000m
+      memory: 2Gi
   config:
     receivers:
       otlp:
@@ -15,19 +23,38 @@ spec:
     
     processors:
       batch:
-        timeout: 10s
-        send_batch_size: 1024
+        timeout: 1s
+        send_batch_size: 512
+        send_batch_max_size: 1024
     
     exporters:
       otlp/alloy:
         endpoint: alloy.grafana-system.svc.cluster.local:4317
         tls:
           insecure: true
+        sending_queue:
+          enabled: true
+          num_consumers: 10
+          queue_size: 1000
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
       
       otlp/signoz:
         endpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
         tls:
           insecure: true
+        sending_queue:
+          enabled: true
+          num_consumers: 10
+          queue_size: 1000
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
     
     service:
       pipelines:
