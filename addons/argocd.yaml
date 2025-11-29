@@ -18,6 +18,30 @@
         release_values:
           global:
             domain: "{{ argocd_domain }}"
+          controller:
+            replicas: 1
+            metrics:
+              enabled: true
+              serviceMonitor:
+                enabled: false
+          server:
+            replicas: 2
+            metrics:
+              enabled: true
+              serviceMonitor:
+                enabled: false
+          repoServer:
+            replicas: 2
+            metrics:
+              enabled: true
+              serviceMonitor:
+                enabled: false
+          applicationSet:
+            replicas: 2
+            metrics:
+              enabled: true
+              serviceMonitor:
+                enabled: false
           configs:
             # secret:
             #   extra:
@@ -60,26 +84,8 @@
                       - email
             params:
               server.insecure: true
-          server:
-            replicas: 2
-            service:
-              type: ClusterIP
-              # type: LoadBalancer
-              # loadBalancerIP: "{{ argocd_static_ip }}"
-            ingress:
-              enabled: false
-            # extraArgs: 
-            #     - --dex-server
-            #     - http://argocd-argo-cd-dex.argocd.svc.cluster.local:5556
-            #     - --dex-server-plaintext 
           redis-ha:
             enabled: false
-          controller:
-            replicas: 1
-          repoServer:
-            replicas: 2
-          applicationSet:
-            replicas: 2
           dex:
             enabled: true
             # extraArgs:
@@ -150,6 +156,78 @@
                     port: 80
             tls:
               secretName: local-jazziro-com-tls
+
+    - name: Create ServiceMonitor for ArgoCD Application Controller
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: monitoring.coreos.com/v1
+          kind: ServiceMonitor
+          metadata:
+            name: argocd-metrics
+            namespace: '{{ namespace }}'
+            labels:
+              release: kube-prometheus-stack
+          spec:
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: argocd-metrics
+            endpoints:
+              - port: http-metrics
+
+    - name: Create ServiceMonitor for ArgoCD Server
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: monitoring.coreos.com/v1
+          kind: ServiceMonitor
+          metadata:
+            name: argocd-server-metrics
+            namespace: '{{ namespace }}'
+            labels:
+              release: kube-prometheus-stack
+          spec:
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: argocd-server-metrics
+            endpoints:
+              - port: http-metrics
+
+    - name: Create ServiceMonitor for ArgoCD Repo Server
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: monitoring.coreos.com/v1
+          kind: ServiceMonitor
+          metadata:
+            name: argocd-repo-server-metrics
+            namespace: '{{ namespace }}'
+            labels:
+              release: kube-prometheus-stack
+          spec:
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: argocd-repo-server
+            endpoints:
+              - port: http-metrics
+
+    - name: Create ServiceMonitor for ArgoCD ApplicationSet Controller
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: monitoring.coreos.com/v1
+          kind: ServiceMonitor
+          metadata:
+            name: argocd-applicationset-controller-metrics
+            namespace: '{{ namespace }}'
+            labels:
+              release: kube-prometheus-stack
+          spec:
+            selector:
+              matchLabels:
+                app.kubernetes.io/name: argocd-applicationset-controller
+            endpoints:
+              - port: http-metrics
 
     - name: Display Argo CD access information
       ansible.builtin.debug:
