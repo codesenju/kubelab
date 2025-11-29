@@ -60,7 +60,7 @@
             source:
               chart: k8s-infra
               repoURL: https://charts.signoz.io
-              targetRevision: 0.14.1
+              targetRevision: 0.15.0
               helm:
                 releaseName: signoz-k8s-infra
                 values: |
