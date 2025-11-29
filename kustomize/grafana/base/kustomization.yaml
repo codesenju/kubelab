@@ -5,3 +5,4 @@ resources:
 - grafana.yaml
 - datasource.yaml
 - dashboards.yaml
+- kube-prometheus-dashboards.yaml

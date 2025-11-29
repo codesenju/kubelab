@@ -1,0 +1,127 @@
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-cluster-overview
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/prometheus-operator/kube-prometheus/main/manifests/grafana-dashboardDefinitions.yaml"
+  configMapRef:
+    name: grafana-dashboard-k8s-resources-cluster
+    key: k8s-resources-cluster.json
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-resources-namespace
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  json: |
+    {
+      "dashboard": {
+        "id": null,
+        "title": "Kubernetes / Compute Resources / Namespace (Pods)",
+        "tags": ["kubernetes-mixin"],
+        "timezone": "browser",
+        "panels": [
+          {
+            "datasource": "prometheus",
+            "targets": [
+              {
+                "expr": "sum(rate(container_cpu_usage_seconds_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", container!=\"\", pod!=\"\"}[5m])) by (pod)",
+                "format": "time_series",
+                "legendFormat": "{{pod}}"
+              }
+            ],
+            "title": "CPU Usage",
+            "type": "graph"
+          }
+        ],
+        "time": {
+          "from": "now-1h",
+          "to": "now"
+        },
+        "templating": {
+          "list": [
+            {
+              "name": "cluster",
+              "type": "query",
+              "query": "label_values(up, cluster)"
+            },
+            {
+              "name": "namespace",
+              "type": "query",
+              "query": "label_values(kube_namespace_status_phase, namespace)"
+            }
+          ]
+        }
+      }
+    }
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-resources-workloads
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://grafana.com/api/dashboards/7249/revisions/1/download"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-resources-pod
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://grafana.com/api/dashboards/6417/revisions/1/download"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-resources-node
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://grafana.com/api/dashboards/7249/revisions/1/download"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: node-exporter-full
+spec:
+  resyncPeriod: 5m
+  folder: "Node Exporter"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://grafana.com/api/dashboards/1860/revisions/37/download"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: prometheus-stats
+spec:
+  resyncPeriod: 5m
+  folder: "Prometheus"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://grafana.com/api/dashboards/2/revisions/2/download"
