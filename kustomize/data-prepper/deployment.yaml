@@ -1,0 +1,50 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: data-prepper
+  namespace: opensearch-system
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: data-prepper
+  template:
+    metadata:
+      labels:
+        app: data-prepper
+    spec:
+      containers:
+      - name: data-prepper
+        image: opensearchproject/data-prepper:2.10.0
+        ports:
+        - containerPort: 21890
+          name: otel-traces
+        - containerPort: 4900
+          name: server
+        volumeMounts:
+        - name: config
+          mountPath: /usr/share/data-prepper/pipelines/pipelines.yaml
+          subPath: pipelines.yaml
+        - name: config
+          mountPath: /usr/share/data-prepper/config/data-prepper-config.yaml
+          subPath: data-prepper-config.yaml
+      volumes:
+      - name: config
+        configMap:
+          name: data-prepper-config
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: data-prepper
+  namespace: opensearch-system
+spec:
+  selector:
+    app: data-prepper
+  ports:
+  - name: otel-traces
+    port: 21890
+    targetPort: 21890
+  - name: server
+    port: 4900
+    targetPort: 4900
