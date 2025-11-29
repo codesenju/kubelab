@@ -54,3 +54,4 @@ local-jazziro-com-tls.yaml
 .idea/workspace.xml
 .idea/inspectionProfiles/profiles_settings.xml
 /.idea/*
+/ansible/group_vars/all/docker.yaml
