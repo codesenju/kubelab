@@ -53,4 +53,4 @@ local-jazziro-com-tls.yaml
 .idea/vcs.xml
 .idea/workspace.xml
 .idea/inspectionProfiles/profiles_settings.xml
-/.idea/aws.xml
+/.idea/*
