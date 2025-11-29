@@ -39,13 +39,13 @@ spec:
           readOnlyRootFilesystem: true
           capabilities:
             add:
-              - BPF
-              - SYS_PTRACE
-              - NET_RAW
-              - CHECKPOINT_RESTORE
-              - DAC_READ_SEARCH
-              - PERFMON
-              - NET_ADMIN
+              - BPF # <-- Important. Required for most eBPF probes to function correctly.
+              - SYS_PTRACE # <-- Important. Allows OBI to access the container namespaces and inspect executables.
+              - NET_RAW # <-- Important. Allows OBI to use socket filters for http requests.
+              - CHECKPOINT_RESTORE # <-- Important. Allows OBI to open ELF files.
+              - DAC_READ_SEARCH # <-- Important. Allows OBI to open ELF files.
+              - PERFMON # <-- Important. Allows OBI to load BPF programs.
+              - NET_ADMIN # <-- Important. Allows OBI to inject HTTP and TCP context propagation information.
         volumeMounts:
           - name: cgroup
             mountPath: /sys/fs/cgroup
