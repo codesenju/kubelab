@@ -1,0 +1,187 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: demo-tracing
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: frontend
+  namespace: demo-tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: frontend
+  template:
+    metadata:
+      labels:
+        app: frontend
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/open-telemetry/demo:latest-frontend
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://alloy.grafana-system.svc.cluster.local:4318"
+        - name: OTEL_SERVICE_NAME
+          value: "frontend"
+        - name: CHECKOUT_SERVICE_ADDR
+          value: "checkout:8080"
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: frontend
+  namespace: demo-tracing
+spec:
+  selector:
+    app: frontend
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: checkout
+  namespace: demo-tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: checkout
+  template:
+    metadata:
+      labels:
+        app: checkout
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/open-telemetry/demo:latest-checkoutservice
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://alloy.grafana-system.svc.cluster.local:4318"
+        - name: OTEL_SERVICE_NAME
+          value: "checkout"
+        - name: CART_SERVICE_ADDR
+          value: "cart:8080"
+        - name: PAYMENT_SERVICE_ADDR
+          value: "payment:8080"
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: checkout
+  namespace: demo-tracing
+spec:
+  selector:
+    app: checkout
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cart
+  namespace: demo-tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cart
+  template:
+    metadata:
+      labels:
+        app: cart
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/open-telemetry/demo:latest-cartservice
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://alloy.grafana-system.svc.cluster.local:4318"
+        - name: OTEL_SERVICE_NAME
+          value: "cart"
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: cart
+  namespace: demo-tracing
+spec:
+  selector:
+    app: cart
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: payment
+  namespace: demo-tracing
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: payment
+  template:
+    metadata:
+      labels:
+        app: payment
+    spec:
+      containers:
+      - name: app
+        image: ghcr.io/open-telemetry/demo:latest-paymentservice
+        env:
+        - name: OTEL_EXPORTER_OTLP_ENDPOINT
+          value: "http://alloy.grafana-system.svc.cluster.local:4318"
+        - name: OTEL_SERVICE_NAME
+          value: "payment"
+        ports:
+        - containerPort: 8080
+---
+apiVersion: v1
+kind: Service
+metadata:
+  name: payment
+  namespace: demo-tracing
+spec:
+  selector:
+    app: payment
+  ports:
+  - port: 8080
+    targetPort: 8080
+---
+apiVersion: batch/v1
+kind: CronJob
+metadata:
+  name: load-generator
+  namespace: demo-tracing
+spec:
+  schedule: "*/1 * * * *"
+  jobTemplate:
+    spec:
+      template:
+        spec:
+          containers:
+          - name: curl
+            image: curlimages/curl:latest
+            command:
+            - sh
+            - -c
+            - |
+              for i in $(seq 1 10); do
+                curl -s http://frontend:8080/ || true
+                sleep 5
+              done
+          restartPolicy: OnFailure
