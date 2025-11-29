@@ -48,7 +48,35 @@ alloy:
       
       otelcol.processor.batch "default" {
         output {
-          traces = [otelcol.exporter.otlp.tempo.input]
+          traces = [otelcol.connector.spanmetrics.default.input]
+        }
+      }
+      
+      otelcol.connector.spanmetrics "default" {
+        histogram {
+          explicit {
+            buckets = ["0.1s", "0.5s", "1s", "5s", "10s"]
+          }
+        }
+        dimensions {
+          name = "http.method"
+        }
+        dimensions {
+          name = "http.status_code"
+        }
+        output {
+          metrics = [otelcol.exporter.prometheus.default.input]
+          traces  = [otelcol.exporter.otlp.tempo.input]
+        }
+      }
+      
+      otelcol.exporter.prometheus "default" {
+        forward_to = [prometheus.remote_write.mimir.receiver]
+      }
+      
+      prometheus.remote_write "mimir" {
+        endpoint {
+          url = "http://mimir-nginx.grafana-system.svc.cluster.local/api/v1/push"
         }
       }
       
