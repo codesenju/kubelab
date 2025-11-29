@@ -5,7 +5,7 @@ metadata:
   name: k8s-birds-view-dashboard
 spec:
   resyncPeriod: 5m
-  folder: "Kubernetes"
+  folder: "Custom"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
@@ -14,20 +14,20 @@ spec:
    - name: grafana-polystat-panel
      version: 2.1.2
 ---
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDashboard
-metadata:
-  name:  k8s-log-aggregator-with-loki
-spec:
-  resyncPeriod: 5m
-  folder: "Kubernetes"
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
-  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/logs.json"
-  # plugins:
-  #  - name: grafana-polystat-panel
-  #    version: 2.1.2
+#apiVersion: grafana.integreatly.org/v1beta1
+#kind: GrafanaDashboard
+#metadata:
+#  name:  k8s-log-aggregator-with-loki
+#spec:
+#  resyncPeriod: 5m
+#  folder: "Kubernetes"
+#  instanceSelector:
+#    matchLabels:
+#      dashboards: "grafana"
+#  url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/logs.json"
+#  # plugins:
+#  #  - name: grafana-polystat-panel
+#  #    version: 2.1.2
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
@@ -35,7 +35,7 @@ metadata:
   name: k8s-litmus-experiments
 spec:
   resyncPeriod: 5m
-  folder: "Kubernetes"
+  folder: "Custom"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
@@ -47,7 +47,7 @@ metadata:
   name: k8s-views-global
 spec:
   resyncPeriod: 5m
-  folder: "Kubernetes"
+  folder: "Custom"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
@@ -59,7 +59,7 @@ metadata:
   name: k8s-system-api-server
 spec:
   resyncPeriod: 5m
-  folder: "Kubernetes"
+  folder: "Custom"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
@@ -71,23 +71,11 @@ metadata:
   name:  k8s-coredns
 spec:
   resyncPeriod: 5m
-  folder: "Kubernetes"
+  folder: "Custom"
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
   url: "https://raw.githubusercontent.com/codesenju/k8s-grafana-dashboards/main/CoreDNS_custom.json"
----
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDashboard
-metadata:
-  name: k6-prometheus
-spec:
-  resyncPeriod: 5m
-  folder: "Kubernetes"
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
-  url: "https://raw.githubusercontent.com/grafana/xk6-output-prometheus-remote/main/grafana/dashboards/k6-prometheus.json"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
@@ -100,3 +88,75 @@ spec:
     matchLabels:
       dashboards: "grafana"
   url: "https://raw.githubusercontent.com/argoproj/argo-cd/master/examples/dashboard.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-system-api-server
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-api-server.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-system-coredns
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-system-coredns.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-views-global
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-global.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-views-namespaces
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-namespaces.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-views-nodes
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-nodes.json"
+---
+apiVersion: grafana.integreatly.org/v1beta1
+kind: GrafanaDashboard
+metadata:
+  name: k8s-views-pods
+spec:
+  resyncPeriod: 5m
+  folder: "Kubernetes"
+  instanceSelector:
+    matchLabels:
+      dashboards: "grafana"
+  url: "https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-pods.json"
