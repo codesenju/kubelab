@@ -4,11 +4,11 @@
   become: true
   gather_facts: false
   vars:
-    target_namespace: opensearch-operator-system
+    target_namespace: opensearch-system
   tasks:
     - name: Deploy OpenSearch Operator ArgoCD Application
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -44,7 +44,7 @@
 
     - name: Create admin credentials secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -60,7 +60,7 @@
 
     - name: Deploy OpenSearch Cluster CRD
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -94,3 +94,36 @@
                 kind: Cluster
                 jsonPointers:
                   - /spec/managed/roles
+
+    - name: Create kube-prometheus-stack OpenSearch Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: opensearch
+            namespace: '{{ target_namespace }}'
+            annotations:
+              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "opensearch.{{ dns_name_1 }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "opensearch.{{ dns_name_1 }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: opensearch-domain-dashboards
+                          port:
+                            number: 5601
+      tags:
+        - ingress
