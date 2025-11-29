@@ -2,7 +2,7 @@
   become: no
   gather_facts: no
   vars:
-    nfs_server_ip: 192.168.0.15
+    nfs_server_ip: 192.168.0.16
     nfs_server_path: /mnt/pool1/AppData/stirlingpdf/
   tasks:
 
