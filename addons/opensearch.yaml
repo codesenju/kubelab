@@ -95,7 +95,7 @@
                 jsonPointers:
                   - /spec/managed/roles
 
-    - name: Create kube-prometheus-stack OpenSearch Ingress
+    - name: Create OpenSearch Ingress
       kubernetes.core.k8s:
         state: present
         definition:
@@ -106,10 +106,10 @@
             namespace: '{{ target_namespace }}'
             annotations:
               nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              # cert-manager.io/cluster-issuer: letsencrypt-production
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+#              cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
+            ingressClassName: nginx
             tls:
               - hosts:
                   - "opensearch.{{ dns_name_1 }}"
