@@ -1,3 +1,4 @@
+````markdown
 # Kubernetes Upgrade Guide
 
 This guide provides step-by-step instructions for upgrading your Kubernetes cluster.
@@ -47,7 +48,7 @@ sudo kubeadm upgrade node
 
 ```bash
 # Drain the node (run this from a node with kubectl access)
-kubectl drain <node-name> --ignore-daemonsets
+kubectl drain `<node-name>` --ignore-daemonsets
 
 # Check available versions
 apt list -a kubelet
@@ -63,7 +64,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 
 # Make the node schedulable again
-kubectl uncordon <node-name>
+kubectl uncordon `<node-name>`
 ```
 
 ### 3. Upgrade Worker Nodes
@@ -80,7 +81,7 @@ sudo apt-mark hold kubeadm
 sudo kubeadm upgrade node
 
 # Drain the node (run this from a node with kubectl access)
-kubectl drain <node-name> --ignore-daemonsets --delete-emptydir-data
+kubectl drain `<node-name>` --ignore-daemonsets --delete-emptydir-data
 
 # Upgrade kubelet and kubectl
 sudo apt-mark unhold kubelet kubectl && \
@@ -92,7 +93,7 @@ sudo systemctl daemon-reload
 sudo systemctl restart kubelet
 
 # Make the node schedulable again
-kubectl uncordon <node-name>
+kubectl uncordon `<node-name>`
 ```
 
 ### 4. Verify the Upgrade
@@ -110,3 +111,5 @@ kubectl get pods -n kube-system
 1. Update any manifests that might be affected by API deprecations
 2. Test critical applications
 3. Update monitoring and logging configurations if necessary
+
+````

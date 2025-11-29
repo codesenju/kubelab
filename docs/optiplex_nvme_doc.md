@@ -1,3 +1,4 @@
+````markdown
 
 # NVMe Support on Dell OptiPlex (Service Tag: BM9NW14)
 
@@ -144,8 +145,38 @@ qm set 102 --hostpci0 0000:03:00.0
 
 ---
 
-## 8. Conclusion
+## 8. Live Commands / Evidence
+
+The following are actual command outputs captured from `kubelab-1` showing the VM list, USB device identification, and disk-by-id entries. These are provided as provenance for the diagnostics above.
+
+```
+root@kubelab-1:~# qm list
+      VMID NAME                 STATUS     MEM(MB)    BOOTDISK(GB) PID
+       101 win11                stopped    4096              64.00 0
+       102 TrueNAS              running    8192              20.00 991475
+      2001 ubuntu               running    10240             80.00 1888
+      4000 k8s-lb               running    1024              20.00 1965
+      4001 k8s-control-plane-1  running    6144              30.00 2041
+      4002 k8s-control-plane-2  running    6144              30.00 2102
+      5001 k8s-worker-1         running    16384             80.00 2188
+      5002 k8s-worker-2         running    16384             80.00 2261
+root@kubelab-1:~# lsusb -v -d 0bda:9210 | grep -i bcdDevice
+  bcdDevice           f0.01
+root@kubelab-1:~# ls -l /dev/disk/by-id/ | grep RTL9210
+lrwxrwxrwx 1 root root  9 Nov 29 11:29 usb-Realtek_RTL9210_NVME_012345679989-0:0 -> ../../sda
+lrwxrwxrwx 1 root root 10 Nov 29 11:29 usb-Realtek_RTL9210_NVME_012345679989-0:0-part1 -> ../../sda1
+root@kubelab-1:~# qm set 102 -scsi2 /dev/disk/by-id/usb-Realtek_RTL9210_NVME_012345679989-0:0
+update VM 102: -scsi2 /dev/disk/by-id/usb-Realtek_RTL9210_NVME_012345679989-0:0
+```
+
+---
+
+## 9. Conclusion
 
 Your Dell OptiPlex does **not** allow NVMe in the M.2 A/E (WiFi) slot due to electrical lane limitations.  
 To use an internal NVMe drive, a **PCIe → NVMe adapter** is the correct and fully supported method.
 
+
+````
+
+*** End Patch
