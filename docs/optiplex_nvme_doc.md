@@ -145,6 +145,43 @@ qm set 102 --hostpci0 0000:03:00.0
 
 ---
 
+## 8. What you can do instead
+
+You’ve got three realistic options:
+
+1) Pass the USB enclosure as a USB device to a VM (cluster-aware)
+
+- In the Proxmox web UI: Datacenter → Resource Mappings → USB Devices
+- Click **Add**, pick the Realtek `0bda:9210` device, and give it an ID.
+- On the VM: **Hardware** → **Add** → **USB Device** → **Use mapping**.
+
+Inside the VM it will appear as a USB disk.
+
+2) Pass the disk as a raw block device to a VM (no “mapping”, but cleanest for NAS VMs like TrueNAS)
+
+- On the Proxmox host shell run:
+
+```bash
+ls -l /dev/disk/by-id/ | grep RTL9210
+```
+
+Then, for example:
+
+```bash
+qm set 105 -scsi2 /dev/disk/by-id/usb-Realtek_RTL9210_NVME_...-0:0
+```
+
+(Replace `105` with your VMID and the correct disk ID from the `ls -l` output.)
+
+The VM now sees the disk as a regular SCSI disk (no partitions needed if a NAS OS will manage it).
+
+3) Use it as Proxmox storage (no passthrough)
+
+- In the Proxmox web UI: Node `kubelab-1` → **Disks** → create Directory / LVM / ZFS on `/dev/sda` or a partition (e.g. `sda2`).
+- Then add virtual disks for VMs on that storage (box the NVMe into Proxmox storage and use normally).
+
+---
+
 ## 8. Live Commands / Evidence
 
 The following are actual command outputs captured from `kubelab-1` showing the VM list, USB device identification, and disk-by-id entries. These are provided as provenance for the diagnostics above.
