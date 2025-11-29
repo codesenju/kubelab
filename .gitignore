@@ -47,3 +47,9 @@ Automation/n8n/smaple-data-reels.json
 Automation/n8n/beatfailure_posts.json
 Automation/n8n/*.mp3
 local-jazziro-com-tls.yaml
+.idea/kubelab.iml
+.idea/misc.xml
+.idea/modules.xml
+.idea/vcs.xml
+.idea/workspace.xml
+.idea/inspectionProfiles/profiles_settings.xml
