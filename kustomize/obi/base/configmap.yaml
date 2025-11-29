@@ -9,10 +9,8 @@ data:
         - k8s_namespace: "media-stack"
     log_level: INFO
     otel_traces_export:
-      - endpoint: http://alloy.grafana-system.svc.cluster.local:4317
-        protocol: grpc
-      - endpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4317
-        protocol: grpc
+      endpoint: http://alloy.grafana-system.svc.cluster.local:4317
+      protocol: grpc
     otel_metrics_export:
       endpoint: http://alloy.grafana-system.svc.cluster.local:4317
       protocol: grpc
