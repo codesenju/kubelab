@@ -80,6 +80,8 @@
                     hostMetrics:
                       enabled: true
                       collectionInterval: 30s
+                    hostPort:
+                      enabled: false
                     logsCollection:
                       enabled: true
                       blacklist:
