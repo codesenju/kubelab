@@ -207,9 +207,9 @@ kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.pas
 ```
 
 Access dashboards:
-- **ArgoCD**: https://argocd.local.jazziro.com
-- **Grafana**: https://grafana.local.jazziro.com
-- **Prometheus**: https://prometheus.local.jazziro.com
+- **ArgoCD**: https://argocd.local.example.com
+- **Grafana**: https://grafana.local.example.com
+- **Prometheus**: https://prometheus.local.example.com
 
 ## Step 9: Deploy Applications (Optional)
 

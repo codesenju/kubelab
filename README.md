@@ -150,9 +150,9 @@ kubectl create secret docker-registry dockerhub-secret \
 ## 🔍 Monitoring & Observability
 
 Access dashboards:
-- **Grafana**: https://grafana.local.jazziro.com
-- **Prometheus**: https://prometheus.local.jazziro.com
-- **ArgoCD**: https://argocd.local.jazziro.com
+- **Grafana**: https://grafana.local.example.com
+- **Prometheus**: https://prometheus.local.example.com
+- **ArgoCD**: https://argocd.local.example.com
 
 ## 🐛 Troubleshooting
 
