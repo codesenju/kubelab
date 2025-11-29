@@ -1,0 +1,29 @@
+---
+apiVersion: v1
+kind: Namespace
+metadata:
+  name: trace-demo
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: trace-generator
+  namespace: trace-demo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: trace-generator
+  template:
+    metadata:
+      labels:
+        app: trace-generator
+    spec:
+      containers:
+      - name: generator
+        image: grafana/xk6-client-tracing:v0.0.9
+        env:
+        - name: ENDPOINT
+          value: "alloy.grafana-system.svc.cluster.local:4317"
+        - name: INSECURE
+          value: "true"
