@@ -8,9 +8,7 @@ data:
       instrument:
         - k8s_namespace: "media-stack"
         - k8s_namespace: "immich"
-        - k8s_namespace: "homarr"
-        - k8s_namespace: "argocd"    
-        - k8s_namespace: "zero-trust"    
+        - k8s_namespace: "homarr" 
         - k8s_namespace: "ddns"    
         - k8s_namespace: "cloudflared"
     log_level: INFO
