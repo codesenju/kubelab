@@ -1,5 +1,3 @@
-````markdown
-
 # NVMe Support on Dell OptiPlex (Service Tag: BM9NW14)
 
 ## Summary & Technical Notes
@@ -212,8 +210,3 @@ update VM 102: -scsi2 /dev/disk/by-id/usb-Realtek_RTL9210_NVME_012345679989-0:0
 
 Your Dell OptiPlex does **not** allow NVMe in the M.2 A/E (WiFi) slot due to electrical lane limitations.  
 To use an internal NVMe drive, a **PCIe → NVMe adapter** is the correct and fully supported method.
-
-
-````
-
-*** End Patch
