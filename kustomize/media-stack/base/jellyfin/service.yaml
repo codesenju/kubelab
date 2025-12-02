@@ -25,3 +25,12 @@ metadata:
 spec:
   type: LoadBalancer
   loadBalancerIP: 192.168.0.55
+  ports:
+  - name: http
+    port: 8096
+    targetPort: 8096
+  - name: https
+    port: 8920
+    targetPort: 8920
+  selector:
+    app: jellyfin
