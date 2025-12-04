@@ -49,5 +49,3 @@ spec:
       diskSize: "10Gi"
       persistence:
         storageClass: ""
-        accessModes:
-          - ReadWriteOnce
