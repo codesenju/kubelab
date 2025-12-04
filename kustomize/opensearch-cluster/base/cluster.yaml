@@ -47,5 +47,3 @@ spec:
         - "data"
         - "cluster_manager"
       diskSize: "10Gi"
-      persistence:
-        storageClass: ""
