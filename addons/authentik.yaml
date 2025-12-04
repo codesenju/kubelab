@@ -107,7 +107,7 @@
             source:
               chart: authentik
               repoURL: https://charts.goauthentik.io/
-              targetRevision: 2025.2.4
+              targetRevision: 2025.10.2
               helm:
                 releaseName: authentik
                 values: |
@@ -135,6 +135,9 @@
                         enabled: true
                         mountPath: /bitnami/postgresql/data
                         existingClaim: authentik-db
+                      extraVolumeMounts:
+                        - name: postgresql-config
+                          mountPath: /bitnami/postgresql/conf
                   redis:
                     enabled: true
                     master:
