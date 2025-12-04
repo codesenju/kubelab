@@ -6,6 +6,49 @@
   vars:
     target_namespace: opensearch-system
   tasks:
+    - name: Deploy OpenSearch master-0 PV
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: opensearch-master-0
+            labels:
+              opensearch-node: master-0
+          spec:
+            capacity:
+              storage: 10Gi
+            nfs:
+              server: 192.168.0.16
+              path: /mnt/pool1/AppData/opensearch/master-0
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy OpenSearch master-1 PV
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: opensearch-master-1
+            labels:
+              opensearch-node: master-1
+          spec:
+            capacity:
+              storage: 10Gi
+            nfs:
+              server: 192.168.0.16
+              path: /mnt/pool1/AppData/opensearch/master-1
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
     - name: Deploy OpenSearch Operator ArgoCD Application
       kubernetes.core.k8s:
         state: present
