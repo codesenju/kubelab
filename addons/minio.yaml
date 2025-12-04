@@ -61,7 +61,7 @@
             namespace: '{{ namespace }}'
             annotations:
               external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
-              # cert-manager.io/cluster-issuer: letsencrypt-production
+              cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: nginx
             tls:
