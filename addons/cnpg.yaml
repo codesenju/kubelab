@@ -28,7 +28,7 @@
             source:
               chart: cloudnative-pg
               repoURL: https://cloudnative-pg.github.io/charts
-              targetRevision: 0.23.2
+              targetRevision: 0.26.1
               helm:
                 releaseName: cnpg
                 values: |
@@ -42,6 +42,7 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+                - ServerSideApply=true
 
     - name: Wait for CloudNativePG operator pods to be ready
       kubernetes.core.k8s_info:
