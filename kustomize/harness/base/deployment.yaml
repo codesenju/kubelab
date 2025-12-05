@@ -18,6 +18,8 @@ spec:
         - name: harness
           image: IMAGE_TEMPLATE
           env:
+            - name: GITNESS_DATABASE_DRIVER
+              value: "postgres"
             - name: GITNESS_URL_BASE
               valueFrom:
                 secretKeyRef:
