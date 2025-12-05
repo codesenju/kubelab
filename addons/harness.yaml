@@ -103,6 +103,6 @@
                         service:
                           name: harness
                           port:
-                            number: 3000
+                            number: 80
       tags:
         - ingress
