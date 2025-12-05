@@ -4,7 +4,7 @@
 
     - name: Create elastic-fleet-secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -27,7 +27,7 @@
 
     - name: Deploy elastic agent managed fleet
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

@@ -6,7 +6,7 @@
   tasks:
     - name: Create apm-server-config ConfigMap
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: ConfigMap
@@ -55,7 +55,7 @@
 
     - name: Create ArgoCD Application for Elastic APM Agent
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -82,7 +82,7 @@
 
     - name: Create APM ingress
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress

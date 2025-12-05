@@ -3,7 +3,7 @@
   gather_facts: no
   become: no
   vars:
-    namespace: minio
+    target_namespace: minio
   tasks:
     - name: Deploy minio
       kubernetes.core.k8s:
@@ -27,7 +27,7 @@
                   app.kubernetes.io/instance: minio
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ namespace }}'
+              namespace: '{{ target_namespace }}'
             syncPolicy:
               automated:
                 prune: true
@@ -45,7 +45,7 @@
           kind: Secret
           metadata:
             name: minio-env
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           stringData:
             MINIO_ROOT_USER: minio
             MINIO_ROOT_PASSWORD: '{{ minio_password }}'
@@ -58,12 +58,12 @@
           kind: Ingress
           metadata:
             name: minio
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
               cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: nginx
+            ingressClassName: traefik
             tls:
             - hosts:
               - "minio.{{ dns_name_1 }}"

@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: harness
+  labels:
+    app: harness
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: harness
+  template:
+    metadata:
+      labels:
+        app: harness
+    spec:
+      containers:
+        - name: harness
+          image: IMAGE_TEMPLATE
+          env:
+            - name: GITNESS_URL_BASE
+              valueFrom:
+                secretKeyRef:
+                  name: harness-secrets
+                  key: GITNESS_URL_BASE
+            - name: GITNESS_URL_REGISTRY
+              valueFrom:
+                secretKeyRef:
+                  name: harness-secrets
+                  key: GITNESS_URL_REGISTRY
+            - name: GITNESS_USER_SIGNUP_ENABLED
+              value: "false"
+            - name: GITNESS_PRINCIPAL_ADMIN_EMAIL
+              valueFrom:
+                secretKeyRef:
+                  name: harness-secrets
+                  key: GITNESS_PRINCIPAL_ADMIN_EMAIL
+            - name: GITNESS_PRINCIPAL_ADMIN_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: harness-secrets
+                  key: GITNESS_PRINCIPAL_ADMIN_PASSWORD
+            - name: GITNESS_ENCRYPTER_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: harness-secrets
+                  key: GITNESS_ENCRYPTER_SECRET
+            - name: GITNESS_ENCRYPTER_MIXED_CONTENT
+              value: "true"
+            - name: GITNESS_DATABASE_DATASOURCE
+              valueFrom:
+                secretKeyRef:
+                  name: harness-secrets
+                  key: GITNESS_DATABASE_DATASOURCE
+          volumeMounts:
+            - name: harness-data
+              mountPath: /data
+              subPath: harness
+            - name: docker-socket
+              mountPath: /var/run/docker.sock
+          ports:
+            - containerPort: 3000
+            - containerPort: 3022
+          securityContext:
+            runAsUser: 1000
+            runAsGroup: 1000
+      volumes:
+      - name: harness-data
+        persistentVolumeClaim:
+          claimName: harness-data
+      - name: docker-socket
+        hostPath:
+          path: /var/run/docker.sock
+          type: Socket

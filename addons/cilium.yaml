@@ -32,7 +32,7 @@
     - name: Clean up temporary files
       file:
         path: "{{ item }}"
-        state: absent
+        state: present
       loop:
         - /tmp/cilium-cli.tar.gz
         - /tmp/cilium-cli
