@@ -3,7 +3,7 @@ kind: Cluster
 metadata:
   name: harness-postgres
 spec:
-  imageName: postgres:17
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
   instances: 1
 
   postgresql:
