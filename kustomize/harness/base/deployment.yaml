@@ -57,7 +57,7 @@ spec:
               mountPath: /data
               subPath: harness
             - name: docker-socket
-              mountPath: /var/run/docker.sock
+              mountPath: /run/containerd/containerd.sock
           ports:
             - containerPort: 3000
             - containerPort: 3022
@@ -70,5 +70,5 @@ spec:
           claimName: harness-data
       - name: docker-socket
         hostPath:
-          path: /var/run/docker.sock
+          path: /run/containerd/containerd.sock
           type: Socket
