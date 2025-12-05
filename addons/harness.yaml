@@ -1,0 +1,108 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: harness
+  tasks:
+
+    - name: Deploy Harness
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: harness
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/harness/overlays/prod
+              targetRevision: main
+              kustomize:
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                labels:
+                  app.kubernetes.io/instance: harness-prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+      tags: harness
+
+    - name: Create Harness secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harness-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            GITNESS_URL_BASE: "{{ harness_url_base }}"
+            GITNESS_URL_REGISTRY: "{{ harness_url_registry }}"
+            GITNESS_PRINCIPAL_ADMIN_EMAIL: "{{ harness_admin_email }}"
+            GITNESS_PRINCIPAL_ADMIN_PASSWORD: "{{ harness_admin_password }}"
+            GITNESS_ENCRYPTER_SECRET: "{{ harness_encrypter_secret }}"
+            GITNESS_DATABASE_DATASOURCE: "{{ harness_database_datasource }}"
+      tags: harness
+
+    - name: Create Harness database secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harness-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ harness_db_username }}"
+            password: "{{ harness_db_password }}"
+      tags: harness
+
+    - name: Create harness ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: harness
+            namespace: '{{ target_namespace }}'
+            annotations:
+              # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "harness.{{ dns_name_1 }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "harness.{{ dns_name_1 }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: harness
+                          port:
+                            number: 3000
+      tags:
+        - ingress

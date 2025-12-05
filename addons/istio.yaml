@@ -176,7 +176,7 @@
     - name: Clean up temporary files
       file:
         path: "{{ item }}"
-        state: absent
+        state: present
       loop:
         - /tmp/istio.tar.gz
         - "/tmp/istio-{{ istio_version }}"

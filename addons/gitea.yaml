@@ -6,7 +6,7 @@
 
     - name: Deploy cloudnative-postgresql gitea cluster
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -44,7 +44,7 @@
 
     - name: Deploy Gitea
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -138,7 +138,7 @@
 
     - name: Create gitea-runner-secret for Gitea runner
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -152,7 +152,7 @@
 
     - name: Deploy gitea-runner
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

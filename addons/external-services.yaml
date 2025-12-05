@@ -2,7 +2,7 @@
   gather_facts: no
   become: no
   vars:
-    namespace: external-services
+    target_namespace: external-services
   tasks:
 
   # Create external-services namespace
@@ -13,17 +13,17 @@
           apiVersion: v1
           kind: Namespace
           metadata:
-            name: '{{ namespace }}'
+            name: '{{ target_namespace }}'
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
             name: local-jazziro-com
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -42,7 +42,7 @@
           kind: Service
           metadata:
             name: webhook-site
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             type: ExternalName
             externalName: 192.168.0.31
@@ -60,7 +60,7 @@
           kind: IngressRoute
           metadata:
             name: webhook-site
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -86,7 +86,7 @@
           kind: Service
           metadata:
             name: dockge
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             type: ExternalName
             externalName: 192.168.0.31
@@ -104,7 +104,7 @@
           kind: IngressRoute
           metadata:
             name: dockge
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -130,7 +130,7 @@
           kind: Service
           metadata:
             name: proxmox
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             type: ExternalName
             externalName: 192.168.0.11
@@ -148,7 +148,7 @@
           kind: IngressRoute
           metadata:
             name: proxmox
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -174,7 +174,7 @@
           kind: Service
           metadata:
             name: homeassistant
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             type: ExternalName
             externalName: 192.168.0.31
@@ -192,7 +192,7 @@
           kind: IngressRoute
           metadata:
             name: homeassistant
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -218,7 +218,7 @@
           kind: Service
           metadata:
             name: pihole
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             type: ExternalName
             externalName: 192.168.0.31
@@ -236,7 +236,7 @@
           kind: IngressRoute
           metadata:
             name: pihole
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -262,7 +262,7 @@
           kind: Service
           metadata:
             name: cloudbeaver
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             type: ExternalName
             externalName: 192.168.0.31
@@ -280,7 +280,7 @@
           kind: IngressRoute
           metadata:
             name: cloudbeaver
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -305,7 +305,7 @@
           kind: Service
           metadata:
             name: beszel
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
           spec:
             type: ExternalName
             externalName: 192.168.0.31
@@ -325,12 +325,12 @@
           kind: Ingress
           metadata:
             name: beszel
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
-              # cert-manager.io/cluster-issuer: letsencrypt-production
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: nginx
+            ingressClassName: traefik
             tls:
             - hosts:
               - "beszel.{{ dns_name_1 }}"
@@ -347,4 +347,4 @@
                       port:
                         number: 8090
       tags: 
-      - beszel
+      - beszel-ingress

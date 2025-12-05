@@ -247,29 +247,36 @@
                     kind: Service
                     port: 8080
             tls:
-              secretName: local-jazziro-com-tlså
+              secretName: local-jazziro-com-tls
 
-    - name: Create signoz-otel-collector IngressRoute
+    - name: Create signoz-otel-collector Ingress
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
           metadata:
             name: signoz-otel-collector
             namespace: '{{ namespace }}'
             annotations:
-              kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`signoz-otel-collector.{{ dns_name_1 }}`)
-                kind: Rule
-                services:
-                  - name: signoz-otel-collector
-                    kind: Service
-                    port: 4318
+            ingressClassName: traefik
             tls:
+            - hosts:
+              - "signoz-otel-collector.{{ dns_name_1 }}"
               secretName: local-jazziro-com-tls
+            rules:
+            - host: "signoz-otel-collector.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: signoz-otel-collector
+                      port:
+                        number: 4318
+      tags: 
+      - ingress
