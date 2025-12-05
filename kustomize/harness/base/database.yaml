@@ -1,0 +1,51 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: harness-postgres
+spec:
+  imageName: postgres:17
+  instances: 1
+
+  managed:
+    roles:
+      - name: harness
+        superuser: true
+        login: true
+
+  bootstrap:
+    initdb:
+      database: harness
+      owner: harness
+      secret:
+        name: harness-postgres-secrets
+
+  storage:
+    size: 2Gi
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 2Gi
+      selector:
+        matchLabels:
+          service: harness-postgres-data
+      storageClassName: ""
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: harness-postgres-data
+  labels:
+    service: harness-postgres-data
+spec:
+  capacity:
+    storage: 2Gi
+  nfs:
+    server: 192.168.0.16
+    path: /mnt/pool1/AppData/cnpg/harness
+  accessModes:
+    - ReadWriteOnce
+  mountOptions:
+    - noatime
+    - nfsvers=4.2

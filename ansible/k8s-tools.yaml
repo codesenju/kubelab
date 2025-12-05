@@ -45,7 +45,7 @@
     - name: Clean up temporary files
       file:
         path: "{{ item }}"
-        state: absent
+        state: present
       with_items:
         - /tmp/k9s.tar.gz
         - /tmp/k9s
@@ -105,7 +105,7 @@
     - name: Remove kube-bench tarball from /tmp
       file:
         path: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
-        state: absent
+        state: present
 
     - name: Print kube-bench usage instructions
       debug:
@@ -137,12 +137,12 @@
     - name: Remove old etcd tarball if exists
       file:
         path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
-        state: absent
+        state: present
 
     - name: Remove old etcd download directory if exists
       file:
         path: /tmp/etcd-download-test
-        state: absent
+        state: present
 
     - name: Create etcd download directory
       file:
@@ -169,7 +169,7 @@
     - name: Remove etcd tarball after extraction
       file:
         path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
-        state: absent
+        state: present
 
     - name: Move etcd, etcdctl, and etcdutl binaries to /usr/local/bin
       copy:
@@ -185,7 +185,7 @@
     - name: Remove etcd download directory
       file:
         path: /tmp/etcd-download-test
-        state: absent
+        state: present
 
     - name: Print etcd, etcdctl, and etcdutl versions
       shell: |

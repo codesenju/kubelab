@@ -125,7 +125,7 @@
 
     - name: Create synthetic-monitor-config secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -150,7 +150,7 @@
 
     - name: Create ArgoCD Application for Elastic Synthetic Monitor
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application

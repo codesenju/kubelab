@@ -185,10 +185,10 @@
             namespace: '{{ target_namespace }}'
             annotations:
               nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
               cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: nginx
+            ingressClassName: traefik
             tls:
               - hosts:
                   - "opensearch.{{ dns_name_1 }}"
