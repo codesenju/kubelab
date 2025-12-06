@@ -17,7 +17,8 @@ deployment:
 ports:
   postgres:
     port: 5432
-    expose: true
+    expose:
+      default: true
     exposedPort: 5432
     protocol: TCP
 
