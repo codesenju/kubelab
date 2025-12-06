@@ -14,6 +14,13 @@ deployment:
   additionalContainers: []
   initContainers: []
 
+ports:
+  postgres:
+    port: 5432
+    expose: true
+    exposedPort: 5432
+    protocol: TCP
+
 ingressRoute:
   dashboard:
     enabled: false
@@ -28,6 +35,8 @@ providers:
     allowExternalNameServices: true
     publishedService:
       enabled: false
+  kubernetesGateway:
+    enabled: true
 
 rbac:
   enabled: true
