@@ -112,3 +112,21 @@
                     kind: TraefikService
             tls:
               secretName: local-jazziro-com-tls
+
+    - name: Apply Gateway API CRDs directly from upstream URL
+      ansible.builtin.shell: |
+        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/standard-install.yaml
+      register: gateway_crds_apply
+      # Removed 'warn: false' from args
+      args:
+        # chdir is a valid arg, but often unnecessary for this command pattern
+        # You might keep args here if you need to set 'chdir', 'creates', etc.
+      tags:
+        - gateway-crds
+    
+    - name: Show apply result
+      ansible.builtin.debug:
+        var: gateway_crds_apply
+      tags:
+        # Removed the stray comment/tag that caused syntax issues in the original
+        - gateway-crds
