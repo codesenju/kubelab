@@ -54,3 +54,73 @@
             username: "{{ domain_locker_db_username }}"
             password: "{{ domain_locker_db_password }}"
       tags: domain-locker
+
+    - name: Create cert-manager Certificate for Postgres
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: domain-locker-postgres-cert
+            namespace: "{{ target_namespace }}"
+          spec:
+            # Request both a wildcard for the logical cluster domain and the specific DB hostname
+            dnsNames:
+              - "{{ dns_name_2 }}"
+              - "{{ domain_locker_postgres_host }}"
+            secretName: domain-locker-postgres-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+      tags: ingress
+
+    # Traefik TLSStore removed — using Gateway API (Gateway + TLSRoute) instead
+
+    - name: Create Gateway (Gateway API) for Postgres TLS termination
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1beta1
+          kind: Gateway
+          metadata:
+            name: domain-locker-gateway
+            namespace: "{{ target_namespace }}"
+          spec:
+            gatewayClassName: traefik
+            listeners:
+              - name: postgres-tls
+                protocol: TLS
+                port: 5432
+                hostname: "{{ domain_locker_postgres_host }}"
+                tls:
+                  mode: Terminate
+                  certificateRefs:
+                    - name: domain-locker-postgres-tls
+                      kind: Secret
+                      group: ""
+                      namespace: "{{ target_namespace }}"
+      tags: ingress
+
+    - name: Create TLSRoute to forward TLS traffic to Postgres service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1alpha2
+          kind: TLSRoute
+          metadata:
+            name: domain-locker-postgres-tlsroute
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: domain-locker-gateway
+            hostnames:
+              - "{{ domain_locker_postgres_host }}"
+            rules:
+              - matches:
+                  - sni:
+                      exact: "{{ domain_locker_postgres_host }}"
+                forwardTo:
+                  - serviceName: domain-locker-postgres-rw
+                    port: 5432
+      tags: ingress

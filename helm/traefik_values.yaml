@@ -38,6 +38,7 @@ providers:
       enabled: false
   kubernetesGateway:
     enabled: true
+    experimentalChannel: true
 
 rbac:
   enabled: true
