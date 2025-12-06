@@ -1,0 +1,56 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: domain-locker
+  tasks:
+
+    - name: Deploy domain-locker
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: domain-locker
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/domain-locker/overlays/prod
+              targetRevision: main
+              kustomize:
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                labels:
+                  app.kubernetes.io/instance: domain-locker-prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+      tags: domain-locker
+
+    - name: Create domain-locker database secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: domain-locker-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ domain_locker_db_username }}"
+            password: "{{ domain_locker_db_password }}"
+      tags: domain-locker
