@@ -1,0 +1,57 @@
+apiVersion: postgresql.cnpg.io/v1
+kind: Cluster
+metadata:
+  name: domain-locker-postgres
+spec:
+  imageName: ghcr.io/cloudnative-pg/postgresql:17
+  instances: 1
+
+  postgresql:
+    parameters:
+      shared_buffers: "256MB"
+    pg_hba:
+      - host all all all scram-sha-256
+
+  managed:
+    roles:
+      - name: domain-locker
+        superuser: true
+        login: true
+
+  bootstrap:
+    initdb:
+      database: domain-locker
+      owner: domain-locker
+      secret:
+        name: domain-locker-postgres-secrets
+
+  storage:
+    size: 2Gi
+    pvcTemplate:
+      accessModes:
+        - ReadWriteOnce
+      resources:
+        requests:
+          storage: 2Gi
+      selector:
+        matchLabels:
+          service: domain-locker-postgres-data
+      storageClassName: ""
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: domain-locker-postgres-data
+  labels:
+    service: domain-locker-postgres-data
+spec:
+  capacity:
+    storage: 2Gi
+  nfs:
+    server: 192.168.0.16
+    path: /mnt/pool1/AppData/cnpg/domain-locker
+  accessModes:
+    - ReadWriteOnce
+  mountOptions:
+    - noatime
+    - nfsvers=4.2
