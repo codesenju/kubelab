@@ -25,17 +25,8 @@
             name: harness-registry-secret
             namespace: "{{ target_namespace }}"
           type: kubernetes.io/dockerconfigjson
-          stringData:
-            .dockerconfigjson: |
-              {
-                "auths": {
-                  "{{ harness_registry_server }}": {
-                    "username": "{{ harness_registry_username }}",
-                    "password": "{{ harness_registry_password }}",
-                    "auth": "{{ (harness_registry_username + ':' + harness_registry_password) | b64encode }}"
-                  }
-                }
-              }
+          data:
+            .dockerconfigjson: "{{ {'auths': {harness_registry_server: {'username': harness_registry_username, 'password': harness_registry_password, 'auth': (harness_registry_username + ':' + harness_registry_password) | b64encode}}} | to_json | b64encode }}"
       tags: domain-locker
 
     - name: Create domain-locker database secrets
@@ -88,29 +79,7 @@
               - RespectIgnoreDifferences=true
       tags: domain-locker
 
-    - name: Create cert-manager Certificate for Postgres
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: domain-locker-postgres-cert
-            namespace: "{{ target_namespace }}"
-          spec:
-            # Request both a wildcard for the logical cluster domain and the specific DB hostname
-            dnsNames:
-              - "{{ dns_name_2 }}"
-              - "{{ dns_name_4 }}"
-            secretName: domain-locker-postgres-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-      tags: ingress
-
-    # Traefik TLSStore removed — using Gateway API (Gateway + TLSRoute) instead
-
-    - name: Create cert-manager Certificate for domain-locker app
+    - name: Create cert-manager Certificate for domain-locker
       kubernetes.core.k8s:
         state: present
         definition:
@@ -120,8 +89,10 @@
             name: domain-locker-cert
             namespace: "{{ target_namespace }}"
           spec:
+            # Request both a wildcard for the logical cluster domain and the specific DB hostname
             dnsNames:
-              - "{{ domain_locker_hostname }}"
+              - "{{ dns_name_2 }}"
+              - "{{ dns_name_4 }}"
             secretName: domain-locker-tls
             issuerRef:
               name: letsencrypt-production
@@ -143,11 +114,11 @@
               - name: http
                 protocol: HTTP
                 port: 80
-                hostname: "{{ domain_locker_hostname }}"
+                hostname: "domainlocker.{{ dns_name_1 }}"
               - name: https
                 protocol: HTTPS
                 port: 443
-                hostname: "{{ domain_locker_hostname }}"
+                hostname: "domainlocker.{{ dns_name_1 }}"
                 tls:
                   certificateRefs:
                     - name: domain-locker-tls
@@ -156,7 +127,12 @@
                 port: 5432
                 hostname: "{{ domain_locker_postgres_host }}"
                 tls:
-                  mode: Passthrough
+                  # mode: Passthrough
+                  mode: Terminate
+                  certificateRefs:
+                    - name: domain-locker-tls
+                      kind: Secret
+                      namespace: "{{ target_namespace }}"
       tags: ingress
 
     - name: Create HTTPRoute for domain-locker app with HTTPS redirect
@@ -173,7 +149,7 @@
               - name: domain-locker-gateway
                 sectionName: https
             hostnames:
-              - "{{ domain_locker_hostname }}"
+              - "domainlocker.{{ dns_name_1 }}"
             rules:
               - backendRefs:
                   - name: domain-locker
@@ -194,7 +170,7 @@
               - name: domain-locker-gateway
                 sectionName: http
             hostnames:
-              - "{{ domain_locker_hostname }}"
+              - "domainlocker.{{ dns_name_1 }}"
             rules:
               - filters:
                   - type: RequestRedirect
