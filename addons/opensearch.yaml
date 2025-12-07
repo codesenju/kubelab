@@ -174,6 +174,35 @@
                 jsonPointers:
                   - /spec/managed/roles
 
+    - name: Create ServersTransport for OpenSearch
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: ServersTransport
+          metadata:
+            name: opensearch-transport
+            namespace: '{{ target_namespace }}'
+          spec:
+            insecureSkipVerify: true
+      tags:
+        - ingress
+
+    - name: Annotate OpenSearch Dashboards Service
+      kubernetes.core.k8s:
+        state: patched
+        api_version: v1
+        kind: Service
+        name: opensearch-domain-dashboards
+        namespace: '{{ target_namespace }}'
+        definition:
+          metadata:
+            annotations:
+              traefik.ingress.kubernetes.io/service.serversscheme: "https"
+              traefik.ingress.kubernetes.io/service.serverstransport: "{{ target_namespace }}-opensearch-transport@kubernetescrd"
+      tags:
+        - ingress
+
     - name: Create OpenSearch Ingress
       kubernetes.core.k8s:
         state: present
@@ -184,7 +213,7 @@
             name: opensearch
             namespace: '{{ target_namespace }}'
             annotations:
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
+              traefik.ingress.kubernetes.io/router.tls: "true"
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
               cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
