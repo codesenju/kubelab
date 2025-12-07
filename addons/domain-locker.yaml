@@ -5,7 +5,55 @@
     target_namespace: domain-locker
   tasks:
 
-    - name: Deploy domain-locker
+    - name: Create namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ target_namespace }}"
+      tags: domain-locker
+
+    - name: Create harness registry pull secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harness-registry-secret
+            namespace: "{{ target_namespace }}"
+          type: kubernetes.io/dockerconfigjson
+          stringData:
+            .dockerconfigjson: |
+              {
+                "auths": {
+                  "{{ harness_registry_server }}": {
+                    "username": "{{ harness_registry_username }}",
+                    "password": "{{ harness_registry_password }}",
+                    "auth": "{{ (harness_registry_username + ':' + harness_registry_password) | b64encode }}"
+                  }
+                }
+              }
+      tags: domain-locker
+
+    - name: Create domain-locker database secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: domain-locker-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ domain_locker_db_username }}"
+            password: "{{ domain_locker_db_password }}"
+      tags: domain-locker
+
+    - name: Deploy domain-locker ArgoCD Application
       kubernetes.core.k8s:
         state: present
         definition:
@@ -40,21 +88,6 @@
               - RespectIgnoreDifferences=true
       tags: domain-locker
 
-    - name: Create domain-locker database secrets
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: domain-locker-postgres-secrets
-            namespace: "{{ target_namespace }}"
-          type: Opaque
-          stringData:
-            username: "{{ domain_locker_db_username }}"
-            password: "{{ domain_locker_db_password }}"
-      tags: domain-locker
-
     - name: Create cert-manager Certificate for Postgres
       kubernetes.core.k8s:
         state: present
@@ -68,7 +101,7 @@
             # Request both a wildcard for the logical cluster domain and the specific DB hostname
             dnsNames:
               - "{{ dns_name_2 }}"
-              - "{{ domain_locker_postgres_host }}"
+              - "{{ dns_name_4 }}"
             secretName: domain-locker-postgres-tls
             issuerRef:
               name: letsencrypt-production
@@ -77,11 +110,29 @@
 
     # Traefik TLSStore removed — using Gateway API (Gateway + TLSRoute) instead
 
-    - name: Create Gateway (Gateway API) for Postgres TLS termination
+    - name: Create cert-manager Certificate for domain-locker app
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: gateway.networking.k8s.io/v1beta1
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: domain-locker-cert
+            namespace: "{{ target_namespace }}"
+          spec:
+            dnsNames:
+              - "{{ domain_locker_hostname }}"
+            secretName: domain-locker-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+      tags: ingress
+
+    - name: Create Gateway for domain-locker
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
           kind: Gateway
           metadata:
             name: domain-locker-gateway
@@ -89,24 +140,74 @@
           spec:
             gatewayClassName: traefik
             listeners:
+              - name: http
+                protocol: HTTP
+                port: 80
+                hostname: "{{ domain_locker_hostname }}"
+              - name: https
+                protocol: HTTPS
+                port: 443
+                hostname: "{{ domain_locker_hostname }}"
+                tls:
+                  certificateRefs:
+                    - name: domain-locker-tls
               - name: postgres-tls
                 protocol: TLS
                 port: 5432
                 hostname: "{{ domain_locker_postgres_host }}"
                 tls:
-                  mode: Terminate
-                  certificateRefs:
-                    - name: domain-locker-postgres-tls
-                      kind: Secret
-                      group: ""
-                      namespace: "{{ target_namespace }}"
+                  mode: Passthrough
+      tags: ingress
+
+    - name: Create HTTPRoute for domain-locker app with HTTPS redirect
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: domain-locker
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: domain-locker-gateway
+                sectionName: https
+            hostnames:
+              - "{{ domain_locker_hostname }}"
+            rules:
+              - backendRefs:
+                  - name: domain-locker
+                    port: 3000
+      tags: ingress
+
+    - name: Create HTTPRoute for HTTP to HTTPS redirect
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: domain-locker-redirect
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: domain-locker-gateway
+                sectionName: http
+            hostnames:
+              - "{{ domain_locker_hostname }}"
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      scheme: https
+                      statusCode: 301
       tags: ingress
 
     - name: Create TLSRoute to forward TLS traffic to Postgres service
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: gateway.networking.k8s.io/v1alpha2
+          apiVersion: gateway.networking.k8s.io/v1alpha3
           kind: TLSRoute
           metadata:
             name: domain-locker-postgres-tlsroute
@@ -114,13 +215,13 @@
           spec:
             parentRefs:
               - name: domain-locker-gateway
+                sectionName: postgres-tls
+                kind: Gateway
             hostnames:
               - "{{ domain_locker_postgres_host }}"
             rules:
-              - matches:
-                  - sni:
-                      exact: "{{ domain_locker_postgres_host }}"
-                forwardTo:
-                  - serviceName: domain-locker-postgres-rw
+              - backendRefs:
+                  - name: domain-locker-postgres-rw
+                    namespace: "{{ target_namespace }}"
                     port: 5432
       tags: ingress

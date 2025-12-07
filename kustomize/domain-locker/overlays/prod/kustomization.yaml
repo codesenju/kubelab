@@ -3,5 +3,16 @@ kind: Kustomization
 
 namespace: domain-locker
 
+images:
+- name: DOMAIN_LOCKER_IMAGE
+  newName: harness.local.jazziro.com/kubelab/dockerio/lissy93/domain-locker
+  newTag: "0.1.2"
+- name: UPDATER_IMAGE
+  newName: harness.local.jazziro.com/kubelab/dockerio/alpine
+  newTag: "3.20"
+
 resources:
 - ../../base
+
+generatorOptions:
+  disableNameSuffixHash: true

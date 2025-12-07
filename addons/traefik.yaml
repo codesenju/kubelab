@@ -1,5 +1,7 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
+  vars:
+    target_namespace: traefik
   tasks:
 
     # To create the base64 string for Traefik dashboard authentication:
@@ -13,7 +15,7 @@
           kind: Secret
           metadata:
             name: traefik-dashboard-auth
-            namespace: traefik
+            namespace: "{{ target_namespace }}"
           type: Opaque
           data:
             users: dHJhZWZpazokYXByMSQ3dnAzb1FBRCQwWjNRSkdyQUkzLmxLTVJTWnN1QTYwCgo=
@@ -31,6 +33,41 @@
             basicAuth:
               secret: traefik-dashboard-auth
 
+    - name: Create ArgoCD Application to deploy traefik-crds
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: traefik-crds
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://traefik.github.io/charts
+              chart: traefik-crds
+              targetRevision: "1.12.0"
+              helm:
+                releaseName: traefik-crds
+                values: |
+                  gatewayAPIExperimental: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags:
+        - traefik-crds
+
     - name: Deploy Traefik
       kubernetes.core.k8s:
         state: present
@@ -47,7 +84,7 @@
             sources:
             - repoURL: https://traefik.github.io/charts
               chart: traefik
-              targetRevision: "37.0.0"
+              targetRevision: "37.4.0"
               helm:
                 releaseName: traefik
                 valueFiles:
@@ -57,7 +94,7 @@
               ref: values
             destination:
               server: https://kubernetes.default.svc
-              namespace: traefik
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -75,7 +112,7 @@
           kind: Certificate
           metadata:
             name: local-jazziro-com
-            namespace: traefik
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -94,7 +131,7 @@
           kind: IngressRoute
           metadata:
             name: traefik-dashboard
-            namespace: traefik
+            namespace: "{{ target_namespace }}"
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -113,20 +150,3 @@
             tls:
               secretName: local-jazziro-com-tls
 
-    - name: Apply Gateway API CRDs directly from upstream URL
-      ansible.builtin.shell: |
-        kubectl apply -f https://github.com/kubernetes-sigs/gateway-api/releases/latest/download/standard-install.yaml
-      register: gateway_crds_apply
-      # Removed 'warn: false' from args
-      args:
-        # chdir is a valid arg, but often unnecessary for this command pattern
-        # You might keep args here if you need to set 'chdir', 'creates', etc.
-      tags:
-        - gateway-crds
-    
-    - name: Show apply result
-      ansible.builtin.debug:
-        var: gateway_crds_apply
-      tags:
-        # Removed the stray comment/tag that caused syntax issues in the original
-        - gateway-crds

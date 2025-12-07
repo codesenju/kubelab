@@ -1,0 +1,52 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: domain-locker
+  labels:
+    app: domain-locker
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: domain-locker
+  template:
+    metadata:
+      labels:
+        app: domain-locker
+    spec:
+      imagePullSecrets:
+        - name: harness-registry-secret
+      containers:
+        - name: domain-locker
+          image: DOMAIN_LOCKER_IMAGE
+          ports:
+            - containerPort: 3000
+          env:
+            - name: DL_ENV_TYPE
+              value: "selfHosted"
+            - name: DL_PG_HOST
+              value: "domain-locker-postgres-rw"
+            - name: DL_PG_PORT
+              value: "5432"
+            - name: DL_PG_USER
+              valueFrom:
+                secretKeyRef:
+                  name: domain-locker-postgres-secrets
+                  key: username
+            - name: DL_PG_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: domain-locker-postgres-secrets
+                  key: password
+            - name: DL_PG_NAME
+              value: "domain-locker"
+        - name: updater
+          image: UPDATER_IMAGE
+          command:
+            - /bin/sh
+            - -c
+            - |
+              apk add --no-cache curl &&
+              echo '0 3 * * * /usr/bin/curl -s -X POST http://localhost:3000/api/domain-updater' > /etc/crontabs/root &&
+              echo '0 4 * * * /usr/bin/curl -s -X POST http://localhost:3000/api/expiration-reminders' >> /etc/crontabs/root &&
+              crond -f -L /dev/stdout
