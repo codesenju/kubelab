@@ -122,7 +122,7 @@
                 tls:
                   certificateRefs:
                     - name: domain-locker-tls
-              - name: postgres-tls
+              - name: postgres
                 protocol: TLS
                 port: 5432
                 hostname: "{{ domain_locker_postgres_host }}"
@@ -191,7 +191,7 @@
           spec:
             parentRefs:
               - name: domain-locker-gateway
-                sectionName: postgres-tls
+                sectionName: postgres
                 kind: Gateway
             hostnames:
               - "{{ domain_locker_postgres_host }}"

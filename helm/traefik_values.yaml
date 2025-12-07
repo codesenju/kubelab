@@ -21,6 +21,20 @@ ports:
       default: true
     exposedPort: 5432
     protocol: TCP
+  http:
+    port: 80
+    expose:
+      default: true
+    exposedPort: 80
+    protocol: TCP
+  https:
+    port: 443
+    expose:
+      default: true
+    exposedPort: 443
+    protocol: TCP
+    tls:
+      enabled: true
 
 ingressRoute:
   dashboard:
