@@ -147,7 +147,7 @@
           spec:
             parentRefs:
               - name: domain-locker-gateway
-                sectionName: https
+                sectionName: websecure
             hostnames:
               - "domainlocker.{{ dns_name_1 }}"
             rules:
@@ -168,7 +168,7 @@
           spec:
             parentRefs:
               - name: domain-locker-gateway
-                sectionName: http
+                sectionName: web
             hostnames:
               - "domainlocker.{{ dns_name_1 }}"
             rules:
