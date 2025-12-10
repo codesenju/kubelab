@@ -9,7 +9,7 @@ spec:
     storage: 250Gi
   nfs:
     server: 192.168.0.16 # change me
-    path: /mnt/pool1/jellyfin/media
+    path: /mnt/pool2/jellyfin/media
   accessModes:
     - ReadWriteMany
   mountOptions:
