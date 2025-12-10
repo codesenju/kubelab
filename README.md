@@ -146,7 +146,7 @@ authentik_bootstrap_email: "admin@local.domain.com"
 # External Services
 cloudflare_api_token: "your-token"
 cloudflare_email: "your-email"
-plex_claim_token: "claim-token"
+jellyfin_claim_token: "claim-token"
 
 # Passwords for other apps
 vaultwarden_admin_token: "admin-token"
