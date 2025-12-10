@@ -60,6 +60,20 @@
             DB_PASSWORD: '{{ immich_db_password }}'
             DB_DATABASE_NAME: '{{ immich_db_name }}'
 
+    - name: Create immich postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: immich-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ immich_db_username }}"
+            password: "{{ immich_db_password }}"
+
     - name: Create immich pv
       kubernetes.core.k8s:
         state: present
@@ -100,7 +114,7 @@
             selector:
               matchLabels:
                 service: immich-data  # Add selector to match PV label
-            volumeName: immich
+            volumeName: immich-data
             storageClassName: "" # This prevents dynamic provisioning
 
     - name: Create immich cache pv
