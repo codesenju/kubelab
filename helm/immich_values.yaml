@@ -40,9 +40,8 @@ immich:
       template: "{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}"
 
 # Dependencies
-
 valkey:
-  enabled: false
+  enabled: true
   controllers:
     main:
       containers:
