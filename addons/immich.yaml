@@ -69,7 +69,7 @@
           metadata:
             name: immich-data
             labels:
-              service: immich # This matches the PVC selector
+              service: immich-data # This matches the PVC selector
           spec:
             capacity:
               storage: 250Gi
@@ -99,7 +99,7 @@
                 storage: 250Gi
             selector:
               matchLabels:
-                service: immich  # Add selector to match PV label
+                service: immich-data  # Add selector to match PV label
             volumeName: immich
             storageClassName: "" # This prevents dynamic provisioning
 
