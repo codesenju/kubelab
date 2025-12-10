@@ -74,7 +74,7 @@ graph TB
     subgraph "Application Layer"
         Gitea[Gitea<br/>Git Repository]
         N8N[n8n<br/>Workflow Automation]
-        MediaStack[Media Stack<br/>Plex + Arr Apps]
+        MediaStack[Media Stack<br/>Jellyfin + Arr Apps]
         Homarr[Homarr<br/>Dashboard]
     end
 
@@ -157,7 +157,7 @@ graph TB
 
     subgraph "Application Storage"
         DB_Storage[Database PVCs<br/>PostgreSQL, etc.]
-        Media_Storage[Media PVCs<br/>Plex, Sonarr, etc.]
+        Media_Storage[Media PVCs<br/>Jellyfin, Sonarr, etc.]
         Metrics_Storage[Metrics PVCs<br/>Prometheus, Mimir]
         Backup_Storage[Backup Storage<br/>Longhorn Snapshots]
     end
