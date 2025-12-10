@@ -116,10 +116,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "kps-grafana.{{ dns_name_1 }}"
+                  - "kps-grafana.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "kps-grafana.{{ dns_name_1 }}"
+              - host: "kps-grafana.{{ local_dns }}"
                 http:
                   paths:
                     - path: /
@@ -149,10 +149,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "prometheus.{{ dns_name_1 }}"
+                  - "prometheus.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "prometheus.{{ dns_name_1 }}"
+              - host: "prometheus.{{ local_dns }}"
                 http:
                   paths:
                     - path: /

@@ -96,10 +96,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "harness.{{ dns_name_1 }}"
+                  - "harness.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "harness.{{ dns_name_1 }}"
+              - host: "harness.{{ local_dns }}"
                 http:
                   paths:
                     - path: /

@@ -205,10 +205,10 @@
             ingressClassName: nginx
             tls:
             - hosts:
-              - "kiali.{{ dns_name_1 }}"
+              - "kiali.{{ local_dns }}"
               secretName: local-jazziro-com-tls
             rules:
-            - host: "kiali.{{ dns_name_1 }}"
+            - host: "kiali.{{ local_dns }}"
               http:
                 paths:
                 - path: /

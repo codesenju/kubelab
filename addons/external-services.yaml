@@ -29,10 +29,10 @@
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
-            commonName: "{{ dns_name_2 }}"
+            commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ dns_name_1 }}"
-            - "{{ dns_name_2 }}"
+            - "{{ local_dns }}"
+            - "{{ local_dns_wildcard }}"
     
     - name: Create webhook-site service
       kubernetes.core.k8s:
@@ -68,7 +68,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`webhook.{{ dns_name_1 }}`)
+              - match: Host(`webhook.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: webhook-site
@@ -112,7 +112,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`dockge.{{ dns_name_1 }}`)
+              - match: Host(`dockge.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: dockge
@@ -156,7 +156,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`pve.{{ dns_name_1 }}`)
+              - match: Host(`pve.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: proxmox
@@ -200,7 +200,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`smarthome.{{ dns_name_1 }}`)
+              - match: Host(`smarthome.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: homeassistant
@@ -244,7 +244,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`pihole.{{ dns_name_1 }}`)
+              - match: Host(`pihole.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: pihole
@@ -288,7 +288,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`cloudbeaver.{{ dns_name_1 }}`)
+              - match: Host(`cloudbeaver.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: cloudbeaver
@@ -333,10 +333,10 @@
             ingressClassName: traefik
             tls:
             - hosts:
-              - "beszel.{{ dns_name_1 }}"
+              - "beszel.{{ local_dns }}"
               secretName: local-jazziro-com-tls
             rules:
-            - host: "beszel.{{ dns_name_1 }}"
+            - host: "beszel.{{ local_dns }}"
               http:
                 paths:
                 - path: /
@@ -403,11 +403,11 @@
               - name: web
                 protocol: HTTP
                 port: 8000
-                hostname: "transmission.{{ dns_name_1 }}"
+                hostname: "transmission.{{ local_dns }}"
               - name: websecure
                 protocol: HTTPS
                 port: 8443
-                hostname: "transmission.{{ dns_name_1 }}"
+                hostname: "transmission.{{ local_dns }}"
                 tls:
                   certificateRefs:
                     - name: local-jazziro-com-tls
@@ -428,7 +428,7 @@
               - name: transmission
                 sectionName: websecure
             hostnames:
-              - "transmission.{{ dns_name_1 }}"
+              - "transmission.{{ local_dns }}"
             rules:
               - backendRefs:
                   - name: transmission-direct
@@ -473,10 +473,10 @@
             ingressClassName: traefik
             tls:
             - hosts:
-              - "beszel.{{ dns_name_1 }}"
+              - "beszel.{{ local_dns }}"
               secretName: local-jazziro-com-tls
             rules:
-            - host: "beszel.{{ dns_name_1 }}"
+            - host: "beszel.{{ local_dns }}"
               http:
                 paths:
                 - path: /

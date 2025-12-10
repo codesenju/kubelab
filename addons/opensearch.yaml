@@ -207,10 +207,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "opensearch.{{ dns_name_1 }}"
+                  - "opensearch.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "opensearch.{{ dns_name_1 }}"
+              - host: "opensearch.{{ local_dns }}"
                 http:
                   paths:
                     - path: /

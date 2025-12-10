@@ -106,10 +106,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "grafana.{{ dns_name_1 }}"
+                  - "grafana.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "grafana.{{ dns_name_1 }}"
+              - host: "grafana.{{ local_dns }}"
                 http:
                   paths:
                     - path: /

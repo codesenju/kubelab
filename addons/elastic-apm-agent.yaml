@@ -96,10 +96,10 @@
             ingressClassName: nginx
             tls:
               - hosts:
-                  - "apm.{{ dns_name_1 }}"
+                  - "apm.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "apm.{{ dns_name_1 }}"
+              - host: "apm.{{ local_dns }}"
                 http:
                   paths:
                     - path: /

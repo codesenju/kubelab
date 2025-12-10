@@ -66,11 +66,11 @@
             ingressClassName: traefik
             tls:
             - hosts:
-              - "minio.{{ dns_name_1 }}"
-              - "s3.{{ dns_name_1 }}"
+              - "minio.{{ local_dns }}"
+              - "s3.{{ local_dns }}"
               secretName: local-jazziro-com-tls
             rules:
-            - host: "minio.{{ dns_name_1 }}"
+            - host: "minio.{{ local_dns }}"
               http:
                 paths:
                 - path: /
@@ -80,7 +80,7 @@
                       name: minio
                       port:
                         number: 9001
-            - host: "s3.{{ dns_name_1 }}"
+            - host: "s3.{{ local_dns }}"
               http:
                 paths:
                 - path: /

@@ -195,6 +195,25 @@
               syncOptions:
                 - CreateNamespace=true
 
+    - name: Create wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: jazziro-com-tls
+            namespace: '{{ target_namespace }}'
+          spec:
+            secretName: jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ public_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+            - "{{ public_dns_wildcard }}"
+
     - name: Create immich ingress
       kubernetes.core.k8s:
         state: present
@@ -211,18 +230,29 @@
             ingressClassName: traefik
             tls:
             - hosts:
-              - "photos.{{ dns_name_1 }}"
-              secretName: local-jazziro-com-tls
+              - "photos.{{ local_dns }}"
+              - "photos.{{ public_dns }}"
+              secretName: jazziro-com-tls
             rules:
-            - host: "photos.{{ dns_name_1 }}"
+            - host: "photos.{{ local_dns }}"
               http:
                 paths:
                 - path: /
                   pathType: Prefix
                   backend:
                     service:
-                      name: immich
+                      name: immich-server
                       port:
-                        number: 80
+                        number: 2283
+            - host: "photos.{{ public_dns }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: immich-server
+                      port:
+                        number: 2283
       tags: 
       - ingress

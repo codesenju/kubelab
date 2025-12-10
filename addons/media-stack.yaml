@@ -63,10 +63,10 @@
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
-            commonName: "{{ dns_name_2 }}"
+            commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ dns_name_1 }}"
-            - "{{ dns_name_2 }}"
+            - "{{ local_dns }}"
+            - "{{ local_dns_wildcard }}"
 
     - name: Create jellyfin IngressRoute
       kubernetes.core.k8s:
@@ -84,7 +84,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`stream.{{ dns_name_1 }}`)
+              - match: Host(`stream.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: jellyfin
@@ -109,7 +109,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`flaresolverr.{{ dns_name_1 }}`)
+              - match: Host(`flaresolverr.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: flaresolverr
@@ -134,7 +134,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`catalog.{{ dns_name_1 }}`)
+              - match: Host(`catalog.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: jellyseerr
@@ -159,7 +159,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`lidarr.{{ dns_name_1 }}`)
+              - match: Host(`lidarr.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: lidarr
@@ -184,7 +184,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`prowlarr.{{ dns_name_1 }}`)
+              - match: Host(`prowlarr.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: prowlarr
@@ -209,7 +209,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`radarr.{{ dns_name_1 }}`)
+              - match: Host(`radarr.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: radarr
@@ -234,7 +234,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`sonarr.{{ dns_name_1 }}`)
+              - match: Host(`sonarr.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: sonarr
@@ -259,7 +259,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`tdarr.{{ dns_name_1 }}`)
+              - match: Host(`tdarr.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: tdarr
@@ -283,9 +283,9 @@
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
-            commonName: "{{ global_dns_wildcard }}"
+            commonName: "{{ public_dns_wildcard }}"
             dnsNames:
-            - "{{ global_dns_wildcard }}"
+            - "{{ public_dns_wildcard }}"
       tags:
         - ingress
 
@@ -305,10 +305,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "stream.{{ global_dns }}"
+                  - "stream.{{ public_dns }}"
                 secretName: jazziro-com-tls
             rules:
-              - host: "stream.{{ global_dns }}"
+              - host: "stream.{{ public_dns }}"
                 http:
                   paths:
                     - path: /
@@ -338,10 +338,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "catalog.{{ global_dns }}"
+                  - "catalog.{{ public_dns }}"
                 secretName: jazziro-com-tls
             rules:
-              - host: "catalog.{{ global_dns }}"
+              - host: "catalog.{{ public_dns }}"
                 http:
                   paths:
                     - path: /

@@ -290,7 +290,7 @@
     #         entryPoints:
     #           - websecure
     #         routes:
-    #           - match: Host(`kibana.{{ dns_name_1 }}`)
+    #           - match: Host(`kibana.{{ local_dns }}`)
     #             kind: Rule
     #             services:
     #               - name: quickstart-kb-http
@@ -316,7 +316,7 @@
     #         entryPoints:
     #           - websecure
     #         routes:
-    #           - match: Host(`elasticsearch.{{ dns_name_1 }}`)
+    #           - match: Host(`elasticsearch.{{ local_dns }}`)
     #             kind: Rule
     #             services:
     #               - name: quickstart-es-http
@@ -344,10 +344,10 @@
             ingressClassName: nginx
             tls:
               - hosts:
-                  - "kibana.{{ dns_name_1 }}"
+                  - "kibana.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "kibana.{{ dns_name_1 }}"
+              - host: "kibana.{{ local_dns }}"
                 http:
                   paths:
                     - path: /
@@ -378,10 +378,10 @@
             ingressClassName: nginx
             tls:
               - hosts:
-                  - "es.{{ dns_name_1 }}"
+                  - "es.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "es.{{ dns_name_1 }}"
+              - host: "es.{{ local_dns }}"
                 http:
                   paths:
                     - path: /

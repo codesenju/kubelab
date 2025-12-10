@@ -214,10 +214,10 @@
             ingressClassName: nginx
             tls:
               - hosts:
-                  - "elastic-fleet.{{ dns_name_1 }}"
+                  - "elastic-fleet.{{ local_dns }}"
                 secretName: local-jazziro-com-tls
             rules:
-              - host: "elastic-fleet.{{ dns_name_1 }}"
+              - host: "elastic-fleet.{{ local_dns }}"
                 http:
                   paths:
                     - path: /

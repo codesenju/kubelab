@@ -61,10 +61,10 @@
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
-            commonName: "{{ dns_name_2 }}"
+            commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ dns_name_1 }}"
-            - "{{ dns_name_2 }}"
+            - "{{ local_dns }}"
+            - "{{ local_dns_wildcard }}"
 
     - name: Create nginx proxy manager IngressRoute
       kubernetes.core.k8s:
@@ -82,7 +82,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`npm.{{ dns_name_1 }}`)
+              - match: Host(`npm.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: nginx-proxy-manager

@@ -103,10 +103,10 @@
     #         ingressClassName: traefik
     #         tls:
     #           - hosts:
-    #               - "tempo.{{ dns_name_1 }}"
+    #               - "tempo.{{ local_dns }}"
     #             secretName: local-jazziro-com-tls
     #         rules:
-    #           - host: "tempo.{{ dns_name_1 }}"
+    #           - host: "tempo.{{ local_dns }}"
     #             http:
     #               paths:
     #                 - path: /

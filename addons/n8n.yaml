@@ -72,10 +72,10 @@
             ingressClassName: nginx
             tls:
             - hosts:
-              - "n8n.{{ dns_name_1 }}"
+              - "n8n.{{ local_dns }}"
               secretName: local-jazziro-com-tls
             rules:
-            - host: "n8n.{{ dns_name_1 }}"
+            - host: "n8n.{{ local_dns }}"
               http:
                 paths:
                 - path: /
