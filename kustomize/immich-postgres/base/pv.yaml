@@ -4,7 +4,7 @@ kind: PersistentVolume
 metadata:
   name: immich-postgres-data
   labels:
-    service: immich-postgres-data  # This matches the PVC selector
+    service: immich-postgres-data # This matches the PVC selector
 spec:
   capacity:
     storage: 1Gi
