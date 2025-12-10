@@ -435,3 +435,56 @@
                     port: 9091
       tags: 
       - transmission
+
+# nginx proxy manager
+    - name: Create nginx proxy manager service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: beszel
+            namespace: '{{ target_namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.31
+            ports:
+            - name: http
+              port: 8090
+              protocol: TCP
+              targetPort: 8090
+      tags: 
+      - npm
+
+    - name: Create beszel ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: beszel
+            namespace: '{{ target_namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - "beszel.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "beszel.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: beszel
+                      port:
+                        number: 8090
+      tags: 
+      - npm

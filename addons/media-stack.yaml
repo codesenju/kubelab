@@ -268,56 +268,88 @@
             tls:
               secretName: local-jazziro-com-tls
 
-    # - name: Create global wildcar certificate
-    #   kubernetes.core.k8s:
-    #     state: present
-    #     definition:
-    #       apiVersion: cert-manager.io/v1
-    #       kind: Certificate
-    #       metadata:
-    #         name: jazziro-com
-    #         namespace: media-stack
-    #       spec:
-    #         secretName: jazziro-com-tls
-    #         issuerRef:
-    #           name: letsencrypt-production
-    #           kind: ClusterIssuer
-    #         commonName: "{{ global_dns_wildcard }}"
-    #         dnsNames:
-    #         - "{{ global_dns }}"
-    #         - "{{ global_dns_wildcard }}"
-    #   tags:
-    #     - ingress
+# Ingress exposing Jellyfin to the public internet via Traefik
+    - name: Create global wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: jazziro-com-tls
+            namespace: media-stack
+          spec:
+            secretName: jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ global_dns_wildcard }}"
+            dnsNames:
+            - "{{ global_dns_wildcard }}"
+      tags:
+        - ingress
 
-    # - name: Create Jellyfin Ingress
-    #   kubernetes.core.k8s:
-    #     state: present
-    #     definition:
-    #       apiVersion: networking.k8s.io/v1
-    #       kind: Ingress
-    #       metadata:
-    #         name: jellyfin
-    #         namespace: '{{ namespace }}'
-    #         annotations:
-    #           # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-    #           external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-    #           cert-manager.io/cluster-issuer: letsencrypt-production
-    #       spec:
-    #         ingressClassName: traefik
-    #         tls:
-    #           - hosts:
-    #               - "stream.{{ global_dns }}"
-    #             secretName: jazziro-com-tls
-    #         rules:
-    #           - host: "stream.{{ global_dns }}"
-    #             http:
-    #               paths:
-    #                 - path: /
-    #                   pathType: Prefix
-    #                   backend:
-    #                     service:
-    #                       name: jellyfin
-    #                       port:
-    #                         number: 8920
-    #   tags:
-    #     - ingress
+    - name: Create Jellyfin Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: jellyfin
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "stream.{{ global_dns }}"
+                secretName: jazziro-com-tls
+            rules:
+              - host: "stream.{{ global_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: jellyfin
+                          port:
+                            number: 8096
+      tags:
+        - ingress
+
+# Ingress exposing Jellyseer to the public internet via Traefik
+    - name: Create Jellyseer Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: jellyseer
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "catalog.{{ global_dns }}"
+                secretName: jazziro-com-tls
+            rules:
+              - host: "catalog.{{ global_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: jellyseerr
+                          port:
+                            number: 5055
+      tags:
+        - ingress

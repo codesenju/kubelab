@@ -1,0 +1,160 @@
+---
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: immich
+  tasks:
+
+    - name: Create immich pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: immich-data
+            labels:
+              service: immich # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 250Gi
+            nfs:
+              server: 192.168.0.16 # change me
+              path: /mnt/pool1/immich/
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Create immich pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: immich-data-claim
+            namespace: '{{ target_namespace }}'
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 250Gi
+            selector:
+              matchLabels:
+                service: immich  # Add selector to match PV label
+            volumeName: immich
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Create immich cache pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: immich-cache
+            labels:
+              service: immich-cache # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 250Gi
+            nfs:
+              server: 192.168.0.16 # change me
+              path: /mnt/pool1/immich/cache
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Create immich pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: immich-cache-claim
+            namespace: '{{ target_namespace }}'
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 250Gi
+            selector:
+              matchLabels:
+                service: immich-cache  # Add selector to match PV label
+            volumeName: immich-cache
+            storageClassName: "" # This prevents dynamic provisioning
+
+
+    - name: Deploy immich
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: opentelemetry-kube-stack
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+            - repoURL: ghcr.io/immich-app/immich-charts
+              chart: immich
+              targetRevision: "0.10.3"
+              helm:
+                releaseName: immich
+                valueFiles:
+                - $values/helm/immich_values.yaml
+            - repoURL: 'https://github.com/codesenju/kubelab.git'
+              targetRevision: main
+              ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Create immich ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: immich
+            namespace: '{{ target_namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - "photos.{{ dns_name_1 }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "photos.{{ dns_name_1 }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: immich
+                      port:
+                        number: 80
+      tags: 
+      - ingress
