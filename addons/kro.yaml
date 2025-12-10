@@ -1,6 +1,8 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
   become: no
+  vars:
+    target_namespace: kro
   tasks:
 
     - name: Deploy Kro
@@ -17,12 +19,12 @@
           spec:
             project: default
             source:
-              repoURL: ghcr.io/kro-run/kro
+              repoURL: registry.k8s.io/kro/charts
               chart: kro
-              targetRevision: 0.3.0
+              targetRevision: 0.7.0
             destination:
               server: https://kubernetes.default.svc
-              namespace: kro
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true

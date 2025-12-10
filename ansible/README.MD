@@ -104,3 +104,41 @@ If you encounter issues during deployment:
 ```bash
 ansible-playbook main.yaml --tags k8s -vvv
 ```
+
+### NFS Storage Permission Issues
+
+When using TrueNAS NFS storage, applications may fail with permission errors. Common symptoms:
+- PostgreSQL: "data directory has wrong ownership" or "Operation not permitted"
+- Redis: "Can't open or create append-only dir: Permission denied"
+
+**Solution**: Fix ownership on TrueNAS server:
+
+```bash
+# SSH to TrueNAS and fix permissions for specific applications
+ssh -i ~/codesenju/kubelab.pem root@192.168.0.16
+
+# For Authentik (PostgreSQL uses 1001:1001, Redis uses 1001:1001)
+chown -R 1001:1001 /mnt/pool1/AppData/authentik/database
+chown -R 1001:1001 /mnt/pool1/AppData/authentik/redis
+
+# For other apps, check the securityContext.runAsUser in the pod spec
+kubectl get pod <pod-name> -o yaml | grep -A5 securityContext
+```
+
+**Prevention**: Use initContainers in Helm values to automatically fix permissions:
+
+```yaml
+postgresql:
+  primary:
+    initContainers:
+      - name: volume-permissions
+        image: busybox:1.35
+        command: ['sh', '-c', 'chown -R 1001:1001 /bitnami/postgresql && chmod -R 755 /bitnami/postgresql']
+        volumeMounts:
+          - name: data
+            mountPath: /bitnami/postgresql
+        securityContext:
+          runAsUser: 0
+```
+
+**Note**: This setup uses UID/GID 1001:1001 for both PostgreSQL and Redis containers.

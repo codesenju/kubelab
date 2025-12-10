@@ -1,50 +1,9 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
   become: no
+  vars:
+    target_namespace: mimir
   tasks:
-    - name: Create MinIO S3 configuration secret
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: minio-s3-config
-            namespace: mimir
-          type: Opaque
-          stringData:
-            MINIO_BUCKET_NAME: "mimir"
-            MINIO_ENDPOINT: "{{ minio_local_endpoint }}"
-            MINIO_REGION: "joburg-north-1"
-            MINIO_ACCESS_KEY_ID: "{{ minio_local_access_key }}"
-            MINIO_SECRET_ACCESS_KEY: "{{ minio_local_secret_key }}"
-      tags: mimir
-
-    - name: Create Mimir tenant overrides ConfigMap
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: ConfigMap
-          metadata:
-            name: mimir-tenant-overrides
-            namespace: mimir
-          data:
-            tenant-overrides.yaml: |
-              overrides:
-                # Example tenant with higher limits
-                tenant1:
-                  ingestion_rate: 50000
-                  ingestion_burst_size: 100000
-                  max_series_per_metric: 20000
-                  max_series_per_query: 200000
-                # Example tenant with lower limits
-                tenant2:
-                  ingestion_rate: 10000
-                  ingestion_burst_size: 20000
-                  max_series_per_metric: 5000
-                  max_series_per_query: 50000
-      tags: mimir
 
     - name: Deploy Mimir ArgoCD Application
       kubernetes.core.k8s:
@@ -72,7 +31,7 @@
               ref: values
             destination:
               server: https://kubernetes.default.svc
-              namespace: mimir
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -80,4 +39,48 @@
               syncOptions:
               - CreateNamespace=true
               - ServerSideApply=true
+      tags: mimir
+
+    - name: Create MinIO S3 configuration secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: minio-s3-config
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            MINIO_BUCKET_NAME: "mimir"
+            MINIO_ENDPOINT: "{{ minio_local_endpoint }}"
+            MINIO_REGION: "joburg-north-1"
+            MINIO_ACCESS_KEY_ID: "{{ minio_local_access_key }}"
+            MINIO_SECRET_ACCESS_KEY: "{{ minio_local_secret_key }}"
+      tags: mimir
+
+    - name: Create Mimir tenant overrides ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: mimir-tenant-overrides
+            namespace: "{{ target_namespace }}"
+          data:
+            tenant-overrides.yaml: |
+              overrides:
+                # Example tenant with higher limits
+                tenant1:
+                  ingestion_rate: 50000
+                  ingestion_burst_size: 100000
+                  max_series_per_metric: 20000
+                  max_series_per_query: 200000
+                # Example tenant with lower limits
+                tenant2:
+                  ingestion_rate: 10000
+                  ingestion_burst_size: 20000
+                  max_series_per_metric: 5000
+                  max_series_per_query: 50000
       tags: mimir
