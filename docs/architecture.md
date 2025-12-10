@@ -1,384 +1,341 @@
-# Kubelab Architecture & Deployment Guide
+# KubeLab Architecture
 
-## Table of Contents
-- [Architecture Overview](#architecture-overview)
-- [Data Flow](#data-flow)
-- [Deployment Order](#deployment-order)
-- [Component Dependencies](#component-dependencies)
-- [Configuration](#configuration)
-- [Deployment Commands](#deployment-commands)
-- [Troubleshooting](#troubleshooting)
-
----
-
-## Architecture Overview
+## 🏗️ Cluster Infrastructure
 
 ```mermaid
-flowchart TB
-    subgraph Layer1["Layer 1: Foundation"]
-        K8S[Kubernetes Cluster]
-        CNI[CNI - Cilium]
-        CSI[CSI - OpenEBS]
+graph TB
+    subgraph "External Storage"
+        TrueNAS[TrueNAS NFS<br/>192.168.0.16<br/>/mnt/pool1/AppData]
     end
 
-    subgraph Layer2["Layer 2: Core Infrastructure"]
-        ARGOCD[ArgoCD]
-        CERTMGR[Cert Manager]
-        EXTDNS[External DNS]
-        TRAEFIK[Traefik Ingress]
-        MINIO[MinIO S3]
+    subgraph "Kubernetes Cluster"
+        subgraph "Load Balancer"
+            LB[HAProxy<br/>192.168.0.40<br/>API: 6443<br/>HTTP: 80/443]
+        end
+
+        subgraph "Control Plane"
+            CP1[k8s-control-1<br/>192.168.0.41<br/>4 vCPU, 8GB RAM]
+            CP2[k8s-control-2<br/>192.168.0.42<br/>4 vCPU, 8GB RAM]
+        end
+
+        subgraph "Worker Nodes"
+            W1[k8s-worker-1<br/>192.168.0.51<br/>8 vCPU, 16GB RAM]
+            W2[k8s-worker-2<br/>192.168.0.52<br/>8 vCPU, 16GB RAM]
+        end
     end
 
-    subgraph Layer3["Layer 3: Observability Storage"]
-        MIMIR[Mimir - Metrics Storage]
-        TEMPO[Tempo - Traces Storage]
-        LOKI[Loki - Logs Storage]
-    end
-
-    subgraph Layer4["Layer 4: Monitoring & Collection"]
-        PROMETHEUS[Prometheus Stack]
-        OTEL[OpenTelemetry Collector]
-        GRAFANA[Grafana]
-    end
-
-    subgraph Layer5["Layer 5: Applications"]
-        APPS[Application Workloads]
-    end
-
-    K8S --> CNI
-    K8S --> CSI
-    CNI --> ARGOCD
-    CSI --> ARGOCD
-    ARGOCD --> CERTMGR
-    ARGOCD --> EXTDNS
-    ARGOCD --> TRAEFIK
-    ARGOCD --> MINIO
-    MINIO --> MIMIR
-    MINIO --> TEMPO
-    MINIO --> LOKI
-    TRAEFIK --> MIMIR
-    TRAEFIK --> TEMPO
-    TRAEFIK --> LOKI
-    MIMIR --> PROMETHEUS
-    MIMIR --> GRAFANA
-    TEMPO --> GRAFANA
-    LOKI --> GRAFANA
-    PROMETHEUS -.remote_write.-> MIMIR
-    OTEL -.traces.-> TEMPO
-    OTEL -.logs.-> LOKI
-    GRAFANA --> APPS
-    PROMETHEUS --> APPS
-    OTEL --> APPS
+    LB --> CP1
+    LB --> CP2
+    CP1 -.-> W1
+    CP1 -.-> W2
+    CP2 -.-> W1
+    CP2 -.-> W2
+    W1 --> TrueNAS
+    W2 --> TrueNAS
 ```
 
----
-
-## Data Flow
+## 📦 Application Layer Architecture
 
 ```mermaid
-flowchart LR
-    subgraph Metrics["Metrics Pipeline"]
-        APP1[Applications] -->|scrape| PROM[Prometheus]
-        PROM -->|remote_write| MIMIR[Mimir]
-        MIMIR -->|store| S3M[(MinIO/S3)]
-        GRAFANA[Grafana] -->|query| PROM
-        GRAFANA -->|query long-term| MIMIR
+graph TB
+    subgraph "Ingress Layer"
+        Traefik[Traefik Ingress<br/>SSL Termination<br/>Load Balancing]
+        CertManager[Cert Manager<br/>Let's Encrypt<br/>TLS Automation]
     end
 
-    subgraph Traces["Traces Pipeline"]
-        APP2[Applications] -->|OTLP| OTEL[OTEL Collector]
-        OTEL -->|forward| TEMPO[Tempo]
-        TEMPO -->|store| S3T[(MinIO/S3)]
-        GRAFANA -->|query| TEMPO
+    subgraph "GitOps Layer"
+        ArgoCD[ArgoCD<br/>Application Deployment<br/>Git Sync]
     end
 
-    subgraph Logs["Logs Pipeline"]
-        APP3[Applications] -->|logs| LOKI[Loki]
-        LOKI -->|store| S3L[(MinIO/S3)]
-        GRAFANA -->|query| LOKI
+    subgraph "Observability Stack"
+        Prometheus[Prometheus<br/>Metrics Collection]
+        Grafana[Grafana<br/>Visualization]
+        Mimir[Mimir<br/>Long-term Storage]
+        Tempo[Tempo<br/>Distributed Tracing]
+        OBI[OBI Collector<br/>Telemetry Pipeline]
+        SigNoz[SigNoz<br/>APM Platform]
+        Elastic[Elastic Stack<br/>Log Management]
+        OpenSearch[OpenSearch<br/>Search & Analytics]
     end
-```
 
-### Network Flow
+    subgraph "Storage Layer"
+        MinIO[MinIO<br/>S3 Storage]
+        Longhorn[Longhorn<br/>Block Storage]
+        CNPG[CloudNative-PG<br/>PostgreSQL]
+        NFS[NFS CSI<br/>Shared Storage]
+    end
 
-```
-Internet
-    ↓
-Traefik Ingress (LoadBalancer)
-    ↓
-┌─────────────────────────────────────┐
-│  Internal Services                  │
-│  - grafana.local.example.com       │
-│  - prometheus.local.example.com    │
-│  - argocd.local.example.com        │
-└─────────────────────────────────────┘
-    ↓
-Pod Network (Cilium CNI)
-    ↓
-Persistent Storage (OpenEBS)
-```
+    subgraph "Security Layer"
+        Authentik[Authentik<br/>Identity Provider]
+        Vaultwarden[Vaultwarden<br/>Password Manager]
+        ExternalDNS[External DNS<br/>DNS Automation]
+    end
 
----
+    subgraph "Application Layer"
+        Gitea[Gitea<br/>Git Repository]
+        N8N[n8n<br/>Workflow Automation]
+        MediaStack[Media Stack<br/>Plex + Arr Apps]
+        Homarr[Homarr<br/>Dashboard]
+    end
 
-## Deployment Order
-
-### Phase 1: Foundation (Required First)
-1. **Kubernetes Cluster** - Container orchestration platform
-2. **CNI (Cilium)** - Network connectivity & security
-3. **CSI (OpenEBS)** - Persistent storage
-
-### Phase 2: Core Infrastructure
-4. **ArgoCD** - GitOps controller for automated deployments
-5. **Cert Manager** - TLS certificate management
-6. **External DNS** - Automatic DNS record creation
-7. **Traefik** - Ingress controller for routing
-8. **MinIO** - S3-compatible object storage
-
-### Phase 3: Observability Backend
-9. **Mimir** - Long-term metrics storage
-   - Requires: MinIO buckets (mimir-blocks, mimir-alertmanager, mimir-ruler)
-10. **Tempo** - Distributed traces storage
-11. **Loki** - Log aggregation storage
-
-### Phase 4: Monitoring & Visualization
-12. **Prometheus Stack** - Metrics collection & alerting
-    - Configured with remote_write to Mimir
-13. **OpenTelemetry Collector** - Traces/logs collection
-14. **Grafana** - Unified observability dashboard
-    - Datasources: Prometheus, Mimir, Tempo, Loki
-
-### Phase 5: Applications
-15. **Application Workloads**
-    - Instrumented with metrics endpoints
-    - OTLP traces to OpenTelemetry
-
----
-
-## Component Dependencies
-
-| Component | Depends On | Provides To | Purpose |
-|-----------|-----------|-------------|---------|
-| **Kubernetes** | - | All | Container orchestration |
-| **Cilium** | Kubernetes | All pods | Network connectivity & security |
-| **OpenEBS** | Kubernetes | StatefulSets | Persistent storage |
-| **ArgoCD** | K8s, CNI, CSI | All apps | GitOps deployment |
-| **Cert Manager** | ArgoCD | Ingresses | TLS certificate management |
-| **External DNS** | ArgoCD | Ingresses | Automatic DNS records |
-| **Traefik** | ArgoCD, Cert Manager | Services | Ingress routing |
-| **MinIO** | ArgoCD, OpenEBS | Mimir, Tempo, Loki | S3-compatible object storage |
-| **Mimir** | MinIO, Traefik | Prometheus, Grafana | Long-term metrics storage |
-| **Tempo** | MinIO, Traefik | OTEL, Grafana | Distributed tracing backend |
-| **Loki** | MinIO, Traefik | Apps, Grafana | Log aggregation |
-| **Prometheus** | Mimir | Grafana, Apps | Metrics collection & alerting |
-| **OTEL Collector** | Tempo | Apps | Traces/logs collection |
-| **Grafana** | Prometheus, Mimir, Tempo, Loki | Users | Unified observability UI |
-
----
-
-## Configuration
-
-### Prometheus → Mimir Integration
-
-```yaml
-remoteWrite:
-  - url: http://mimir-nginx.mimir.svc:80/api/v1/push
-    headers:
-      X-Scope-OrgID: kube-prometheus-stack
-```
-
-### Grafana Datasources
-
-```yaml
-datasources:
-  - name: Prometheus
-    url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc:9090
-  
-  - name: Mimir
-    url: http://mimir-nginx.mimir.svc.cluster.local:80/prometheus
-  
-  - name: Tempo
-    url: http://tempo-gateway.grafana-system.svc.cluster.local
-  
-  - name: Loki
-    url: http://loki-stack.monitoring.svc:3100
-```
-
-### MinIO Buckets
-
-Required buckets for observability stack:
-
-```
-mimir-blocks          # Mimir metrics blocks
-mimir-alertmanager    # Mimir alertmanager state
-mimir-ruler           # Mimir ruler state
-thanos-store          # Prometheus long-term storage
-tempo-traces          # Tempo traces
-loki-chunks           # Loki log chunks
-```
-
-### ⚠️ Mimir S3 Configuration
-
-**Important**: Mimir requires separate S3 buckets for each storage component. Using the same bucket name without different storage prefixes will cause validation errors:
-
-```
-error validating config: invalid bucket config: alertmanager storage: 
-S3 bucket name and storage prefix cannot be the same as the one used in blocks storage config
-```
-
-**Correct configuration** in `helm/mimir_values.yaml`:
-
-```yaml
-mimir:
-  structuredConfig:
-    blocks_storage:
-      s3:
-        bucket_name: mimir-blocks
+    Traefik --> ArgoCD
+    Traefik --> Grafana
+    Traefik --> Authentik
+    Traefik --> Gitea
     
-    alertmanager_storage:
-      s3:
-        bucket_name: mimir-alertmanager
+    ArgoCD --> Prometheus
+    ArgoCD --> Tempo
+    ArgoCD --> MinIO
     
-    ruler_storage:
-      s3:
-        bucket_name: mimir-ruler
+    Prometheus --> Mimir
+    Tempo --> MinIO
+    Mimir --> MinIO
+    
+    Authentik --> CNPG
+    Gitea --> CNPG
+    N8N --> CNPG
+    
+    MediaStack --> Longhorn
+    MediaStack --> NFS
+```
+
+## 🌐 Network Architecture
+
+```mermaid
+graph LR
+    subgraph "External Access"
+        CF[Cloudflare DNS]
+        LE[Let's Encrypt CA]
+    end
+
+    subgraph "Cluster Network"
+        subgraph "Pod Network - 10.244.0.0/16"
+            PodCIDR[Pod CIDR<br/>CNI: Cilium]
+        end
+        
+        subgraph "Service Network - 10.96.0.0/12"
+            SvcCIDR[Service CIDR<br/>ClusterIP Services]
+        end
+        
+        subgraph "Ingress Network"
+            MetalLB[MetalLB<br/>192.168.0.100-110]
+            TraefikLB[Traefik LoadBalancer<br/>External IP]
+        end
+    end
+
+    CF --> TraefikLB
+    LE --> CertManager
+    TraefikLB --> SvcCIDR
+    SvcCIDR --> PodCIDR
+    MetalLB --> TraefikLB
+```
+
+## 💾 Storage Architecture
+
+```mermaid
+graph TB
+    subgraph "Storage Classes"
+        SC1[longhorn<br/>Replicated Block Storage]
+        SC2[nfs-csi<br/>Shared File Storage]
+        SC3[local-path<br/>Local Node Storage]
+    end
+
+    subgraph "Storage Backends"
+        subgraph "Longhorn Cluster"
+            LH1[Longhorn Node 1<br/>Local Disks]
+            LH2[Longhorn Node 2<br/>Local Disks]
+        end
+        
+        subgraph "External Storage"
+            NFS_Server[TrueNAS NFS<br/>192.168.0.16<br/>/mnt/pool1/AppData]
+        end
+        
+        subgraph "Object Storage"
+            MinIO_Cluster[MinIO Distributed<br/>4 Nodes<br/>S3 Compatible]
+        end
+    end
+
+    subgraph "Application Storage"
+        DB_Storage[Database PVCs<br/>PostgreSQL, etc.]
+        Media_Storage[Media PVCs<br/>Plex, Sonarr, etc.]
+        Metrics_Storage[Metrics PVCs<br/>Prometheus, Mimir]
+        Backup_Storage[Backup Storage<br/>Longhorn Snapshots]
+    end
+
+    SC1 --> LH1
+    SC1 --> LH2
+    SC2 --> NFS_Server
+    
+    DB_Storage --> SC1
+    Media_Storage --> SC2
+    Metrics_Storage --> MinIO_Cluster
+    Backup_Storage --> SC1
+```
+
+## 🔐 Security Architecture
+
+```mermaid
+graph TB
+    subgraph "Identity & Access"
+        Authentik_IDP[Authentik<br/>OIDC/SAML Provider]
+        RBAC[Kubernetes RBAC<br/>Role-based Access]
+        ServiceAccounts[Service Accounts<br/>Pod Identity]
+    end
+
+    subgraph "Network Security"
+        NetworkPolicies[Network Policies<br/>Traffic Control]
+        Cilium_Security[Cilium Security<br/>eBPF Enforcement]
+        TLS_Termination[TLS Termination<br/>Traefik + Cert Manager]
+    end
+
+    subgraph "Secret Management"
+        K8s_Secrets[Kubernetes Secrets<br/>Encrypted at Rest]
+        Ansible_Vault[Ansible Vault<br/>Deployment Secrets]
+        Vaultwarden_Vault[Vaultwarden<br/>Password Storage]
+    end
+
+    subgraph "Certificate Management"
+        CertManager_CA[Cert Manager<br/>Certificate Lifecycle]
+        LetsEncrypt[Let's Encrypt<br/>Public CA]
+        DNS_Challenge[DNS-01 Challenge<br/>Cloudflare Integration]
+    end
+
+    Authentik_IDP --> RBAC
+    RBAC --> ServiceAccounts
+    NetworkPolicies --> Cilium_Security
+    TLS_Termination --> CertManager_CA
+    CertManager_CA --> LetsEncrypt
+    LetsEncrypt --> DNS_Challenge
+```
+
+## 📊 Data Flow Architecture
+
+```mermaid
+graph LR
+    subgraph "Metrics Flow"
+        Apps[Applications] --> Prometheus
+        Prometheus --> Mimir
+        Mimir --> MinIO_Metrics[MinIO Buckets]
+        Prometheus --> Grafana
+        Mimir --> Grafana
+    end
+
+    subgraph "Tracing Flow"
+        Apps_Traces[Applications] --> OBI_Collector[OBI Collector]
+        OBI_Collector --> Tempo
+        Tempo --> MinIO_Traces[MinIO Buckets]
+        Tempo --> Grafana_Traces[Grafana Explore]
+    end
+
+    subgraph "Logs Flow"
+        Apps_Logs[Applications] --> Alloy[Alloy Collector]
+        Alloy --> Loki[Loki]
+        Loki --> Grafana_Logs[Grafana Logs]
+    end
+
+    subgraph "GitOps Flow"
+        Git_Repo[Git Repository] --> ArgoCD
+        ArgoCD --> K8s_API[Kubernetes API]
+        K8s_API --> Workloads[Application Workloads]
+    end
+```
+
+## 🔧 Addon Dependencies
+
+```mermaid
+graph TD
+    subgraph "Layer 0: Foundation"
+        K8s[Kubernetes Cluster]
+        ArgoCD[ArgoCD]
+    end
+
+    subgraph "Layer 1: Infrastructure"
+        Traefik[Traefik]
+        CertManager[Cert Manager]
+        MetalLB[MetalLB]
+        MetricsServer[Metrics Server]
+    end
+
+    subgraph "Layer 2: Storage"
+        MinIO[MinIO]
+        Longhorn[Longhorn]
+        CNPG[CloudNative-PG]
+        NFS_CSI[NFS CSI]
+    end
+
+    subgraph "Layer 3: Observability"
+        Prometheus[Prometheus Stack]
+        Mimir[Mimir]
+        Tempo[Tempo]
+        OBI[OBI Collector]
+    end
+
+    subgraph "Layer 4: Security"
+        Authentik[Authentik]
+        Vaultwarden[Vaultwarden]
+        ExternalDNS[External DNS]
+    end
+
+    subgraph "Layer 5: Applications"
+        Gitea[Gitea]
+        MediaStack[Media Stack]
+        N8N[n8n]
+        Homarr[Homarr]
+    end
+
+    K8s --> ArgoCD
+    ArgoCD --> Traefik
+    ArgoCD --> CertManager
+    ArgoCD --> MinIO
+    ArgoCD --> Longhorn
+    
+    MinIO --> Mimir
+    MinIO --> Tempo
+    Prometheus --> Mimir
+    Prometheus --> OBI
+    Tempo --> OBI
+    
+    CNPG --> Authentik
+    CNPG --> Gitea
+    CNPG --> N8N
+    
+    Longhorn --> MediaStack
+    NFS_CSI --> MediaStack
+```
+
+## 📈 Scaling Architecture
+
+```mermaid
+graph TB
+    subgraph "Horizontal Scaling"
+        HPA[Horizontal Pod Autoscaler<br/>CPU/Memory based]
+        KEDA[KEDA<br/>Event-driven scaling]
+        VPA[Vertical Pod Autoscaler<br/>Resource optimization]
+    end
+
+    subgraph "Storage Scaling"
+        Longhorn_Replicas[Longhorn<br/>Add nodes for capacity]
+        MinIO_Distributed[MinIO<br/>Distributed scaling]
+        NFS_Expansion[NFS<br/>Expand underlying storage]
+    end
+
+    subgraph "Observability Scaling"
+        Prometheus_Sharding[Prometheus<br/>Functional sharding]
+        Mimir_Scaling[Mimir<br/>Horizontal components]
+        Tempo_Scaling[Tempo<br/>Distributed components]
+    end
+
+    HPA --> Applications
+    KEDA --> Applications
+    VPA --> Applications
+    
+    Applications --> Longhorn_Replicas
+    Applications --> MinIO_Distributed
+    
+    Prometheus_Sharding --> Mimir_Scaling
+    Tempo_Scaling --> MinIO_Distributed
 ```
 
 ---
 
-## Deployment Commands
-
-### Phase 1: Foundation
-```bash
-# Deploy Kubernetes cluster (manual or via kubeadm/k3s/etc)
-# CNI and CSI are typically deployed during cluster initialization
-```
-
-### Phase 2: Core Infrastructure
-```bash
-ansible-playbook main.yaml --tags argocd
-ansible-playbook main.yaml --tags cert-manager
-ansible-playbook main.yaml --tags external-dns
-ansible-playbook main.yaml --tags traefik
-ansible-playbook main.yaml --tags minio
-```
-
-### Phase 3: Observability Backend
-```bash
-# Create MinIO buckets first
-ansible-playbook fix-mimir-buckets.yaml
-
-# Deploy observability storage
-ansible-playbook addons/mimir.yaml
-ansible-playbook addons/tempo.yaml
-ansible-playbook addons/loki.yaml
-```
-
-### Phase 4: Monitoring & Visualization
-```bash
-ansible-playbook addons/kube-prometheus-stack.yaml
-ansible-playbook addons/otel-collector.yaml
-ansible-playbook addons/grafana.yaml
-```
-
-### Phase 5: Applications
-```bash
-ansible-playbook addons/your-app.yaml
-```
-
-### Verification Commands
-```bash
-# Check all pods are running
-kubectl get pods -A
-
-# Verify ArgoCD applications
-kubectl get applications -n argocd
-
-# Check Mimir health
-kubectl get pods -n mimir
-kubectl logs -n mimir -l app.kubernetes.io/name=mimir --tail=50
-
-# Verify MinIO buckets
-kubectl exec -n minio deploy/minio -- mc ls minio/
-```
-
----
-
-## Troubleshooting
-
-### Common Issues
-
-#### Mimir pods failing with bucket errors
-**Symptoms**: Pods crash with "invalid bucket config" error
-
-**Solution**:
-- Ensure separate buckets are created for blocks, alertmanager, and ruler
-- Verify bucket names in `helm/mimir_values.yaml` match created buckets
-- Restart affected pods after configuration changes:
-  ```bash
-  kubectl delete pod -n mimir -l app.kubernetes.io/name=mimir
-  ```
-
-#### ArgoCD sync failures
-**Symptoms**: Applications stuck in "OutOfSync" or "Degraded" state
-
-**Solution**:
-```bash
-# Check application status
-kubectl get application -n argocd
-
-# View sync errors
-kubectl describe application <app-name> -n argocd
-
-# Force sync
-kubectl patch application <app-name> -n argocd --type merge -p '{"operation":{"initiatedBy":{"username":"admin"},"sync":{}}}'
-```
-
-#### Certificate issues
-**Symptoms**: TLS certificate not issued or expired
-
-**Solution**:
-```bash
-# Verify cert-manager is running
-kubectl get pods -n cert-manager
-
-# Check certificate status
-kubectl get certificates -A
-
-# Describe certificate for details
-kubectl describe certificate <cert-name> -n <namespace>
-
-# Check cert-manager logs
-kubectl logs -n cert-manager -l app=cert-manager
-```
-
-#### DNS resolution problems
-**Symptoms**: Services not accessible via domain names
-
-**Solution**:
-```bash
-# Verify external-dns is running
-kubectl get pods -n external-dns
-
-# Check DNS records being managed
-kubectl logs -n external-dns -l app.kubernetes.io/name=external-dns
-
-# Verify ingress has correct annotations
-kubectl get ingress -A -o yaml | grep -A 5 "external-dns"
-```
-
-#### Pod stuck in Pending state
-**Symptoms**: Pods not scheduling
-
-**Solution**:
-```bash
-# Check pod events
-kubectl describe pod <pod-name> -n <namespace>
-
-# Check node resources
-kubectl top nodes
-
-# Check PVC status if using persistent storage
-kubectl get pvc -A
-```
-
-For more troubleshooting tips, see [Troubleshooting Guide](troubleshooting.md).
+**🏗️ Architecture Summary:** Production-ready Kubernetes cluster with layered addon architecture, comprehensive observability, and enterprise-grade security and storage solutions.

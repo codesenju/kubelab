@@ -105,6 +105,55 @@ If you encounter issues during deployment:
 ansible-playbook main.yaml --tags k8s -vvv
 ```
 
+### Gateway API Issues
+
+**ExternalName Service Compatibility**
+- Gateway API doesn't support `ExternalName` services as backend references
+- Error: "type ExternalName is not supported for Kubernetes Service reference"
+
+**Solution**: Use ClusterIP service with manual Endpoints:
+```yaml
+apiVersion: v1
+kind: Service
+metadata:
+  name: external-service
+spec:
+  type: ClusterIP
+  ports:
+  - port: 80
+---
+apiVersion: v1
+kind: Endpoints
+metadata:
+  name: external-service
+subsets:
+- addresses:
+  - ip: 192.168.1.100
+  ports:
+  - port: 80
+```
+
+**Note**: Ingress API works with ExternalName services, but Gateway API requires actual endpoints for better observability and traffic management.
+
+### Certificate Issues
+
+**Expired Certificate Symptoms**
+- Browser shows "Your connection is not private"
+- Error: `net::ERR_CERT_DATE_INVALID`
+- Certificate shows old expiration date despite valid cert in Kubernetes
+
+**Root Cause**: Traefik may cache old certificates and not reload updated ones automatically.
+
+**Solution**: Restart Traefik pods to force certificate reload:
+```bash
+kubectl delete pod -n traefik -l app.kubernetes.io/name=traefik
+```
+
+**Verification**: Check actual certificate being served:
+```bash
+echo | openssl s_client -servername example.com -connect example.com:443 2>/dev/null | openssl x509 -noout -dates
+```
+
 ### NFS Storage Permission Issues
 
 When using TrueNAS NFS storage, applications may fail with permission errors. Common symptoms:
