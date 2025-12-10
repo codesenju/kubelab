@@ -22,7 +22,7 @@
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
-            name: local-jazziro-com
+            name: local-jazziro-com-tls
             namespace: '{{ target_namespace }}'
           spec:
             secretName: local-jazziro-com-tls
@@ -212,7 +212,7 @@
   # Pi-hole external service and ingressroute
     - name: Create pihole service
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Service
@@ -230,7 +230,7 @@
 
     - name: Create pihole IngressRoute
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -348,3 +348,90 @@
                         number: 8090
       tags: 
       - beszel-ingress
+
+# APi Gateway Example
+    - name: Create transmission service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: transmission-direct
+            namespace: '{{ target_namespace }}'
+          spec:
+            type: ClusterIP
+            ports:
+            - name: http
+              port: 9091
+              protocol: TCP
+              targetPort: 9091
+      tags:
+      - transmission
+
+    - name: Create transmission endpoints
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: transmission-direct
+            namespace: '{{ target_namespace }}'
+          subsets:
+          - addresses:
+            - ip: 192.168.0.31
+            ports:
+            - name: http
+              port: 9091
+              protocol: TCP
+      tags:
+      - transmission
+
+    - name: Create Gateway for transmission
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: Gateway
+          metadata:
+            name: transmission
+            namespace: "{{ target_namespace }}"
+          spec:
+            gatewayClassName: traefik
+            listeners:
+              - name: web
+                protocol: HTTP
+                port: 8000
+                hostname: "transmission.{{ dns_name_1 }}"
+              - name: websecure
+                protocol: HTTPS
+                port: 8443
+                hostname: "transmission.{{ dns_name_1 }}"
+                tls:
+                  certificateRefs:
+                    - name: local-jazziro-com-tls
+      tags: 
+      - transmission
+
+    - name: Create HTTPRoute for transmission
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: transmission
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: transmission
+                sectionName: websecure
+            hostnames:
+              - "transmission.{{ dns_name_1 }}"
+            rules:
+              - backendRefs:
+                  - name: transmission-direct
+                    port: 9091
+      tags: 
+      - transmission
