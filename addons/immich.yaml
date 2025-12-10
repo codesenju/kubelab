@@ -6,6 +6,22 @@
     target_namespace: immich
   tasks:
 
+    - name: Create immich db secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: immich-db-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            DB_HOSTNAME: 'immich-postgres-rw'
+            DB_USERNAME: '{{ immich_db_username }}'
+            DB_PASSWORD: '{{ immich_db_password }}'
+            DB_DATABASE_NAME: '{{ immich_db_name }}'
+
     - name: Create immich pv
       kubernetes.core.k8s:
         state: present
@@ -21,7 +37,7 @@
               storage: 250Gi
             nfs:
               server: 192.168.0.16 # change me
-              path: /mnt/pool1/immich/
+              path: /mnt/pool2/immich/
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -64,7 +80,7 @@
               storage: 250Gi
             nfs:
               server: 192.168.0.16 # change me
-              path: /mnt/pool1/immich/cache
+              path: /mnt/pool2/immich/
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -100,7 +116,7 @@
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: opentelemetry-kube-stack
+            name: immich
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
