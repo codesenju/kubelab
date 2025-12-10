@@ -58,7 +58,7 @@
             sources:
             - repoURL: https://dl.gitea.com/charts/
               chart: gitea
-              targetRevision: 12.0.0
+              targetRevision: 12.4.0
               helm:
                 releaseName: gitea
                 values: |
@@ -82,20 +82,20 @@
                         STORAGE_TYPE: minio
                       "storage":
                         STORAGE_TYPE: minio
-                        MINIO_ENDPOINT: {{ minio_endpoint }}
+                        MINIO_ENDPOINT: {{ minio_local_endpoint }}
                         MINIO_LOCATION: joburg-north-1
-                        MINIO_ACCESS_KEY_ID: {{ s3_access_key }}
-                        MINIO_SECRET_ACCESS_KEY: {{ s3_secret_key }}
+                        MINIO_ACCESS_KEY_ID: {{ minio_local_access_key }}
+                        MINIO_SECRET_ACCESS_KEY: {{ minio_local_secret_key }}
                         MINIO_BUCKET: gitea-storage
                         MINIO_USE_SSL: true
                         MINIO_INSECURE_SKIP_VERIFY: false
                         SERVE_DIRECT: true
                       "storage.minio":
                         STORAGE_TYPE: minio
-                        MINIO_ENDPOINT: {{ minio_endpoint }}
+                        MINIO_ENDPOINT: {{ minio_local_endpoint }}
                         MINIO_LOCATION: joburg-north-1
-                        MINIO_ACCESS_KEY_ID: {{ s3_access_key }}
-                        MINIO_SECRET_ACCESS_KEY: {{ s3_secret_key }}
+                        MINIO_ACCESS_KEY_ID: {{ minio_local_access_key }}
+                        MINIO_SECRET_ACCESS_KEY: {{ minio_local_secret_key }}
                         MINIO_BUCKET: gitea-storage
                         MINIO_USE_SSL: true
                         MINIO_INSECURE_SKIP_VERIFY: false
@@ -114,8 +114,8 @@
                       email: {{ gitea_admin_email }}
                       passwordMode: keepUpdated
                   ingress:
-                    enabled: true
-                    className: "nginx"
+                    enabled: false
+                    className: "traefik"
                     pathType: Prefix
                     annotations: {}
                     hosts:

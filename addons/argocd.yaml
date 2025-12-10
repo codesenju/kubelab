@@ -135,6 +135,8 @@
             dnsNames:
             - "{{ dns_name_1 }}"
             - "{{ dns_name_2 }}"
+      tags:
+      - ingress
 
     - name: Create Traefik dashboard IngressRoute
       kubernetes.core.k8s:
@@ -160,6 +162,8 @@
                     port: 80
             tls:
               secretName: local-jazziro-com-tls
+      tags:
+      - ingress
 
     - name: Create ServiceMonitor for ArgoCD Application Controller
       kubernetes.core.k8s:
