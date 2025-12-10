@@ -172,10 +172,10 @@
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
-            commonName: "{{ dns_name_2 }}"
+            commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ dns_name_1 }}"
-            - "{{ dns_name_2 }}"
+            - "{{ local_dns }}"
+            - "{{ local_dns_wildcard }}"
       tags: homarr-tls
 
     - name: Create homarr IngressRoute
@@ -194,7 +194,7 @@
             entryPoints:
               - websecure
             routes:
-              - match: Host(`homarr.{{ dns_name_1 }}`)
+              - match: Host(`homarr.{{ local_dns }}`)
                 kind: Rule
                 services:
                   - name: homarr

@@ -81,8 +81,8 @@
           spec:
             # Request both a wildcard for the logical cluster domain and the specific DB hostname
             dnsNames:
-              - "{{ dns_name_2 }}"
-              - "{{ dns_name_4 }}"
+              - "{{ local_dns_wildcard }}"
+              - "{{ public_dns_wildcard }}"
             secretName: domain-locker-tls
             issuerRef:
               name: letsencrypt-production
@@ -104,11 +104,11 @@
               - name: web
                 protocol: HTTP
                 port: 8000
-                hostname: "domainlocker.{{ dns_name_1 }}"
+                hostname: "domainlocker.{{ local_dns }}"
               - name: websecure
                 protocol: HTTPS
                 port: 8443
-                hostname: "domainlocker.{{ dns_name_1 }}"
+                hostname: "domainlocker.{{ local_dns }}"
                 tls:
                   certificateRefs:
                     - name: domain-locker-tls
@@ -139,7 +139,7 @@
               - name: domain-locker-gateway
                 sectionName: websecure
             hostnames:
-              - "domainlocker.{{ dns_name_1 }}"
+              - "domainlocker.{{ local_dns }}"
             rules:
               - backendRefs:
                   - name: domain-locker
@@ -160,7 +160,7 @@
               - name: domain-locker-gateway
                 sectionName: web
             hostnames:
-              - "domainlocker.{{ dns_name_1 }}"
+              - "domainlocker.{{ local_dns }}"
             rules:
               - filters:
                   - type: RequestRedirect
