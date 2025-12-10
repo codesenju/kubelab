@@ -52,10 +52,10 @@
             issuerRef:
               name: letsencrypt-staging
               kind: ClusterIssuer
-            commonName: "{{ dns_name_2 }}"
+            commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ dns_name_1 }}"
-            - "{{ dns_name_2 }}"
+            - "{{ local_dns }}"
+            - "{{ local_dns_wildcard }}"
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
@@ -71,10 +71,10 @@
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
-            commonName: "{{ dns_name_2 }}"
+            commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ dns_name_1 }}"
-            - "{{ dns_name_2 }}"
+            - "{{ local_dns }}"
+            - "{{ local_dns_wildcard }}"
 
     - name: Create gotify ingress
       kubernetes.core.k8s:
