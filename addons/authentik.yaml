@@ -1,95 +1,9 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
   become: no
+  vars:
+    target_namespace: zero-trust
   tasks:
-  
-    - name: Deploy Authentik postgresql pv
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: PersistentVolume
-          metadata:
-            name: authentik-db
-            namespace: zero-trusts
-            labels:
-              service: authentik-db  # This matches the PVC selector
-          spec:
-            capacity:
-              storage: 8Gi
-            nfs:
-              server: 192.168.0.16 # change me
-              path: /mnt/pool1/AppData/authentik/database
-            accessModes:
-              - ReadWriteOnce
-            mountOptions:
-              - noatime
-              - nfsvers=4.2
-
-    - name: Deploy Authentik postgresql db pvc
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: authentik-db
-            namespace: zero-trust
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: 8Gi
-            selector:
-              matchLabels:
-                service: authentik-db  # Add selector to match PV label
-            volumeName: authentik-db
-            storageClassName: "" # This prevents dynamic provisioning
-
-    - name: Deploy Authentik redis pv
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: PersistentVolume
-          metadata:
-            name: authentik-redis
-            namespace: zero-trust
-            labels:
-              service: authentik-redis  # This matches the PVC selector
-          spec:
-            capacity:
-              storage: 8Gi
-            nfs:
-              server: 192.168.0.16 # change me
-              path: /mnt/pool1/AppData/authentik/redis
-            accessModes:
-              - ReadWriteOnce
-            mountOptions:
-              - noatime
-              - nfsvers=4.2
-
-    - name: Deploy Authentik redis pvc
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: PersistentVolumeClaim
-          metadata:
-            name: authentik-redis
-            namespace: zero-trust
-          spec:
-            accessModes:
-              - ReadWriteOnce
-            resources:
-              requests:
-                storage: 8Gi
-            selector:
-              matchLabels:
-                service: authentik-redis  # Add selector to match PV label
-            volumeName: authentik-redis
-            storageClassName: "" # This prevents dynamic provisioning
 
     - name: Deploy Authentik
       kubernetes.core.k8s:
@@ -146,10 +60,98 @@
                         existingClaim: authentik-redis
             destination:
               server: https://kubernetes.default.svc
-              namespace: zero-trust
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+
+    - name: Deploy Authentik postgresql pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: authentik-db
+            namespace: "{{ target_namespace }}"
+            labels:
+              service: authentik-db  # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 8Gi
+            nfs:
+              server: 192.168.0.16 # change me
+              path: /mnt/pool1/AppData/authentik/database
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy Authentik postgresql db pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: authentik-db
+            namespace: "{{ target_namespace }}"
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 8Gi
+            selector:
+              matchLabels:
+                service: authentik-db  # Add selector to match PV label
+            volumeName: authentik-db
+            storageClassName: "" # This prevents dynamic provisioning
+
+    - name: Deploy Authentik redis pv
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: authentik-redis
+            namespace: "{{ target_namespace }}"
+            labels:
+              service: authentik-redis  # This matches the PVC selector
+          spec:
+            capacity:
+              storage: 8Gi
+            nfs:
+              server: 192.168.0.16 # change me
+              path: /mnt/pool1/AppData/authentik/redis
+            accessModes:
+              - ReadWriteOnce
+            mountOptions:
+              - noatime
+              - nfsvers=4.2
+
+    - name: Deploy Authentik redis pvc
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: authentik-redis
+            namespace: "{{ target_namespace }}"
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 8Gi
+            selector:
+              matchLabels:
+                service: authentik-redis  # Add selector to match PV label
+            volumeName: authentik-redis
+            storageClassName: "" # This prevents dynamic provisioning

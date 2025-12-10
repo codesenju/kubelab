@@ -5,45 +5,6 @@
     target_namespace: domain-locker
   tasks:
 
-    - name: Create namespace
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Namespace
-          metadata:
-            name: "{{ target_namespace }}"
-      tags: domain-locker
-
-    - name: Create harness registry pull secret
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: harness-registry-secret
-            namespace: "{{ target_namespace }}"
-          type: kubernetes.io/dockerconfigjson
-          data:
-            .dockerconfigjson: "{{ {'auths': {harness_registry_server: {'username': harness_registry_username, 'password': harness_registry_password, 'auth': (harness_registry_username + ':' + harness_registry_password) | b64encode}}} | to_json | b64encode }}"
-      tags: domain-locker
-
-    - name: Create domain-locker database secrets
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: domain-locker-postgres-secrets
-            namespace: "{{ target_namespace }}"
-          type: Opaque
-          stringData:
-            username: "{{ domain_locker_db_username }}"
-            password: "{{ domain_locker_db_password }}"
-      tags: domain-locker
-
     - name: Deploy domain-locker ArgoCD Application
       kubernetes.core.k8s:
         state: present
@@ -77,6 +38,35 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
+      tags: domain-locker
+
+    - name: Create harness registry pull secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harness-registry-secret
+            namespace: "{{ target_namespace }}"
+          type: kubernetes.io/dockerconfigjson
+          data:
+            .dockerconfigjson: "{{ {'auths': {harness_registry_server: {'username': harness_registry_username, 'password': harness_registry_password, 'auth': (harness_registry_username + ':' + harness_registry_password) | b64encode}}} | to_json | b64encode }}"
+      tags: domain-locker
+
+    - name: Create domain-locker database secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: domain-locker-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ domain_locker_db_username }}"
+            password: "{{ domain_locker_db_password }}"
       tags: domain-locker
 
     - name: Create cert-manager Certificate for domain-locker

@@ -38,6 +38,11 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
       tags: harness
 
     - name: Create Harness secrets

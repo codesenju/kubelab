@@ -6,6 +6,43 @@
   vars:
     target_namespace: opensearch-system
   tasks:
+
+    - name: Deploy OpenSearch Operator ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: opensearch-operator
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: opensearch-operator
+              repoURL: https://opensearch-project.github.io/opensearch-k8s-operator
+              targetRevision: 2.8.0
+              helm:
+                releaseName: opensearch-operator
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: "postgresql.cnpg.io"
+                kind: Cluster
+                jsonPointers:
+                  - /spec/managed/roles
+
     - name: Deploy OpenSearch master-0 PV
       kubernetes.core.k8s:
         state: present
@@ -85,41 +122,6 @@
                 storage: 10Gi
             volumeName: opensearch-master-1
             storageClassName: ""
-    - name: Deploy OpenSearch Operator ArgoCD Application
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
-          metadata:
-            name: opensearch-operator
-            namespace: argocd
-            finalizers:
-              - resources-finalizer.argocd.argoproj.io
-          spec:
-            project: default
-            source:
-              chart: opensearch-operator
-              repoURL: https://opensearch-project.github.io/opensearch-k8s-operator
-              targetRevision: 2.8.0
-              helm:
-                releaseName: opensearch-operator
-            destination:
-              server: https://kubernetes.default.svc
-              namespace: "{{ target_namespace }}"
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-              syncOptions:
-                - CreateNamespace=true
-                - ServerSideApply=true
-                - RespectIgnoreDifferences=true
-            ignoreDifferences:
-              - group: "postgresql.cnpg.io"
-                kind: Cluster
-                jsonPointers:
-                  - /spec/managed/roles
 
     - name: Create admin credentials secret
       kubernetes.core.k8s:
@@ -188,24 +190,9 @@
       tags:
         - ingress
 
-    - name: Annotate OpenSearch Dashboards Service
-      kubernetes.core.k8s:
-        state: patched
-        api_version: v1
-        kind: Service
-        name: opensearch-domain-dashboards
-        namespace: '{{ target_namespace }}'
-        definition:
-          metadata:
-            annotations:
-              traefik.ingress.kubernetes.io/service.serversscheme: "https"
-              traefik.ingress.kubernetes.io/service.serverstransport: "{{ target_namespace }}-opensearch-transport@kubernetescrd"
-      tags:
-        - ingress
-
     - name: Create OpenSearch Ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
@@ -213,7 +200,7 @@
             name: opensearch
             namespace: '{{ target_namespace }}'
             annotations:
-              traefik.ingress.kubernetes.io/router.tls: "true"
+              traefik.ingress.kubernetes.io/service.serversscheme: https
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
               cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
