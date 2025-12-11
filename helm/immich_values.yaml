@@ -64,17 +64,13 @@ valkey:
 # Immich components
 
 server:
-  enabled: true
   controllers:
     main:
       containers:
         main:
-          image:
-            repository: ghcr.io/immich-app/immich-server
-            pullPolicy: IfNotPresent
           volumeMounts:
             - name: library
-              mountPath: /immich
+              mountPath: /immich/data
   ingress:
     main:
       enabled: false
