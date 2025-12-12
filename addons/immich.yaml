@@ -44,7 +44,7 @@
                 jsonPointers:
                   - /spec/managed/roles
 
-    - name: Create immich db secrets
+    - name: Create immich secrets
       kubernetes.core.k8s:
         state: present
         definition:
