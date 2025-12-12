@@ -42,7 +42,7 @@ immich:
     auth:
       issuerUrl: https://accounts.google.com
       buttonText: "Sign in with Google"
-      clientId: "${{GOOGLE_CLIENT_ID}"
+      clientId: "${GOOGLE_CLIENT_ID}"
       clientSecret: "${GOOGLE_CLIENT_SECRET}"
       mobileRedirectUri: "${MOBILE_REDIRECT_URI}"
       enabled: true
