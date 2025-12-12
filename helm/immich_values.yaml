@@ -17,7 +17,7 @@ controllers:
           # Add the env vars to connect to your database here.
         envFrom:
           - secretRef:
-              name: immich-db-secrets
+              name: immich-secrets
 
 immich:
   metrics:
@@ -39,6 +39,13 @@ immich:
     storageTemplate:
       enabled: true
       template: "{{y}}/{{y}}-{{MM}}-{{dd}}/{{filename}}"
+    auth:
+      issuerUrl: https://accounts.google.com
+      buttonText: "Sign in with Google"
+      clientId: "${{GOOGLE_CLIENT_ID}"
+      clientSecret: "${GOOGLE_CLIENT_SECRET}"
+      mobileRedirectUri: "${MOBILE_REDIRECT_URI}"
+      enabled: true
 
 # Dependencies
 valkey:
