@@ -27,6 +27,8 @@ resources:
 # - readarr/service.yaml # project retired
 - prowlarr/deployment.yaml
 - prowlarr/service.yaml
+- jackett/deployment.yaml
+- jackett/service.yaml
 
 # Additional components
 # - overseerr/deployment.yaml
