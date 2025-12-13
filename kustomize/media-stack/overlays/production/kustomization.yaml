@@ -81,6 +81,8 @@ images:
 - name: ghcr.io/flaresolverr/flaresolverr
   newName: ghcr.io/flaresolverr/flaresolverr
   newTag: "v3.4.6"
+- name: lscr.io/linuxserver/jackett
+  newTag: "0.24.445"
 
 # Strategic merge patches
 patches:
