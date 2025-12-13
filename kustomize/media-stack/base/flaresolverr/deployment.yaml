@@ -36,10 +36,10 @@ spec:
           name: http
         resources:
           requests:
-            cpu: 256m
-            memory: 512Mi
-          limits:
             cpu: 512m
             memory: 1Gi
+          limits:
+            cpu: 1Gi
+            memory: 2Gi
         # No volumes needed (stateless service)
       restartPolicy: Always  # Kubernetes equivalent of `unless-stopped`
