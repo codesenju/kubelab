@@ -39,7 +39,7 @@ spec:
             cpu: 512m
             memory: 1Gi
           limits:
-            cpu: 1Gi
+            cpu: 1024m
             memory: 2Gi
         # No volumes needed (stateless service)
       restartPolicy: Always  # Kubernetes equivalent of `unless-stopped`
