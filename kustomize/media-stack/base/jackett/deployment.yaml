@@ -19,7 +19,7 @@ spec:
       #   fsGroup: 1000  # Matches shared PGID
       containers:
       - name: jackett
-        image: lscr.io/linuxserver/jackett:latest
+        image: lscr.io/linuxserver/jackett
         imagePullPolicy: IfNotPresent
         env:
         - name: AUTO_UPDATE
