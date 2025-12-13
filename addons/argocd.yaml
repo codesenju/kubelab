@@ -124,7 +124,7 @@
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
-            name: local-jazziro-com
+            name: local-jazziro-com-tls
             namespace: '{{ namespace }}'
           spec:
             secretName: local-jazziro-com-tls
@@ -133,10 +133,10 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns }}"
             - "{{ local_dns_wildcard }}"
       tags:
-      - ingress
+        - ingress
+        - certificate
 
     - name: Create Traefik dashboard IngressRoute
       kubernetes.core.k8s:

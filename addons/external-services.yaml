@@ -31,7 +31,6 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns }}"
             - "{{ local_dns_wildcard }}"
     
     - name: Create webhook-site service
@@ -380,7 +379,7 @@
             namespace: '{{ target_namespace }}'
           subsets:
           - addresses:
-            - ip: 192.168.0.31
+            - ip: 192.168.0.21
             ports:
             - name: http
               port: 9091

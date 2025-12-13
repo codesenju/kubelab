@@ -49,227 +49,7 @@
             #   - /status  # Ignore PVC status changes
       tags: media-stack
 
-    - name: Create local wildcar certificate
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: local-jazziro-com
-            namespace: '{{ namespace }}'
-          spec:
-            secretName: local-jazziro-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-            - "{{ local_dns }}"
-            - "{{ local_dns_wildcard }}"
-
-    - name: Create jellyfin IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: jellyfin
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`stream.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: jellyfin
-                    kind: Service
-                    port: 8096
-            tls:
-              secretName: local-jazziro-com-tls
-
-    - name: Create flaresolverr IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: flaresolverr
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`flaresolverr.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: flaresolverr
-                    kind: Service
-                    port: 8191
-            tls:
-              secretName: local-jazziro-com-tls
-
-    - name: Create jellyseerr IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: jellyseerr
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`catalog.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: jellyseerr
-                    kind: Service
-                    port: 5055
-            tls:
-              secretName: local-jazziro-com-tls
-
-    - name: Create lidarr IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: lidarr
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`lidarr.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: lidarr
-                    kind: Service
-                    port: 8686
-            tls:
-              secretName: local-jazziro-com-tls
-
-    - name: Create prowlarr IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: prowlarr
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`prowlarr.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: prowlarr
-                    kind: Service
-                    port: 9696
-            tls:
-              secretName: local-jazziro-com-tls
-
-    - name: Create radarr IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: radarr
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`radarr.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: radarr
-                    kind: Service
-                    port: 7878
-            tls:
-              secretName: local-jazziro-com-tls
-
-    - name: Create sonarr IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: sonarr
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`sonarr.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: sonarr
-                    kind: Service
-                    port: 8989
-            tls:
-              secretName: local-jazziro-com-tls
-
-    - name: Create tdarr IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: tdarr
-            namespace: '{{ namespace }}'
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`tdarr.{{ local_dns }}`)
-                kind: Rule
-                services:
-                  - name: tdarr
-                    kind: Service
-                    port: 8265
-            tls:
-              secretName: local-jazziro-com-tls
-
-# Ingress exposing Jellyfin to the public internet via Traefik
-    - name: Create global wildcar certificate
+    - name: Create public wildcar certificate
       kubernetes.core.k8s:
         state: present
         definition:
@@ -288,6 +68,156 @@
             - "{{ public_dns_wildcard }}"
       tags:
         - ingress
+        - certificate
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-tls
+            namespace: media-stack
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ local_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate
+
+    - name: Create flaresolverr Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: flaresolverr
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "flaresolverr.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "flaresolverr.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: flaresolverr
+                          port:
+                            number: 8191
+      tags:
+        - ingress
+
+    - name: Create lidarr Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: lidarr
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "lidarr.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "lidarr.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: lidarr
+                          port:
+                            number: 8686
+      tags:
+        - ingress
+
+    - name: Create prowlarr Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: prowlarr
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "prowlarr.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "prowlarr.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: prowlarr
+                          port:
+                            number: 9696
+      tags:
+        - ingress
+
+    - name: Create tdarr Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: tdarr
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "tdarr.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "tdarr.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: tdarr
+                          port:
+                            number: 8265
+      tags:
+        - ingress
 
     - name: Create Jellyfin Ingress
       kubernetes.core.k8s:
@@ -300,15 +230,28 @@
             namespace: '{{ namespace }}'
             annotations:
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
+              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
               - hosts:
                   - "stream.{{ public_dns }}"
                 secretName: jazziro-com-tls
+              - hosts:
+                  - "stream.{{ local_dns }}"
+                secretName: lcoal-jazziro-com-tls
             rules:
               - host: "stream.{{ public_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: jellyfin
+                          port:
+                            number: 8096
+              - host: "stream.{{ local_dns }}"
                 http:
                   paths:
                     - path: /
@@ -333,13 +276,16 @@
             namespace: '{{ namespace }}'
             annotations:
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
+              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
               - hosts:
                   - "catalog.{{ public_dns }}"
                 secretName: jazziro-com-tls
+              - hosts:
+                  - "catalog.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
             rules:
               - host: "catalog.{{ public_dns }}"
                 http:
@@ -351,5 +297,111 @@
                           name: jellyseerr
                           port:
                             number: 5055
+              - host: "catalog.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: jellyseerr
+                          port:
+                            number: 5055
+      tags:
+        - ingress
+
+    - name: Create sonarr Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: sonarr
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+              - hosts:
+                  - "sonarr.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "sonarr.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: sonarr
+                          port:
+                            number: 8989
+      tags:
+        - ingress
+
+    - name: Create radarr Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: radarr
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+              - hosts:
+                  - "radarr.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "radarr.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: radarr
+                          port:
+                            number: 7878
+      tags:
+        - ingress
+
+    - name: Create jackett Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: jackett
+            namespace: '{{ namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: nginx
+            tls:
+              - hosts:
+                  - "jackett.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
+            rules:
+              - host: "jackett.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: jackett
+                          port:
+                            number: 9117
       tags:
         - ingress

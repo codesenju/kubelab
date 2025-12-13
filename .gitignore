@@ -56,3 +56,6 @@ local-jazziro-com-tls.yaml
 /.idea/*
 /ansible/group_vars/all/docker.yaml
 ansible/group_vars/all/secrets.yaml
+manifests/peer1_*.key
+manifests/wg0.*conf
+manifests/transmission-*.yaml

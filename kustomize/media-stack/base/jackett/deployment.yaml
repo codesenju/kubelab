@@ -1,0 +1,49 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: jackett
+  labels:
+    app.kubernetes.io/component: indexer-management
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: jackett
+  template:
+    metadata:
+      labels:
+        app: jackett
+        app.kubernetes.io/component: indexer-management
+    spec:
+      # securityContext:
+      #   fsGroup: 1000  # Matches shared PGID
+      containers:
+      - name: jackett
+        image: lscr.io/linuxserver/jackett:latest
+        imagePullPolicy: IfNotPresent
+        env:
+        - name: AUTO_UPDATE
+          value: "true"
+        envFrom:
+        - configMapRef:
+            name: shared-permissions
+        - configMapRef:
+            name: global-env
+        ports:
+        - containerPort: 9117
+          name: http
+        volumeMounts:
+        - name: media-stack-config
+          mountPath: /config
+          subPath: jackett/config
+        resources:
+          requests:
+            cpu: "200m"
+            memory: "512Mi"
+          limits:
+            cpu: "400m"
+            memory: "1Gi"
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config

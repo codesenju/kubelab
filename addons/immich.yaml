@@ -59,9 +59,9 @@
             DB_USERNAME: '{{ immich_db_username }}'
             DB_PASSWORD: '{{ immich_db_password }}'
             DB_DATABASE_NAME: '{{ immich_db_name }}'
-            GOOGLE_CLIENT_ID: '{{ google_client_id }}'
-            GOOGLE_CLIENT_SECRET: '{{ google_client_secret }}'
-            MOBILE_REDIRECT_URI: '{{ mobile_redirect_uri }}'
+            # GOOGLE_CLIENT_ID: '{{ google_client_id }}'
+            # GOOGLE_CLIENT_SECRET: '{{ google_client_secret }}'
+            # MOBILE_REDIRECT_URI: '{{ mobile_redirect_uri }}'
 
     - name: Create immich postgres secrets
       kubernetes.core.k8s:
