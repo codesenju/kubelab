@@ -78,36 +78,3 @@
             username: "{{ harness_db_username }}"
             password: "{{ harness_db_password }}"
       tags: harness
-
-    - name: Create harness ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: harness
-            namespace: '{{ target_namespace }}'
-            annotations:
-              # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "harness.{{ local_dns }}"
-                secretName: local-jazziro-com-tls
-            rules:
-              - host: "harness.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: harness
-                          port:
-                            number: 80
-      tags:
-        - ingress
