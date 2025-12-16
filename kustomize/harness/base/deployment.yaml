@@ -17,6 +17,7 @@ spec:
       containers:
         - name: harness
           image: IMAGE_TEMPLATE
+          workingDir: /data
           env:
             - name: GITNESS_DATABASE_DRIVER
               value: "postgres"
