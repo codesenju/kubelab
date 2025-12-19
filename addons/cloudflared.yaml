@@ -16,7 +16,7 @@
             selector:
               matchLabels:
                 app: cloudflared
-            replicas: 2 # You could also consider elastic scaling for this deployment
+            replicas: 1
             template:
               metadata:
                 labels:
@@ -109,9 +109,7 @@
               - hostname: {{ cloudflared_hostname_4 }}
                 service: http://immich-server.immich.svc.cluster.local:2283
               - hostname: {{ cloudflared_hostname_5 }}
-                service: https://minio.minio-s3.svc.cluster.local:443
-              # - hostname: {{ cloudflared_hostname_6 }}
-              #   service: https://minio.minio-s3.svc.cluster.local:443
+                service: http://harness.harness.svc.cluster.local:80
               # This rule sends traffic to the built-in hello-world HTTP server. This can help debug connectivity
               # issues. If hello.example.com resolves and tunnel.example.com does not, then the problem is
               # in the connection from cloudflared to your local service, not from the internet to cloudflared.

@@ -78,3 +78,121 @@
             username: "{{ harness_db_username }}"
             password: "{{ harness_db_password }}"
       tags: harness
+
+    - name: Create public wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: jazziro-com-tls
+            namespace: "{{ target_namespace }}"
+          spec:
+            secretName: jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ public_dns_wildcard }}"
+            dnsNames:
+            - "{{ public_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-tls
+            namespace: "{{ target_namespace }}"
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ local_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate
+
+    - name: Create harness ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: harness
+            namespace: "{{ target_namespace }}"
+            annotations:
+              cert-manager.io/cluster-issuer: letsencrypt-production
+              # 🔑 Traefik middlewares for Docker registry uploads
+              traefik.ingress.kubernetes.io/router.middlewares: harness-registry-upload@kubernetescrd
+              traefik.ingress.kubernetes.io/service.serverstransport: harness-registry-transport@kubernetescrd
+              # (Optional but recommended)
+              traefik.ingress.kubernetes.io/router.entrypoints: websecure
+          spec:
+            ingressClassName: traefik
+            tls:
+              - hosts:
+                  - "harness.{{ public_dns }}"
+                secretName: jazziro-com-tls
+            rules:
+              - host: "harness.{{ public_dns }}"
+                http:
+                  paths:
+                    # 🔥 Docker Registry traffic
+                    - path: /v2/
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: harness
+                          port:
+                            number: 80
+    
+                    # UI + API
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: harness
+                          port:
+                            number: 80
+
+
+    - name: Create traefik Middleware
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: Middleware
+          metadata:
+            name: registry-upload
+            namespace: "{{ target_namespace }}"
+          spec:
+            buffering:
+              maxRequestBodyBytes: 0
+              memRequestBodyBytes: 0
+      tags: harness
+
+    - name: Create traefik ServerTransport
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: ServersTransport
+          metadata:
+            name: registry-transport
+            namespace: "{{ target_namespace }}"
+          spec:
+            forwardingTimeouts:
+              dialTimeout: 300s
+              responseHeaderTimeout: 300s
+              idleConnTimeout: 300s
+      tags: harness
