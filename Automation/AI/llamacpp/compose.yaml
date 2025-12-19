@@ -1,0 +1,22 @@
+services:
+  llamacpp:
+    build:
+      dockerfile: .devops/cpu.Dockerfile
+      context: https://github.com/ggml-org/llama.cpp.git
+      args:
+        # Required to work around https://github.com/ggml-org/llama.cpp/issues/17403
+        UBUNTU_VERSION: "25.10"
+    container_name: llamacpp
+    volumes:
+      - ./models:/models
+    command:
+      - -m
+      - /models/Qwen2.5-Coder-1.5B-Instruct-Q8_0-GGUF/qwen2.5-coder-1.5b-instruct-q8_0.gguf
+    networks:
+      - proxy
+    ports:
+    - "8080:8080"
+    restart: unless-stopped
+networks:
+  proxy:
+    external: true
