@@ -1,0 +1,44 @@
+# Stage 1 — base with all tools
+FROM alpine:latest
+# Create working user
+RUN adduser -D -h /home/node node
+WORKDIR /home/node
+# Enable community repo for ffmpeg
+RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
+
+# Install dependencies
+RUN apk update && apk add --no-cache \
+    nodejs npm \
+    ffmpeg \
+    bash \
+    python3 py3-pip \
+    wget \
+    # Install yt-dlp
+    && pip3 install --break-system-packages yt-dlp
+
+# Copy scripts
+COPY video_editor.sh .
+COPY getvid.sh .
+COPY escape925.png .
+
+# Install MinIO Client (multi-arch)
+RUN ARCH=$(uname -m) && \
+    case "$ARCH" in \
+      x86_64) URL="https://dl.min.io/client/mc/release/linux-amd64/mc";; \
+      aarch64) URL="https://dl.min.io/client/mc/release/linux-arm64/mc";; \
+      *) echo "Unsupported arch $ARCH" && exit 1;; \
+    esac && \
+    wget -q "$URL" -O /usr/local/bin/mc && chmod +x /usr/local/bin/mc \
+    && chmod +x *.sh && \
+    chown node:node *.sh && \
+    mkdir -p /home/node/output/ && \
+    mkdir -p /home/node/input/ && \
+    chown -R node:node /home/node/
+
+# Install n8n
+RUN npm install -g n8n@2.1.0
+
+EXPOSE 5678
+USER node
+ENTRYPOINT ["n8n"]
+CMD ["start"]

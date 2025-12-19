@@ -52,7 +52,7 @@
                           name: cloudflare-api-key
                           key: apiToken
                   sources:
-                  - service
+                  # - service
                   - ingress
                   - traefik-proxy
                   extraArgs:

@@ -1,8 +1,9 @@
-FROM n8nio/n8n:1.110.1
+FROM n8nio/n8n:1.123.3
 USER root
 # Install MinIO Client (mc) & video editor script
 COPY video_editor.sh .
 COPY getvid.sh .
+COPY escape925.png .
 RUN ARCH=$(uname -m) && \
     if [ "$ARCH" = "x86_64" ]; then \
         wget -q https://dl.min.io/client/mc/release/linux-amd64/mc -O /usr/local/bin/mc; \
