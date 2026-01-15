@@ -438,7 +438,7 @@
 # nginx proxy manager
     - name: Create nginx proxy manager service
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Service
@@ -458,7 +458,7 @@
 
     - name: Create beszel ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
@@ -487,3 +487,56 @@
                         number: 8090
       tags: 
       - npm
+
+# TrueNAS
+    - name: Create TrueNAS service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: nas
+            namespace: '{{ target_namespace }}'
+          spec:
+            type: ExternalName
+            externalName: 192.168.0.16
+            ports:
+            - name: http
+              port: 80
+              protocol: TCP
+              targetPort: 80
+      tags: 
+      - truenas
+
+    - name: Create TrueNAS ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: nas
+            namespace: '{{ target_namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - "nas.{{ local_dns }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "nas.{{ local_dns }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: nas
+                      port:
+                        number: 80
+      tags: 
+      - truenas
