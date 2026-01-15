@@ -2,7 +2,7 @@
   gather_facts: no
   become: no
   vars:
-    namespace: rustfs
+    target_namespace: rustfs
   tasks:
 
     - name: Deploy rustfs ArgoCD Application
@@ -29,7 +29,7 @@
                   app.kubernetes.io/instance: rustfs-prod
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ namespace }}'
+              namespace: '{{ target_namespace }}'
             syncPolicy:
               automated:
                 prune: true
@@ -39,3 +39,54 @@
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
       tags: rustfs
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-tls
+            namespace: '{{ target_namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ local_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+      tags:
+      - ingress
+
+    - name: Create rustfs ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: rustfs
+            namespace: '{{ target_namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-staging
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - "s3.{{ local_dns }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "s3.{{ local_dns }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: rustfs
+                      port:
+                        number: 9001
+      tags: ingress
