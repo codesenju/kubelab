@@ -2,7 +2,7 @@
 FROM alpine:latest
 # Create working user
 RUN adduser -D -h /home/node node
-WORKDIR /home/node
+WORKDIR /home/node/.n8n-files/
 # Enable community repo for ffmpeg
 RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
 
@@ -31,8 +31,6 @@ RUN ARCH=$(uname -m) && \
     wget -q "$URL" -O /usr/local/bin/mc && chmod +x /usr/local/bin/mc \
     && chmod +x *.sh && \
     chown node:node *.sh && \
-    mkdir -p /home/node/output/ && \
-    mkdir -p /home/node/input/ && \
     chown -R node:node /home/node/
 
 # Install n8n

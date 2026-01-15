@@ -9,6 +9,7 @@ Options:
   -o, --output <name>   Rename final file (keep extension)
   --audio               Download audio only (mp3)
   --trim <seconds>      Keep only the first N seconds
+  --30s                 Cut video to 30 seconds
   -q, --quiet           Suppress downloader/ffmpeg output
   --yt-dlp-args "<args>"  Append extra arguments to yt-dlp (split on spaces)
   -h, --help            Show this help
@@ -67,6 +68,11 @@ while [[ "$#" -gt 0 ]]; do
         echo "Invalid trim duration. Use: --trim <seconds>"
         exit 1
       fi
+      ;;
+    --30s)
+      trim=true
+      trim_duration=30
+      shift
       ;;
     --audio)
       audio_only=true
@@ -199,7 +205,8 @@ if [ "$trim" = true ]; then
   else
     ffmpeg -y -i "$filename" -t "$trim_duration" -c copy "$trimmed"
   fi
-  filename="$trimmed"
+  rm -f "$filename"
+  mv "$trimmed" "$filename"
   if [ "$quiet" = false ]; then
     echo "Saved as: $filename"
   fi

@@ -1,0 +1,17 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: rustfs
+spec:
+  selector:
+    app: rustfs
+  ports:
+    - protocol: TCP
+      port: 9000
+      targetPort: 9000
+      name: http-rustfs-1
+    - protocol: TCP
+      port: 9001
+      targetPort: 9001
+      name: http-rustfs-2
+  type: ClusterIP

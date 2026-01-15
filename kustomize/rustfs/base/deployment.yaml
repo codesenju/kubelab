@@ -1,0 +1,32 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: rustfs
+  labels:
+    app: rustfs
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: rustfs
+  template:
+    metadata:
+      labels:
+        app: rustfs
+    spec:
+      containers:
+        - name: rustfs
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 9000
+              name: http-rustfs-1
+            - containerPort: 9001
+              name: http-rustfs-2
+          volumeMounts:
+            - name: rustfs-data
+              mountPath: /data
+              subPath: rustfs
+      volumes:
+        - name: rustfs-data
+          persistentVolumeClaim:
+            claimName: rustfs-data
