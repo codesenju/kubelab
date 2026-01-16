@@ -17,6 +17,28 @@ spec:
       containers:
         - name: rustfs
           image: IMAGE_PLACEHOLDER
+          env:
+            - name: RUSTFS_REGION
+              value: france
+            - name: RUSTFS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-secrets
+                  key: rustfs_access_key
+            - name: RUSTFS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-secrets
+                  key: rustfs_secret_key
+            - name: RUSTFS_CONSOLE_ENABLE
+              value: "true"
+            - name: RUSTFS_SERVER_DOMAINS
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-secrets
+                  key: rustfs_server_domains
+            - name: RUSTFS_ADDRESS
+              value: ":9000"
           ports:
             - containerPort: 9000
               name: http-rustfs-1
