@@ -7,7 +7,7 @@
 
     - name: Deploy cloudnative-postgresql gitea cluster
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -45,7 +45,7 @@
 
     - name: Deploy Gitea
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -139,7 +139,7 @@
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
@@ -159,7 +159,7 @@
 
     - name: Create gitea ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress

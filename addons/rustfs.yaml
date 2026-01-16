@@ -7,7 +7,7 @@
 
     - name: Deploy rustfs ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -42,7 +42,7 @@
 
     - name: Create rustfs secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -58,7 +58,7 @@
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
@@ -78,7 +78,7 @@
 
     - name: Create rustfs ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
