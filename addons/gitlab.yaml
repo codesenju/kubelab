@@ -1,0 +1,81 @@
+- hosts: k8s-control-plane-1
+  become: no
+  gather_facts: no
+  vars:
+    target_namespace: gitlab
+  tasks:
+
+    - name: Deploy Gitlab Agent
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitlab-agent
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: gitlab-agent
+              repoURL: https://charts.gitlab.io
+              targetRevision: 2.22.1
+              helm:
+                releaseName: gitlab-agent
+                values: |
+                  config:
+                    token: "{{ gitlab_agent_token }}"
+                    kasAddress: wss://kas.gitlab.com
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Deploy Gitlab Runner
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gitlab-runner
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: gitlab-runner
+              repoURL: https://charts.gitlab.io
+              targetRevision: 0.84.2
+              helm:
+                releaseName: gitlab-runner
+                values: |
+                  rbac:
+                    create: true
+                  runnerToken: '{{ gitlab_runner_token }}'
+                  gitlabUrl: 'https://gitlab.com/'
+                  runners:
+                    config: | 
+                      [[runners]]
+                        shell = "bash"
+                        name = "kubelab-runner"
+                        [runners.kubernetes]
+                        image = "ubuntu:24.04"
+                        privileged = true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
