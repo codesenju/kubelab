@@ -1,7 +1,8 @@
 - hosts: k8s-control-plane-1
   become: no
+  gather_facts: no
   vars:
-    minio_endpoint: "{{ s3_endpoint }}"
+    target_namespace: gitea
   tasks:
 
     - name: Deploy cloudnative-postgresql gitea cluster
@@ -27,7 +28,7 @@
                   app.kubernetes.io/instance: gitea-database
             destination:
               server: https://kubernetes.default.svc
-              namespace: gitea
+              namespace: '{{ target_namespace }}'
             syncPolicy:
               automated:
                 prune: true
@@ -83,7 +84,7 @@
                       "storage":
                         STORAGE_TYPE: minio
                         MINIO_ENDPOINT: {{ minio_local_endpoint }}
-                        MINIO_LOCATION: joburg-north-1
+                        # MINIO_LOCATION: joburg-north-1
                         MINIO_ACCESS_KEY_ID: {{ minio_local_access_key }}
                         MINIO_SECRET_ACCESS_KEY: {{ minio_local_secret_key }}
                         MINIO_BUCKET: gitea-storage
@@ -93,7 +94,7 @@
                       "storage.minio":
                         STORAGE_TYPE: minio
                         MINIO_ENDPOINT: {{ minio_local_endpoint }}
-                        MINIO_LOCATION: joburg-north-1
+                        # MINIO_LOCATION: joburg-north-1
                         MINIO_ACCESS_KEY_ID: {{ minio_local_access_key }}
                         MINIO_SECRET_ACCESS_KEY: {{ minio_local_secret_key }}
                         MINIO_BUCKET: gitea-storage
@@ -136,15 +137,66 @@
               syncOptions:
                 - CreateNamespace=true
 
-    - name: Create gitea-runner-secret for Gitea runner
+    - name: Create local wildcar certificate
       kubernetes.core.k8s:
         state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-tls
+            namespace: '{{ target_namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ local_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+      tags:
+      - ingress
+
+    - name: Create gitea ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: gitea
+            namespace: '{{ target_namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-staging
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - "git.{{ local_dns }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "git.{{ local_dns }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: gitea-http
+                      port:
+                        number: 3000
+      tags: ingress
+
+    - name: Create gitea-runner-secret for Gitea runner
+      kubernetes.core.k8s:
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
           metadata:
             name: gitea-runner-secret
-            namespace: gitea
+            namespace: '{{ target_namespace }}'
           type: Opaque
           stringData:
             registration_token: "{{ gitea_registration_token }}"
@@ -152,7 +204,7 @@
 
     - name: Deploy gitea-runner
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -173,7 +225,7 @@
                   app.kubernetes.io/instance: gitea-runner
             destination:
               server: https://kubernetes.default.svc
-              namespace: gitea
+              namespace: '{{ target_namespace }}'
             syncPolicy:
               automated:
                 prune: true

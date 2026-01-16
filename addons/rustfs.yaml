@@ -40,6 +40,22 @@
                 - RespectIgnoreDifferences=true
       tags: rustfs
 
+    - name: Create rustfs secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: rustfs-secrets
+            namespace: '{{ target_namespace }}'
+          type: Opaque
+          stringData:
+            rustfs_access_key: '{{ rustfs_access_key }}'
+            rustfs_secret_key: '{{ rustfs_secret_key }}'
+            rustfs_server_domains: '{{ rustfs_server_domains }}'
+      tags: rustfs
+
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
         state: present
@@ -71,7 +87,7 @@
             namespace: '{{ target_namespace }}'
             annotations:
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-staging
+              # cert-manager.io/cluster-issuer: letsencrypt-staging
           spec:
             ingressClassName: traefik
             tls:

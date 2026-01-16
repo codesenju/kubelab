@@ -198,7 +198,7 @@
               syncOptions:
                 - CreateNamespace=true
 
-    - name: Create wildcar certificate
+    - name: Create public wildcar certificate
       kubernetes.core.k8s:
         state: present
         definition:
@@ -214,8 +214,31 @@
               kind: ClusterIssuer
             commonName: "{{ public_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
             - "{{ public_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-tls
+            namespace: '{{ target_namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ local_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate
 
     - name: Create immich ingress
       kubernetes.core.k8s:
@@ -228,14 +251,16 @@
             namespace: '{{ target_namespace }}'
             annotations:
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
+              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
             - hosts:
-              - "photos.{{ local_dns }}"
               - "photos.{{ public_dns }}"
               secretName: jazziro-com-tls
+            - hosts:
+              - "photos.{{ local_dns }}"
+              secretName: local-jazziro-com-tls
             rules:
             - host: "photos.{{ local_dns }}"
               http:
