@@ -19,7 +19,7 @@ spec:
           image: IMAGE_PLACEHOLDER
           env:
             - name: RUSTFS_REGION
-              value: france
+              value: joburg-north-1
             - name: RUSTFS_ACCESS_KEY
               valueFrom:
                 secretKeyRef:
