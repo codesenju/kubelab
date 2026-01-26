@@ -1,0 +1,65 @@
+expose:
+  type: ingress
+  tls:
+    enabled: true
+    certSource: auto
+  ingress:
+    className: traefik
+    annotations:
+      ingress.kubernetes.io/ssl-redirect: "true"
+      ingress.kubernetes.io/proxy-body-size: "0"
+      traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+externalURL: https://harbor.jazziro.com
+
+database:
+  type: internal
+  internal:
+    password: "Harbor12345!"
+
+redis:
+  type: internal
+
+persistence:
+  enabled: true
+  resourcePolicy: "keep"
+  persistentVolumeClaim:
+    database:
+      storageClass: "nfs-csi"
+      size: 5Gi
+    redis:
+      storageClass: "nfs-csi"
+      size: 2Gi
+    trivy:
+      storageClass: "nfs-csi"
+      size: 5Gi
+  imageChartStorage:
+    type: s3
+    s3:
+      region: joburg-north-1
+      bucket: harbor
+      existingSecret: harbor-s3-creds
+      regionendpoint: http://minio.minio.svc.cluster.local:9000
+      secure: false
+      v4auth: true
+      chunksize: "5242880"
+
+existingSecretAdminPassword: "harbor-admin-password"
+existingSecretAdminPasswordKey: "password"
+
+existingSecretSecretKey: "harbor-secret-key"
+
+metrics:
+  enabled: true
+  serviceMonitor:
+    enabled: true
+
+trivy:
+  enabled: true
+  resources:
+    requests:
+      cpu: 200m
+      memory: 512Mi
+    limits:
+      cpu: 1
+      memory: 1Gi
