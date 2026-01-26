@@ -1,0 +1,97 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: harbor
+  tasks:
+
+    - name: Create Harbor Namespace
+      kubernetes.core.k8s:
+        name: "{{ target_namespace }}"
+        api_version: v1
+        kind: Namespace
+        state: present
+
+    - name: Create Harbor S3 Secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            REGISTRY_STORAGE_S3_ACCESSKEY: "{{ minio_local_access_key }}"
+            REGISTRY_STORAGE_S3_SECRETKEY: "{{ minio_local_secret_key }}"
+
+    - name: Create Harbor Admin Password Secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-admin-password
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            password: "Harbor@homelab"
+
+    - name: Create Harbor Secret Key
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-secret-key
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            secretKey: "1234567890123456" # Must be exactly 16 characters
+
+    - name: Deploy Harbor
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: harbor
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            sources:
+              - repoURL: https://helm.goharbor.io
+                chart: harbor
+                targetRevision: 1.18.2
+                helm:
+                  releaseName: harbor
+                  valueFiles:
+                    - $values/helm/harbor_values.yaml
+                  values: |
+                    expose:
+                      ingress:
+                        hosts:
+                          core: {{ harbor_domain }}
+                        annotations:
+                          external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
+                          cert-manager.io/cluster-issuer: letsencrypt-production
+                    externalURL: https://{{ harbor_domain }}
+              - repoURL: https://github.com/codesenju/kubelab.git
+                targetRevision: main
+                ref: values
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
