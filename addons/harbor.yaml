@@ -74,9 +74,11 @@
                   valueFiles:
                     - $values/helm/harbor_values.yaml
                   values: |
+                    externalURL: https://{{ harbor_domain }}
                     expose:
                       tls:
-                        enabled: true    
+                        enabled: true
+                        certSource: secret
                         secret:
                           secretName: "jazziro-com-tls"
                       ingress:
