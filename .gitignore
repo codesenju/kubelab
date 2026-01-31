@@ -60,3 +60,4 @@ manifests/peer1_*.key
 manifests/wg0.*conf
 manifests/transmission-*.yaml
 .continue/
+helm/harbor_values.template.yml
