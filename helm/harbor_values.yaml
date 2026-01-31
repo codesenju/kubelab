@@ -10,8 +10,6 @@ expose:
       ingress.kubernetes.io/proxy-body-size: "0"
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
 
-externalURL: https://harbor.jazziro.com
-
 database:
   type: internal
   internal:
