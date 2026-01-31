@@ -1,14 +1,19 @@
 expose:
   type: ingress
-  # tls:
-  #   enabled: true
-  #   certSource: auto
+  tls:
+    enabled: true
+    certSource: secret
+    secretName: jazziro-com-tls
   ingress:
+    hosts:
+      core: harbor.jazziro.com
     className: traefik
     annotations:
       ingress.kubernetes.io/ssl-redirect: "true"
       ingress.kubernetes.io/proxy-body-size: "0"
       traefik.ingress.kubernetes.io/router.entrypoints: websecure
+
+externalURL: https://harbor.jazziro.com
 
 database:
   type: internal
