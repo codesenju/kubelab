@@ -75,12 +75,15 @@
                     - $values/helm/harbor_values.yaml
                   values: |
                     expose:
+                      tls:
+                        enabled: true    
+                        secret:
+                          secretName: "jazziro-com-tls"
                       ingress:
                         hosts:
                           core: {{ harbor_domain }}
                         annotations:
                           external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-                          cert-manager.io/cluster-issuer: letsencrypt-production
                     externalURL: https://{{ harbor_domain }}
               - repoURL: https://github.com/codesenju/kubelab.git
                 targetRevision: main
@@ -95,3 +98,45 @@
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
+
+    - name: Create public wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: jazziro-com-tls
+            namespace: "{{ target_namespace }}"
+          spec:
+            secretName: jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ public_dns_wildcard }}"
+            dnsNames:
+            - "{{ public_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-tls
+            namespace: "{{ target_namespace }}"
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ local_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate

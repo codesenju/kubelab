@@ -1,8 +1,8 @@
 expose:
   type: ingress
-  tls:
-    enabled: true
-    certSource: auto
+  # tls:
+  #   enabled: true
+  #   certSource: auto
   ingress:
     className: traefik
     annotations:
