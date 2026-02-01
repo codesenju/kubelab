@@ -19,7 +19,7 @@ spec:
           image: IMAGE_PLACEHOLDER
           env:
             - name: RUST_BACKTRACE
-              value: 1
+              value: "1"
             - name: RUSTFS_REGION
               value: joburg-north-1
             - name: RUSTFS_ACCESS_KEY
