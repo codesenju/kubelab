@@ -7,7 +7,7 @@
   tasks:
     - name: Deploy minio
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -39,7 +39,7 @@
 
     - name: Create minio-env secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -52,7 +52,7 @@
 
     - name: Create minio ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
