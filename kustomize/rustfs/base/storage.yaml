@@ -9,7 +9,7 @@ spec:
     storage: 5Gi
   nfs:
     server: 192.168.0.16
-    path: /mnt/pool1/AppData
+    path: /mnt/pool1/AppData/rustfs
   accessModes:
     - ReadWriteOnce
   mountOptions:
