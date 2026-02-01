@@ -17,6 +17,7 @@ spec:
       containers:
         - name: rustfs
           image: IMAGE_PLACEHOLDER
+          command: /data
           env:
             - name: RUST_BACKTRACE
               value: "1"
