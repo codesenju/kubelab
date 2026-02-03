@@ -20,7 +20,7 @@
             source:
               repoURL: https://github.com/codesenju/kubelab.git
               path: kustomize/binfmt/overlays/prod
-              targetRevision: binfmt
+              targetRevision: HEAD
               kustomize:
                 # Add these to your existing kustomize config
                 labels:
