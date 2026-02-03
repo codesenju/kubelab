@@ -115,8 +115,8 @@
                           region: joburg-north-1
                           bucket: harbor
                           existingSecret: harbor-s3-creds
-                          regionendpoint: http://minio.minio.svc.cluster.local:9000
-                          secure: false
+                          regionendpoint: https://s3.local.jazziro.com
+                          secure: true
                           v4auth: true
                           chunksize: "5242880"
                     existingSecretAdminPassword: "harbor-admin-password"
