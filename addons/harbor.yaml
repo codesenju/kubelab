@@ -23,8 +23,8 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            REGISTRY_STORAGE_S3_ACCESSKEY: "{{ minio_local_access_key }}"
-            REGISTRY_STORAGE_S3_SECRETKEY: "{{ minio_local_secret_key }}"
+            REGISTRY_STORAGE_S3_ACCESSKEY: "Tv58blS9PLk6sCNf1JGB"
+            REGISTRY_STORAGE_S3_SECRETKEY: "kbWY9P2u5KTGMhc473qyHozIitrjZsUpN6LvREgV"
 
     - name: Create Harbor Admin Password Secret
       kubernetes.core.k8s:
