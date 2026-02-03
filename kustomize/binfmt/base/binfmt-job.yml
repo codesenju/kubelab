@@ -1,17 +1,13 @@
-apiVersion: apps/v1
-kind: DaemonSet
+apiVersion: batch/v1
+kind: Job
 metadata:
   name: binfmt
+  namespace: kube-system
 spec:
-  selector:
-    matchLabels:
-      app: binfmt
   template:
-    metadata:
-      labels:
-        app: binfmt
     spec:
       hostPID: true
+      restartPolicy: OnFailure
       tolerations:
         - operator: Exists
       containers:
@@ -29,4 +25,3 @@ spec:
         - name: host-proc
           hostPath:
             path: /proc
-            type: Directory
