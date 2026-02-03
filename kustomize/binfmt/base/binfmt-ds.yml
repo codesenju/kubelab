@@ -1,0 +1,36 @@
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: binfmt
+  namespace: kube-system
+  labels:
+    k8s-app: binfmt
+spec:
+  selector:
+    matchLabels:
+      k8s-app: binfmt
+  template:
+    metadata:
+      labels:
+        k8s-app: binfmt
+    spec:
+      hostPID: true
+      containers:
+      - name: binfmt
+        image: tonistiigi/binfmt:latest
+        securityContext:
+          privileged: true
+        args: ["--install", "all"]
+        volumeMounts:
+        - name: lib-modules
+          mountPath: /lib/modules
+          readOnly: true
+        - name: binfmt-misc
+          mountPath: /proc/sys/fs/binfmt_misc
+      volumes:
+      - name: lib-modules
+        hostPath:
+          path: /lib/modules
+      - name: binfmt-misc
+        hostPath:
+          path: /proc/sys/fs/binfmt_misc
