@@ -1,0 +1,10 @@
+services:
+  gitlab-runner:
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      #  - ./config.toml:/etc/gitlab-runner/config.toml:ro
+    build:
+      context: .
+      args:
+        GITLAB_RUNNER_IMAGE_TAG: alpine-v17.9.1
+networks: {}

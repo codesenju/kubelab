@@ -42,15 +42,6 @@
         remote_src: yes
       when: k9s_check.rc != 0
 
-    - name: Clean up temporary files
-      file:
-        path: "{{ item }}"
-        state: present
-      with_items:
-        - /tmp/k9s.tar.gz
-        - /tmp/k9s
-      when: k9s_check.rc != 0
-
 #===== Helm
     - name: Check current helm version
       command: helm version --client
@@ -105,7 +96,7 @@
     - name: Remove kube-bench tarball from /tmp
       file:
         path: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
-        state: present
+        state: absent
 
     - name: Print kube-bench usage instructions
       debug:
@@ -137,12 +128,12 @@
     - name: Remove old etcd tarball if exists
       file:
         path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
-        state: present
+        state: absent
 
     - name: Remove old etcd download directory if exists
       file:
         path: /tmp/etcd-download-test
-        state: present
+        state: absent
 
     - name: Create etcd download directory
       file:
@@ -169,7 +160,7 @@
     - name: Remove etcd tarball after extraction
       file:
         path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
-        state: present
+        state: absent
 
     - name: Move etcd, etcdctl, and etcdutl binaries to /usr/local/bin
       copy:
@@ -185,7 +176,7 @@
     - name: Remove etcd download directory
       file:
         path: /tmp/etcd-download-test
-        state: present
+        state: absent
 
     - name: Print etcd, etcdctl, and etcdutl versions
       shell: |

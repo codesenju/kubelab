@@ -61,3 +61,6 @@ manifests/wg0.*conf
 manifests/transmission-*.yaml
 .continue/
 helm/harbor_values.template.yml
+*/*/.env
+*/.env
+.env
