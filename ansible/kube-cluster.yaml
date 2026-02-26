@@ -1,6 +1,12 @@
 - hosts: control-plane
   become: yes
   tasks:
+    - name: Install required packages
+      apt:
+        name: conntrack
+        state: present
+        update_cache: yes
+
     - name: Create an Empty file for Kubeadm configuring
       copy:
         content: ""
@@ -13,7 +19,7 @@
             path: /etc/kubernetes/kubeadm-config.yaml
             block: |
               kind: ClusterConfiguration
-              apiVersion: kubeadm.k8s.io/v1beta3
+              apiVersion: kubeadm.k8s.io/v1beta4
               networking:
                 podSubnet: "{{ pod_cidr }}"
               controlPlaneEndpoint: "{{ hostvars['nginx-server']['ansible_host'] }}:6443"
@@ -36,12 +42,16 @@
             msg: "Failed to configure container runtime and control plane. Playbook will exit!"
 
 
+    - name: Check if cluster is already initialized
+      stat:
+        path: /etc/kubernetes/admin.conf
+      register: admin_conf_exists
+
     - name: Initialize the first control plane
       shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs >> cluster_initialized.log
       args:
         chdir: $HOME
-        creates: cluster_initialized.log
-      when: inventory_hostname == "k8s-control-plane-1"
+      when: inventory_hostname == "k8s-control-plane-1" and not admin_conf_exists.stat.exists
 
     - name: Create .kube directory
       file:
@@ -57,23 +67,59 @@
         owner: "{{ ansible_user }}"
       when: inventory_hostname == "k8s-control-plane-1"
 
+- hosts: k8s-control-plane-1
+  become: yes
+  tasks:
     - name: Get join command for control plane
       shell: kubeadm token create --print-join-command
       register: join_command_control_plane
-      when: inventory_hostname == "k8s-control-plane-1"
 
     - name: Get certificate key
       shell: kubeadm init phase upload-certs --upload-certs | tail -1
       register: cert_key
-      when: inventory_hostname == "k8s-control-plane-1"
 
-    # - name: Join additional control plane nodes
-    #   shell: "{{ hostvars['k8s-control-plane-1']['join_command_control_plane'].stdout }} --control-plane --certificate-key {{ hostvars['k8s-control-plane-1']['cert_key'].stdout }}"
-    #   when: inventory_hostname == "k8s-control-plane-2"
+    - name: Set control plane join facts
+      set_fact:
+        control_plane_join_command: "{{ join_command_control_plane.stdout }}"
+        certificate_key: "{{ cert_key.stdout }}"
+
+- hosts: control-plane
+  become: yes
+  tasks:
+    - name: Stop kubelet service
+      service:
+        name: kubelet
+        state: stopped
+      when: inventory_hostname != "k8s-control-plane-1"
+      ignore_errors: yes
+
+    - name: Kill processes using kubernetes ports
+      shell: |
+        pkill -f kube-apiserver || true
+        pkill -f kube-controller-manager || true
+        pkill -f kube-scheduler || true
+        pkill -f etcd || true
+        sleep 3
+      when: inventory_hostname != "k8s-control-plane-1"
+      ignore_errors: yes
+
+    - name: Clean up previous failed join attempts
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/kubernetes/kubelet.conf
+        - /etc/kubernetes/pki/ca.crt
+        - /var/lib/kubelet
+        - /etc/kubernetes/pki
+        - /var/lib/etcd
+        - /etc/kubernetes/manifests
+      when: inventory_hostname != "k8s-control-plane-1"
+      ignore_errors: yes
 
     - name: Join additional control plane nodes
-      shell: "{{ hostvars['k8s-control-plane-1']['join_command_control_plane'].stdout }} --control-plane --certificate-key {{ hostvars['k8s-control-plane-1']['cert_key'].stdout }}"
-      when: inventory_hostname in ["k8s-control-plane-2", "k8s-control-plane-3"]
+      shell: "{{ hostvars['k8s-control-plane-1']['control_plane_join_command'] }} --control-plane --certificate-key {{ hostvars['k8s-control-plane-1']['certificate_key'] }}"
+      when: inventory_hostname != "k8s-control-plane-1"
 
     - name: Install Pod Network
       shell: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml >> pod_network_setup.log
@@ -96,5 +142,47 @@
 - hosts: workers
   become: yes
   tasks:
+    - name: Install required packages
+      apt:
+        name: conntrack
+        state: present
+        update_cache: yes
+
+    - name: Stop kubelet service
+      service:
+        name: kubelet
+        state: stopped
+      ignore_errors: yes
+
+    - name: Kill processes using kubernetes ports
+      shell: |
+        pkill -f kubelet || true
+        sleep 2
+      ignore_errors: yes
+
+    - name: Clean up previous failed join attempts
+      file:
+        path: "{{ item }}"
+        state: absent
+      loop:
+        - /etc/kubernetes/kubelet.conf
+        - /etc/kubernetes/pki/ca.crt
+        - /var/lib/kubelet
+        - /etc/kubernetes/pki
+      ignore_errors: yes
+
+    - name: Get node status from cluster
+      shell: |
+        kubectl get node {{ inventory_hostname }} --no-headers 2>/dev/null || echo "NotFound"
+      register: node_status
+      delegate_to: k8s-control-plane-1
+      ignore_errors: yes
+
+    - name: Delete existing node from cluster
+      shell: |
+        kubectl delete node {{ inventory_hostname }} --ignore-not-found=true
+      delegate_to: k8s-control-plane-1
+      when: node_status.stdout != "NotFound"
+
     - name: Join worker nodes
       shell: "{{ hostvars['k8s-control-plane-1']['worker_join_command'] }}"

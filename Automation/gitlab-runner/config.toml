@@ -1,0 +1,17 @@
+concurrent = 1
+check_interval = 0
+
+[[runners]]
+  name = "docker-runner"
+  url = "https://gitlab.com/"
+  token = "glrt-zwqbIKRhOmsco79RfzvOrmc6MjFoN3BwCm86MQp0OjIKdTozcTc0cxg.01.1j1geemuq"
+  executor = "docker"
+  [runners.docker]
+    tls_verify = true
+    image = "alpine:latest"
+    privileged = true
+    disable_entrypoint_overwrite = false
+    oom_kill_disable = false
+    disable_cache = false
+    volumes = ["/cache"]
+    shm_size = 0

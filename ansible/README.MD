@@ -22,13 +22,17 @@ This directory contains Ansible playbooks and configurations for deploying and m
 Before running playbooks, verify that Ansible can connect to all nodes:
 
 ```bash
+export ANSIBLE_CONFIG=ansible.cfg
+```
+
+```bash
 ansible all -m ping
 ```
 
 ### Deploy Kubernetes Cluster
 
 ```bash
-ansible-playbook main.yaml --tags k8s
+ansible-playbook main.yaml
 ```
 
 ### Deploy Specific Components
@@ -38,6 +42,7 @@ ansible-playbook main.yaml --tags <tag>
 ```
 
 Available tags:
+
 - `k8s` - Deploy Kubernetes components
 - `storage` - Configure storage
 - `networking` - Configure networking
@@ -108,10 +113,12 @@ ansible-playbook main.yaml --tags k8s -vvv
 ### Gateway API Issues
 
 **ExternalName Service Compatibility**
+
 - Gateway API doesn't support `ExternalName` services as backend references
 - Error: "type ExternalName is not supported for Kubernetes Service reference"
 
 **Solution**: Use ClusterIP service with manual Endpoints:
+
 ```yaml
 apiVersion: v1
 kind: Service
@@ -120,17 +127,17 @@ metadata:
 spec:
   type: ClusterIP
   ports:
-  - port: 80
+    - port: 80
 ---
 apiVersion: v1
 kind: Endpoints
 metadata:
   name: external-service
 subsets:
-- addresses:
-  - ip: 192.168.1.100
-  ports:
-  - port: 80
+  - addresses:
+      - ip: 192.168.1.100
+    ports:
+      - port: 80
 ```
 
 **Note**: Ingress API works with ExternalName services, but Gateway API requires actual endpoints for better observability and traffic management.
@@ -138,6 +145,7 @@ subsets:
 ### Certificate Issues
 
 **Expired Certificate Symptoms**
+
 - Browser shows "Your connection is not private"
 - Error: `net::ERR_CERT_DATE_INVALID`
 - Certificate shows old expiration date despite valid cert in Kubernetes
@@ -145,11 +153,13 @@ subsets:
 **Root Cause**: Traefik may cache old certificates and not reload updated ones automatically.
 
 **Solution**: Restart Traefik pods to force certificate reload:
+
 ```bash
 kubectl delete pod -n traefik -l app.kubernetes.io/name=traefik
 ```
 
 **Verification**: Check actual certificate being served:
+
 ```bash
 echo | openssl s_client -servername example.com -connect example.com:443 2>/dev/null | openssl x509 -noout -dates
 ```
@@ -157,6 +167,7 @@ echo | openssl s_client -servername example.com -connect example.com:443 2>/dev/
 ### NFS Storage Permission Issues
 
 When using TrueNAS NFS storage, applications may fail with permission errors. Common symptoms:
+
 - PostgreSQL: "data directory has wrong ownership" or "Operation not permitted"
 - Redis: "Can't open or create append-only dir: Permission denied"
 
@@ -182,7 +193,12 @@ postgresql:
     initContainers:
       - name: volume-permissions
         image: busybox:1.35
-        command: ['sh', '-c', 'chown -R 1001:1001 /bitnami/postgresql && chmod -R 755 /bitnami/postgresql']
+        command:
+          [
+            "sh",
+            "-c",
+            "chown -R 1001:1001 /bitnami/postgresql && chmod -R 755 /bitnami/postgresql",
+          ]
         volumeMounts:
           - name: data
             mountPath: /bitnami/postgresql
