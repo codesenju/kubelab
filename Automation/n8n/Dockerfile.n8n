@@ -24,9 +24,9 @@ COPY escape925.png .
 # Install MinIO Client (multi-arch)
 RUN ARCH=$(uname -m) && \
     case "$ARCH" in \
-      x86_64) URL="https://dl.min.io/client/mc/release/linux-amd64/mc";; \
-      aarch64) URL="https://dl.min.io/client/mc/release/linux-arm64/mc";; \
-      *) echo "Unsupported arch $ARCH" && exit 1;; \
+    x86_64) URL="https://dl.min.io/client/mc/release/linux-amd64/mc";; \
+    aarch64) URL="https://dl.min.io/client/mc/release/linux-arm64/mc";; \
+    *) echo "Unsupported arch $ARCH" && exit 1;; \
     esac && \
     wget -q "$URL" -O /usr/local/bin/mc && chmod +x /usr/local/bin/mc \
     && chmod +x *.sh && \
@@ -34,7 +34,7 @@ RUN ARCH=$(uname -m) && \
     chown -R node:node /home/node/
 
 # Install n8n
-RUN npm install -g n8n@2.1.0
+RUN npm install -g n8n@2.8.3
 
 EXPOSE 5678
 USER node
