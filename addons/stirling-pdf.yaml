@@ -22,7 +22,7 @@
             source:
               chart: stirling-pdf-chart
               repoURL: https://docs.stirlingpdf.com/Stirling-PDF-chart
-              targetRevision: 1.9.1
+              targetRevision: 3.1.0
               helm:
                 releaseName: stirling-pdf
                 values: |

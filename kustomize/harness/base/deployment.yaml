@@ -21,6 +21,11 @@ spec:
           env:
             - name: GITNESS_DATABASE_DRIVER
               value: "postgres"
+            - name: GITNESS_REGISTRY_STORAGE_DRIVER
+              valueFrom:
+                secretKeyRef:
+                  name: harness-secrets
+                  key: GITNESS_REGISTRY_STORAGE_DRIVER
             - name: GITNESS_REGISTRY_S3_REGION_ENDPOINT
               valueFrom:
                 secretKeyRef:
