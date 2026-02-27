@@ -239,7 +239,7 @@
                 secretName: jazziro-com-tls
               - hosts:
                   - "stream.{{ local_dns }}"
-                secretName: lcoal-jazziro-com-tls
+                secretName: local-jazziro-com-tls
             rules:
               - host: "stream.{{ public_dns }}"
                 http:
@@ -320,10 +320,10 @@
             name: sonarr
             namespace: '{{ namespace }}'
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
               # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: nginx
+            ingressClassName: traefik
             tls:
               - hosts:
                   - "sonarr.{{ local_dns }}"
@@ -352,10 +352,10 @@
             name: radarr
             namespace: '{{ namespace }}'
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
               # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: nginx
+            ingressClassName: traefik
             tls:
               - hosts:
                   - "radarr.{{ local_dns }}"
@@ -384,10 +384,10 @@
             name: jackett
             namespace: '{{ namespace }}'
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ ingress_nginx_ip }}'
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
               # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: nginx
+            ingressClassName: traefik
             tls:
               - hosts:
                   - "jackett.{{ local_dns }}"

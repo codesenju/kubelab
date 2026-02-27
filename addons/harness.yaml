@@ -62,11 +62,12 @@
             GITNESS_PRINCIPAL_ADMIN_PASSWORD: "{{ harness_admin_password }}"
             GITNESS_ENCRYPTER_SECRET: "{{ harness_encrypter_secret }}"
             GITNESS_DATABASE_DATASOURCE: "{{ harness_database_datasource }}"
-            GITNESS_REGISTRY_S3_REGION_ENDPOINT: <your-S3-endpoint>
-            GITNESS_REGISTRY_S3_ACCESS_KEY: <your-access-key>
-            GITNESS_REGISTRY_S3_SECRET_KEY: <your-secret-key>
-            GITNESS_REGISTRY_S3_REGION: <your-aws-region>
-            GITNESS_REGISTRY_S3_BUCKET: <your-S3-bucket>
+            GITNESS_REGISTRY_S3_REGION_ENDPOINT: "https://{{ rustfs_server_domains }}"
+            GITNESS_REGISTRY_S3_ACCESS_KEY: "{{ rustfs_access_key }}"
+            GITNESS_REGISTRY_S3_SECRET_KEY: "{{ rustfs_secret_key }}"
+            GITNESS_REGISTRY_S3_REGION: us-east-1
+            GITNESS_REGISTRY_S3_BUCKET: gitness
+            GITNESS_REGISTRY_STORAGE_DRIVER: s3
       tags: harness
 
     - name: Create Harness database secrets
