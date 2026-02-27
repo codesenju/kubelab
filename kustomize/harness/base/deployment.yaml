@@ -21,6 +21,8 @@ spec:
           env:
             - name: GITNESS_DATABASE_DRIVER
               value: "postgres"
+            - name: GITNESS_STORAGE_DRIVER
+              value: "s3"
             - name: GITNESS_REGISTRY_STORAGE_DRIVER
               valueFrom:
                 secretKeyRef:
