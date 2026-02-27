@@ -110,6 +110,12 @@ If you encounter issues during deployment:
 ansible-playbook main.yaml --tags k8s -vvv
 ```
 
+### Setup kubeconfig
+
+```bash
+ssh -i <private-key> ubuntu@<control-plane-ip> cat /home/ubuntu/.kube/config > ~/.kube/config
+```
+
 ### Gateway API Issues
 
 **ExternalName Service Compatibility**

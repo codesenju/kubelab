@@ -2,7 +2,7 @@
   hosts: k8s-control-plane-1
   become: true
   vars:
-    cilium_version: "0.18.2"  # Explicitly set version instead of fetching
+    cilium_version: "0.19.1"  # Explicitly set version instead of fetching
   tasks:
     - name: Download Cilium CLI
       get_url:
@@ -38,7 +38,7 @@
         - /tmp/cilium-cli
 
     - name: Install Cilium
-      shell: cilium install --version 1.17.2 --set bpf.tc.priority=2
+      shell: cilium install --version {{ cilium_version }} --set bpf.tc.priority=2
       register: cilium_install
       changed_when: cilium_install.rc == 0
 
