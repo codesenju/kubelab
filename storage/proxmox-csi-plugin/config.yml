@@ -2,7 +2,7 @@ clusters:
   # List of Proxmox clusters
   - url: https://192.168.0.11:8006/api2/json
     # Skip the certificate verification, if needed
-    insecure: false
+    insecure: true
     # Proxmox api token
     token_id: "kubernetes-csi@pve!csi"
     token_secret: "secret"
