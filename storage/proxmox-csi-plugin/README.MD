@@ -1,6 +1,8 @@
 # 🚀 Proxmox VE CSI Driver on Kubernetes
 
-![csi_proxmox](../../assets/img/proxmox_csi.png)
+<p align="center">
+  <img src="../../assets/img/proxmox_csi.png" width="400" />
+</p>
 
 <p align="center">
   <img src="https://img.shields.io/badge/Proxmox-7.4+-orange" alt="Proxmox">
