@@ -172,7 +172,7 @@ tofu apply "plan"
 
 ## 🚀 Install Kubernetes Components
 
-Follow the [Ansible Deployment Guide](../ansible/README.md) to deploy and manage your Kubernetes cluster.
+Follow the [Ansible Deployment Guide](../ansible/) to deploy and manage your Kubernetes cluster.
 
 ```bash
 # Or navigate directly
