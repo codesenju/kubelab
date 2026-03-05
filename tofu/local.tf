@@ -7,8 +7,8 @@ locals {
   worker_memory           = 4096
   control_plane_cores     = 6
   control_plane_memory    = 4096
-  worker_disk_size        = 80
-  control_plane_disk_size = 50
+  worker_disk_size        = 120
+  control_plane_disk_size = 60
 
   # Proxmox node assignment for each VM
   # Control plane nodes (3 nodes)
