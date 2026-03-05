@@ -1,0 +1,246 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  vars:
+    arc_runner_sets:
+      - name: kubelab
+        github_config_url: "https://github.com/kubelab17"
+      - name: synthetic-monitor-gitops
+        github_config_url: "https://github.com/codesenju/synthetic-monitor-gitops"
+    namespace: arc-system
+  tasks:
+
+    - name: Deploy GitHub Actions Runner Controller
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: gha-runner-scale-set-controller
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: ghcr.io/actions/actions-runner-controller-charts
+              chart: gha-runner-scale-set-controller
+              targetRevision: "0.12.1"
+              helm:
+                releaseName: gha-runner-scale-set-controller
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+            ignoreDifferences:
+            - group: apiextensions.k8s.io
+              kind: CustomResourceDefinition
+              jsonPointers:
+              - /spec/preserveUnknownFields
+
+    - name: Create additional RBAC permissions for cross-namespace access
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: gha-rs-controller-cross-namespace
+          rules:
+          - apiGroups: [""]
+            resources: ["serviceaccounts"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: [""]
+            resources: ["secrets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: [""]
+            resources: ["pods"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: ["rbac.authorization.k8s.io"]
+            resources: ["roles", "rolebindings"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: ["actions.github.com"]
+            resources: ["ephemeralrunnersets", "autoscalingrunnersets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+    - name: Bind additional RBAC permissions to controller service account
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: gha-rs-controller-cross-namespace
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: gha-rs-controller-cross-namespace
+          subjects:
+          - kind: ServiceAccount
+            name: gha-runner-scale-set-controller-gha-rs-controller
+            namespace: arc-system
+
+    - name: Create RBAC permissions for listener service accounts
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRole
+          metadata:
+            name: gha-rs-listener-cross-namespace
+          rules:
+          - apiGroups: ["actions.github.com"]
+            resources: ["ephemeralrunnersets", "autoscalingrunnersets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+          - apiGroups: [""]
+            resources: ["pods", "secrets"]
+            verbs: ["get", "list", "watch", "create", "update", "patch", "delete"]
+
+    - name: Bind listener RBAC permissions (this will catch dynamically created listener service accounts)
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: gha-rs-listener-cross-namespace
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: gha-rs-listener-cross-namespace
+          subjects:
+          - kind: Group
+            name: system:serviceaccounts:arc-system
+            apiGroup: rbac.authorization.k8s.io
+
+    # - name: Wait for controller deployment to be ready
+    #   kubernetes.core.k8s_info:
+    #     api_version: apps/v1
+    #     kind: Deployment
+    #     name: gha-runner-scale-set-controller-gha-rs-controller
+    #     namespace: arc-system
+    #     wait: true
+    #     wait_condition:
+    #       type: Available
+    #       status: "True"
+    #     wait_timeout: 300
+
+    - name: Create shared GitHub token secret for all runner scale sets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: arc-runner-github-secret
+            namespace: "{{ namespace }}"
+          type: Opaque
+          data:
+            github_token: "{{ github_runner_token | b64encode }}"
+
+    - name: Deploy GitHub Actions Runner Scale Sets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: "arc-runner-set-{{ item.name }}"
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: ghcr.io/actions/actions-runner-controller-charts
+              chart: gha-runner-scale-set
+              targetRevision: "0.12.1"
+              helm:
+                releaseName: "arc-runner-set-{{ item.name }}"
+                values: |
+                  githubConfigUrl: "{{ item.github_config_url }}"
+                  githubConfigSecret: "arc-runner-github-secret"
+                  runnerGroup: "{{ kubelab }}"
+                  runnerScaleSetName: "{{ item.name }}-runner-set"
+                  controllerServiceAccount:
+                    name: "arc-gha-rs-controller"
+                    namespace: "arc-system"
+                  template:
+                    spec:
+                      initContainers:
+                        - name: init-dind-externals
+                          image: ghcr.io/actions/actions-runner:latest
+                          command:
+                            ["cp", "-r", "/home/runner/externals/.", "/home/runner/tmpDir/"]
+                          volumeMounts:
+                            - name: dind-externals
+                              mountPath: /home/runner/tmpDir
+                      containers:
+                        - name: runner
+                          image: ghcr.io/actions/actions-runner:latest
+                          command: ["/home/runner/run.sh"]
+                          env:
+                            - name: DOCKER_HOST
+                              value: tcp://localhost:2375
+                          volumeMounts:
+                            - name: work
+                              mountPath: /home/runner/_work
+                            - name: dind-sock
+                              mountPath: /var/run
+                        - name: dind
+                          image: docker:dind
+                          args:
+                            - dockerd
+                            - --tls=false
+                            - --host=tcp://0.0.0.0:2375
+                            - --host=unix:///var/run/docker.sock
+                            - --group=$(DOCKER_GROUP_GID)
+                          env:
+                            - name: DOCKER_GROUP_GID
+                              value: "123"
+                            - name: DOCKER_TLS_CERTDIR
+                              value: ""
+                          securityContext:
+                            privileged: true
+                          volumeMounts:
+                            - name: work
+                              mountPath: /home/runner/_work
+                            - name: dind-sock
+                              mountPath: /var/run
+                            - name: dind-externals
+                              mountPath: /home/runner/externals
+                      volumes:
+                        - name: work
+                          emptyDir: {}
+                        - name: dind-sock
+                          emptyDir: {}
+                        - name: dind-externals
+                          emptyDir: {}
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+            ignoreDifferences:
+            - group: actions.github.com
+              kind: AutoscalingRunnerSet
+              jsonPointers:
+              - /spec/template/spec/initContainers
+              - /spec/template/spec/containers
+              - /spec/template/spec/volumes
+              - /spec/template/spec/restartPolicy
+              - /spec/template/spec/serviceAccountName
+      loop: "{{ arc_runner_sets }}"
+      tags:
+        - arc-runners
