@@ -229,4 +229,7 @@ resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
   node_name    = "kubelab-${count.index + 1}"
   url          = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
   file_name    = "jammy-server-cloudimg-amd64.qcow2"
+  # lifecycle {
+  #   ignore_changes = [url]
+  # }
 }

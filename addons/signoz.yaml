@@ -21,30 +21,56 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.103.0
+              targetRevision: 0.113.0
               helm:
                 releaseName: signoz
                 values: |
                   global:
-                    storageClass: nfs-csi
+                    storageClass: proxmox-csi
                     clusterName: kubelab
                   imagePullSecrets:
                     - dockerhub-secret
-                  
+
                   # ClickHouse optimization
                   clickhouse:
-                    installCustomStorageClass: true
+                    coldStorage:
+                      enabled: true
+                      # Set free space size on default disk in bytes
+                      defaultKeepFreeSpaceBytes: "10485760" # 10MiB
+                      type: s3
+                      endpoint: "https://{{ minio_local_endpoint }}/signoz/"
+                      accessKey: "{{ minio_local_access_key }}"
+                      secretAccess: "{{ minio_local_secret_key }}"
+                    storageClass: proxmox-csi
                     imagePullSecrets:
                       - dockerhub-secret
                     persistence:
-                      size: 50Gi
+                      size: 20Gi
                     resources:
                       requests:
+                        cpu: 1000m
+                        memory: 2Gi
+                      limits:
                         cpu: 2000m
                         memory: 4Gi
-                      limits:
-                        cpu: 4000m
-                        memory: 8Gi
+                    # HA Config
+                    layout:
+                      shardsCount: 1 # Perfomance
+                      replicasCount: 3 # HA
+                    zookeeper:
+                      replicaCount: 3
+                    schemaMigrator:
+                      enableReplication: true
+                    podDistribution:
+                      # All instances in unique nodes:
+                      - type: ClickHouseAntiAffinity
+                        topologyKey: kubernetes.io/hostname
+                      # Distribute shards of replicas across nodes:
+                      - type: ReplicaAntiAffinity
+                        topologyKey: kubernetes.io/hostname
+                      # Distribute replicas of shards across nodes:
+                      - type: ShardAntiAffinity
+                        topologyKey: kubernetes.io/hostname
                     # Increase write buffer and merge settings
                     configOverride: |
                       <clickhouse>
@@ -69,8 +95,8 @@
                         cpu: 500m
                         memory: 1Gi
                       limits:
-                        cpu: 2000m
-                        memory: 4Gi
+                        cpu: 1000m
+                        memory: 2Gi
                     config:
                       exporters:
                         clickhousetraces:
@@ -88,13 +114,13 @@
                           timeout: 30s
                           sending_queue:
                             enabled: true
-                            num_consumers: 20
-                            queue_size: 5000
+                            num_consumers: 40
+                            queue_size: 15000
                       processors:
                         batch:
-                          timeout: 5s
-                          send_batch_size: 10000
-                          send_batch_max_size: 20000
+                          timeout: 10s
+                          send_batch_size: 50000     
+                          send_batch_max_size: 100000
                   
                   signoz:
                     imagePullSecrets:
@@ -145,7 +171,7 @@
                   global:
                     cloud: others
                     clusterName: "kubelab"
-                    storageClass: "nfs-csi"
+                    storageClass: "proxmox-csi"
                     deploymentEnvironment: prod
                     imagePullSecrets:
                       - "dockerhub-secret"
@@ -225,7 +251,7 @@
 
     - name: Create signoz IngressRoute
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -247,6 +273,8 @@
                     port: 8080
             tls:
               secretName: local-jazziro-com-tls
+      tags: 
+      - ingress
 
     - name: Create signoz-otel-collector Ingress
       kubernetes.core.k8s:
@@ -259,7 +287,7 @@
             namespace: '{{ target_namespace }}'
             annotations:
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
+              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
@@ -277,5 +305,37 @@
                       name: signoz-otel-collector
                       port:
                         number: 4318
+      tags: 
+      - ingress
+
+    - name: Create signoz frontend Ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: signoz
+            namespace: '{{ target_namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              # cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - "signoz.{{ local_dns }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "signoz.{{ local_dns }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: signoz
+                      port:
+                        number: 8080
       tags: 
       - ingress
