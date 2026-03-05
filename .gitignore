@@ -64,3 +64,4 @@ helm/harbor_values.template.yml
 */*/.env
 */.env
 .env
+storage/proxmox-csi-plugin/group_vars/all/secrets.yaml

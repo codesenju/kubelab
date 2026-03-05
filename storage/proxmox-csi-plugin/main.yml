@@ -1,0 +1,140 @@
+- hosts: local
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: csi-proxmox
+    k8s_region: kubelab # change me to proxmox cluster name
+  tasks:
+
+  - name: Label worker nodes
+    kubernetes.core.k8s:
+      state: present
+      apply: yes
+      definition:
+        apiVersion: v1
+        kind: Node
+        metadata:
+          name: "{{ item.name }}"
+          labels:
+            topology.kubernetes.io/region: "{{ k8s_region }}"
+            topology.kubernetes.io/zone: "{{ item.zone }}"
+    loop:
+      - { name: k8s-worker-1, zone: kubelab-1 } # change me { name: <k8s-node-name>, zone: <proxmox-node-name> }
+      - { name: k8s-worker-2, zone: kubelab-1 } 
+      - { name: k8s-worker-3, zone: kubelab-2 }
+    tags:
+      - argocd
+      - manifest
+
+  - name: Create a namespace for the plugin and grant it the privileged permissions
+    kubernetes.core.k8s:
+      definition:
+        apiVersion: v1
+        kind: Namespace
+        metadata:
+          name: "{{ target_namespace }}"
+          labels:
+            kubernetes.io/metadata.name: "{{ target_namespace }}"
+            pod-security.kubernetes.io/enforce: privileged
+      state: present
+    tags:
+      - argocd
+      - manifest
+
+  #  //--- Comment out bellow if you are using Argocd  ---//
+  - name: Create Proxmox CSI Secret from config.yaml
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: v1
+        kind: Secret
+        metadata:
+          name: proxmox-csi-plugin
+          namespace: "{{ target_namespace }}"
+        type: Opaque
+        stringData:
+          config.yaml: |
+            features:
+              provider: default
+            clusters:
+              - url: "{{ proxmox_endpoint }}/api2/json"
+                insecure: true
+                token_id: "{{ proxmox_token_id }}"
+                token_secret: "{{ proxmox_token_secret }}"
+                region: "{{ k8s_region }}"
+            storageClass:
+              - name: proxmox-csi
+                storage: local-lvm
+                reclaimPolicy: Delete
+                fstype: ext4 
+                allowVolumeExpansion: true
+                # Define the storage class as default
+                # annotations:
+                #   storageclass.kubernetes.io/is-default-class: "true"
+    tags:
+      - manifest
+  - name: Apply Proxmox CSI Plugin from remote manifest
+    kubernetes.core.k8s:
+      state: present
+      src: https://raw.githubusercontent.com/sergelogvinov/proxmox-csi-plugin/main/docs/deploy/proxmox-csi-plugin-release.yml
+    tags:
+      - manifest
+  #  //---
+
+  #  //--- Comment out bellow if you are NOT using Argocd  ---//
+  - name: Deploy Proxmox CSI Plugin
+    kubernetes.core.k8s:
+      state: present
+      definition:
+        apiVersion: argoproj.io/v1alpha1
+        kind: Application
+        metadata:
+          name: proxmox-csi-plugin
+          namespace: argocd
+          finalizers:
+            - resources-finalizer.argocd.argoproj.io
+        spec:
+          project: default
+          sources:
+          - repoURL: ghcr.io/sergelogvinov/charts
+            chart: proxmox-csi-plugin
+            targetRevision: "0.5.5"
+            helm:
+              releaseName: proxmox-csi-plugin
+              values: |
+                config:
+                  clusters:
+                    # List of Proxmox clusters
+                    - url: "{{ proxmox_endpoint }}/api2/json"
+                      # Skip the certificate verification, if needed
+                      insecure: true
+                      # Proxmox api token
+                      token_id: {{ proxmox_token_id | to_json }}
+                      token_secret: {{ proxmox_token_secret | to_json }}
+                      # Region name, which is cluster name
+                      region: kubelab
+                # Define the storage classesx
+                storageClass:
+                  - name: proxmox-csi
+                    storage: local-lvm
+                    reclaimPolicy: Retain
+                    # fstype: xfs
+                    fstype: ext4
+                    allowVolumeExpansion: true
+                    # Define the storage class as default
+                    annotations:
+                      storageclass.kubernetes.io/is-default-class: "true"
+          destination:
+            server: https://kubernetes.default.svc
+            namespace: "{{ target_namespace }}"
+          syncPolicy:
+            automated:
+              prune: true
+              selfHeal: true
+            syncOptions:
+            - CreateNamespace=true
+            - ServerSideApply=true
+            - RespectIgnoreDifferences=true
+    tags:
+    - argocd
+  ## //---

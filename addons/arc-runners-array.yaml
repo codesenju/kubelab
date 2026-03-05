@@ -4,15 +4,14 @@
     arc_runner_sets:
       - name: kubelab
         github_config_url: "https://github.com/kubelab17"
-        runner_group: "kubelab"
-      # - name: synthetic-monitor-gitops
-      #   github_config_url: "https://github.com/codesenju/synthetic-monitor-gitops"
+      - name: synthetic-monitor-gitops
+        github_config_url: "https://github.com/codesenju/synthetic-monitor-gitops"
     namespace: arc-system
   tasks:
 
     - name: Deploy GitHub Actions Runner Controller
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -47,7 +46,7 @@
 
     - name: Create additional RBAC permissions for cross-namespace access
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: rbac.authorization.k8s.io/v1
           kind: ClusterRole
@@ -72,7 +71,7 @@
 
     - name: Bind additional RBAC permissions to controller service account
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: rbac.authorization.k8s.io/v1
           kind: ClusterRoleBinding
@@ -89,7 +88,7 @@
 
     - name: Create RBAC permissions for listener service accounts
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: rbac.authorization.k8s.io/v1
           kind: ClusterRole
@@ -105,7 +104,7 @@
 
     - name: Bind listener RBAC permissions (this will catch dynamically created listener service accounts)
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: rbac.authorization.k8s.io/v1
           kind: ClusterRoleBinding
@@ -134,7 +133,7 @@
 
     - name: Create shared GitHub token secret for all runner scale sets
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -147,7 +146,7 @@
 
     - name: Deploy GitHub Actions Runner Scale Sets
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -167,7 +166,7 @@
                 values: |
                   githubConfigUrl: "{{ item.github_config_url }}"
                   githubConfigSecret: "arc-runner-github-secret"
-                  runnerGroup: "{{ item.runner_group }}"
+                  runnerGroup: "{{ kubelab }}"
                   runnerScaleSetName: "{{ item.name }}-runner-set"
                   controllerServiceAccount:
                     name: "arc-gha-rs-controller"

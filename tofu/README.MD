@@ -83,7 +83,7 @@ locals {
 
 **Note:** The array index matches the VM number (index 0 = VM 1, index 1 = VM 2, etc.). If the override arrays are commented out or not defined, all VMs will use the default resource values.
 
-### 3. S3 Backend Setup
+### 3. S3 Backend Setup (Optional)
 
 The OpenTofu state is stored in an S3-compatible backend using Drive3 (Google Drive exposed as S3-compatible storage).
 
@@ -170,27 +170,11 @@ tofu plan -out=plan
 tofu apply "plan"
 ```
 
-### Destroy the Infrastructure
+## 🚀 Install Kubernetes Components
+
+Follow the [Ansible Deployment Guide](../ansible/README.md) to deploy and manage your Kubernetes cluster.
 
 ```bash
-tofu destroy
+# Or navigate directly
+cd ../ansible
 ```
-
-## Configuration Files
-
-- `main.tf` - Main configuration file
-- `variables.tf` - Variable definitions
-- `outputs.tf` - Output definitions
-- `local.tf` - Local variables (node assignments, VM specs, network config)
-
-## Proxmox Provider Configuration
-
-The Proxmox provider is configured to use the local Proxmox API:
-
-```hcl
-provider "proxmox" {
-  insecure = true  # Disables SSL verification (testing only)
-}
-```
-
-For production environments, it's recommended to set `insecure = false` and configure proper SSL certificates.
