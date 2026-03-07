@@ -14,10 +14,10 @@
 
 ## 📋 Table of Contents
 
-- [Prerequisites](#prerequisites)
-- [Configuration](#configuration)
-- [Create CSI Role and User](#create-csi-role-and-user-in-proxmox)
-- [Deploy CSI Driver](#deploy-proxmox-csi-driver-controller)
+- [Prerequisites](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#-prerequisites)
+- [Configuration](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#%EF%B8%8F-configuration)
+- [Create CSI Role and User](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#-create-csi-role-and-user-in-proxmox)
+- [Deploy CSI Driver](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#-deploy-proxmox-csi-driver-controller)
 
 ---
 
@@ -107,7 +107,3 @@ EOF
 - [Proxmox CSI Plugin Documentation](https://github.com/sergelogvinov/proxmox-csi-plugin/blob/main/docs/install.md)
 
 ---
-
-<p align="center">
-  <sub>Built with ❤️ for the Kubernetes community</sub>
-</p>
