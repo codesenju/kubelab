@@ -23,8 +23,8 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            REGISTRY_STORAGE_S3_ACCESSKEY: "REDACTED-HARBOR-S3-ACCESS-KEY"
-            REGISTRY_STORAGE_S3_SECRETKEY: "REDACTED-HARBOR-S3-SECRET-KEY"
+            REGISTRY_STORAGE_S3_ACCESSKEY: "aaabbbccc"
+            REGISTRY_STORAGE_S3_SECRETKEY: "aaabbbcccdddeeefffggg"
 
     - name: Create Harbor Admin Password Secret
       kubernetes.core.k8s:
