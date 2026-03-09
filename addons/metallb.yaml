@@ -6,7 +6,7 @@
     - name: Install Metallb
       kubernetes.core.k8s:
         state: present
-        src: https://raw.githubusercontent.com/metallb/metallb/v0.14.9/config/manifests/metallb-frr-k8s.yaml
+        src: https://raw.githubusercontent.com/metallb/metallb/v0.15.3/config/manifests/metallb-native.yaml
 
     - name: Wait for metallb pods to be ready
       shell: kubectl wait --for=condition=Ready pods --all -n metallb-system >> metallb_ready.log
