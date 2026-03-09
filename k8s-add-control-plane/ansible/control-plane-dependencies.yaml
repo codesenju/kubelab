@@ -1,8 +1,8 @@
-- name: Kubernetes Dependencies
-  hosts: workers 
+- name: Kubernetes Dependencies for Control Plane
+  hosts: new_control_plane
   become: yes
   vars:
-    k8s_version: "1.31"
+    k8s_version: "1.32"
   tasks:
 
     - name: Updates
@@ -141,10 +141,17 @@
         name: kubelet={{ k8s_version }}.*
         state: present
         update_cache: true
+      tags:
+        - install_kubelet
 
     - name: Install Kubeadm
       apt:
         name: kubeadm={{ k8s_version }}.*
+        state: present
+
+    - name: Install Kubectl
+      apt:
+        name: kubectl={{ k8s_version }}.*
         state: present
 
     - name: Enable the Kubelet service

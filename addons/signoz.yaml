@@ -251,7 +251,7 @@
 
     - name: Create signoz IngressRoute
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
