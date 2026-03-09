@@ -53,6 +53,7 @@
           upstream kubernetes {
               server {{ hostvars['k8s-control-plane-1']['ansible_host'] }}:6443;
               server {{ hostvars['k8s-control-plane-2']['ansible_host'] }}:6443;
+              server {{ hostvars['k8s-control-plane-3']['ansible_host'] }}:6443;
           }
 
           server {
