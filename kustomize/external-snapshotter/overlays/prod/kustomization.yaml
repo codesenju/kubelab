@@ -4,5 +4,9 @@ kind: Kustomization
 
 namespace: external-snapshotter
 
+images:
+  - name: registry.k8s.io/sig-storage/snapshot-controller
+    newName: harbor.jazziro.com/registry-k8s-io/sig-storage/snapshot-controller
+
 resources:
   - ../../base
