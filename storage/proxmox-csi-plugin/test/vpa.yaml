@@ -1,0 +1,69 @@
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: clickhouse-vpa-1
+  namespace: signoz
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: chi-signoz-clickhouse-cluster-0-0
+  updatePolicy:
+    updateMode: "Off"  # Off, Initial, Recreate, InPlaceOrRecreate
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        controlledResources: ["cpu", "memory"]
+        minAllowed:
+          cpu: 100m
+          memory: 128Mi
+        maxAllowed:
+          cpu: 6
+          memory: 12Gi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: clickhouse-vpa-2
+  namespace: signoz
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: chi-signoz-clickhouse-cluster-0-1
+  updatePolicy:
+    updateMode: "Off"  # Off, Initial, Recreate, InPlaceOrRecreate
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        controlledResources: ["cpu", "memory"]
+        minAllowed:
+          cpu: 100m
+          memory: 128Mi
+        maxAllowed:
+          cpu: 6
+          memory: 12Gi
+---
+apiVersion: autoscaling.k8s.io/v1
+kind: VerticalPodAutoscaler
+metadata:
+  name: clickhouse-vpa-3
+  namespace: signoz
+spec:
+  targetRef:
+    apiVersion: apps/v1
+    kind: StatefulSet
+    name: chi-signoz-clickhouse-cluster-0-2
+  updatePolicy:
+    updateMode: "Off"  # Off, Initial, Recreate, InPlaceOrRecreate
+  resourcePolicy:
+    containerPolicies:
+      - containerName: '*'
+        controlledResources: ["cpu", "memory"]
+        minAllowed:
+          cpu: 100m
+          memory: 128Mi
+        maxAllowed:
+          cpu: 6
+          memory: 12Gi
