@@ -48,11 +48,11 @@
                       size: 20Gi
                     resources:
                       requests:
-                        cpu: 1000m
-                        memory: 2Gi
-                      limits:
-                        cpu: 2000m
+                        cpu: 2
                         memory: 4Gi
+                      limits:
+                        cpu: 4
+                        memory: 8Gi
                     # HA Config
                     layout:
                       shardsCount: 1 # Perfomance
