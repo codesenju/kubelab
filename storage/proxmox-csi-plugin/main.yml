@@ -109,8 +109,10 @@
                       # Skip the certificate verification, if needed
                       insecure: true
                       # Proxmox api token
-                      token_id: {{ proxmox_token_id | to_json }}
-                      token_secret: {{ proxmox_token_secret | to_json }}
+                      username: {{ proxmox_username | to_json }}
+                      password: {{ proxmox_password | to_json }}
+                      # token_id: {{ proxmox_token_id | to_json }}
+                      # token_secret: {{ proxmox_token_secret | to_json }}
                       # Region name, which is cluster name
                       region: kubelab
                 # Define the storage classesx
@@ -124,6 +126,9 @@
                     # Define the storage class as default
                     annotations:
                       storageclass.kubernetes.io/is-default-class: "true"
+                controller:
+                  snapshotter:
+                    enabled: true
           destination:
             server: https://kubernetes.default.svc
             namespace: "{{ target_namespace }}"
