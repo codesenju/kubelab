@@ -1,0 +1,45 @@
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: busybox-pvc
+  namespace: test
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: proxmox-csi
+  resources:
+    requests:
+      storage: 1Gi
+---
+apiVersion: v1
+kind: Pod
+metadata:
+  name: busybox-pod
+  namespace: test
+spec:
+  containers:
+    - name: busybox
+      image: harbor.jazziro.com/dhi/bash:5-alpine3.23
+      command:
+        - /bin/sh
+        - -c
+        - |
+          echo "Starting test..." && \
+          sleep 5 && \
+          echo "Test file created at $(date)" > /mnt/test.txt && \
+          echo "File created successfully!" && \
+          cat /mnt/test.txt && \
+          sleep 3600
+      volumeMounts:
+        - name: volume
+          mountPath: /mnt
+  securityContext:
+    runAsUser: 0
+    runAsGroup: 0
+    fsGroup: 0
+  volumes:
+    - name: volume
+      persistentVolumeClaim:
+        claimName: busybox-pvc
+  restartPolicy: Never

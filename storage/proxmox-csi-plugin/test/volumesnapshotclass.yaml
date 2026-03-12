@@ -1,0 +1,9 @@
+---
+apiVersion: snapshot.storage.k8s.io/v1
+kind: VolumeSnapshotClass
+metadata:
+  name: proxmox-csi-snapshot
+driver: csi.proxmox.sinextra.dev
+deletionPolicy: Delete
+# parameters:
+  # Add driver-specific parameters here

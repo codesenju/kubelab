@@ -1,0 +1,64 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: autoscalers
+  tasks:
+
+    - name: Deploy VPA
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: vertical-pod-autoscaler
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://kubernetes.github.io/autoscaler
+              chart: vertical-pod-autoscaler
+              targetRevision: 0.8.1
+              helm:
+                releaseName: vertical-pod-autoscaler
+                values: |
+                  imagePullSecrets: 
+                    - name: "harbor-secret"
+                  admissionController:
+                    image:
+                      repository:  "harbor.jazziro.com/registry-k8s-io/autoscaling/vpa-admission-controller"
+                  certGen:
+                    image:
+                      repository: "harbor.jazziro.com/registry-k8s-io/ingress-nginx/kube-webhook-certgen"
+                  recommender:
+                    image:
+                      repository: "harbor.jazziro.com/registry-k8s-io/autoscaling/vpa-recommender"
+                  updater:
+                    image:
+                      repository: harbor.jazziro.com/registry-k8s-io/autoscaling/vpa-updater
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+
+    - name: Create Harbor pull secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-secret
+            namespace: '{{ target_namespace }}'
+          type: kubernetes.io/dockerconfigjson
+          data:
+            .dockerconfigjson: "{{ {'auths': {'https://harbor.jazziro.com': {'username': harbor_username, 'password': harbor_password, 'auth': (harbor_username + ':' + harbor_password) | b64encode}}} | to_json | b64encode }}"
