@@ -35,8 +35,9 @@ mimir:
   structuredConfig:
     ruler:
       enable_api: true
-      alertmanager_url: http://mimir-alertmanager.mimir.svc.cluster.local/alertmanager
-      enable_alertmanager_v2: true
+    limits:
+      ruler_alertmanager_client_config:
+        alertmanager_url: http://mimir-alertmanager.mimir.svc.cluster.local/alertmanager
     common:
       storage:
         backend: s3
