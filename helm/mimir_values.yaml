@@ -33,6 +33,10 @@ global:
 # object storage service such as S3 or GCS.
 mimir:
   structuredConfig:
+    ruler:
+      enable_api: true
+      alertmanager_url: http://mimir-alertmanager.mimir.svc.cluster.local/alertmanager
+      enable_alertmanager_v2: true
     common:
       storage:
         backend: s3
