@@ -1,0 +1,29 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: databasus
+  labels:
+    app: databasus
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: databasus
+  template:
+    metadata:
+      labels:
+        app: databasus
+    spec:
+      containers:
+        - name: databasus
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - containerPort: 4005
+              name: http-databasus-1
+          volumeMounts:
+            - name: databasus-data
+              mountPath: /databasus-data
+      volumes:
+        - name: databasus-data
+          persistentVolumeClaim:
+            claimName: databasus-data
