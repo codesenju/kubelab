@@ -19,7 +19,7 @@ spec:
           image: IMAGE_PLACEHOLDER
           ports:
             - containerPort: 4005
-              name: http-databasus-1
+              name: http
           volumeMounts:
             - name: databasus-data
               mountPath: /databasus-data

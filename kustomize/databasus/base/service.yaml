@@ -9,5 +9,5 @@ spec:
     - protocol: TCP
       port: 4005
       targetPort: 4005
-      name: http-databasus-1
+      name: http
   type: ClusterIP
