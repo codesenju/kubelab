@@ -35,7 +35,7 @@ spec:
       resources:
         requests:
           storage: 1Gi
-      selector:
-        matchLabels:
-          service: signoz-postgres-data
+      # selector:
+      #   matchLabels:
+      #     service: signoz-postgres-data
       storageClassName: "proxmox-csi"
