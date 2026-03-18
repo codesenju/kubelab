@@ -1,0 +1,13 @@
+apiVersion: v1
+kind: Service
+metadata:
+  name: databasus
+spec:
+  selector:
+    app: databasus
+  ports:
+    - protocol: TCP
+      port: 4005
+      targetPort: 4005
+      name: http-databasus-1
+  type: ClusterIP
