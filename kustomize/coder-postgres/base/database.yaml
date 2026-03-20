@@ -11,13 +11,13 @@ spec:
       - "vectors.so"
   managed:
     roles:
-      - name: coder
+      - name: postgres
         superuser: true
         login: true
   bootstrap:
     initdb:
       database: coder
-      owner: coder
+      owner: postgres
       secret:
         name: coder-postgres-secrets
       postInitSQL:
