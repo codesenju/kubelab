@@ -25,13 +25,13 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
         - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
   storage:
-    size: 8Gi
+    size: 5Gi
     pvcTemplate:
       accessModes:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 8Gi
+          storage: 5Gi
       storageClassName: ""
   backup:
     # 3-day retention for both base backups and WALs
@@ -62,7 +62,7 @@ spec:
   # This runs every day at 2:00 AM
   schedule: "0 0 2 * * *"
   cluster:
-    name: coder
+    name: coder-postgres
   # Setting this to true takes a backup immediately upon creation
   immediate: true
   # 'self' means this ScheduledBackup object owns the resulting Backup records
