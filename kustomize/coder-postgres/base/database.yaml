@@ -25,14 +25,14 @@ spec:
         - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
         - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
   storage:
-    size: 1Gi
+    size: 8Gi
     pvcTemplate:
       accessModes:
         - ReadWriteOnce
       resources:
         requests:
-          storage: 1Gi
-      storageClassName: "proxmox-csi"
+          storage: 8Gi
+      storageClassName: ""
   backup:
     # 3-day retention for both base backups and WALs
     retentionPolicy: "3d"
