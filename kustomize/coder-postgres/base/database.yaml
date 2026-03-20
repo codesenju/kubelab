@@ -32,9 +32,9 @@ spec:
       resources:
         requests:
           storage: 5Gi
-      storageClassName: ""
+      # storageClassName: ""
   backup:
-    # 3-day retention for both base backups and WALs
+    # 3-day retention for both base backups and WALsgit
     retentionPolicy: "3d"
     barmanObjectStore:
       destinationPath: s3://cnpg/backups/coder
