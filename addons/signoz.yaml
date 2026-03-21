@@ -5,6 +5,116 @@
     target_namespace: signoz
   tasks:
 
+    - name: Deploy signoz postgres
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: Cluster
+          metadata:
+            name: signoz-postgres
+            namespace: "{{ target_namespace }}"
+          spec:
+            # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
+            imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba # UID 26, GID 999
+            instances: 1
+            postgresql:
+              shared_preload_libraries:
+                - "vectors.so"
+            bootstrap:
+              initdb:
+                database: signoz
+                owner: signoz
+                secret:
+                  name: signoz-postgres-secrets
+                postInitSQL:
+                  - CREATE EXTENSION IF NOT EXISTS "vectors";
+                  - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
+                  - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
+            storage:
+              size: 1Gi
+              pvcTemplate:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+            backup:
+              # 3-day retention for both base backups and WALsgit
+              retentionPolicy: "3d"
+              barmanObjectStore:
+                destinationPath: s3://cnpg/backups
+                # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
+                endpointURL: "https://{{ rustfs_endpoint }}"
+                s3Credentials:
+                  accessKeyId:
+                    name: s3-creds
+                    key: ACCESS_KEY_ID
+                  secretAccessKey:
+                    name: s3-creds
+                    key: SECRET_ACCESS_KEY
+                wal:
+                  compression: gzip
+                data:
+                  compression: gzip
+                  jobs: 2
+      tags:
+        - postgres
+  
+    - name: Create coder postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Create signoz postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: signoz-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ signoz_db_username }}"
+            password: "{{ signoz_db_password }}"
+      tags:
+        - postgres
+
+    - name: Deploy ScheduledBackup
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: ScheduledBackup
+          metadata:
+            name: daily-s3-backup
+            namespace: "{{ target_namespace }}"
+          spec:
+            # Standard Cron: s m h dom mon dow
+            # This runs every day at 2:00 AM
+            schedule: "0 0 2 * * *"
+            cluster:
+              name: signoz-postgres
+            # Setting this to true takes a backup immediately upon creation
+            immediate: true
+            # 'self' means this ScheduledBackup object owns the resulting Backup records
+            backupOwnerReference: self
+      tags:
+        - postgres
+
     - name: Deploy Signoz
       kubernetes.core.k8s:
         state: present
@@ -21,16 +131,25 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.113.0
+              targetRevision: 0.116.1
               helm:
                 releaseName: signoz
                 values: |
+                  signoz:
+                    imagePullSecrets:
+                      - dockerhub-secret
+                    env:
+                      signoz_telemetrystore_provider: clickhouse
+                      signoz_emailing_enabled: false
+                      signoz_alertmanager_provider: signoz
+                      signoz_alertmanager_signoz_external__url: "{{ signoz_host }}"
+                      signoz_sqlstore_proviser: postgres
+                      signoz_sqlstore_postgres_dsn: "{{ signoz_sqlstore_postgres_dsn }}"
                   global:
                     storageClass: proxmox-csi
                     clusterName: kubelab
                   imagePullSecrets:
                     - dockerhub-secret
-
                   # ClickHouse optimization
                   clickhouse:
                     coldStorage:
@@ -38,9 +157,9 @@
                       # Set free space size on default disk in bytes
                       defaultKeepFreeSpaceBytes: "10485760" # 10MiB
                       type: s3
-                      endpoint: "https://{{ minio_local_endpoint }}/signoz/"
-                      accessKey: "{{ minio_local_access_key }}"
-                      secretAccess: "{{ minio_local_secret_key }}"
+                      endpoint: "https://{{ rustfs_endpoint }}/signoz/"
+                      accessKey: "{{ rustfs_access_key }}"
+                      secretAccess: "{{ rustfs_secret_key }}"
                     storageClass: proxmox-csi
                     imagePullSecrets:
                       - dockerhub-secret
@@ -121,10 +240,6 @@
                           timeout: 10s
                           send_batch_size: 50000     
                           send_batch_max_size: 100000
-                  
-                  signoz:
-                    imagePullSecrets:
-                      - dockerhub-secret
             destination:
               server: https://kubernetes.default.svc
               namespace: signoz
@@ -134,7 +249,9 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
-      tags: signoz
+      tags:
+        - argocd
+
     - name: Create Docker pull secret
       kubernetes.core.k8s:
         state: present
@@ -229,6 +346,8 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      tags:
+        - argocd
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
