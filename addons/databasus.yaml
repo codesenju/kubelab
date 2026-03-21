@@ -2,12 +2,12 @@
   gather_facts: no
   become: no
   vars:
-    namespace: databasus
+    target_namespace: databasus
   tasks:
 
     - name: Deploy databasus ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -29,7 +29,7 @@
                   app.kubernetes.io/instance: databasus-prod
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ namespace }}'
+              namespace: '{{ target_namespace }}'
             syncPolicy:
               automated:
                 prune: true
@@ -39,3 +39,125 @@
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
       tags: databasus
+      when: false
+
+    - name: Deploy Databasus
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: databasus
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: databasus
+              repoURL: ghcr.io/databasus/charts
+              targetRevision: 3.22.0
+              helm:
+                releaseName: databasus
+                values: |
+                  persistence:
+                    enabled: true
+                    # Storage class name. Leave empty to use cluster default.
+                    # Examples: "longhorn", "standard", "gp2", etc.
+                    storageClassName: "" # leave empty to use default
+                    accessMode: ReadWriteOnce
+                    size: 10Gi
+                    # Mount path in container
+                    mountPath: /databasus-data
+                  ingress:
+                    enabled: true
+                    className: traefik
+                    annotations:
+                       traefik.ingress.kubernetes.io/router.middlewares: "{{ target_namespace }}-redirect-https@kubernetescrd"
+                    hosts:
+                      - host: 'databasus.{{ local_dns }}'
+                        paths:
+                          - path: /
+                            pathType: Prefix
+                    tls:
+                    - hosts:
+                      - 'databasus.{{ local_dns }}'
+                      secretName: local-jazziro-com-tls
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+
+    - name: Create local wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: local-jazziro-com-tls
+            namespace: '{{ target_namespace }}'
+          spec:
+            secretName: local-jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ local_dns_wildcard }}"
+            dnsNames:
+            - "{{ local_dns_wildcard }}"
+      tags:
+        - ingress
+
+    - name: Create Traefik HTTPS Redirect Middleware
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: Middleware
+          metadata:
+            name: redirect-https
+            namespace: "{{ target_namespace }}"
+          spec:
+            redirectScheme:
+              scheme: https
+              permanent: true
+
+    - name: Create Databasus Ingress
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: networking.k8s.io/v1
+          kind: Ingress
+          metadata:
+            name: databasus
+            namespace: '{{ target_namespace }}'
+            annotations:
+              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              cert-manager.io/cluster-issuer: letsencrypt-production
+          spec:
+            ingressClassName: traefik
+            tls:
+            - hosts:
+              - "databasus.{{ local_dns }}"
+              secretName: local-jazziro-com-tls
+            rules:
+            - host: "databasus.{{ local_dns }}"
+              http:
+                paths:
+                - path: /
+                  pathType: Prefix
+                  backend:
+                    service:
+                      name: databasus
+                      port:
+                        name: http
+      tags: 
+      - ingress
+      when: false

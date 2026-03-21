@@ -102,7 +102,7 @@ export NODE_1_IP="192.168.0.41"
 export NODE_2_IP="192.168.0.42"
 export NODE_3_IP="192.168.0.43"
 
-export SNAPSHOT_PATH="/opt/kubernetes/k8s-snapshot_2026-02-26_09h43.db"
+export SNAPSHOT_PATH="/opt/kubernetes/etcd-snapshot_2026-03-08_17h35.db"
 
 sudo mv /var/lib/etcd/ /var/lib/etcd.bak
 
@@ -136,12 +136,7 @@ sudo ETCDCTL_API=3 etcdutl snapshot restore $SNAPSHOT_PATH \
  --data-dir /var/lib/etcd
 
 5. Update Manifests and Restart (All 3 Nodes)
-
-   Edit /etc/kubernetes/manifests-backup/etcd.yaml on each node.
-
-sudo sed -i 's|/var/lib/etcd|/var/lib/etcd-from-backup|g' /etc/kubernetes/manifests-backup/etcd.yaml
-
-    Change the hostPath for the etcd-data volume to /var/lib/etcd-from-backup.
+r the etcd-data volume to /var/lib/etcd-from-backup.
 
     Move the files back:
 
@@ -162,3 +157,22 @@ sudo kubectl exec -n kube-system etcd-k8s-control-plane-1 -- etcdctl \
  --cert=/etc/kubernetes/pki/etcd/server.crt \
  --key=/etc/kubernetes/pki/etcd/server.key \
  member list -w table
+
+For a full cluster-wide check, run this from one control-plane node:
+
+sudo kubectl exec -n kube-system etcd-k8s-control-plane-1 -- etcdctl \
+  --endpoints=https://192.168.0.41:2379,https://192.168.0.42:2379,https://192.168.0.43:2379 \
+  --cacert=/etc/kubernetes/pki/etcd/ca.crt \
+  --cert=/etc/kubernetes/pki/etcd/server.crt \
+  --key=/etc/kubernetes/pki/etcd/server.key \
+  endpoint status -w table
+
+Use this to label the three control-plane nodes so ROLES shows control-plane:
+kubectl label node k8s-control-plane-1 node-role.kubernetes.io/control-plane=""
+kubectl label node k8s-control-plane-2 node-role.kubernetes.io/control-plane=""
+kubectl label node k8s-control-plane-3 node-role.kubernetes.io/control-plane=""
+
+For workers, use:
+kubectl label node k8s-worker-1 node-role.kubernetes.io/worker=""
+kubectl label node k8s-worker-2 node-role.kubernetes.io/worker=""
+kubectl label node k8s-worker-3 node-role.kubernetes.io/worker=""

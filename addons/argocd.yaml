@@ -12,7 +12,7 @@
         state: present
         chart_repo_url: https://argoproj.github.io/argo-helm
         chart_ref: argo-cd
-        chart_version: 9.3.7
+        chart_version: 9.4.14
         release_namespace: '{{ namespace }}'
         create_namespace: true
         release_values:
@@ -53,6 +53,8 @@
                  g, ArgoCD Viewers, role:readonly
                  g, jazziro-kubelab:kubelab, role:readonly
             cm:
+              accounts.devops: apiKey, login
+              accounts.devops.enabled: "true"
               admin.enabled: true
               exec.enabled: true
               dex.config: |

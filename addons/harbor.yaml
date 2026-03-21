@@ -23,8 +23,8 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            REGISTRY_STORAGE_S3_ACCESSKEY: "aaabbbccc"
-            REGISTRY_STORAGE_S3_SECRETKEY: "aaabbbcccdddeeefffggg"
+            REGISTRY_STORAGE_S3_ACCESSKEY: "{{ REGISTRY_STORAGE_S3_ACCESSKEY }}"
+            REGISTRY_STORAGE_S3_SECRETKEY: "{{ REGISTRY_STORAGE_S3_SECRETKEY }}"
 
     - name: Create Harbor Admin Password Secret
       kubernetes.core.k8s:
@@ -82,9 +82,9 @@
                           core: {{ harbor_domain }}
                         className: traefik
                         annotations:
-                          ingress.kubernetes.io/ssl-redirect: "true"
-                          ingress.kubernetes.io/proxy-body-size: "0"
                           traefik.ingress.kubernetes.io/router.entrypoints: websecure
+                          traefik.ingress.kubernetes.io/router.middlewares: harbor-harbor-headers@kubernetescrd
+                          traefik.ingress.kubernetes.io/router.middlewares: harbor-harbor-registry-upload@kubernetescrd
                           external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
                         tls:
                           - secretName: jazziro-com-tls
@@ -145,6 +145,8 @@
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
+      tags:
+        argocd
 
     - name: Create public wildcar certificate
       kubernetes.core.k8s:
@@ -187,3 +189,35 @@
       tags:
         - ingress
         - certificate
+
+    - name: Create Headers Middleware
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: Middleware
+          metadata:
+            name: harbor-headers
+            namespace: "{{ target_namespace }}"
+          spec:
+            headers:
+              customRequestHeaders:
+                Connection: keep-alive
+      tags:
+        - ingress
+
+    - name: Create Buffer Middleware
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: Middleware
+          metadata:
+            name: harbor-registry-upload
+            namespace: "{{ target_namespace }}"
+          spec:
+            buffering:
+              maxRequestBodyBytes: 0
+              memRequestBodyBytes: 0
+      tags:
+        - ingress
