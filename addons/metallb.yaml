@@ -1,6 +1,8 @@
 - hosts: k8s-control-plane-1
   gather_facts: no
   become: no
+  vars:
+    target_namespace: metallb-system
   tasks:
 
     - name: Install Metallb
@@ -26,7 +28,7 @@
           kind: IPAddressPool
           metadata:
             name: k3s-lb-pool
-            namespace: metallb-system
+            namespace: "{{ target_namespace }}"
           spec:
             addresses:
             - '{{ metallb_addr_pool_range }}'

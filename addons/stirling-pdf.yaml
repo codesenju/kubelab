@@ -29,16 +29,16 @@
                   persistence:
                     enabled: true
                     accessMode: ReadWriteOnce
-                    size: 8Gi
+                    size: 2Gi
                     labels:
                       {}
                       # name: value
                     path: /tmp
                     pv:
                       enabled: true
-                      pvname: "stirning-pdf-data"
+                      pvname: "stirling-pdf-data"
                       capacity:
-                        storage: 8Gi
+                        storage: 2Gi
                       accessMode: ReadWriteOnce
                       nfs:
                         server: {{ nfs_server_ip  }}

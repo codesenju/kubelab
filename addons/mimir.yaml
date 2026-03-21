@@ -21,7 +21,7 @@
             sources:
             - repoURL: https://grafana.github.io/helm-charts
               chart: mimir-distributed
-              targetRevision: "5.7.0"
+              targetRevision: "6.0.5"
               helm:
                 releaseName: mimir
                 valueFiles:
@@ -53,10 +53,10 @@
           type: Opaque
           stringData:
             MINIO_BUCKET_NAME: "mimir"
-            MINIO_ENDPOINT: "{{ minio_local_endpoint }}"
+            MINIO_ENDPOINT: "{{ rustfs_endpoint }}"
             MINIO_REGION: "joburg-north-1"
-            MINIO_ACCESS_KEY_ID: "{{ minio_local_access_key }}"
-            MINIO_SECRET_ACCESS_KEY: "{{ minio_local_secret_key }}"
+            MINIO_ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            MINIO_SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
       tags: mimir
 
     - name: Create Mimir tenant overrides ConfigMap

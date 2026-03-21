@@ -8,8 +8,7 @@
 
   - name: Label worker nodes
     kubernetes.core.k8s:
-      state: present
-      apply: yes
+      state: patched
       definition:
         apiVersion: v1
         kind: Node
@@ -41,10 +40,9 @@
       - argocd
       - manifest
 
-  #  //--- Comment out bellow if you are using Argocd  ---//
   - name: Create Proxmox CSI Secret from config.yaml
     kubernetes.core.k8s:
-      state: present
+      state: true
       definition:
         apiVersion: v1
         kind: Secret
@@ -73,15 +71,16 @@
                 #   storageclass.kubernetes.io/is-default-class: "true"
     tags:
       - manifest
+    when: false # remove me if using tag -t manifests
   - name: Apply Proxmox CSI Plugin from remote manifest
     kubernetes.core.k8s:
-      state: present
+      state: true
       src: https://raw.githubusercontent.com/sergelogvinov/proxmox-csi-plugin/main/docs/deploy/proxmox-csi-plugin-release.yml
     tags:
       - manifest
+    when: false # remove me if using tag -t manifests
   #  //---
 
-  #  //--- Comment out bellow if you are NOT using Argocd  ---//
   - name: Deploy Proxmox CSI Plugin
     kubernetes.core.k8s:
       state: present
@@ -115,11 +114,12 @@
                       # token_secret: {{ proxmox_token_secret | to_json }}
                       # Region name, which is cluster name
                       region: kubelab
-                # Define the storage classesx
+                # Define the storage class
                 storageClass:
                   - name: proxmox-csi
                     storage: local-lvm
-                    reclaimPolicy: Retain
+                    # reclaimPolicy: Retain
+                    reclaimPolicy: Delete
                     # fstype: xfs
                     fstype: ext4
                     allowVolumeExpansion: true

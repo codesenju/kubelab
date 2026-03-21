@@ -10,23 +10,22 @@ spec:
     shared_preload_libraries:
       - "vectors.so"
 
-  managed:
-    roles:
-      - name: gitea
-        superuser: true
-        login: true
+  # managed:
+  #   roles:
+  #     - name: gitea
+  #       superuser: true
+  #       login: true  
 
   bootstrap:
     initdb:
       database: gitea
-      owner: gitea
+      owner: postgres
       secret:
         name: gitea-postgres-secrets
       postInitSQL:
         - CREATE EXTENSION IF NOT EXISTS "vectors";
         - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
         - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
-
   storage:
     size: 1Gi
     pvcTemplate:
@@ -38,4 +37,3 @@ spec:
       selector:
         matchLabels:
           service: gitea-postgres-data
-      storageClassName: ""
