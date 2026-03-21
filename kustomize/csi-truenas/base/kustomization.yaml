@@ -3,3 +3,8 @@ apiVersion: kustomize.config.k8s.io/v1beta1
 kind: Kustomization
 resources:
   - https://raw.githubusercontent.com/truenas/truenas-csi/refs/tags/v1.0.1/deploy/truenas-csi-driver.yaml
+  - https://raw.githubusercontent.com/truenas/truenas-csi/refs/tags/v1.0.1/examples/storageclass-nfs.yaml
+  - https://raw.githubusercontent.com/truenas/truenas-csi/refs/tags/v1.0.1/examples/storageclass-iscsi.yaml
+  - https://raw.githubusercontent.com/truenas/truenas-csi/refs/tags/v1.0.1/examples/storageclass-nfs-compressed.yaml
+  - https://raw.githubusercontent.com/truenas/truenas-csi/refs/tags/v1.0.1/examples/storageclass-encrypted.yaml
+  - https://raw.githubusercontent.com/truenas/truenas-csi/refs/tags/v1.0.1/examples/volumesnapshotclass.yaml
