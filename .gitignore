@@ -65,3 +65,11 @@ helm/harbor_values.template.yml
 */.env
 .env
 storage/proxmox-csi-plugin/group_vars/all/secrets.yaml
+zero-trust/trivy/main.zip
+zero-trust/trivy/nohup.out
+zero-trust/trivy/trivy-report.json
+zero-trust/trivy/trivy-vulns.ndjson
+zero-trust/trivy/signoz-trivy-vuln-dashboard.json
+zero-trust/trivy/vex.repository.json
+zero-trust/trivy/.well-known/vex-repository.json
+zero-trust/trivy/publish-trivy-otlp.sh

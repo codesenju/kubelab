@@ -37,7 +37,7 @@ spec:
     # 3-day retention for both base backups and WALsgit
     retentionPolicy: "3d"
     barmanObjectStore:
-      destinationPath: s3://cnpg/backups/coder
+      destinationPath: s3://cnpg/backups
       # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
       endpointURL: http://rustfs.rustfs.svc.cluster.local:9000
       s3Credentials:
