@@ -8,5 +8,8 @@ images:
   newName: dbeaver/cloudbeaver
   newTag: 26.0.0
 
+patches:
+  - path: storage.yaml
+
 resources:
 - ../../base
