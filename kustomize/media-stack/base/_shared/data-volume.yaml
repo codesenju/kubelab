@@ -188,7 +188,7 @@ spec:
     storage: 20Gi
   nfs:
     server: 192.168.0.16 # change me
-    path: /mnt/pool1/AppData/
+    path: /mnt/pool2/AppData/
   accessModes:
     - ReadWriteMany
   mountOptions:
