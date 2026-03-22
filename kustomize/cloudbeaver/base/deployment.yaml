@@ -1,0 +1,38 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cloudbeaver
+  labels:
+    app: cloudbeaver
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cloudbeaver
+  template:
+    metadata:
+      labels:
+        app: cloudbeaver
+    spec:
+      containers:
+        - name: cloudbeaver
+          image: IMAGE_PLACEHOLDER
+          tty: true
+          stdin: true
+          ports:
+            - containerPort: 8978
+              name: http-cloudbeaver-1
+          resources:
+            requests:
+              cpu: 250m
+              memory: 256Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+          volumeMounts:
+            - name: cloudbeaver-data
+              mountPath: /opt/cloudbeaver/workspace
+      volumes:
+        - name: cloudbeaver-data
+          persistentVolumeClaim:
+            claimName: cloudbeaver-data
