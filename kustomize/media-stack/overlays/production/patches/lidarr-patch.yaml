@@ -5,7 +5,7 @@ metadata:
 spec:
   template:
     spec:
-      replicas: 0
+      replicas: 1
       containers:
       - name: lidarr
         env:
