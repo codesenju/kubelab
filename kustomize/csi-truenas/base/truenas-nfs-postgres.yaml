@@ -11,5 +11,5 @@ parameters:
   compression: ZSTD
   sync: STANDARD
   nfs.mountOptions: hard,nfsvers=4.1
-  nfs.mapAllUser: postgres
-  nfs.mapAllGroup: docker
+  nfs.mapRootUser: postgres
+  nfs.mapRootGroup: docker
