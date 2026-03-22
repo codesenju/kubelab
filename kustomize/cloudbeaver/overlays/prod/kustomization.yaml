@@ -6,7 +6,7 @@ namespace: cloudbeaver
 images:
 - name: IMAGE_PLACEHOLDER
   newName: dbeaver/cloudbeaver
-  newTag: 25.0.2
+  newTag: 26.0.0
 
 resources:
 - ../../base

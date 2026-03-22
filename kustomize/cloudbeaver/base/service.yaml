@@ -9,5 +9,5 @@ spec:
     - protocol: TCP
       port: 8978
       targetPort: 8978
-      name: http-cloudbeaver-1
+      name: http
   type: ClusterIP

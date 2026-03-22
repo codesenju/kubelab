@@ -21,7 +21,7 @@ spec:
           stdin: true
           ports:
             - containerPort: 8978
-              name: http-cloudbeaver-1
+              name: http
           resources:
             requests:
               cpu: 250m
