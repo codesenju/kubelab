@@ -39,6 +39,7 @@
                 resources:
                   requests:
                     storage: 1Gi
+                storageClassName: "nfs-csi"
             backup:
               # 3-day retention for both base backups and WALsgit
               retentionPolicy: "3d"
@@ -131,7 +132,7 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.116.1
+              targetRevision: 0.116.2
               helm:
                 releaseName: signoz
                 values: |
@@ -146,12 +147,15 @@
                       signoz_sqlstore_proviser: postgres
                       signoz_sqlstore_postgres_dsn: "{{ signoz_sqlstore_postgres_dsn }}"
                   global:
-                    storageClass: proxmox-csi
+                    storageClass: nfs-csi
                     clusterName: kubelab
                   imagePullSecrets:
                     - dockerhub-secret
                   # ClickHouse optimization
                   clickhouse:
+                    initContainers:
+                      udf:
+                        enabled: false
                     coldStorage:
                       enabled: true
                       # Set free space size on default disk in bytes
@@ -175,21 +179,21 @@
                     # HA Config
                     layout:
                       shardsCount: 1 # Perfomance
-                      replicasCount: 3 # HA
+                      replicasCount: 2 # HA
                     zookeeper:
-                      replicaCount: 3
+                      replicaCount: 2
                     schemaMigrator:
                       enableReplication: true
-                    podDistribution:
-                      # All instances in unique nodes:
-                      - type: ClickHouseAntiAffinity
-                        topologyKey: kubernetes.io/hostname
-                      # Distribute shards of replicas across nodes:
-                      - type: ReplicaAntiAffinity
-                        topologyKey: kubernetes.io/hostname
-                      # Distribute replicas of shards across nodes:
-                      - type: ShardAntiAffinity
-                        topologyKey: kubernetes.io/hostname
+                    # podDistribution:
+                    #   # All instances in unique nodes:
+                    #   - type: ClickHouseAntiAffinity
+                    #     topologyKey: kubernetes.io/hostname
+                    #   # Distribute shards of replicas across nodes:
+                    #   - type: ReplicaAntiAffinity
+                    #     topologyKey: kubernetes.io/hostname
+                    #   # Distribute replicas of shards across nodes:
+                    #   - type: ShardAntiAffinity
+                    #     topologyKey: kubernetes.io/hostname
                     # Increase write buffer and merge settings
                     configOverride: |
                       <clickhouse>

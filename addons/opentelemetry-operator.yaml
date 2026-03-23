@@ -20,7 +20,7 @@
             source:
               chart: opentelemetry-operator
               repoURL: https://open-telemetry.github.io/opentelemetry-helm-charts
-              targetRevision: 0.72.0
+              targetRevision: 0.108.0
               helm:
                 releaseName: opentelemetry-operator
             destination:

@@ -176,3 +176,8 @@ For workers, use:
 kubectl label node k8s-worker-1 node-role.kubernetes.io/worker=""
 kubectl label node k8s-worker-2 node-role.kubernetes.io/worker=""
 kubectl label node k8s-worker-3 node-role.kubernetes.io/worker=""
+
+## Rsync
+```bash
+nohup rsync -ahvP --numeric-ids /mnt/pool1/AppData/rustfs /mnt/pool2/AppData/ > rsync.log 2>&1 &
+```

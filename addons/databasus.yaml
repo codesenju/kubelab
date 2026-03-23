@@ -38,6 +38,29 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: apps
+                kind: StatefulSet
+                name: databasus
+                jqPathExpressions:
+                  - .spec.template.metadata.annotations
+                  - .spec.template.metadata.creationTimestamp
+                  - .spec.template.spec.containers[].livenessProbe.httpGet.scheme
+                  - .spec.template.spec.containers[].livenessProbe.successThreshold
+                  - .spec.template.spec.containers[].readinessProbe.httpGet.scheme
+                  - .spec.template.spec.containers[].readinessProbe.successThreshold
+                  - .spec.template.spec.containers[].terminationMessagePath
+                  - .spec.template.spec.containers[].terminationMessagePolicy
+                  - .spec.template.spec.dnsPolicy
+                  - .spec.template.spec.restartPolicy
+                  - .spec.template.spec.schedulerName
+                  - .spec.template.spec.securityContext
+                  - .spec.template.spec.terminationGracePeriodSeconds
+                  - .spec.volumeClaimTemplates[].apiVersion
+                  - .spec.volumeClaimTemplates[].kind
+                  - .spec.volumeClaimTemplates[].metadata.creationTimestamp
+                  - .spec.volumeClaimTemplates[].spec.volumeMode
+                  - .spec.volumeClaimTemplates[].status
       tags: databasus
       when: false
 
@@ -75,6 +98,7 @@
                     className: traefik
                     annotations:
                        traefik.ingress.kubernetes.io/router.middlewares: "{{ target_namespace }}-redirect-https@kubernetescrd"
+                       argocd.argoproj.io/ignore-healthcheck: "true"
                     hosts:
                       - host: 'databasus.{{ local_dns }}'
                         paths:
@@ -94,6 +118,30 @@
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: apps
+                kind: StatefulSet
+                name: databasus
+                jqPathExpressions:
+                  - .spec.template.metadata.annotations
+                  - .spec.template.metadata.creationTimestamp
+                  - .spec.template.spec.containers[].livenessProbe.httpGet.scheme
+                  - .spec.template.spec.containers[].livenessProbe.successThreshold
+                  - .spec.template.spec.containers[].readinessProbe.httpGet.scheme
+                  - .spec.template.spec.containers[].readinessProbe.successThreshold
+                  - .spec.template.spec.containers[].terminationMessagePath
+                  - .spec.template.spec.containers[].terminationMessagePolicy
+                  - .spec.template.spec.dnsPolicy
+                  - .spec.template.spec.restartPolicy
+                  - .spec.template.spec.schedulerName
+                  - .spec.template.spec.securityContext
+                  - .spec.template.spec.terminationGracePeriodSeconds
+                  - .spec.volumeClaimTemplates[].apiVersion
+                  - .spec.volumeClaimTemplates[].kind
+                  - .spec.volumeClaimTemplates[].metadata.creationTimestamp
+                  - .spec.volumeClaimTemplates[].spec.volumeMode
+                  - .spec.volumeClaimTemplates[].status
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:

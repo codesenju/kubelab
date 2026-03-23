@@ -6,43 +6,120 @@
     target_namespace: immich
   tasks:
 
-    - name: Deploy immich postgres
+    - name: Deploy postgres
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: argoproj.io/v1alpha1
-          kind: Application
+          apiVersion: postgresql.cnpg.io/v1
+          kind: Cluster
           metadata:
             name: immich-postgres
-            namespace: argocd
-            finalizers:
-              - resources-finalizer.argocd.argoproj.io
+            namespace: "{{ target_namespace }}"
           spec:
-            project: default
-            source:
-              repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/immich-postgres/overlays/prod
-              targetRevision: main
-              kustomize:
-                # Add these to your existing kustomize config
-                labels:
-                  app.kubernetes.io/instance: '{{ target_namespace }}'
-            destination:
-              server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
-            syncPolicy:
-              automated:
-                prune: true
-                selfHeal: true
-              syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
-            ignoreDifferences:
-              - group: "postgresql.cnpg.io"
-                kind: Cluster
-                jsonPointers:
-                  - /spec/managed/roles
+            # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
+            imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba # UID 26, GID 999
+            instances: 1
+            postgresql:
+              shared_preload_libraries:
+                - "vectors.so"
+            managed:
+              roles:
+                - name: immich
+                  superuser: true
+                  login: true
+            bootstrap:
+              initdb:
+                database: immich
+                owner: immich
+                secret:
+                  name: immich-postgres-secrets
+                postInitSQL:
+                  - CREATE EXTENSION IF NOT EXISTS "vectors";
+                  - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
+                  - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
+            storage:
+              size: 1Gi
+              pvcTemplate:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 3Gi
+            backup:
+              # 3-day retention for both base backups and WALsgit
+              retentionPolicy: "3d"
+              barmanObjectStore:
+                destinationPath: s3://cnpg/backups/immich-postgres
+                # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
+                endpointURL: "https://{{ rustfs_endpoint }}"
+                s3Credentials:
+                  accessKeyId:
+                    name: s3-creds
+                    key: ACCESS_KEY_ID
+                  secretAccessKey:
+                    name: s3-creds
+                    key: SECRET_ACCESS_KEY
+                wal:
+                  compression: gzip
+                data:
+                  compression: gzip
+                  jobs: 2
+      tags:
+        - postgres
+
+    - name: Create postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Deploy ScheduledBackup
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: ScheduledBackup
+          metadata:
+            name: daily-s3-backup
+            namespace: "{{ target_namespace }}"
+          spec:
+            # Standard Cron: s m h dom mon dow
+            # This runs every day at 2:00 AM
+            schedule: "0 0 2 * * *"
+            cluster:
+              name: immich-postgres
+            # Setting this to true takes a backup immediately upon creation
+            immediate: true
+            # 'self' means this ScheduledBackup object owns the resulting Backup records
+            backupOwnerReference: self
+      tags:
+        - postgres
+
+    - name: Create immich postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: immich-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ immich_db_username }}"
+            password: "{{ immich_db_password }}"
+      tags:
+        - postgres
 
     - name: Create immich secrets
       kubernetes.core.k8s:
@@ -62,20 +139,6 @@
             # GOOGLE_CLIENT_ID: '{{ google_client_id }}'
             # GOOGLE_CLIENT_SECRET: '{{ google_client_secret }}'
             # MOBILE_REDIRECT_URI: '{{ mobile_redirect_uri }}'
-
-    - name: Create immich postgres secrets
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: immich-postgres-secrets
-            namespace: "{{ target_namespace }}"
-          type: Opaque
-          stringData:
-            username: "{{ immich_db_username }}"
-            password: "{{ immich_db_password }}"
 
     - name: Create immich pv
       kubernetes.core.k8s:
