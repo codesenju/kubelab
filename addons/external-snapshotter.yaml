@@ -35,6 +35,13 @@
                         path: /spec/template/spec/imagePullSecrets
                         value:
                           - name: harbor-secret
+                  - target:
+                      kind: Deployment
+                      name: snapshot-controller
+                    patch: |-
+                      - op: replace
+                        path: /spec/replicas
+                        value: 1
             destination:
               server: https://kubernetes.default.svc
               namespace: external-snapshotter

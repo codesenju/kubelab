@@ -21,7 +21,7 @@
             source:
               repoURL: https://grafana.github.io/helm-charts
               chart: grafana-operator
-              targetRevision: v5.18.0
+              targetRevision: 5.22.2
               helm:
                 releaseName: grafana-operator
             destination:
@@ -101,7 +101,7 @@
             annotations:
               # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
               external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
+              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
