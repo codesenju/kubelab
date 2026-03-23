@@ -102,6 +102,18 @@ EOF
 
 ---
 
+## Set Default StorageClass
+```bash
+export sc=<>
+kubectl patch storageclass $sc -p \
+        '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":"true"}}}'
+```
+## Remove Default StorageClass
+```bash
+export sc=<>
+kubectl patch storageclass $sc -p \
+        '{"metadata":{"annotations":{"storageclass.kubernetes.io/is-default-class":null}}}'
+```
 ## 📚 Reference
 
 - [Proxmox CSI Plugin Documentation](https://github.com/sergelogvinov/proxmox-csi-plugin/blob/main/docs/install.md)
