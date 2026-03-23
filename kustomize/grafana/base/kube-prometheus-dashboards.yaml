@@ -24,48 +24,7 @@ spec:
   instanceSelector:
     matchLabels:
       dashboards: "grafana"
-  json: |
-    {
-      "dashboard": {
-        "id": null,
-        "title": "Kubernetes / Compute Resources / Namespace (Pods)",
-        "tags": ["kubernetes-mixin"],
-        "timezone": "browser",
-        "panels": [
-          {
-            "datasource": "prometheus",
-            "targets": [
-              {
-                "expr": "sum(rate(container_cpu_usage_seconds_total{job=\"kubelet\", metrics_path=\"/metrics/cadvisor\", cluster=\"$cluster\", namespace=\"$namespace\", container!=\"\", pod!=\"\"}[5m])) by (pod)",
-                "format": "time_series",
-                "legendFormat": "{{pod}}"
-              }
-            ],
-            "title": "CPU Usage",
-            "type": "graph"
-          }
-        ],
-        "time": {
-          "from": "now-1h",
-          "to": "now"
-        },
-        "templating": {
-          "list": [
-            {
-              "name": "cluster",
-              "type": "query",
-              "query": "label_values(up, cluster)"
-            },
-            {
-              "name": "namespace",
-              "type": "query",
-              "query": "label_values(kube_namespace_status_phase, namespace)"
-            }
-          ]
-        }
-      },
-      "overwrite": true
-    }
+  url: "https://raw.githubusercontent.com/dotdc/grafana-dashboards-kubernetes/master/dashboards/k8s-views-namespaces.json"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDashboard
