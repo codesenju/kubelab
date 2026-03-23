@@ -4237,10 +4237,6 @@ prometheus:
       - url: http://mimir-gateway.mimir.svc.cluster.local/api/v1/push
         headers:
           X-Scope-OrgID: kube-prometheus-stack
-        writeRelabelConfigs:
-          - sourceLabels: [__name__]
-            regex: up|node_.*|kube_.*|container_.*|argocd_.*|process_.*
-            action: keep
     # - url: http://remote1/push
     ## additionalRemoteWrite is appended to remoteWrite
     additionalRemoteWrite: []
