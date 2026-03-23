@@ -73,3 +73,5 @@ zero-trust/trivy/signoz-trivy-vuln-dashboard.json
 zero-trust/trivy/vex.repository.json
 zero-trust/trivy/.well-known/vex-repository.json
 zero-trust/trivy/publish-trivy-otlp.sh
+ansible/nohup.out
+ansible/tmp.json

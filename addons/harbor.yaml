@@ -85,6 +85,7 @@
                           traefik.ingress.kubernetes.io/router.entrypoints: websecure
                           traefik.ingress.kubernetes.io/router.middlewares: harbor-harbor-headers@kubernetescrd
                           traefik.ingress.kubernetes.io/router.middlewares: harbor-harbor-registry-upload@kubernetescrd
+                          argocd.argoproj.io/ignore-healthcheck: "true"
                           external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
                         tls:
                           - secretName: jazziro-com-tls
@@ -145,6 +146,13 @@
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            ignoreDifferences:
+              - group: networking.k8s.io
+                kind: Ingress
+                name: harbor-ingress
+                jqPathExpressions:
+                  - .status.loadBalancer
       tags:
         argocd
 

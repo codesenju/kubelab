@@ -35,10 +35,10 @@
                     trace:
                       backend: s3
                       s3:
-                        access_key: "{{ minio_local_access_key }}"
-                        secret_key: "{{ minio_local_secret_key }}"
+                        access_key: "{{ rustfs_access_key }}"
+                        secret_key: "{{ rustfs_secret_key }}"
                         bucket: 'tempo-traces'
-                        endpoint: "{{ minio_local_endpoint }}"
+                        endpoint: "{{ rustfs_endpoint }}"
                         insecure: false
                   traces:
                     otlp:

@@ -182,6 +182,8 @@
               port: 8123
               protocol: TCP
               targetPort: 8123
+      tags:
+      - homeassistant
 
     - name: Create homeassistant IngressRoute
       kubernetes.core.k8s:
@@ -207,6 +209,8 @@
                     port: 8123
             tls:
               secretName: local-jazziro-com-tls
+      tags:
+      - homeassistant
 
   # Pi-hole external service and ingressroute
     - name: Create pihole service
@@ -255,7 +259,7 @@
   # CloudBeaver external service and ingressroute
     - name: Create cloudbeaver service
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Service
@@ -270,10 +274,13 @@
               port: 8978
               protocol: TCP
               targetPort: 8978
+      tags:
+        cloudbeaver
+      when: false
 
     - name: Create cloudbeaver IngressRoute
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -295,10 +302,13 @@
                     port: 8978
             tls:
               secretName: local-jazziro-com-tls
+      tags:
+        cloudbeaver
+      when: false
 
     - name: Create beszel service
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Service
@@ -315,10 +325,11 @@
               targetPort: 8090
       tags: 
       - beszel
+      when: false
 
     - name: Create beszel ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
@@ -346,7 +357,8 @@
                       port:
                         number: 8090
       tags: 
-      - beszel-ingress
+      - beszel
+      when: false
 
 # APi Gateway Example
     - name: Create transmission service
@@ -434,59 +446,6 @@
                     port: 9091
       tags: 
       - transmission
-
-# nginx proxy manager
-    - name: Create nginx proxy manager service
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: beszel
-            namespace: '{{ target_namespace }}'
-          spec:
-            type: ExternalName
-            externalName: 192.168.0.31
-            ports:
-            - name: http
-              port: 8090
-              protocol: TCP
-              targetPort: 8090
-      tags: 
-      - npm
-
-    - name: Create beszel ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: beszel
-            namespace: '{{ target_namespace }}'
-            annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: traefik
-            tls:
-            - hosts:
-              - "beszel.{{ local_dns }}"
-              secretName: local-jazziro-com-tls
-            rules:
-            - host: "beszel.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: beszel
-                      port:
-                        number: 8090
-      tags: 
-      - npm
 
 # TrueNAS
     - name: Create TrueNAS service

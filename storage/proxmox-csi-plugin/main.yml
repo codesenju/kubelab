@@ -118,14 +118,13 @@
                 storageClass:
                   - name: proxmox-csi
                     storage: local-lvm
-                    # reclaimPolicy: Retain
                     reclaimPolicy: Delete
                     # fstype: xfs
                     fstype: ext4
                     allowVolumeExpansion: true
                     # Define the storage class as default
-                    annotations:
-                      storageclass.kubernetes.io/is-default-class: "true"
+                    # annotations:
+                    #   storageclass.kubernetes.io/is-default-class: "true"
                 controller:
                   snapshotter:
                     enabled: true

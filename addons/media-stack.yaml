@@ -28,6 +28,41 @@
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 commonLabels:
                   app.kubernetes.io/instance: media-stack-prod
+                patches:
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: lidarr
+                    patch: |-
+                      - op: replace
+                        path: /spec/replicas
+                        value: 0
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: jackett
+                    patch: |-
+                      - op: replace
+                        path: /spec/replicas
+                        value: 0
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/priorityClassName
+                        value: high-priority
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: StatefulSet
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/priorityClassName
+                        value: high-priority
           
             destination:
               server: https://kubernetes.default.svc
