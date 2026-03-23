@@ -63,7 +63,8 @@ spec:
             }
           ]
         }
-      }
+      },
+      "overwrite": true
     }
 ---
 apiVersion: grafana.integreatly.org/v1beta1
