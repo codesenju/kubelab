@@ -18,7 +18,7 @@
             source:
               chart: crossplane
               repoURL: https://charts.crossplane.io/stable
-              targetRevision: 2.1.3
+              targetRevision: 2.2.0
               helm:
                 releaseName: crossplane
             destination:
@@ -31,17 +31,6 @@
               syncOptions:
                 - CreateNamespace=true
 
-    - name: Wait for Crossplane operator pods to be ready
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Pod
-        namespace: crossplane-system
-      register: crossplane_pods
-      until: crossplane_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
-      retries: 30
-      delay: 10
-
-
     - name: Deploy Crossplane provider-kubernetes
       kubernetes.core.k8s:
         state: present
@@ -52,24 +41,6 @@
             name: upbound-provider-kubernetes
           spec:
             package: xpkg.upbound.io/upbound/provider-kubernetes:v0.17.0
-
-    - name: Wait for provider-kubernetes pod to be ready
-      kubernetes.core.k8s_info:
-        api_version: v1
-        kind: Pod
-        namespace: crossplane-system
-        label_selectors:
-          - "pkg.crossplane.io/provider=provider-kubernetes"
-      register: kubernetes_provider_pods
-
-    - name: Pause until provider-kubernetes pod is running
-      ansible.builtin.pause:
-        seconds: 5
-      when: kubernetes_provider_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length == 0
-      register: pause_result
-      until: kubernetes_provider_pods.resources | selectattr('status.phase', 'equalto', 'Running') | list | length > 0
-      retries: 12
-      delay: 5
 
     - name: Create Crossplane Kubernetes target credentials secret
       kubernetes.core.k8s:
