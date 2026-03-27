@@ -21,7 +21,7 @@
             source:
               repoURL: registry.k8s.io/kro/charts
               chart: kro
-              targetRevision: 0.7.0
+              targetRevision: v0.8.5
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
