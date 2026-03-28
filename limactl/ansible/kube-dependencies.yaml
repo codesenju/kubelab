@@ -1,5 +1,6 @@
 - name: Kubernetes Dependencies
-  hosts: workers 
+  hosts: control-plane, worker
+  gather_facts: yes
   become: yes
   tasks:
 
@@ -14,12 +15,13 @@
         update_cache: yes
 
     - name: Install required Python packages
-      pip:
+      apt:
         name:
-          - kubernetes
-          - PyYAML
-          - jsonpatch
+          - python3-kubernetes
+          - python3-yaml
+          - python3-jsonpatch
         state: present
+        update_cache: yes
         
     - name: Install prerequisites
       apt:
@@ -169,3 +171,12 @@
 
     - name: Reboot
       reboot:
+
+- hosts: control-plane
+  become: yes
+  tasks:
+    - name: Install Kubectl
+      apt:
+        name: kubectl={{ k8s_version }}.*
+        state: present
+        force: yes

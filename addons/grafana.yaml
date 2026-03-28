@@ -51,7 +51,7 @@
             GF_SECURITY_ADMIN_PASSWORD: "{{ grafana_admin_password }}"
       tags: grafana-secret
 
-    - name: Deploy Grafana
+    - name: Deploy Grafana App Resources
       kubernetes.core.k8s:
         state: present
         definition:
@@ -88,7 +88,8 @@
             #     kind: Cluster
             #     jsonPointers:
             #       - /spec/managed/roles
-    - name: Deploy Grafana
+
+    - name: Deploy Grafana Cluster
       kubernetes.core.k8s:
         state: present
         definition:
@@ -96,6 +97,7 @@
           kind: Grafana
           metadata:
             name: grafana
+            namespace: "{{ target_namespace }}"
             labels:
               dashboards: "grafana"
           spec:
@@ -133,17 +135,17 @@
             config:
               server:
                 root_url: "https://{{ grafana_domain }}/"
-                auth.generic_oauth:
-                  name: Authentik
-                  enabled: true
-                  client_id: "{{ grafana_client_id  }}"
-                  client_secret: "{{ grafana_client_secret  }}"
-                  scopes: "openid profile email"
-                  auth_url: "https://{{ authentik_domain }}/application/o/authorize/"
-                  token_url: "https://{{ authentik_domain }}/application/o/token/"
-                  api_url: "https://{{ authentik_domain }}/application/o/userinfo/"
-                  # Optionally map user groups to Grafana roles
-                  role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
+              auth.generic_oauth:
+                name: "Authentik"
+                enabled: "true"
+                client_id: "{{ grafana_client_id | to_json }}"
+                client_secret: "{{ grafana_client_secret | to_json }}"
+                scopes: "openid profile email"
+                auth_url: "https://{{ authentik_domain }}/application/o/authorize/"
+                token_url: "https://{{ authentik_domain }}/application/o/token/"
+                api_url: "https://{{ authentik_domain }}/application/o/userinfo/"
+                # Optionally map user groups to Grafana roles
+                role_attribute_path: contains(groups, 'Grafana Admins') && 'Admin' || contains(groups, 'Grafana Editors') && 'Editor' || 'Viewer'
               log:
                 mode: "console"
               auth:
