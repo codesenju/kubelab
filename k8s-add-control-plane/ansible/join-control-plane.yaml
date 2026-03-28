@@ -4,7 +4,6 @@
   become: yes
   vars:
     existing_control_plane_node: "k8s-control-plane-2"
-    k8s_version: "1.32"
 
   tasks:
     - name: Get certificate key from existing control plane

@@ -21,7 +21,7 @@
             source:
               repoURL: https://grafana.github.io/helm-charts
               chart: tempo-distributed
-              targetRevision: 1.15.4
+              targetRevision: 1.61.3
               helm:
                 releaseName: tempo
                 values: |
@@ -57,7 +57,7 @@
                     config:
                       storage:
                         remote_write:
-                          - url: http://mimir-nginx.mimir.svc.cluster.local/api/v1/push
+                          - url: http://mimir-gateway.mimir.svc.cluster.local/api/v1/push
                             send_exemplars: true
                       registry:
                         external_labels:

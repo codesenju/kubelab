@@ -1,8 +1,6 @@
 - name: Kubernetes Dependencies for Control Plane
   hosts: new_control_plane
   become: yes
-  vars:
-    k8s_version: "1.32"
   tasks:
 
     - name: Updates
