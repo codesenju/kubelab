@@ -1,10 +1,11 @@
 - name: Install k9s
   hosts: control-plane
   become: yes
-  vars:
-    k8s_version: "1.33"
-    etcd_version: "v3.6.8"
   tasks:
+
+    - name: Normalize CPU architecture for tool downloads
+      set_fact:
+        tool_arch: "{{ {'x86_64': 'amd64', 'aarch64': 'arm64', 'arm64': 'arm64', 'armv7l': 'arm', 'armv6l': 'arm'}.get(ansible_architecture, ansible_architecture) }}"
   
   #===== k9s
     - name: Check if k9s is already installed
@@ -15,7 +16,7 @@
 
     - name: Download k9s
       get_url:
-        url: "https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_amd64.tar.gz"
+        url: "https://github.com/derailed/k9s/releases/latest/download/k9s_Linux_{{ tool_arch }}.tar.gz"
         dest: /tmp/k9s.tar.gz
         mode: '0755'
       when: k9s_check.rc != 0
@@ -51,7 +52,7 @@
 
     - name: Install Helm
       unarchive:
-        src: https://get.helm.sh/helm-v3.13.3-linux-amd64.tar.gz
+        src: "https://get.helm.sh/helm-v3.13.3-linux-{{ tool_arch }}.tar.gz"
         dest: /usr/local/bin
         extra_opts: "--strip-components=1"
         owner: root
@@ -65,12 +66,12 @@
 #===== kube-bench
     - name: Set kube-bench version
       set_fact:
-        kube_bench_version: "0.10.1"
+        kube_bench_version: "0.15.0"
 
     - name: Download kube-bench tarball
       get_url:
-        url: "https://github.com/aquasecurity/kube-bench/releases/download/v{{ kube_bench_version }}/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
-        dest: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+        url: "https://github.com/aquasecurity/kube-bench/releases/download/v{{ kube_bench_version }}/kube-bench_{{ kube_bench_version }}_linux_{{ tool_arch }}.tar.gz"
+        dest: "/tmp/kube-bench_{{ kube_bench_version }}_linux_{{ tool_arch }}.tar.gz"
         mode: '0644'
 
     - name: Create kube-bench config directory
@@ -81,7 +82,7 @@
 
     - name: Extract kube-bench tarball to /opt/kube-bench
       unarchive:
-        src: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+        src: "/tmp/kube-bench_{{ kube_bench_version }}_linux_{{ tool_arch }}.tar.gz"
         dest: "/opt/kube-bench"
         remote_src: yes
         mode: '0755'
@@ -95,7 +96,7 @@
 
     - name: Remove kube-bench tarball from /tmp
       file:
-        path: "/tmp/kube-bench_{{ kube_bench_version }}_linux_amd64.tar.gz"
+        path: "/tmp/kube-bench_{{ kube_bench_version }}_linux_{{ tool_arch }}.tar.gz"
         state: absent
 
     - name: Print kube-bench usage instructions
@@ -127,7 +128,7 @@
 
     - name: Remove old etcd tarball if exists
       file:
-        path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        path: "/tmp/etcd-{{ etcd_version }}-linux-{{ tool_arch }}.tar.gz"
         state: absent
 
     - name: Remove old etcd download directory if exists
@@ -143,13 +144,13 @@
 
     - name: Download etcd tarball
       get_url:
-        url: "https://storage.googleapis.com/etcd/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
-        dest: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        url: "https://storage.googleapis.com/etcd/{{ etcd_version }}/etcd-{{ etcd_version }}-linux-{{ tool_arch }}.tar.gz"
+        dest: "/tmp/etcd-{{ etcd_version }}-linux-{{ tool_arch }}.tar.gz"
         mode: '0644'
 
     - name: Extract etcd tarball
       unarchive:
-        src: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        src: "/tmp/etcd-{{ etcd_version }}-linux-{{ tool_arch }}.tar.gz"
         dest: /tmp/etcd-download-test
         remote_src: yes
         extra_opts:
@@ -159,7 +160,7 @@
 
     - name: Remove etcd tarball after extraction
       file:
-        path: "/tmp/etcd-{{ etcd_version }}-linux-amd64.tar.gz"
+        path: "/tmp/etcd-{{ etcd_version }}-linux-{{ tool_arch }}.tar.gz"
         state: absent
 
     - name: Move etcd, etcdctl, and etcdutl binaries to /usr/local/bin

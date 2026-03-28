@@ -1,0 +1,37 @@
+vmType: qemu
+arch: x86_64
+
+cpus: 4
+memory: "4GiB"
+disk: "50GiB"
+
+images:
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
+
+mounts:
+  - location: "~"
+    writable: false
+
+ssh:
+  localPort: 60024
+
+networks:
+  - lima: user-v2
+
+provision:
+  - mode: system
+    script: |
+      #!/bin/bash
+      set -eux
+      apt-get update
+      id -u k8s >/dev/null 2>&1 || useradd -m -s /bin/bash k8s
+      usermod -aG sudo k8s
+      echo 'k8s ALL=(ALL) NOPASSWD:ALL' >/etc/sudoers.d/99-k8s
+      chmod 0440 /etc/sudoers.d/99-k8s
+
+      mkdir /home/k8s/.ssh/ -p
+      HOST_USER=jazziro # change me
+      cat /Users/${HOST_USER}/.ssh/id_ed25519.pub > /home/k8s/.ssh/authorized_keys
+      chown k8s:k8s /home/k8s/.ssh/authorized_keys
+      chmod 600 /home/k8s/.ssh/authorized_keys

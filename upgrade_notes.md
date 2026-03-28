@@ -70,7 +70,7 @@ ubuntu@k8s-control-plane-1:~$ sudo kubeadm upgrade plan
 [preflight] Running pre-flight checks.
 [upgrade/config] Reading configuration from the "kubeadm-config" ConfigMap in namespace "kube-system"...
 [upgrade/config] Use 'kubeadm init phase upload-config --config your-config-file' to re-upload it.
-[upgrade/init config] FATAL: this version of kubeadm only supports deploying clusters with the control plane version >= 1.32.0. Current version: v1.30.12
+[upgrade/init config] FATAL: this version of kubeadm only supports deploying clusters with the control plane version >= 1.33.0. Current version: v1.30.12
 To see the stack trace of this error execute with --v=5 or higher
 ```
 ##### Solution
@@ -78,7 +78,7 @@ To see the stack trace of this error execute with --v=5 or higher
 kubectl -n kube-system get cm kubeadm-config -o jsonpath='{.data.ClusterConfiguration}'
 
 kubectl -n kube-system get cm kubeadm-config -o jsonpath='{.data.ClusterConfiguration}' > /tmp/ClusterConfiguration.yaml
-sed -i 's/kubernetesVersion: v1.30.12/kubernetesVersion: v1.32.13/' /tmp/ClusterConfiguration.yaml
+sed -i 's/kubernetesVersion: v1.30.12/kubernetesVersion: v1.33.13/' /tmp/ClusterConfiguration.yaml
 sudo kubeadm init phase upload-config kubeadm --config /tmp/ClusterConfiguration.yaml
 ```
 # ETCD

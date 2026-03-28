@@ -1,0 +1,9 @@
+---
+- name: Import Kubernetes Dependencies Playbook
+  import_playbook: kube-dependencies.yaml
+
+- name: Setup K8s Cluster
+  import_playbook: kube-cluster.yaml
+
+- name: Install K8s Tools
+  import_playbook: k8s-tools.yaml

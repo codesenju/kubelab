@@ -1,8 +1,6 @@
 - name: Kubernetes Dependencies
   hosts: control-plane, workers 
   become: yes
-  vars:
-    k8s_version: "1.32"
   tasks:
 
     - name: Updates
@@ -174,8 +172,6 @@
 
 - hosts: control-plane
   become: yes
-  vars:
-    k8s_version: "1.32"
   tasks:
     - name: Install Kubectl
       apt:

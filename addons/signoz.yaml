@@ -164,7 +164,7 @@
                       endpoint: "https://{{ rustfs_endpoint }}/signoz/"
                       accessKey: "{{ rustfs_access_key }}"
                       secretAccess: "{{ rustfs_secret_key }}"
-                    storageClass: proxmox-csi
+                    storageClass: nfs-csi
                     imagePullSecrets:
                       - dockerhub-secret
                     persistence:
@@ -292,7 +292,7 @@
                   global:
                     cloud: others
                     clusterName: "kubelab"
-                    storageClass: "proxmox-csi"
+                    storageClass: "nfs-csi"
                     deploymentEnvironment: prod
                     imagePullSecrets:
                       - "dockerhub-secret"
