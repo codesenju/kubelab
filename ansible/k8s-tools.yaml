@@ -2,7 +2,7 @@
   hosts: control-plane
   become: yes
   vars:
-    k8s_version: "1.32"
+    k8s_version: "1.33"
     etcd_version: "v3.6.8"
   tasks:
   

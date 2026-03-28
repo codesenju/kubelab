@@ -1,8 +1,6 @@
 - name: Kubernetes Dependencies
   hosts: workers 
   become: yes
-  vars:
-    k8s_version: "1.32"
   tasks:
 
     - name: Updates
