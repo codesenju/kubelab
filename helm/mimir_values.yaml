@@ -103,10 +103,11 @@ ingester:
   replicas: 1
   resources:
     limits:
-      memory: 2Gi
+      cpu: 1
+      memory: 4Gi
     requests:
       cpu: 500m
-      memory: 1Gi
+      memory: 2Gi
   priorityClassName: "high-priority"
   topologySpreadConstraints: {}
   affinity:
