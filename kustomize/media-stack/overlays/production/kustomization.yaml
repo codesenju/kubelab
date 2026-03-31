@@ -63,13 +63,13 @@ images:
 # - name: lscr.io/linuxserver/qbittorrent
 #   newTag: "5.0.4"
 - name: lscr.io/linuxserver/sonarr
-  newTag: "4.0.16"
+  newTag: "4.0.17"
 - name: lscr.io/linuxserver/radarr
   newTag: "6.0.4"
 - name: lscr.io/linuxserver/lidarr
   newTag: "3.1.0"
 - name: lscr.io/linuxserver/prowlarr
-  newTag: "2.3.0"
+  newTag: "2.3.0.5236-ls139"
 - name: ghcr.io/haveagitgat/tdarr
   newTag: "2.58.01"
 - name: ghcr.io/haveagitgat/tdarr_node
