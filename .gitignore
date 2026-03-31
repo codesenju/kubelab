@@ -76,3 +76,5 @@ zero-trust/trivy/publish-trivy-otlp.sh
 ansible/nohup.out
 ansible/tmp.json
 lima-kube-config.txt
+limactl/cfg/*
+zero-trust/kube-bench/cfg/*
