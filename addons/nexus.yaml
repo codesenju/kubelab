@@ -1,0 +1,98 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  vars:
+    target_namespace: nexus
+  tasks:
+
+    - name: Create namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ target_namespace }}"
+
+    - name: Create nexus postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: nexus-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ nexus_db_username }}"
+            password: "{{ nexus_db_password }}"
+      tags:
+      - postgres
+
+    - name: Create postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Deploy postgres
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1alpha1
+          kind: PostgresCluster
+          metadata:
+            name: nexus
+            namespace: "{{ target_namespace }}"
+          spec:
+            name: nexus
+            db:
+              name: nexus
+              username: nexus
+              secretName: nexus-postgres-secrets
+              storageClassName: "nfs-csi-postgres"
+            backup:
+              s3Path: "s3://cnpg/backups"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              retentionPolicy: "3d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+      tags:
+        - postgres
+
+    - name: Deploy ScheduledBackup
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: ScheduledBackup
+          metadata:
+            name: daily-s3-backup
+            namespace: "{{ target_namespace }}"
+          spec:
+            # Standard Cron: s m h dom mon dow
+            # This runs every day at 2:00 AM
+            schedule: "0 0 2 * * *"
+            cluster:
+              name: nexus-postgres
+            # Setting this to true takes a backup immediately upon creation
+            immediate: true
+            # 'self' means this ScheduledBackup object owns the resulting Backup records
+            backupOwnerReference: self
+      tags:
+        - postgres
+      when: false
