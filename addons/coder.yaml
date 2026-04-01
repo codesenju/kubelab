@@ -181,57 +181,6 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
 
-    - name: Create local wildcard certificate
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: local-jazziro-com-tls
-            namespace: '{{ target_namespace }}'
-          spec:
-            secretName: local-jazziro-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-            - "{{ local_dns_wildcard }}"
-
-    - name: Create coder Gateway
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: gateway.networking.k8s.io/v1
-          kind: Gateway
-          metadata:
-            name: coder
-            namespace: '{{ target_namespace }}'
-          spec:
-            gatewayClassName: traefik
-            listeners:
-            - name: web
-              hostname: "coder.{{ local_dns }}"
-              port: 8000
-              protocol: HTTP
-              allowedRoutes:
-                namespaces:
-                  from: Same
-            - name: websecure
-              hostname: "coder.{{ local_dns }}"
-              port: 8443
-              protocol: HTTPS
-              tls:
-                mode: Terminate
-                certificateRefs:
-                - group: ""
-                  kind: Secret
-                  name: local-jazziro-com-tls
-              allowedRoutes:
-                namespaces:
-                  from: Same
-
     - name: Create coder HTTPRoute
       kubernetes.core.k8s:
         state: present
@@ -245,18 +194,10 @@
             hostnames:
             - "coder.{{ local_dns }}"
             parentRefs:
-            - group: gateway.networking.k8s.io
-              kind: Gateway
-              name: coder
-              sectionName: websecure
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
             rules:
-            - matches:
-              - path:
-                  type: PathPrefix
-                  value: /
-              backendRefs:
-              - group: ""
-                kind: Service
-                name: coder
-                port: 80
-                weight: 1
+              - backendRefs:
+                  - name: coder
+                    port: 80

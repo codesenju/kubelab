@@ -19,9 +19,15 @@
           spec:
             project: default
             source:
-              repoURL: registry.k8s.io/kro/charts
+              repoURL: registry.k8s.io/kro/charts # oci chart
               chart: kro
-              targetRevision: v0.8.5
+              targetRevision: v0.9.0
+              helm:
+                releaseName: kro
+                values: |
+                  image:
+                    repository: registry.k8s.io/kro/kro
+                    # tag: "v0.9.0"
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
