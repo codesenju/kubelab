@@ -78,3 +78,7 @@ ansible/tmp.json
 lima-kube-config.txt
 limactl/cfg/*
 zero-trust/kube-bench/cfg/*
+limactl/kube-bench
+addons/robusta.yaml
+kro/rgd/postgres.yaml
+.gitignore

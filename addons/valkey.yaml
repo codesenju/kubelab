@@ -1,0 +1,38 @@
+- hosts: k8s-control-plane-1
+  become: no
+  gather_facts: no
+  vars:
+    target_namespace: valkey-system
+  tasks:
+
+    - name: Deploy valkey-operator chart
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: valkey-operator
+            namespace: argocd # TODO Replace with the namespace where ArgoCD is deployed
+          spec:
+            project: default
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            sources:
+              - chart: valkey-operator
+                repoURL: ghcr.io/hyperspike
+                targetRevision: v0.0.61
+                releaseName: valkey
+                helm:
+                  # values: |
+      tags:
+      - valkey
