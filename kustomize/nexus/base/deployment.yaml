@@ -32,4 +32,4 @@ spec:
                   name: nexus-postgres-secrets
                   key: password
             - name: NEXUS_DATASTORE_NEXUS_JDBCURL
-              value: jdbc:postgresql://nexus-postgres-rw.nexus-repo.svc.cluster.local:5432/nexus
+              value: jdbc:postgresql://nexus-postgres-rw.nexus.svc.cluster.local:5432/nexus
