@@ -12,15 +12,37 @@ spec:
       labels:
         app: nexus-repo
     spec:
+      initContainers:
+        - name: wait-for-postgres
+          image: busybox:1.36
+          command:
+            - sh
+            - -c
+            - until nc -z nexus-postgres-rw.nexus.svc.cluster.local 5432; do echo waiting for postgres; sleep 5; done
       containers:
         - name: nexus-repo
           image: IMAGE_NAME # Replace with the actual image name
           ports:
             - name: http
               containerPort: 8081
+          startupProbe:
+            tcpSocket:
+              port: 8081
+            periodSeconds: 10
+            failureThreshold: 60
+          readinessProbe:
+            tcpSocket:
+              port: 8081
+            periodSeconds: 10
+            failureThreshold: 6
+          livenessProbe:
+            tcpSocket:
+              port: 8081
+            periodSeconds: 20
+            failureThreshold: 6
           env:
             - name: INSTALL4J_ADD_VM_PARAMS
-              value: -Dnexus.datastore.enabled=true 
+              value: -Dnexus.datastore.enabled=true
             - name: NEXUS_DATASTORE_NEXUS_USERNAME
               valueFrom:
                 secretKeyRef:
