@@ -4,7 +4,7 @@ kind: Kustomization
 images:
   - name: IMAGE_NAME
     newName: "sonatype/nexus3"
-    newTag: "3.70.5"
+    newTag: "3.90.2-alpine"
 
 resources:
 - ../../base
