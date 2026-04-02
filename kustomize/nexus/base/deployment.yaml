@@ -19,6 +19,8 @@ spec:
             - name: http
               containerPort: 8081
           env:
+            - name: INSTALL4J_ADD_VM_PARAMS
+              value: -Dnexus.datastore.enabled=true 
             - name: NEXUS_DATASTORE_NEXUS_USERNAME
               valueFrom:
                 secretKeyRef:
