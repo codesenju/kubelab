@@ -1,0 +1,126 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: csi-truenas
+  tasks:
+
+    - name: Deploy csi-truenas
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: csi-truenas
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/csi-truenas/overlays/prod
+              targetRevision: HEAD
+              kustomize:
+                images:
+                  - ghcr.io/truenas/truenas-csi=harbor.jazziro.com/ghcrio/truenas/truenas-csi
+                  - registry.k8s.io/sig-storage/csi-provisioner=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-provisioner
+                  - registry.k8s.io/sig-storage/csi-attacher=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-attacher
+                  - registry.k8s.io/sig-storage/csi-snapshotter=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-snapshotter
+                  - registry.k8s.io/sig-storage/csi-resizer=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-resizer
+                  - registry.k8s.io/sig-storage/livenessprobe=harbor.jazziro.com/registry-k8s-io/sig-storage/livenessprobe
+                  - registry.k8s.io/sig-storage/csi-node-driver-registrar=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-node-driver-registrar
+                patches:
+                  - target:
+                      kind: Deployment
+                      name: truenas-csi-controller
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/imagePullSecrets
+                        value:
+                          - name: harbor-secret
+                  - target:
+                      kind: DaemonSet
+                      name: truenas-csi-node
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/imagePullSecrets
+                        value:
+                          - name: harbor-secret
+                  - target:
+                      kind: Secret
+                      name: truenas-api-credentials
+                    patch: |-
+                      apiVersion: v1
+                      kind: Secret
+                      metadata:
+                        name: truenas-api-credentials
+                        namespace: csi-truenas
+                      type: Opaque
+                      stringData:
+                        api-key: "{{ truenas_api_key }}"
+                  - target:
+                      kind: ConfigMap
+                      name: truenas-csi-config
+                    patch: |-
+                      apiVersion: v1
+                      kind: ConfigMap
+                      metadata:
+                        name: truenas-csi-config
+                        namespace: csi-truenas
+                      data:
+                        truenasURL: "{{ truenas_url }}"
+                        truenasInsecure: "{{ truenas_insecure | default('true') | string }}"
+                        defaultPool: "{{ truenas_pool }}"
+                        nfsServer: "{{ truenas_nfs_server }}"
+                        iscsiPortal: "{{ truenas_iscsi_portal }}"
+                        iscsiIQNBase: "{{ truenas_iqn_base | default('iqn.2000-01.io.truenas') }}"
+                  - target:
+                      group: storage.k8s.io
+                      version: v1
+                      kind: StorageClass
+                      name: truenas-iscsi
+                    patch: |-
+                      apiVersion: storage.k8s.io/v1
+                      kind: StorageClass
+                      metadata:
+                        name: truenas-iscsi
+                      parameters:
+                        iscsi.networks: "192.168.0.0/24"
+                  - target:
+                      group: storage.k8s.io
+                      version: v1
+                      kind: StorageClass
+                      name: truenas-nfs-zstd
+                    patch: |-
+                      apiVersion: storage.k8s.io/v1
+                      kind: StorageClass
+                      metadata:
+                        name: truenas-nfs-zstd
+                      parameters:
+                        dataset: pool2/csi-k8s/
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: csi-truenas
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+
+    - name: Create Harbor pull secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: harbor-secret
+            namespace: '{{ target_namespace }}'
+          type: kubernetes.io/dockerconfigjson
+          data:
+            .dockerconfigjson: "{{ {'auths': {'https://' + harbor_domain: {'username': harbor_username, 'password': harbor_password, 'auth': (harbor_username + ':' + harbor_password) | b64encode}}} | to_json | b64encode }}"

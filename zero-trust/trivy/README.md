@@ -10,11 +10,7 @@ This directory focuses on scanning container images with Trivy, applying VEX dat
 
 ## VEX source (direct internet)
 
-Use the upstream VEX Hub manifest directly:
-
-`https://raw.githubusercontent.com/aquasecurity/vexhub/main/vex-repository.json`
-
-You can pass this explicitly via `--vex-repo-url`, but `publish-trivy-otlp.sh` already defaults to it.
+The script uses Trivy CLI defaults for VEX repository resolution (`--vex repo`) and does not require a custom VEX repo URL flag.
 
 ## Scan with Trivy (manual)
 
@@ -24,7 +20,6 @@ export IMAGE="nginx:1.27-alpine"
 trivy image \
   --scanners vuln \
   --vex repo \
-  --vex-repo "https://raw.githubusercontent.com/aquasecurity/vexhub/main/vex-repository.json" \
   --db-repository "registry.local.jazziro.com/ghcrio/aquasecurity/trivy-db:2" \
   --java-db-repository "registry.local.jazziro.com/ghcrio/aquasecurity/trivy-java-db:1" \
   "$IMAGE"
@@ -58,13 +53,19 @@ OTLP_LOGS_URL="http://localhost:4318/v1/logs" \
 ./publish-trivy-otlp.sh
 ```
 
+SigNoz collector example:
+
+```bash
+IMAGE="nginx:1.27-alpine" OTLP_LOGS_URL="https://signoz-otel-collector.local.jazziro.com/v1/logs" ./publish-trivy-otlp.sh
+```
+
+Note: if you pipe output to `pbcopy`, the final success line (`Published Trivy logs to ...`) goes to clipboard (stdout), while Trivy `INFO/WARN` logs still appear in terminal (stderr).
+
 Optional overrides:
 
-- `VEX_REPO_URL` (default: upstream VEX manifest)
 - `TRIVY_DB_REPOSITORY` (default: `registry.local.jazziro.com/ghcrio/aquasecurity/trivy-db:2`)
 - `TRIVY_JAVA_DB_REPOSITORY` (default: `registry.local.jazziro.com/ghcrio/aquasecurity/trivy-java-db:1`)
 - `OTLP_AUTH_HEADER`
-- `VERIFY_VEX_REPO=true|false`
 - `SKIP_VEX_REPO_UPDATE=true|false`
 - `PUBLISH_RETRIES` and `PUBLISH_BACKOFF_SECONDS`
 
@@ -73,7 +74,6 @@ Flag form is also supported:
 ```bash
 ./publish-trivy-otlp.sh \
   --image "nginx:1.27-alpine" \
-  --vex-repo-url "https://raw.githubusercontent.com/aquasecurity/vexhub/main/vex-repository.json" \
   --db-repository "registry.local.jazziro.com/ghcrio/aquasecurity/trivy-db:2" \
   --java-db-repository "registry.local.jazziro.com/ghcrio/aquasecurity/trivy-java-db:1" \
   --otlp-logs-url "http://localhost:4318/v1/logs"

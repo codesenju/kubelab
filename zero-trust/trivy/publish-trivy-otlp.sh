@@ -2,10 +2,8 @@
 set -eu
 
 IMAGE="${IMAGE:-}"
-VEX_REPO_URL="${VEX_REPO_URL:-https://raw.githubusercontent.com/aquasecurity/vexhub/main/vex-repository.json}"
 OTLP_LOGS_URL="${OTLP_LOGS_URL:-}"
 OTLP_AUTH_HEADER="${OTLP_AUTH_HEADER:-}"
-VERIFY_VEX_REPO="${VERIFY_VEX_REPO:-true}"
 SKIP_VEX_REPO_UPDATE="${SKIP_VEX_REPO_UPDATE:-false}"
 TRIVY_DB_REPOSITORY="${TRIVY_DB_REPOSITORY:-registry.local.jazziro.com/ghcrio/aquasecurity/trivy-db:2}"
 TRIVY_JAVA_DB_REPOSITORY="${TRIVY_JAVA_DB_REPOSITORY:-registry.local.jazziro.com/ghcrio/aquasecurity/trivy-java-db:1}"
@@ -16,22 +14,18 @@ usage() {
   cat <<'EOF'
 Usage:
   IMAGE=<required-image> OTLP_LOGS_URL=<required-endpoint> ./publish-trivy-otlp.sh
-  ./publish-trivy-otlp.sh --image <image> --vex-repo-url <url> --otlp-logs-url <url> [options]
+  ./publish-trivy-otlp.sh --image <image> --otlp-logs-url <url> [options]
 
 Optional environment variables:
-  VEX_REPO_URL=<url>               VEX manifest URL or base URL (default: upstream VEX Hub manifest)
-  VERIFY_VEX_REPO=true|false       Verify VEX manifest URL before scan (default: true)
   TRIVY_DB_REPOSITORY=<oci-ref>    Trivy DB OCI reference (default: jazziro proxy)
   TRIVY_JAVA_DB_REPOSITORY=<ref>   Trivy Java DB OCI reference (default: jazziro proxy)
 
 Flags:
   --image <image>               Container image to scan (required if IMAGE is unset)
-  --vex-repo-url <url>          VEX repo base URL or manifest URL
   --db-repository <oci-ref>     Trivy DB OCI reference
   --java-db-repository <ref>    Trivy Java DB OCI reference
   --otlp-logs-url <url>         OTLP logs endpoint (required if OTLP_LOGS_URL is unset)
   --otlp-auth-header <value>    Optional Authorization header value
-  --verify-vex-repo <bool>      true|false (default: true)
   --skip-vex-repo-update <bool> true|false (default: false)
   --publish-retries <int>       Number of publish retries (default: 3)
   --publish-backoff <seconds>   Base backoff seconds (default: 2)
@@ -44,7 +38,6 @@ Examples:
   ./publish-trivy-otlp.sh
   ./publish-trivy-otlp.sh \
     --image nginx:1.27-alpine \
-    --vex-repo-url https://raw.githubusercontent.com/aquasecurity/vexhub/main/vex-repository.json \
     --db-repository registry.local.jazziro.com/ghcrio/aquasecurity/trivy-db:2 \
     --java-db-repository registry.local.jazziro.com/ghcrio/aquasecurity/trivy-java-db:1 \
     --otlp-logs-url http://localhost:4318/v1/logs
@@ -61,15 +54,6 @@ parse_args() {
       --image)
         [ "$#" -ge 2 ] || { echo "Missing value for --image" >&2; exit 1; }
         IMAGE="$2"
-        shift 2
-        ;;
-      --vex-repo-url=*)
-        VEX_REPO_URL="${1#*=}"
-        shift
-        ;;
-      --vex-repo-url)
-        [ "$#" -ge 2 ] || { echo "Missing value for --vex-repo-url" >&2; exit 1; }
-        VEX_REPO_URL="$2"
         shift 2
         ;;
       --otlp-logs-url=*)
@@ -106,15 +90,6 @@ parse_args() {
       --otlp-auth-header)
         [ "$#" -ge 2 ] || { echo "Missing value for --otlp-auth-header" >&2; exit 1; }
         OTLP_AUTH_HEADER="$2"
-        shift 2
-        ;;
-      --verify-vex-repo=*)
-        VERIFY_VEX_REPO="${1#*=}"
-        shift
-        ;;
-      --verify-vex-repo)
-        [ "$#" -ge 2 ] || { echo "Missing value for --verify-vex-repo" >&2; exit 1; }
-        VERIFY_VEX_REPO="$2"
         shift 2
         ;;
       --skip-vex-repo-update=*)
@@ -198,14 +173,6 @@ if [ -z "${OTLP_LOGS_URL}" ]; then
   exit 1
 fi
 
-case "${VERIFY_VEX_REPO}" in
-  true|false) ;;
-  *)
-    echo "VERIFY_VEX_REPO must be true or false, got: ${VERIFY_VEX_REPO}" >&2
-    exit 1
-    ;;
-esac
-
 case "${SKIP_VEX_REPO_UPDATE}" in
   true|false) ;;
   *)
@@ -228,18 +195,6 @@ case "${PUBLISH_BACKOFF_SECONDS}" in
     ;;
 esac
 
-case "${VEX_REPO_URL}" in
-  */.well-known/vex-repository.json)
-    VEX_REPO_BASE_URL="${VEX_REPO_URL%/.well-known/vex-repository.json}"
-    VEX_MANIFEST_URL="${VEX_REPO_URL}"
-    ;;
-  *)
-    VEX_REPO_BASE_URL="${VEX_REPO_URL%/}"
-    VEX_MANIFEST_URL="${VEX_REPO_BASE_URL}/.well-known/vex-repository.json"
-    ;;
-esac
-
-validate_url "${VEX_REPO_URL}" "VEX_REPO_URL"
 validate_url "${OTLP_LOGS_URL}" "OTLP_LOGS_URL"
 
 if [ -z "${TRIVY_DB_REPOSITORY}" ]; then
@@ -259,29 +214,11 @@ case "${OTLP_LOGS_URL}" in
     ;;
 esac
 
-if [ "${VERIFY_VEX_REPO}" = "true" ]; then
-  echo "Validating VEX manifest URL: ${VEX_MANIFEST_URL}"
-  if ! curl -fsS "${VEX_MANIFEST_URL}" >/dev/null; then
-    echo "Failed to reach VEX manifest URL: ${VEX_MANIFEST_URL}" >&2
-    exit 1
-  fi
-fi
-
 TMP_JSON="$(mktemp)"
 TMP_OTLP="$(mktemp)"
-TMP_XDG_DATA_HOME="$(mktemp -d)"
-trap 'rm -f "$TMP_JSON" "$TMP_OTLP"; rm -rf "$TMP_XDG_DATA_HOME"' EXIT
-
-mkdir -p "${TMP_XDG_DATA_HOME}/.trivy/vex"
-cat > "${TMP_XDG_DATA_HOME}/.trivy/vex/repository.yaml" <<EOF
-repositories:
-  - name: local
-    url: ${VEX_REPO_BASE_URL}
-    enabled: true
-    username: ""
-    password: ""
-    token: ""
-EOF
+TMP_OTLP_HEADERS="$(mktemp)"
+TMP_OTLP_RESPONSE="$(mktemp)"
+trap 'rm -f "$TMP_JSON" "$TMP_OTLP" "$TMP_OTLP_HEADERS" "$TMP_OTLP_RESPONSE"' EXIT
 
 echo "Scanning image: ${IMAGE}"
 echo "Using Trivy DB: ${TRIVY_DB_REPOSITORY}"
@@ -291,7 +228,7 @@ if [ "${SKIP_VEX_REPO_UPDATE}" = "true" ]; then
   TRIVY_CMD="${TRIVY_CMD} --skip-vex-repo-update"
 fi
 
-XDG_DATA_HOME="${TMP_XDG_DATA_HOME}" sh -c "${TRIVY_CMD}"
+sh -c "${TRIVY_CMD}"
 
 VULN_COUNT="$(jq '[.Results[]? | .Vulnerabilities[]?] | length' "${TMP_JSON}")"
 echo "Vulnerabilities found: ${VULN_COUNT}"
@@ -394,18 +331,30 @@ max_attempts=$((PUBLISH_RETRIES + 1))
 while [ "$attempt" -lt "$max_attempts" ]; do
   attempt=$((attempt + 1))
 
+  rm -f "${TMP_OTLP_HEADERS}" "${TMP_OTLP_RESPONSE}"
+
   if [ -n "${OTLP_AUTH_HEADER}" ]; then
-    if curl -fsS -X POST "${OTLP_LOGS_URL}" \
+    if curl -fsS -D "${TMP_OTLP_HEADERS}" -o "${TMP_OTLP_RESPONSE}" -X POST "${OTLP_LOGS_URL}" \
       -H "Content-Type: application/json" \
       -H "Authorization: ${OTLP_AUTH_HEADER}" \
       --data @"${TMP_OTLP}"; then
-      break
+      content_type="$(grep -i '^content-type:' "${TMP_OTLP_HEADERS}" | head -n 1 | cut -d' ' -f2- | tr -d '\r' || true)"
+      if [ -n "${content_type}" ] && printf '%s' "${content_type}" | grep -qi 'text/html'; then
+        echo "OTLP endpoint returned HTML (content-type: ${content_type}). Check OTLP_LOGS_URL; it may point to the UI instead of collector ingestion endpoint." >&2
+      else
+        break
+      fi
     fi
   else
-    if curl -fsS -X POST "${OTLP_LOGS_URL}" \
+    if curl -fsS -D "${TMP_OTLP_HEADERS}" -o "${TMP_OTLP_RESPONSE}" -X POST "${OTLP_LOGS_URL}" \
       -H "Content-Type: application/json" \
       --data @"${TMP_OTLP}"; then
-      break
+      content_type="$(grep -i '^content-type:' "${TMP_OTLP_HEADERS}" | head -n 1 | cut -d' ' -f2- | tr -d '\r' || true)"
+      if [ -n "${content_type}" ] && printf '%s' "${content_type}" | grep -qi 'text/html'; then
+        echo "OTLP endpoint returned HTML (content-type: ${content_type}). Check OTLP_LOGS_URL; it may point to the UI instead of collector ingestion endpoint." >&2
+      else
+        break
+      fi
     fi
   fi
 

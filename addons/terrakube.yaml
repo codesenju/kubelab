@@ -1,0 +1,270 @@
+- hosts: k8s-control-plane-1
+  become: no
+  gather_facts: no
+  vars:
+    target_namespace: terrakube
+  tasks:
+
+    - name: Deploy postgres
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: Cluster
+          metadata:
+            name: terrakube-postgres
+            namespace: "{{ target_namespace }}"
+          spec:
+            # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
+            imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba # UID 26, GID 999
+            instances: 1
+            postgresql:
+              shared_preload_libraries:
+                - "vectors.so"
+            managed:
+              roles:
+                - name: terrakube
+                  superuser: true
+                  login: true
+            bootstrap:
+              initdb:
+                database: terrakube
+                owner: terrakube
+                secret:
+                  name: terrakube-postgres-secrets
+                postInitSQL:
+                  - CREATE EXTENSION IF NOT EXISTS "vectors";
+                  - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
+                  - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
+            storage:
+              size: 1Gi
+              pvcTemplate:
+                accessModes:
+                  - ReadWriteOnce
+                resources:
+                  requests:
+                    storage: 1Gi
+                storageClassName: "proxmox-csi"
+            backup:
+              # 3-day retention for both base backups and WALsgit
+              retentionPolicy: "3d"
+              barmanObjectStore:
+                destinationPath: s3://cnpg/backups
+                # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
+                endpointURL: "https://{{ rustfs_endpoint }}"
+                s3Credentials:
+                  accessKeyId:
+                    name: s3-creds
+                    key: ACCESS_KEY_ID
+                  secretAccessKey:
+                    name: s3-creds
+                    key: SECRET_ACCESS_KEY
+                wal:
+                  compression: gzip
+                data:
+                  compression: gzip
+                  jobs: 2
+      tags:
+        - postgres
+
+    - name: Create terrakube postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: terrakube-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ terrakube_db_username }}"
+            password: "{{ terrakube_db_password }}"
+      tags:
+      - postgres
+
+    - name: Create postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Deploy ScheduledBackup
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: postgresql.cnpg.io/v1
+          kind: ScheduledBackup
+          metadata:
+            name: daily-s3-backup
+            namespace: "{{ target_namespace }}"
+          spec:
+            # Standard Cron: s m h dom mon dow
+            # This runs every day at 2:00 AM
+            schedule: "0 0 2 * * *"
+            cluster:
+              name: terrakube-postgres
+            # Setting this to true takes a backup immediately upon creation
+            immediate: true
+            # 'self' means this ScheduledBackup object owns the resulting Backup records
+            backupOwnerReference: self
+      tags:
+        - postgres
+
+    - name: Deploy terrakube chart
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: terrakube
+            namespace: argocd # TODO Replace with the namespace where ArgoCD is deployed
+          spec:
+            project: default
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            sources:
+              - chart: terrakube
+                repoURL: https://charts.terrakube.io
+                targetRevision: 4.5.9
+                releaseName: terrakube
+                helm:
+                  values: |
+                    security:
+                      useOpenLDAP: true
+                      dexIssuerUri: "https://terrakube.{{ local_dns }}/dex"
+                    ## Terrakube Storage
+                    storage:
+                      defaultStorage: false
+                      minio:
+                        accessKey: "{{ rustfs_access_key }}"
+                        secretKey: "{{ rustfs_secret_key }}"
+                        bucketName: "terrakube"
+                        endpoint: "https://{{ rustfs_server_domains }}"
+                    ingress:
+                      useTls: true
+                      includeTlsHosts: true
+                      ui:
+                        enabled: false
+                        domain: "terrakube.{{ local_dns }}"
+                      api:
+                        enabled: false
+                        domain: "terrakube.{{ local_dns }}"
+                      registry:
+                        enabled: false
+                        domain: "terrakube-reg.{{ local_dns }}"
+                      dex:
+                        enabled: false
+                    dex:
+                      config:
+                        issuer: "https://terrakube.{{ local_dns }}/dex"
+                        staticClients:
+                          - id: example-app
+                            redirectURIs:
+                              - "https://terrakube.{{ local_dns }}"
+                            name: example-app
+                            public: true
+                    ## Terrakube API properties
+                    api:
+                      defaultDatabase: false
+                      loadSampleData: false
+                      properties:
+                        databaseType: "POSTGRESQL"
+                        databaseHostname: "terrakube-postgres-rw.terrakube.svc.cluster.local"
+                        databaseName: "{{ terrakube_db_name  }}"
+                        databaseUser: "{{ terrakube_db_username  }}"
+                        databasePassword: "{{ terrakube_db_password }}"
+                        databaseSslMode: "disable"
+                        databasePort: "5432"
+      tags:
+      - terrakube
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: terrakube
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
+              - "terrakube.{{ local_dns }}"
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /api/v1
+                backendRefs:
+                  - name: terrakube-api-service
+                    port: 8080
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /dex
+                backendRefs:
+                  - name: terrakube-dex
+                    port: 5556
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /.well-known
+                backendRefs:
+                  - name: terrakube-api-service
+                    port: 8080
+              - backendRefs:
+                  - name: terrakube-ui-service
+                    port: 8080
+      tags: 
+      - ingress
+
+    - name: Create HTTPRoute http redirect
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: terrakube-redirect
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web
+            hostnames:
+              - "terrakube.{{ local_dns }}"
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      scheme: https
+                      statusCode: 301
+                      port: 443
+      tags: 
+      - ingress
