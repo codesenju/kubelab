@@ -42,7 +42,7 @@ spec:
             failureThreshold: 6
           env:
             - name: INSTALL4J_ADD_VM_PARAMS
-              value: -Dnexus.datastore.enabled=true
+              value: -Dnexus.datastore.enabled=true -Xms2g -Xmx4g
             - name: NEXUS_DATASTORE_NEXUS_USERNAME
               valueFrom:
                 secretKeyRef:
@@ -55,3 +55,10 @@ spec:
                   key: password
             - name: NEXUS_DATASTORE_NEXUS_JDBCURL
               value: jdbc:postgresql://nexus-postgres-rw.nexus.svc.cluster.local:5432/nexus
+          resources:
+            requests:
+              cpu: 500m
+              memory: 4Gi
+            limits:
+              cpu: "2"
+              memory: 6Gi
