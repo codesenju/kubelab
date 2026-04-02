@@ -129,6 +129,7 @@
                         path: /spec/hostnames
                         value:
                           - "nexus.{{ local_dns }}"
+                          - "registry.{{ local_dns}}"
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ target_namespace }}'
@@ -140,8 +141,10 @@
               - CreateNamespace=true
               - ServerSideApply=true
               - RespectIgnoreDifferences=true
-            # ignoreDifferences:
-            #   - group: "postgresql.cnpg.io"
-            #     kind: Cluster
-            #     jsonPointers:
-            #       - /spec/managed/roles
+            ignoreDifferences:
+              - group: "gateway.networking.k8s.io"
+                kind: HTTPRoute
+                name: nexus-repo
+                jqPathExpressions:
+                  - .spec.parentRefs[]
+                  - .spec.rules[]
