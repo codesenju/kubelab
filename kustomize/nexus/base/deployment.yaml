@@ -1,0 +1,34 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: nexus-repo
+  namespace: nexus-repo
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: nexus-repo
+  template:
+    metadata:
+      labels:
+        app: nexus-repo
+    spec:
+      containers:
+        - name: nexus-repo
+          image: IMAGE_NAME # Replace with the actual image name
+          ports:
+            - name: http
+              containerPort: 8081
+          env:
+            - name: NEXUS_DATASTORE_NEXUS_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: nexus-postgres-secrets
+                  key: username
+            - name: NEXUS_DATASTORE_NEXUS_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: nexus-postgres-secrets
+                  key: password
+            - name: NEXUS_DATASTORE_NEXUS_JDBCURL
+              value: jdbc:postgresql://nexus-postgres-rw.nexus-repo.svc.cluster.local:5432/nexus
