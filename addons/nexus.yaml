@@ -127,7 +127,8 @@
                     patch: |-
                       - op: replace
                         path: /spec/hostnames
-                        value: "nexus.{{ local_dns }}"
+                        value:
+                          - "nexus.{{ local_dns }}"
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ target_namespace }}'
