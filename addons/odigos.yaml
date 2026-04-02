@@ -1,0 +1,86 @@
+- hosts: k8s-control-plane-1
+  gather_facts: no
+  become: no
+  vars:
+    target_namespace: odigos
+  tasks:
+
+    - name: Deploy Odigos
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: odigos
+            namespace: argocd
+          spec:
+            project: default
+            source:
+              repoURL: https://odigos-io.github.io/odigos
+              chart: odigos
+              targetRevision: 1.22.3
+              helm:
+                releaseName: odigos
+                # values: |
+                #   # OPTIONAL: add your custom Helm values here if needed.
+                #   # Argo CD expects this field to be a YAML-formatted string.
+                #   # To use chart defaults, delete this field entirely or set it to an empty string ("").
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Create HTTPRoute for odigos
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: odigos
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
+              - "odigos.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: ui
+                    port: 3000
+      tags: 
+      - ingress
+
+    - name: Create HTTPRoute http redirect
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: odigos-redirect
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web
+            hostnames:
+              - "odigos.{{ local_dns }}"
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      scheme: https
+                      statusCode: 301
+                      port: 443
+      tags: 
+      - ingress
