@@ -96,3 +96,51 @@
       tags:
         - postgres
       when: false
+
+    - name: Deploy nexus
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: nexus
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/nexus/overlays/prod
+              targetRevision: main
+              kustomize:
+                # Add these to your existing kustomize config
+                labels:
+                  app.kubernetes.io/instance: nexus
+                patches:
+                  - target:
+                      group: gateway.networking.k8s.io
+                      version: v1
+                      kind: HTTPRoute
+                      name: nexus-repo
+                    patch: |-
+                      - op: replace
+                        path: /spec/hostnames
+                        value: "nexus.{{ local_dns }}"
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+              - CreateNamespace=true
+              - ServerSideApply=true
+              - RespectIgnoreDifferences=true
+            # ignoreDifferences:
+            #   - group: "postgresql.cnpg.io"
+            #     kind: Cluster
+            #     jsonPointers:
+            #       - /spec/managed/roles
