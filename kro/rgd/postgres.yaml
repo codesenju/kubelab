@@ -50,7 +50,7 @@ spec:
           instances: ${schema.spec.instances}
           postgresql:
             shared_preload_libraries:
-              - "vectors.so"
+              - "vector.so"
           managed:
             roles:
               - name: ${schema.spec.db.username}
@@ -63,7 +63,7 @@ spec:
               secret:
                 name: ${schema.spec.db.secretName}
               postInitSQL:
-                - CREATE EXTENSION IF NOT EXISTS "vectors";
+                - CREATE EXTENSION IF NOT EXISTS "vector";
                 - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
                 - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
           storage:

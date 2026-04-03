@@ -51,22 +51,23 @@
         state: present
         definition:
           apiVersion: v1beta1
-          kind: PostgresClusterRecovery # Use PostgresCluster instead if you don't want to create cluster from backup and remove backupPlan
+          kind: PostgresCluster # Use PostgresCluster instead if you don't want to create cluster from backup and remove backupPlan
           metadata:
             name: nexus
             namespace: "{{ target_namespace }}"
           spec:
             name: nexus
+            image: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0
             db:
               name: nexus
               username: nexus
               secretName: nexus-postgres-secrets
               storageClassName: "nfs-csi-postgres"
-              backupName: nexus-postgres-daily-s3-backup-20260402020000 # remove me if not creating cluster from backup
+              # backupName: nexus-postgres-daily-s3-backup-20260402020000 # remove me if not creating cluster from backup
             backup:
               s3Path: "s3://cnpg/backups"
               endpointURL: "https://{{ rustfs_endpoint }}"
-              retentionPolicy: "3d"
+              retentionPolicy: "5d"
               s3:
                 credentialsSecretName: s3-creds
                 accessKeyId: ACCESS_KEY_ID
