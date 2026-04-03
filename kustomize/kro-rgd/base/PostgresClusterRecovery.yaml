@@ -67,9 +67,9 @@ spec:
                 - CREATE EXTENSION IF NOT EXISTS "vectors";
                 - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
                 - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
-              # start from a backup
-              recovery:
-                backup: ${schema.spec.db.backupName}
+            # start from a backup
+            recovery:
+              backup: ${schema.spec.db.backupName}
           storage:
             size: ${schema.spec.db.size}
             pvcTemplate:
