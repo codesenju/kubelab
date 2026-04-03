@@ -69,7 +69,8 @@ spec:
                 - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
             # start from a backup
             recovery:
-              backup: ${schema.spec.db.backupName}
+              backup: 
+                name: ${schema.spec.db.backupName}
           storage:
             size: ${schema.spec.db.size}
             pvcTemplate:
