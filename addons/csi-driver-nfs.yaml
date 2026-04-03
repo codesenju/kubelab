@@ -1,8 +1,8 @@
+---
 - hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   tasks:
-
     - name: Deploy csi-driver-nfs
       kubernetes.core.k8s:
         state: present
@@ -29,7 +29,7 @@
                     parameters:
                       server: 192.168.0.16
                       share: /mnt/pool1/k8s/nfs
-                      mountPermissions: "0777" 
+                      mountPermissions: "0777"
                     reclaimPolicy: Delete
                     volumeBindingMode: Immediate
                     mountOptions:
@@ -55,9 +55,9 @@
           metadata:
             name: nfs-csi-postgres
           mountOptions:
-          - nfsvers=4.1
-          - noatime
-          - async
+            - nfsvers=4.1
+            - noatime
+            - async
           parameters:
             mountPermissions: "0777"
             server: 192.168.0.16

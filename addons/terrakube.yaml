@@ -197,7 +197,7 @@
                         databaseSslMode: "disable"
                         databasePort: "5432"
       tags:
-      - terrakube
+        - terrakube
 
     - name: Create HTTPRoute
       kubernetes.core.k8s:
@@ -241,7 +241,7 @@
                   - name: terrakube-ui-service
                     port: 8080
       tags: 
-      - ingress
+        - ingress
 
     - name: Create HTTPRoute http redirect
       kubernetes.core.k8s:
@@ -267,4 +267,4 @@
                       statusCode: 301
                       port: 443
       tags: 
-      - ingress
+        - ingress

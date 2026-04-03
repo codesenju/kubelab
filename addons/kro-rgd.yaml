@@ -1,0 +1,40 @@
+---
+- name: Kro RGD
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  tasks:
+    - name: Deploy Pihole
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: pihole
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/kro-rgd/overlays/prod
+              targetRevision: main
+              kustomize:
+                # Add these to your existing kustomize config
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                commonLabels:
+                  app.kubernetes.io/instance: kro-rgd
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: pihole
+            syncPolicy:
+              automated:
+                prune: false
+                selfHeal: false
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true

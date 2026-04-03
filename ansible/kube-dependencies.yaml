@@ -1,17 +1,17 @@
+---
 - name: Kubernetes Dependencies
-  hosts: control-plane, workers 
-  become: yes
+  hosts: control-plane, workers
+  become: true
   tasks:
-
     - name: Updates
       apt:
-        update_cache: yes
+        update_cache: true
 
     - name: Install pip3
       apt:
         name: python3-pip
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Install required Python packages
       pip:
@@ -20,7 +20,7 @@
           - PyYAML
           - jsonpatch
         state: present
-        
+
     - name: Install prerequisites
       apt:
         name:
@@ -34,7 +34,7 @@
           - nfs-common
           - open-iscsi
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Disable SWAP
       shell: |
@@ -43,14 +43,14 @@
     - name: Disable SWAP in fstab
       replace:
         path: /etc/fstab
-        regexp: '^([^#].*?\sswap\s+sw\s+.*)$'
-        replace: '# \1'
+        regexp: "^([^#].*?\\sswap\\s+sw\\s+.*)$"
+        replace: "# \\1"
 
     - name: Create an empty file for the containerd module
       copy:
         content: ""
         dest: /etc/modules-load.d/containerd.conf
-        force: no
+        force: false
 
     - name: Configure modules for containerd
       blockinfile:
@@ -63,7 +63,7 @@
       copy:
         content: ""
         dest: /etc/sysctl.d/99-kubernetes-cri.conf
-        force: no
+        force: false
 
     - name: Configure sysctl parameters for K8S
       lineinfile:
@@ -91,9 +91,10 @@
 
     - name: Add Docker's APT repo
       apt_repository:
-        repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/docker-apt-keyring.asc] https://download.docker.com/linux/ubuntu {{ ansible_distribution_release }} stable"
+        repo: "deb [arch={{ 'amd64' if ansible_architecture == 'x86_64' else 'arm64' }} signed-by=/etc/apt/keyrings/docker-apt-keyring.asc] https://download.docker.com/linux/ubuntu
+          {{ ansible_distribution_release }} stable"
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Add Kubernetes apt-key
       get_url:
@@ -106,7 +107,7 @@
       apt_repository:
         repo: "deb [signed-by=/etc/apt/keyrings/kubernetes-apt-keyring.asc] https://pkgs.k8s.io/core:/stable:/v{{ k8s_version }}/deb/ /"
         state: present
-        update_cache: yes
+        update_cache: true
 
     - name: Install containerd
       apt:
@@ -131,8 +132,8 @@
       systemd:
         name: containerd
         state: restarted
-        enabled: yes
-        daemon-reload: yes
+        enabled: true
+        daemon-reload: true
 
     - name: Install Kubelet
       apt:
@@ -150,7 +151,7 @@
     - name: Enable the Kubelet service
       service:
         name: kubelet
-        enabled: yes
+        enabled: true
 
     - name: Load br_netfilter kernel module
       modprobe:
@@ -171,10 +172,10 @@
       reboot:
 
 - hosts: control-plane
-  become: yes
+  become: true
   tasks:
     - name: Install Kubectl
       apt:
         name: kubectl={{ k8s_version }}.*
         state: present
-        force: yes
+        force: true

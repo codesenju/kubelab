@@ -1,9 +1,9 @@
+---
 - hosts: k8s-control-plane-1
-  become: no
+  become: false
   vars:
     ingress_nginx_load_balancer_ip: 192.168.0.61
   tasks:
-
     - name: Deploy ingress-nginx
       kubernetes.core.k8s:
         state: present
