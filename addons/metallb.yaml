@@ -1,17 +1,17 @@
+---
 - hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   vars:
     target_namespace: metallb-system
   tasks:
-
     - name: Install Metallb
       kubernetes.core.k8s:
         state: present
         src: https://raw.githubusercontent.com/metallb/metallb/v0.15.3/config/manifests/metallb-native.yaml
 
     - name: Wait for metallb pods to be ready
-      shell: kubectl wait --for=condition=Ready pods --all -n metallb-system >> metallb_ready.log
+      ansible.builtin.shell: kubectl wait --for=condition=Ready pods --all -n metallb-system >> metallb_ready.log
       args:
         chdir: $HOME
         creates: metallb_ready.log
@@ -31,7 +31,7 @@
             namespace: "{{ target_namespace }}"
           spec:
             addresses:
-            - '{{ metallb_addr_pool_range }}'
+              - "{{ metallb_addr_pool_range }}"
             autoAssign: true
 
     - name: Deploy Metallb L2Advertisement

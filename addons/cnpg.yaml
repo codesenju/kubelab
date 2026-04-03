@@ -1,8 +1,9 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: CloudNativePG
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   tasks:
-
     - name: Create namespace in Kubernetes
       kubernetes.core.k8s:
         state: present
@@ -28,11 +29,10 @@
             source:
               chart: cloudnative-pg
               repoURL: https://cloudnative-pg.github.io/charts
-              targetRevision: 0.26.1
+              targetRevision: 0.28.0
               helm:
                 releaseName: cnpg
-                values: |
-                   #
+                # values: |
             destination:
               server: https://kubernetes.default.svc
               namespace: cnpg-system
@@ -51,7 +51,7 @@
         label_selectors:
           - app.kubernetes.io/name=cloudnative-pg
       register: operator_pods
-      until: 
+      until:
         - operator_pods.resources is defined
         - operator_pods.resources | length > 0
         - operator_pods.resources | map(attribute='status.phase') | list | intersect(['Running']) | length == operator_pods.resources | length

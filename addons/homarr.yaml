@@ -1,10 +1,10 @@
+---
 - hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   vars:
     namespace: homarr
   tasks:
-
     - name: Create Homarr namespace
       kubernetes.core.k8s:
         state: present
@@ -22,7 +22,7 @@
             name: homarr-db
             namespace: homarr
             labels:
-              service: homarr-db  # This matches the PVC selector
+              service: homarr-db # This matches the PVC selector
           spec:
             capacity:
               storage: 50Mi
@@ -52,7 +52,7 @@
                 storage: 50Mi
             selector:
               matchLabels:
-                service: homarr-db  # Add selector to match PV label
+                service: homarr-db # Add selector to match PV label
             volumeName: homarr-db
             storageClassName: "" # This prevents dynamic provisioning
 
@@ -66,7 +66,7 @@
             name: homarr-images
             namespace: homarr
             labels:
-              service: homarr   # This matches the PVC selector
+              service: homarr # This matches the PVC selector
           spec:
             capacity:
               storage: 50Mi
@@ -98,7 +98,7 @@
                 storage: 50Mi
             selector:
               matchLabels:
-                service: homarr-images  # Add selector to match PV label
+                service: homarr-images # Add selector to match PV label
             volumeName: homarr-images
             storageClassName: "" # This prevents dynamic provisioning
 
@@ -117,12 +117,12 @@
             project: default
             source:
               chart: homarr
-              repoURL: ghcr.io/homarr-labs/charts  # note: the oci:// syntax is not included.
+              repoURL: ghcr.io/homarr-labs/charts # note: the oci:// syntax is not included.
               targetRevision: 3.7.1
               helm:
                 releaseName: homarr
                 values: |
-                  rbac: 
+                  rbac:
                     enabled: true
                   service:
                     # type: LoadBalancer
@@ -166,7 +166,7 @@
           kind: Certificate
           metadata:
             name: local-jazziro-com
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -174,8 +174,8 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns }}"
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns }}"
+              - "{{ local_dns_wildcard }}"
       tags: homarr-tls
 
     - name: Create homarr IngressRoute
@@ -186,10 +186,10 @@
           kind: IngressRoute
           metadata:
             name: homarr
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
             annotations:
               kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
           spec:
             entryPoints:
               - websecure

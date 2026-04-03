@@ -1,3 +1,4 @@
+---
 - name: Setup Longhonrn
   import_playbook: ../addons/longhorn.yaml
 
@@ -13,32 +14,32 @@
 - name: Setup Cert Manager
   import_playbook: ../addons/cert-manager.yaml
 
-- name: adhoc
+- name: Adhoc
   import_playbook: ../addons/adhoc.yaml
-  
-- name: ingress-nginx
+
+- name: Ingress-nginx
   import_playbook: ../addons/ingress-nginx.yaml
 
-- name: cnpg
+- name: Cnpg
   import_playbook: ../addons/cnpg.yaml
 
-- name: csi-driver-nfs
+- name: Csi-driver-nfs
   import_playbook: ../addons/csi-driver-nfs.yaml
 
-- name: media-stack
+- name: Media-stack
   import_playbook: ../addons/media-stack.yaml
 
-- name: homarr
+- name: Homarr
   import_playbook: ../addons/homarr.yaml
 
-- name: ddns
+- name: Ddns
   import_playbook: ../addons/ddns.yaml
 
-- name: beszel-agent
+- name: Beszel-agent
   import_playbook: ../addons/beszel-agent.yaml
 
-- name: vailtwarden
+- name: Vailtwarden
   import_playbook: ../addons/vaultwarden.yaml
 
-- name: minio
+- name: Minio
   import_playbook: ../addons/minio.yaml

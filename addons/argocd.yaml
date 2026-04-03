@@ -1,11 +1,12 @@
+---
 - name: Install k9s
   hosts: k8s-control-plane-1
-  become: no
+  become: false
   gather_facts: false
   vars:
     namespace: argocd
   tasks:
-# kubectl get crd -o name | grep argoproj.io | xargs kubectl delete
+    # kubectl get crd -o name | grep argoproj.io | xargs kubectl delete
     - name: Deploy Argocd
       kubernetes.core.helm:
         name: argocd
@@ -13,7 +14,7 @@
         chart_repo_url: https://argoproj.github.io/argo-helm
         chart_ref: argo-cd
         chart_version: 9.4.14
-        release_namespace: '{{ namespace }}'
+        release_namespace: "{{ namespace }}"
         create_namespace: true
         release_values:
           global:
@@ -48,10 +49,10 @@
             #     dex.authentik.clientSecret: "{{ argocd_openid_client_secret }}"
             rbac:
               policy.csv: |
-                 g, ArgoCD Admins, role:admin
-                 g, authentik Admins, role:admin
-                 g, ArgoCD Viewers, role:readonly
-                 g, jazziro-kubelab:kubelab, role:readonly
+                g, ArgoCD Admins, role:admin
+                g, authentik Admins, role:admin
+                g, ArgoCD Viewers, role:readonly
+                g, jazziro-kubelab:kubelab, role:readonly
             cm:
               accounts.devops: apiKey, login
               accounts.devops.enabled: "true"
@@ -106,14 +107,14 @@
     #       status: "True"
 
     - name: Get Argo CD admin password
-      shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      ansible.builtin.shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
       register: argocd_password
       changed_when: false
       tags:
         - get_credentials
 
     - name: Get LoadBalancer IP
-      shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
+      ansible.builtin.shell: kubectl -n argocd get svc argocd-server -o jsonpath='{.status.loadBalancer.ingress[0].ip}'
       register: lb_ip
       changed_when: false
       tags:
@@ -127,7 +128,7 @@
           kind: Certificate
           metadata:
             name: local-jazziro-com-tls
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -135,7 +136,7 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns_wildcard }}"
       tags:
         - ingress
         - certificate
@@ -148,10 +149,10 @@
           kind: IngressRoute
           metadata:
             name: argocd-server
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
             annotations:
               kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
           spec:
             entryPoints:
               - websecure
@@ -165,7 +166,7 @@
             tls:
               secretName: local-jazziro-com-tls
       tags:
-      - ingress
+        - ingress
 
     - name: Create ServiceMonitor for ArgoCD Application Controller
       kubernetes.core.k8s:
@@ -175,7 +176,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-metrics
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:
@@ -193,7 +194,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-server-metrics
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:
@@ -211,7 +212,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-repo-server-metrics
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:
@@ -229,7 +230,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-applicationset-controller-metrics
-            namespace: '{{ namespace }}'
+            namespace: "{{ namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:
@@ -251,4 +252,3 @@
           - "----------------------------------------"
       tags:
         - get_credentials
-

@@ -1,7 +1,7 @@
 ---
 - hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+  gather_facts: false
+  become: false
   vars:
     target_namespace: minio
   tasks:
@@ -27,15 +27,15 @@
                   app.kubernetes.io/instance: minio
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
 
     - name: Create minio-env secret
       kubernetes.core.k8s:
@@ -45,10 +45,10 @@
           kind: Secret
           metadata:
             name: minio-env
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           stringData:
             MINIO_ROOT_USER: minio
-            MINIO_ROOT_PASSWORD: '{{ minio_password }}'
+            MINIO_ROOT_PASSWORD: "{{ minio_password }}"
 
     - name: Create minio ingress
       kubernetes.core.k8s:
@@ -58,37 +58,37 @@
           kind: Ingress
           metadata:
             name: minio
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
-            - hosts:
-              - "minio.{{ local_dns }}"
-              - "s3.{{ local_dns }}"
-              secretName: local-jazziro-com-tls
+              - hosts:
+                  - "minio.{{ local_dns }}"
+                  - "s3.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
             rules:
-            - host: "minio.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: minio
-                      port:
-                        number: 9001
-            - host: "s3.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: minio
-                      port:
-                        number: 9000
-      tags: 
-      - ingress
+              - host: "minio.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: minio
+                          port:
+                            number: 9001
+              - host: "s3.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: minio
+                          port:
+                            number: 9000
+      tags:
+        - ingress

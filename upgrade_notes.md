@@ -102,10 +102,9 @@ export NODE_1_IP="192.168.0.41"
 export NODE_2_IP="192.168.0.42"
 export NODE_3_IP="192.168.0.43"
 
-export SNAPSHOT_PATH="/opt/kubernetes/etcd-snapshot_2026-03-08_17h35.db"
+export SNAPSHOT_PATH="/opt/kubernetes/etcd-snapshot_2026-04-03_00h00.db"
 
 sudo mv /var/lib/etcd/ /var/lib/etcd.bak
-
 sudo mkdir -p /var/lib/etcd -p
 
 sudo ETCDCTL_API=3 etcdutl snapshot restore $SNAPSHOT_PATH \

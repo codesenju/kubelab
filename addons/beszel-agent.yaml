@@ -1,8 +1,8 @@
+---
 - hosts: k8s-control-plane-1
-  gather_facts: no 
-  become: no
+  gather_facts: false
+  become: false
   tasks:
-
     - name: Deploy Beszel Agent
       kubernetes.core.k8s:
         state: present
@@ -26,7 +26,7 @@
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 labels:
                   app.kubernetes.io/instance: beszel-agent-prod
-          
+
             destination:
               server: https://kubernetes.default.svc
               namespace: beszel
@@ -35,12 +35,12 @@
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
-            # ignoreDifferences:
-            # - group: ""
-            #   kind: PersistentVolumeClaim
-            #   jsonPointers:
-            #   - /status  # Ignore PVC status changes
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      # ignoreDifferences:
+      # - group: ""
+      #   kind: PersistentVolumeClaim
+      #   jsonPointers:
+      #   - /status  # Ignore PVC status changes
       tags: beszel-agent
