@@ -1,13 +1,14 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Databasus Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: databasus
   tasks:
-
     - name: Deploy databasus ArgoCD Application
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -29,7 +30,7 @@
                   app.kubernetes.io/instance: databasus-prod
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -62,11 +63,11 @@
                   - .spec.volumeClaimTemplates[].spec.volumeMode
                   - .spec.volumeClaimTemplates[].status
       tags: databasus
-      when: false
+      # when: false
 
     - name: Deploy Databasus
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -110,7 +111,7 @@
                       secretName: local-jazziro-com-tls
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -142,70 +143,25 @@
                   - .spec.volumeClaimTemplates[].metadata.creationTimestamp
                   - .spec.volumeClaimTemplates[].spec.volumeMode
                   - .spec.volumeClaimTemplates[].status
+      when: false
 
-    - name: Create local wildcar certificate
+    - name: Create HTTPRoute for databasus
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: local-jazziro-com-tls
-            namespace: '{{ target_namespace }}'
-          spec:
-            secretName: local-jazziro-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-            - "{{ local_dns_wildcard }}"
-      tags:
-        - ingress
-
-    - name: Create Traefik HTTPS Redirect Middleware
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: Middleware
-          metadata:
-            name: redirect-https
-            namespace: "{{ target_namespace }}"
-          spec:
-            redirectScheme:
-              scheme: https
-              permanent: true
-
-    - name: Create Databasus Ingress
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: databasus
-            namespace: '{{ target_namespace }}'
-            annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              cert-manager.io/cluster-issuer: letsencrypt-production
+            namespace: "{{ target_namespace }}"
           spec:
-            ingressClassName: traefik
-            tls:
-            - hosts:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
               - "databasus.{{ local_dns }}"
-              secretName: local-jazziro-com-tls
             rules:
-            - host: "databasus.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: databasus
-                      port:
-                        name: http
-      tags: 
-      - ingress
-      when: false
+              - backendRefs:
+                  - name: databasus
+                    port: 4005

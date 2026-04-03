@@ -6,7 +6,7 @@ namespace: databasus
 images:
 - name: IMAGE_PLACEHOLDER
   newName: databasus/databasus
-  newTag: latest
+  newTag: v3.32.0 
 
 resources:
 - ../../base
