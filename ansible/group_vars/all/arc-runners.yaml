@@ -1,3 +1,4 @@
+---
 # ARC Runner Sets Configuration
 arc_runner_sets:
   - name: kubelab
@@ -11,4 +12,4 @@ arc_runner_sets:
 
 # Default GitHub configuration (fallback)
 github_config_url: "https://github.com/your-org/default-repo"
-github_pat: "{{ github_token }}"  # Reference to your encrypted secret
+github_pat: "{{ github_token }}" # Reference to your encrypted secret

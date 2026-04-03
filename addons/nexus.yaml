@@ -1,9 +1,10 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
+---
+- name: Nexus Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
   vars:
     target_namespace: nexus
   tasks:
-
     - name: Create namespace
       kubernetes.core.k8s:
         state: present
@@ -27,7 +28,7 @@
             username: "{{ nexus_db_username }}"
             password: "{{ nexus_db_password }}"
       tags:
-      - postgres
+        - postgres
 
     - name: Create postgres secrets
       kubernetes.core.k8s:
@@ -129,18 +130,18 @@
                         path: /spec/hostnames
                         value:
                           - "nexus.{{ local_dns }}"
-                          - "registry.{{ local_dns}}"
+                          - "registry.{{ local_dns }}"
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
             ignoreDifferences:
               - group: "gateway.networking.k8s.io"
                 kind: HTTPRoute

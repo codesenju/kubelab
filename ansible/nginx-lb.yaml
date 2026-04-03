@@ -1,25 +1,26 @@
+---
 - hosts: loadbalancer
-  become: yes
+  become: true
   tasks:
     - name: Update apt cache
-      apt:
-        update_cache: yes
+      ansible.builtin.apt:
+        update_cache: true
       when: ansible_os_family == "Debian"
 
     - name: Install NGINX
-      apt:
+      ansible.builtin.apt:
         name: nginx
         state: present
       when: ansible_os_family == "Debian"
 
     - name: Create NGINX configuration directory
-      file:
+      ansible.builtin.file:
         path: /etc/nginx/tcpconf.d
         state: directory
-        mode: '0755'
+        mode: "0755"
 
     - name: Replace nginx.conf with minimal configuration
-      copy:
+      ansible.builtin.copy:
         dest: /etc/nginx/nginx.conf
         content: |
           user www-data;
@@ -47,7 +48,7 @@
           }
 
     - name: Configure Kubernetes API Server load balancing
-      copy:
+      ansible.builtin.copy:
         dest: /etc/nginx/tcpconf.d/kubernetes.conf
         content: |
           upstream kubernetes {
@@ -62,17 +63,17 @@
           }
 
     - name: Validate NGINX configuration
-      command: /usr/sbin/nginx -t
+      ansible.builtin.command: /usr/sbin/nginx -t
       register: nginx_validate
       changed_when: false
-      ignore_errors: yes
+      ignore_errors: true
 
     - name: Fail if NGINX configuration is invalid
-      fail:
+      ansible.builtin.fail:
         msg: "NGINX configuration test failed. Please check the configuration."
       when: nginx_validate.rc != 0
 
     - name: Restart NGINX
-      service:
+      ansible.builtin.service:
         name: nginx
         state: restarted
