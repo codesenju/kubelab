@@ -59,14 +59,6 @@ spec:
                 login: true
           bootstrap:
             initdb:
-              database: ${schema.spec.db.name}
-              owner: ${schema.spec.db.username}
-              secret:
-                name: ${schema.spec.db.secretName}
-              postInitSQL:
-                - CREATE EXTENSION IF NOT EXISTS "vectors";
-                - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
-                - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
             # start from a backup
             recovery:
               backup: 
