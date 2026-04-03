@@ -51,7 +51,7 @@ spec:
           instances: ${schema.spec.instances}
           postgresql:
             shared_preload_libraries:
-              - "vectors.so"
+              - "vector.so"
           managed:
             roles:
               - name: ${schema.spec.db.username}
