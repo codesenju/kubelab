@@ -13,4 +13,3 @@
 
 - name: Setup k8s tools
   import_playbook: k8s-tools.yaml
-

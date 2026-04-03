@@ -34,9 +34,11 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
   node_name   = "kubelab-1"
   description = "Kubernetes Load Balancer"
   vm_id       = 4000 # Unique VM ID for the load balancer
+  hotplug     = "network,disk,usb,memory"
 
   cpu {
     units = 512
+    numa  = true
   }
 
   memory {
@@ -46,7 +48,7 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
   disk {
     datastore_id = "local-lvm"
     # file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
-    import_from = proxmox_virtual_environment_download_file.ubuntu_cloud_image[0].id
+    import_from = proxmox_download_file.ubuntu_cloud_image[0].id
     interface   = "virtio0"
     iothread    = true
     discard     = "on"
@@ -98,9 +100,11 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
   node_name   = local.control_plane_nodes[count.index]
   description = "Kubernetes control-plane Node ${count.index + 1}"
   vm_id       = 4000 + count.index + 1 # Unique VM ID for each control-plane node
+  hotplug     = "network,disk,usb,memory"
 
   cpu {
     cores = try(local.control_plane_cores_override[count.index], local.control_plane_cores)
+    numa  = true
   }
 
   memory {
@@ -111,7 +115,7 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
   disk {
     datastore_id = "local-lvm"
     # file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
-    import_from = local.control_plane_nodes[count.index] == "kubelab-1" ? proxmox_virtual_environment_download_file.ubuntu_cloud_image[0].id : proxmox_virtual_environment_download_file.ubuntu_cloud_image[1].id
+    import_from = local.control_plane_nodes[count.index] == "kubelab-1" ? proxmox_download_file.ubuntu_cloud_image[0].id : proxmox_download_file.ubuntu_cloud_image[1].id
     interface   = "virtio0"
     iothread    = true
     discard     = "on"
@@ -163,10 +167,12 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   name      = "k8s-worker-${count.index + 1}"
   node_name = local.worker_nodes[count.index]
   vm_id     = 5000 + count.index + 1 # Unique VM ID for each worker node
+  hotplug   = "network,disk,usb,memory"
 
   cpu {
     cores = try(local.worker_cores_override[count.index], local.worker_cores)
     type  = "host" # Use host CPU to resolve minio issue - Fatal glibc error: CPU does not support x86-64-v2
+    numa  = true
   }
 
   memory {
@@ -177,7 +183,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   disk {
     datastore_id = "local-lvm"
     # file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
-    import_from = local.worker_nodes[count.index] == "kubelab-1" ? proxmox_virtual_environment_download_file.ubuntu_cloud_image[0].id : proxmox_virtual_environment_download_file.ubuntu_cloud_image[1].id
+    import_from = local.worker_nodes[count.index] == "kubelab-1" ? proxmox_download_file.ubuntu_cloud_image[0].id : proxmox_download_file.ubuntu_cloud_image[1].id
     interface   = "virtio0"
     iothread    = true
     discard     = "on"
@@ -222,7 +228,7 @@ resource "proxmox_virtual_environment_vm" "k8s_worker" {
   }
 }
 
-resource "proxmox_virtual_environment_download_file" "ubuntu_cloud_image" {
+resource "proxmox_download_file" "ubuntu_cloud_image" {
   count        = 2
   content_type = "import"
   datastore_id = "local"
