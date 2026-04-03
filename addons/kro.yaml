@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Kro Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: kro
   tasks:
-
     - name: Deploy Kro
       kubernetes.core.k8s:
         state: present
@@ -21,7 +22,7 @@
             source:
               repoURL: registry.k8s.io/kro/charts # oci chart
               chart: kro
-              targetRevision: v0.9.0
+              targetRevision: 0.9.0
               helm:
                 releaseName: kro
                 values: |
@@ -36,9 +37,9 @@
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
             # ignoreDifferences:
             #   - group: "postgresql.cnpg.io"
             #     kind: Cluster
