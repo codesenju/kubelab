@@ -65,7 +65,7 @@
               storageClassName: "nfs-csi-postgres"
               # backupName: nexus-postgres-daily-s3-backup-20260402020000 # remove me if not creating cluster from backup
             backup:
-              s3Path: "s3://cnpg/backups"
+              s3Path: "s3://cnpg/backups/nexus"
               endpointURL: "https://{{ rustfs_endpoint }}"
               retentionPolicy: "5d"
               s3:
