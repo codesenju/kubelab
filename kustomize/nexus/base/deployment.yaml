@@ -57,8 +57,8 @@ spec:
               value: jdbc:postgresql://nexus-postgres-rw.nexus.svc.cluster.local:5432/nexus
           resources:
             requests:
-              cpu: 500m
+              cpu: 2
               memory: 4Gi
             limits:
-              cpu: "2"
+              cpu: "4"
               memory: 6Gi

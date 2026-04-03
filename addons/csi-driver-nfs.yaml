@@ -57,10 +57,13 @@
           mountOptions:
             - nfsvers=4.1
             - noatime
-            - async
+            - hard
+            - timeo=600
+            - retrans=2
           parameters:
             mountPermissions: "0777"
             server: 192.168.0.16
+            # NAS export should include no_root_squash,no_subtree_check for fsGroup/chown
             share: /mnt/pool2/k8s/nfs-postgres
           provisioner: nfs.csi.k8s.io
           reclaimPolicy: Delete
