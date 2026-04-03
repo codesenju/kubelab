@@ -1,0 +1,87 @@
+---
+- name: Tune Nexus Hugging Face proxy repository
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  vars:
+    nexus_base_url: "https://registry.local.jazziro.com"
+    hf_repo_name: "hf"
+
+    # Tuning defaults for large GGUF downloads
+    hf_http_timeout_seconds: 300
+    hf_http_retries: 5
+    hf_proxy_metadata_max_age_minutes: 10080
+    hf_negative_cache_ttl_minutes: 60
+
+    # Prefer inventory/extra-vars; env vars are fallback for local runs
+    nexus_admin_user: "{{ lookup('env', 'NEXUS_ADMIN_USER') | default('admin', true) }}"
+    nexus_admin_password: "{{ lookup('env', 'NEXUS_ADMIN_PASSWORD') | default('', true) }}"
+
+  tasks:
+    - name: Require Nexus admin password
+      ansible.builtin.assert:
+        that:
+          - nexus_admin_password | length > 0
+        fail_msg: >-
+          Set nexus_admin_password in inventory/group_vars or export NEXUS_ADMIN_PASSWORD.
+
+    - name: Read current HF proxy configuration
+      ansible.builtin.uri:
+        url: "{{ nexus_base_url }}/service/rest/v1/repositories/huggingface/proxy/{{ hf_repo_name }}"
+        method: GET
+        user: "{{ nexus_admin_user }}"
+        password: "{{ nexus_admin_password }}"
+        force_basic_auth: true
+        validate_certs: false
+        return_content: true
+        status_code: 200
+      register: hf_repo_current
+
+    - name: Build tuned HF proxy payload
+      ansible.builtin.set_fact:
+        hf_repo_payload:
+          name: "{{ hf_repo_current.json.name }}"
+          online: true
+          storage: "{{ hf_repo_current.json.storage }}"
+          cleanup: "{{ hf_repo_current.json.cleanup | default({'policyNames': []}) }}"
+          proxy:
+            remoteUrl: "{{ hf_repo_current.json.proxy.remoteUrl }}"
+            contentMaxAge: "{{ hf_repo_current.json.proxy.contentMaxAge | default(-1) }}"
+            metadataMaxAge: "{{ hf_proxy_metadata_max_age_minutes }}"
+            preserveEncodedCharacters: "{{ hf_repo_current.json.proxy.preserveEncodedCharacters | default(false) }}"
+          negativeCache:
+            enabled: true
+            timeToLive: "{{ hf_negative_cache_ttl_minutes }}"
+          httpClient:
+            blocked: false
+            autoBlock: false
+            connection:
+              retries: "{{ hf_http_retries }}"
+              userAgentSuffix: "{{ hf_repo_current.json.httpClient.connection.userAgentSuffix | default('') }}"
+              timeout: "{{ hf_http_timeout_seconds }}"
+              enableCircularRedirects: "{{ hf_repo_current.json.httpClient.connection.enableCircularRedirects | default(false) }}"
+              enableCookies: "{{ hf_repo_current.json.httpClient.connection.enableCookies | default(false) }}"
+              useTrustStore: "{{ hf_repo_current.json.httpClient.connection.useTrustStore | default(false) }}"
+            authentication: "{{ hf_repo_current.json.httpClient.authentication | default(None) }}"
+          routingRuleName: "{{ hf_repo_current.json.routingRuleName | default(None) }}"
+          replication: "{{ hf_repo_current.json.replication | default({'preemptivePullEnabled': false, 'assetPathRegex': None}) }}"
+
+    - name: Apply tuned HF proxy configuration
+      ansible.builtin.uri:
+        url: "{{ nexus_base_url }}/service/rest/v1/repositories/huggingface/proxy/{{ hf_repo_name }}"
+        method: PUT
+        user: "{{ nexus_admin_user }}"
+        password: "{{ nexus_admin_password }}"
+        force_basic_auth: true
+        validate_certs: false
+        body_format: json
+        body: "{{ hf_repo_payload }}"
+        status_code: 204
+
+    - name: Print applied tuning summary
+      ansible.builtin.debug:
+        msg:
+          - "HF repository: {{ hf_repo_name }}"
+          - "http timeout: {{ hf_http_timeout_seconds }}s"
+          - "http retries: {{ hf_http_retries }}"
+          - "metadata max age: {{ hf_proxy_metadata_max_age_minutes }} minutes"
+          - "negative cache ttl: {{ hf_negative_cache_ttl_minutes }} minutes"

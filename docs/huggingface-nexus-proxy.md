@@ -56,3 +56,9 @@ export HF_HUB_ETAG_TIMEOUT=120
 ## Security recommendation
 
 Avoid using `admin` credentials in shell history for routine downloads. Create a dedicated read-only Nexus user for Hugging Face proxy access.
+
+## Automation
+
+Use `addons/hf-tuning.yaml` to apply the recommended Nexus HF proxy tuning through Ansible.
+
+- Setup and usage guide: `docs/hf-tuning-playbook.md`
