@@ -30,6 +30,29 @@ hf download unsloth/Qwen3.5-9B-GGUF --include "Qwen3.5-9B-Q4_K_M.gguf"
 - URL-encode special characters in the password before placing it in `HF_ENDPOINT` (for example, `@` becomes `%40`).
 - This command downloads only one file (`Qwen3.5-9B-Q4_K_M.gguf`) via `--include`.
 
+## Nexus proxy tuning for large GGUF downloads
+
+If you observe repeated HEAD timeouts before the download starts, tune the `hf` proxy repository:
+
+- `httpClient.connection.timeout`: `300`
+- `httpClient.connection.retries`: `5`
+- `proxy.metadataMaxAge`: `10080` (minutes)
+- `negativeCache.timeToLive`: `60` (minutes)
+
+You can verify current settings with:
+
+```bash
+curl -sk -u '<admin-user>:<admin-password>' \
+  'https://registry.local.jazziro.com/service/rest/v1/repositories/huggingface/proxy/hf'
+```
+
+For reliability on big files, also set:
+
+```bash
+export HF_HUB_DOWNLOAD_TIMEOUT=1800
+export HF_HUB_ETAG_TIMEOUT=120
+```
+
 ## Security recommendation
 
 Avoid using `admin` credentials in shell history for routine downloads. Create a dedicated read-only Nexus user for Hugging Face proxy access.
