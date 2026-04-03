@@ -1,7 +1,7 @@
 apiVersion: kro.run/v1alpha1
 kind: ResourceGraphDefinition
 metadata:
-  name: postgresCluster
+  name: postgres-cluster
 spec:
   # kro uses this simple schema to create your CRD schema and apply it
   # The schema defines what users can provide when they instantiate the RGD (create an instance).
