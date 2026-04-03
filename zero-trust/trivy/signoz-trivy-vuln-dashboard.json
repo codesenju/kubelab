@@ -1,12 +1,12 @@
 {
-  "description": "Trivy vulnerability findings exported as OTLP logs (service.name=trivy-scan, event.name=security.vulnerability)",
+  "description": "Minimal dashboard with only vital vulnerability stats by image and severity.",
   "layout": [
     {
       "h": 3,
-      "i": "2a53a6f0-f037-469b-94f3-83efeca9b2bb",
+      "i": "17df8801-a93f-4fa6-82d8-4eafc0c82a84",
       "moved": false,
       "static": false,
-      "w": 2,
+      "w": 3,
       "x": 0,
       "y": 0
     },
@@ -15,25 +15,16 @@
       "i": "41a83a22-f42b-4f0e-a513-b17ec7b1f419",
       "moved": false,
       "static": false,
-      "w": 2,
-      "x": 2,
+      "w": 3,
+      "x": 3,
       "y": 0
     },
     {
       "h": 3,
-      "i": "17df8801-a93f-4fa6-82d8-4eafc0c82a84",
+      "i": "2a53a6f0-f037-469b-94f3-83efeca9b2bb",
       "moved": false,
       "static": false,
-      "w": 2,
-      "x": 4,
-      "y": 0
-    },
-    {
-      "h": 3,
-      "i": "c1f61e39-3dcf-4a46-9ad5-5ad5ba7f6a11",
-      "moved": false,
-      "static": false,
-      "w": 2,
+      "w": 3,
       "x": 6,
       "y": 0
     },
@@ -42,63 +33,36 @@
       "i": "a66f4af2-8f8e-4d2f-b7fd-5cbde6f8f0a1",
       "moved": false,
       "static": false,
-      "w": 4,
-      "x": 8,
+      "w": 3,
+      "x": 9,
       "y": 0
     },
     {
-      "h": 7,
-      "i": "b8e18dd8-4e28-49fc-89de-e05fdb8f93b4",
+      "h": 8,
+      "i": "c2c55c3f-116b-4a36-b4a2-6f8b1f7d9d6e",
       "moved": false,
       "static": false,
-      "w": 12,
+      "w": 6,
       "x": 0,
       "y": 3
     },
     {
-      "h": 9,
+      "h": 8,
+      "i": "37dcfcd1-5041-49af-b17a-08d5d461f170",
+      "moved": false,
+      "static": false,
+      "w": 6,
+      "x": 6,
+      "y": 3
+    },
+    {
+      "h": 11,
       "i": "b2bb0d3f-79e5-41e3-a7b8-3dbfffd55e12",
       "moved": false,
       "static": false,
       "w": 12,
       "x": 0,
-      "y": 10
-    },
-    {
-      "h": 7,
-      "i": "37dcfcd1-5041-49af-b17a-08d5d461f170",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 0,
-      "y": 19
-    },
-    {
-      "h": 7,
-      "i": "518838bf-b5df-42a3-9b28-7f5e879669c2",
-      "moved": false,
-      "static": false,
-      "w": 6,
-      "x": 6,
-      "y": 19
-    },
-    {
-      "h": 8,
-      "i": "f4f4a2c1-baf2-41f9-a11a-579ebfd6ec31",
-      "moved": false,
-      "static": false,
-      "w": 12,
-      "x": 0,
-      "y": 26
-    },
-    {
-      "h": 8,
-      "i": "e6fdf79f-a035-4ca9-a20c-a953e4a2bf67",
-      "moved": false,
-      "static": false,
-      "w": 12,
-      "x": 0,
-      "y": 34
+      "y": 11
     }
   ],
   "panelMap": {},
@@ -106,11 +70,55 @@
     "trivy",
     "security",
     "vulnerability",
-    "logs"
+    "minimal"
   ],
-  "title": "Trivy Vulnerabilities (OTLP Logs)",
+  "title": "Trivy Vulnerability Essentials",
   "uploadedGrafana": false,
-  "version": "v4",
+  "variables": {
+    "451a6f52-0e99-468a-8719-42b08d2f6bd4": {
+      "allSelected": true,
+      "customValue": "",
+      "defaultValue": "__all__",
+      "description": "Filter dashboard by container image name",
+      "dynamicVariablesAttribute": "container.image.name",
+      "dynamicVariablesSource": "All telemetry",
+      "id": "451a6f52-0e99-468a-8719-42b08d2f6bd4",
+      "modificationUUID": "cab180db-327f-471a-b5a9-913e2aa06c08",
+      "multiSelect": true,
+      "name": "container.image.name",
+      "order": 0,
+      "queryValue": "",
+      "selectedValue": "__all__",
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "DYNAMIC"
+    },
+    "d8e0ef88-c10f-43f5-9f1c-7a1bf2e2f1c3": {
+      "allSelected": true,
+      "customValue": "CRITICAL,HIGH,MEDIUM,LOW,UNKNOWN",
+      "defaultValue": "__all__",
+      "description": "Filter vulnerabilities by severity",
+      "id": "d8e0ef88-c10f-43f5-9f1c-7a1bf2e2f1c3",
+      "modificationUUID": "0c412e8d-e72c-471b-988d-585c99be7e64",
+      "multiSelect": true,
+      "name": "severity",
+      "order": 1,
+      "queryValue": "",
+      "selectedValue": [
+        "CRITICAL",
+        "HIGH",
+        "MEDIUM",
+        "LOW",
+        "UNKNOWN"
+      ],
+      "showALLOption": true,
+      "sort": "DISABLED",
+      "textboxValue": "",
+      "type": "CUSTOM"
+    }
+  },
+  "version": "v5",
   "widgets": [
     {
       "bucketCount": 30,
@@ -164,7 +172,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security'"
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security'"
           }
         ],
         "id": "6d4954d6-ad57-4e17-8878-f5d0a6fd8c8c",
@@ -196,7 +204,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "TOTAL",
+      "title": "Total Vulnerabilities",
       "yAxisUnit": "none"
     },
     {
@@ -251,7 +259,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'MEDIUM'"
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'MEDIUM'"
           }
         ],
         "id": "fbc2f693-8d08-478f-b8f2-6fc5e763c0d6",
@@ -283,7 +291,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "MEDIUM",
+      "title": "Medium",
       "yAxisUnit": "none"
     },
     {
@@ -338,7 +346,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'CRITICAL'"
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'CRITICAL'"
           }
         ],
         "id": "5021f41b-bca8-4f3d-bc54-c049cba476d7",
@@ -370,94 +378,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "CRITICAL",
-      "yAxisUnit": "none"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
-      "description": "Low vulnerabilities",
-      "fillSpans": false,
-      "id": "c1f61e39-3dcf-4a46-9ad5-5ad5ba7f6a11",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "value",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
-                "isJSON": false,
-                "key": "",
-                "type": ""
-              },
-              "aggregateOperator": "count",
-              "dataSource": "logs",
-              "disabled": false,
-              "expression": "A",
-              "filters": {
-                "items": [],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": [],
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "last",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "count"
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'LOW'"
-          }
-        ],
-        "id": "f7b255f4-978b-4f29-b0dd-cfd65a5f8064",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "clickhouse_sql"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "LOW",
+      "title": "Critical",
       "yAxisUnit": "none"
     },
     {
@@ -512,7 +433,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'HIGH'"
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'HIGH'"
           }
         ],
         "id": "4f93f980-530d-4642-b2b2-2649ec98799a",
@@ -544,112 +465,27 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "HIGH",
+      "title": "High",
       "yAxisUnit": "none"
     },
     {
       "bucketCount": 30,
       "bucketWidth": 0,
       "columnUnits": {},
-      "description": "Scan runs over time, split by severity counts per scan",
-      "fillSpans": false,
-      "id": "b8e18dd8-4e28-49fc-89de-e05fdb8f93b4",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "graph",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
-                "isJSON": false,
-                "key": "",
-                "type": ""
-              },
-              "aggregateOperator": "count",
-              "dataSource": "logs",
-              "disabled": false,
-              "expression": "A",
-              "filters": {
-                "items": [],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": [],
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "count"
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "{{severity}}",
-            "name": "A",
-            "query": "SELECT fromUnixTimestamp64Nano(timestamp) AS ts, tupleElement(sev_cnt, 1) AS severity, toFloat64(tupleElement(sev_cnt, 2)) AS value FROM signoz_logs.distributed_logs_v2 ARRAY JOIN [('LOW', toInt64OrZero(coalesce(nullIf(attributes_string['scan.vulnerability.count.low'], ''), '0'))), ('MEDIUM', toInt64OrZero(coalesce(nullIf(attributes_string['scan.vulnerability.count.medium'], ''), '0'))), ('HIGH', toInt64OrZero(coalesce(nullIf(attributes_string['scan.vulnerability.count.high'], ''), '0'))), ('CRITICAL', toInt64OrZero(coalesce(nullIf(attributes_string['scan.vulnerability.count.critical'], ''), '0')))] AS sev_cnt WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' ORDER BY ts ASC, severity ASC"
-          }
-        ],
-        "id": "ec4019f1-4951-4f17-b905-ec947bdc95d9",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "clickhouse_sql"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Scans Over Time (by Severity)",
-      "yAxisUnit": "short"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {},
       "columnWidths": {
+        "Fixed Version": 120,
+        "Image": 280,
+        "Installed Version": 120,
+        "Last Seen": 145,
         "Library": 120,
-        "Vulnerability": 140,
+        "Occurrences": 110,
         "Severity": 90,
         "Status": 90,
-        "Installed Version": 120,
-        "Fixed Version": 120,
         "Title": 360,
         "URL": 260,
-        "Occurrences": 110
+        "Vulnerability": 140
       },
-      "description": "Detailed vulnerability rows with title and URL",
+      "description": "Detailed vulnerability rows mapped to image, with status, versions, and reference URL.",
       "fillSpans": false,
       "id": "b2bb0d3f-79e5-41e3-a7b8-3dbfffd55e12",
       "isStacked": false,
@@ -697,7 +533,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "SELECT fromUnixTimestamp64Nano(max(timestamp)) AS \"Last Seen\", coalesce(nullIf(attributes_string['library'], ''), nullIf(attributes_string['package.name'], ''), nullIf(attributes_string['package'], '')) AS \"Library\", coalesce(nullIf(attributes_string['vulnerability.id'], ''), nullIf(attributes_string['vulnerability_id'], '')) AS \"Vulnerability\", upper(coalesce(nullIf(attributes_string['severity'], ''), nullIf(attributes_string['vulnerability.severity'], ''), nullIf(severity_text, ''), 'UNKNOWN')) AS \"Severity\", coalesce(nullIf(attributes_string['vulnerability.status'], ''), nullIf(attributes_string['status'], ''), 'unknown') AS \"Status\", coalesce(nullIf(attributes_string['installed_version'], ''), nullIf(attributes_string['package.version'], '')) AS \"Installed Version\", coalesce(nullIf(attributes_string['fixed_version'], ''), '') AS \"Fixed Version\", coalesce(nullIf(attributes_string['vulnerability.title'], ''), nullIf(attributes_string['title'], ''), '') AS \"Title\", coalesce(nullIf(attributes_string['vulnerability.reference'], ''), nullIf(attributes_string['primary_url'], ''), '') AS \"URL\", count() AS \"Occurrences\" FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.vulnerability' AND attributes_string['event.domain'] = 'security' GROUP BY \"Library\", \"Vulnerability\", \"Severity\", \"Status\", \"Installed Version\", \"Fixed Version\", \"Title\", \"URL\" ORDER BY \"Last Seen\" DESC, \"Severity\" DESC LIMIT 200"
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT fromUnixTimestamp64Nano(max(l.timestamp)) AS \"Last Seen\", coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') AS \"Image\", coalesce(nullIf(l.attributes_string['library'], ''), nullIf(l.attributes_string['package.name'], ''), nullIf(l.attributes_string['package'], '')) AS \"Library\", coalesce(nullIf(l.attributes_string['vulnerability.id'], ''), nullIf(l.attributes_string['vulnerability_id'], '')) AS \"Vulnerability\", upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) AS \"Severity\", coalesce(nullIf(l.attributes_string['vulnerability.status'], ''), nullIf(l.attributes_string['status'], ''), 'unknown') AS \"Status\", coalesce(nullIf(l.attributes_string['installed_version'], ''), nullIf(l.attributes_string['package.version'], '')) AS \"Installed Version\", coalesce(nullIf(l.attributes_string['fixed_version'], ''), '') AS \"Fixed Version\", coalesce(nullIf(l.attributes_string['vulnerability.title'], ''), nullIf(l.attributes_string['title'], ''), '') AS \"Title\", coalesce(nullIf(l.attributes_string['vulnerability.reference'], ''), nullIf(l.attributes_string['primary_url'], ''), '') AS \"URL\", count() AS \"Occurrences\" FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown'))) AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($severity), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($severity), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($severity), '[', ''), ']', ''), '\\'', '')), upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')))) GROUP BY \"Image\", \"Library\", \"Vulnerability\", \"Severity\", \"Status\", \"Installed Version\", \"Fixed Version\", \"Title\", \"URL\" ORDER BY \"Image\" ASC, \"Severity\" DESC LIMIT 300"
           }
         ],
         "id": "2e5ec403-7558-4df0-905b-8dbfc91994ca",
@@ -729,7 +565,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Latest Vulnerabilities (Detailed)",
+      "title": "Latest Vulnerabilities by Image (Detailed)",
       "yAxisUnit": "none"
     },
     {
@@ -738,7 +574,7 @@
       "columnUnits": {
         "Vulnerabilities": "short"
       },
-      "description": "Top affected images",
+      "description": "Vulnerability findings per image from each image's latest scan event.",
       "fillSpans": false,
       "id": "37dcfcd1-5041-49af-b17a-08d5d461f170",
       "isStacked": false,
@@ -786,7 +622,7 @@
             "disabled": false,
             "legend": "",
             "name": "A",
-            "query": "SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS \"Image\", argMax(toInt64OrZero(attributes_string['scan.vulnerability.count']), timestamp) AS \"Vulnerabilities\" FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' GROUP BY \"Image\" ORDER BY \"Vulnerabilities\" DESC LIMIT 20"
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') AS \"Image\", count() AS \"Vulnerabilities\" FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND (has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($severity), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($severity), '[', ''), ']', ''), '\\'', '')), '__all_') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($severity), '[', ''), ']', ''), '\\'', '')), upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')))) GROUP BY \"Image\" ORDER BY \"Vulnerabilities\" DESC LIMIT 20"
           }
         ],
         "id": "67f71669-0f0e-43cb-8f4d-53e93134ef89",
@@ -818,7 +654,7 @@
       "stackedBarChart": false,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Top Images by Vulnerabilities",
+      "title": "Top Images by Vuln Count (Last Scan)",
       "yAxisUnit": "none"
     },
     {
@@ -827,45 +663,98 @@
       "columnUnits": {
         "Count": "short"
       },
-      "description": "Latest scan vulnerabilities grouped by whether a fixed version is available",
+      "contextLinks": {
+        "linksData": []
+      },
+      "customLegendColors": {},
+      "decimalPrecision": 2,
+      "description": "Bar graph of severity counts from the latest scan per image.",
+      "fillMode": "none",
       "fillSpans": false,
-      "id": "518838bf-b5df-42a3-9b28-7f5e879669c2",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
+      "id": "c2c55c3f-116b-4a36-b4a2-6f8b1f7d9d6e",
+      "isLogScale": false,
+      "isStacked": true,
+      "legendPosition": "bottom",
+      "lineInterpolation": "spline",
+      "lineStyle": "solid",
+      "mergeAllActiveQueries": true,
       "nullZeroValues": "zero",
       "opacity": "1",
-      "panelTypes": "table",
+      "panelTypes": "bar",
       "query": {
         "builder": {
           "queryData": [
             {
               "aggregateAttribute": {
                 "dataType": "",
-                "id": "------false",
+                "id": "----",
                 "isColumn": false,
                 "isJSON": false,
                 "key": "",
                 "type": ""
               },
               "aggregateOperator": "count",
+              "aggregations": [
+                {
+                  "expression": "count()"
+                }
+              ],
               "dataSource": "logs",
               "disabled": false,
               "expression": "A",
+              "filter": {
+                "expression": "service.name = 'trivy-scan' AND event.name = 'security.vulnerability'"
+              },
               "filters": {
-                "items": [],
+                "items": [
+                  {
+                    "key": {
+                      "dataType": "string",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "service.name",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "trivy-scan"
+                  },
+                  {
+                    "key": {
+                      "dataType": "string",
+                      "isColumn": false,
+                      "isJSON": false,
+                      "key": "event.name",
+                      "type": "tag"
+                    },
+                    "op": "=",
+                    "value": "security.vulnerability"
+                  }
+                ],
                 "op": "AND"
               },
               "functions": [],
-              "groupBy": [],
-              "having": [],
-              "legend": "",
+              "groupBy": [
+                {
+                  "dataType": "string",
+                  "id": "severity_text--string--tag",
+                  "isColumn": false,
+                  "isJSON": false,
+                  "key": "severity_text",
+                  "type": "tag"
+                }
+              ],
+              "having": {
+                "expression": ""
+              },
+              "legend": "{{severity_text}}",
               "limit": null,
               "orderBy": [],
               "queryName": "A",
               "reduceTo": "avg",
+              "source": "",
               "spaceAggregation": "sum",
               "stepInterval": 60,
-              "timeAggregation": "count"
+              "timeAggregation": "rate"
             }
           ],
           "queryFormulas": []
@@ -873,12 +762,36 @@
         "clickhouse_sql": [
           {
             "disabled": false,
-            "legend": "",
+            "legend": "CRITICAL",
             "name": "A",
-            "query": "WITH latest_scan AS (SELECT max(timestamp) AS ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security') SELECT if(coalesce(nullIf(attributes_string['fixed_version'], ''), '') = '', 'No Fix Version', 'Fix Version Available') AS \"Fix State\", count() AS \"Count\" FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp = (SELECT ts FROM latest_scan) AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.vulnerability' AND attributes_string['event.domain'] = 'security' GROUP BY \"Fix State\" ORDER BY \"Count\" DESC"
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND ((has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_')) OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'CRITICAL'"
+          },
+          {
+            "disabled": false,
+            "legend": "HIGH",
+            "name": "B",
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND ((has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_')) OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'HIGH'"
+          },
+          {
+            "disabled": false,
+            "legend": "MEDIUM",
+            "name": "C",
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND ((has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_')) OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'MEDIUM'"
+          },
+          {
+            "disabled": false,
+            "legend": "LOW",
+            "name": "D",
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND ((has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_')) OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'LOW'"
+          },
+          {
+            "disabled": false,
+            "legend": "UNKNOWN",
+            "name": "E",
+            "query": "WITH latest_scan_per_image AS (SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS image, max(timestamp) AS latest_ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' AND ((has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all__') OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), '__all_')) OR has(splitByChar(',', replaceAll(replaceAll(replaceAll(toString($container.image.name), '[', ''), ']', ''), '\\'', '')), coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown'))) GROUP BY image) SELECT toFloat64(count()) AS value, now() AS ts FROM signoz_logs.distributed_logs_v2 l INNER JOIN latest_scan_per_image s ON coalesce(nullIf(l.attributes_string['container.image.name'], ''), nullIf(l.attributes_string['image'], ''), 'unknown') = s.image AND l.timestamp = s.latest_ts WHERE l.ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND l.resource.`service.name`::String = 'trivy-scan' AND l.attributes_string['event.name'] = 'security.vulnerability' AND l.attributes_string['event.domain'] = 'security' AND upper(coalesce(nullIf(l.attributes_string['severity'], ''), nullIf(l.attributes_string['vulnerability.severity'], ''), nullIf(l.severity_text, ''), 'UNKNOWN')) = 'UNKNOWN'"
           }
         ],
-        "id": "1b993ba6-8e34-468a-a8a9-2d17f9f40352",
+        "id": "91aac1aa-12f8-44cd-8bf6-76303bb99d92",
         "promql": [
           {
             "disabled": false,
@@ -887,7 +800,8 @@
             "query": ""
           }
         ],
-        "queryType": "clickhouse_sql"
+        "queryType": "clickhouse_sql",
+        "unit": ""
       },
       "selectedLogFields": [
         {
@@ -902,196 +816,13 @@
         }
       ],
       "selectedTracesFields": [],
+      "showPoints": false,
       "softMax": 0,
       "softMin": 0,
-      "stackedBarChart": false,
+      "stackedBarChart": true,
       "thresholds": [],
       "timePreferance": "GLOBAL_TIME",
-      "title": "Fix Version Availability (Latest Scan)",
-      "yAxisUnit": "none"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {
-        "Vulnerability Count": "short"
-      },
-      "columnWidths": {
-        "Image": 280,
-        "Last Scan": 220,
-        "Result": 120,
-        "Vulnerability Count": 150
-      },
-      "description": "Shows latest scan outcome per image, including clean scans with zero vulnerabilities",
-      "fillSpans": false,
-      "id": "f4f4a2c1-baf2-41f9-a11a-579ebfd6ec31",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "table",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
-                "isJSON": false,
-                "key": "",
-                "type": ""
-              },
-              "aggregateOperator": "count",
-              "dataSource": "logs",
-              "disabled": false,
-              "expression": "A",
-              "filters": {
-                "items": [],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": [],
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "count"
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": "SELECT coalesce(nullIf(attributes_string['container.image.name'], ''), nullIf(attributes_string['image'], ''), 'unknown') AS \"Image\", fromUnixTimestamp64Nano(max(timestamp)) AS \"Last Scan\", argMax(coalesce(nullIf(attributes_string['security.scan.result'], ''), 'unknown'), timestamp) AS \"Result\", argMax(toInt64OrZero(attributes_string['scan.vulnerability.count']), timestamp) AS \"Vulnerability Count\" FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security' GROUP BY \"Image\" ORDER BY \"Last Scan\" DESC"
-          }
-        ],
-        "id": "02ded3fd-3252-4d42-9d5f-ae4b11333ee0",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "clickhouse_sql"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Latest Scan Result by Image",
-      "yAxisUnit": "none"
-    },
-    {
-      "bucketCount": 30,
-      "bucketWidth": 0,
-      "columnUnits": {
-        "Count": "short"
-      },
-      "description": "Pie view of vulnerability severities for the latest scan",
-      "fillSpans": false,
-      "id": "e6fdf79f-a035-4ca9-a20c-a953e4a2bf67",
-      "isStacked": false,
-      "mergeAllActiveQueries": false,
-      "nullZeroValues": "zero",
-      "opacity": "1",
-      "panelTypes": "pie",
-      "query": {
-        "builder": {
-          "queryData": [
-            {
-              "aggregateAttribute": {
-                "dataType": "",
-                "id": "------false",
-                "isColumn": false,
-                "isJSON": false,
-                "key": "",
-                "type": ""
-              },
-              "aggregateOperator": "count",
-              "dataSource": "logs",
-              "disabled": false,
-              "expression": "A",
-              "filters": {
-                "items": [],
-                "op": "AND"
-              },
-              "functions": [],
-              "groupBy": [],
-              "having": [],
-              "legend": "",
-              "limit": null,
-              "orderBy": [],
-              "queryName": "A",
-              "reduceTo": "avg",
-              "spaceAggregation": "sum",
-              "stepInterval": 60,
-              "timeAggregation": "count"
-            }
-          ],
-          "queryFormulas": []
-        },
-        "clickhouse_sql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": "WITH latest_scan AS (SELECT max(timestamp) AS ts FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp >= $start_timestamp_nano AND timestamp <= $end_timestamp_nano AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.scan.summary' AND attributes_string['event.domain'] = 'security') SELECT upper(coalesce(nullIf(attributes_string['severity'], ''), nullIf(attributes_string['vulnerability.severity'], ''), nullIf(severity_text, ''), 'UNKNOWN')) AS \"Severity\", count() AS \"Count\" FROM signoz_logs.distributed_logs_v2 WHERE ts_bucket_start BETWEEN $start_timestamp - 1800 AND $end_timestamp AND timestamp = (SELECT ts FROM latest_scan) AND resource.`service.name`::String = 'trivy-scan' AND attributes_string['event.name'] = 'security.vulnerability' AND attributes_string['event.domain'] = 'security' GROUP BY \"Severity\" ORDER BY \"Count\" DESC"
-          }
-        ],
-        "id": "37351f0c-6a8a-4e15-a707-f1de4f3813d8",
-        "promql": [
-          {
-            "disabled": false,
-            "legend": "",
-            "name": "A",
-            "query": ""
-          }
-        ],
-        "queryType": "clickhouse_sql"
-      },
-      "selectedLogFields": [
-        {
-          "dataType": "string",
-          "name": "body",
-          "type": ""
-        },
-        {
-          "dataType": "string",
-          "name": "timestamp",
-          "type": ""
-        }
-      ],
-      "selectedTracesFields": [],
-      "softMax": 0,
-      "softMin": 0,
-      "stackedBarChart": false,
-      "thresholds": [],
-      "timePreferance": "GLOBAL_TIME",
-      "title": "Severity Split (Latest Scan)",
+      "title": "Severity Bar (Latest Scan)",
       "yAxisUnit": "none"
     }
   ]
