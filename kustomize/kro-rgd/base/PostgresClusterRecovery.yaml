@@ -58,8 +58,6 @@ spec:
                 superuser: true
                 login: true
           bootstrap:
-            initdb:
-            # start from a backup
             recovery:
               backup: 
                 name: ${schema.spec.db.backupName}
