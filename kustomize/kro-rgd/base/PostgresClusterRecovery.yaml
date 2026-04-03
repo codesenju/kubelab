@@ -1,0 +1,118 @@
+apiVersion: kro.run/v1alpha1
+kind: ResourceGraphDefinition
+metadata:
+  name: postgresClusterRecovery
+spec:
+  # kro uses this simple schema to create your CRD schema and apply it
+  # The schema defines what users can provide when they instantiate the RGD (create an instance).
+  schema:
+    apiVersion: v1alpha1
+    kind: PostgresClusterRecovery
+    group: kubelab.io
+    spec:
+      # Spec fields that users can provide.
+      name: string | required=true immutable=true description="Postgres cluster name"
+      # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
+      image: string | default="ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba" # UID 26, GID 999
+      instances: integer | default=1
+      db:
+        name: string | required=true
+        username: string | required=true
+        size: string | default="1Gi"
+        storageClassName: string | default=""
+        secretName: string | required=true
+        backupName: string | required=true description="Name of the backup to recover from. Must match the name of an existing Backup record created by CloudNativePG operator, which you can find by running 'kubectl get backups -n <namespace>'."
+      backup:
+        s3Path: string | default="s3://cnpg/backups"
+        endpointURL: string | required=true
+        retentionPolicy: string | default="3d"
+        s3:
+          credentialsSecretName: string | required=true
+          accessKeyId: string | required=true
+          secretAccessKey: string | required=true
+      scheduledBackup:
+        enabled: boolean | default=false
+        cron: string | default="0 0 2 * * *" description="Standard Cron s m h dom mon dow, default runs every day at 2h00 AM"
+    status:
+      # Fields the controller will inject into instances status.
+      clusterConditions: ${cluster.status.conditions}
+
+  # Define the resources this API will manage.
+  resources:
+
+    - id: cluster
+      template:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: Cluster
+        metadata:
+          name: ${schema.spec.name}-postgres
+        spec:
+          imageName: ${schema.spec.image}
+          instances: ${schema.spec.instances}
+          postgresql:
+            shared_preload_libraries:
+              - "vectors.so"
+          managed:
+            roles:
+              - name: ${schema.spec.db.username}
+                superuser: true
+                login: true
+          bootstrap:
+            initdb:
+              database: ${schema.spec.db.name}
+              owner: ${schema.spec.db.username}
+              secret:
+                name: ${schema.spec.db.secretName}
+              postInitSQL:
+                - CREATE EXTENSION IF NOT EXISTS "vectors";
+                - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
+                - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
+              # start from a backup
+              recovery:
+                backup: ${schema.spec.db.backupName}
+          storage:
+            size: ${schema.spec.db.size}
+            pvcTemplate:
+              accessModes:
+                - ReadWriteOnce
+              resources:
+                requests:
+                  storage: ${schema.spec.db.size}
+              storageClassName: ${schema.spec.db.storageClassName}
+          backup:
+            # 3-day retention for both base backups and WALsgit
+            retentionPolicy: ${schema.spec.backup.retentionPolicy}
+            barmanObjectStore:
+              destinationPath: ${schema.spec.backup.s3Path}
+              # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
+              endpointURL: ${schema.spec.backup.endpointURL}
+              s3Credentials:
+                accessKeyId:
+                  name: ${schema.spec.backup.s3.credentialsSecretName}
+                  key: ${schema.spec.backup.s3.accessKeyId}
+                secretAccessKey:
+                  name: ${schema.spec.backup.s3.credentialsSecretName}
+                  key: ${schema.spec.backup.s3.secretAccessKey}
+              wal:
+                compression: gzip
+              data:
+                compression: gzip
+                jobs: 2
+
+    - id: scheduledBackup
+      includeWhen:
+        - ${schema.spec.scheduledBackup.enabled} # Only include if the user wants to create scheduled backup
+      template:
+        apiVersion: postgresql.cnpg.io/v1
+        kind: ScheduledBackup
+        metadata:
+          name: ${cluster.metadata.name}-daily-s3-backup
+          namespace: ${cluster.metadata.namespace}
+        spec:
+          schedule: ${schema.spec.scheduledBackup.cron}
+          cluster:
+            name: ${cluster.metadata.name}
+          # Setting this to true takes a backup immediately upon creation
+          immediate: true
+          # 'self' means this ScheduledBackup object owns the resulting Backup records
+          backupOwnerReference: self

@@ -3,15 +3,17 @@
   hosts: k8s-control-plane-1
   gather_facts: false
   become: false
+  vars:
+    target_namespace: kro
   tasks:
-    - name: Deploy Pihole
+    - name: Deploy Kro RGD's
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
           metadata:
-            name: pihole
+            name: kro-rgd
             namespace: argocd
             finalizers:
               - resources-finalizer.argocd.argoproj.io
@@ -29,11 +31,11 @@
                   app.kubernetes.io/instance: kro-rgd
             destination:
               server: https://kubernetes.default.svc
-              namespace: pihole
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
-                prune: false
-                selfHeal: false
+                prune: true
+                selfHeal: true
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
