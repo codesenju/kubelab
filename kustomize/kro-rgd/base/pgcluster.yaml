@@ -13,7 +13,7 @@ spec:
       # Spec fields that users can provide.
       name: string | required=true immutable=true description="Postgres cluster name"
       # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-      image: string | default="ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie" # UID 26, GID 102
+      image: string | default="ghcr.io/cloudnative-pg/postgresql:16-standard-trixie" # UID 26, GID 102
       instances: integer | default=1
       bootstrap:
         mode: string | enum="initdb,recovery" default="initdb" description="initdb or recovery"
