@@ -3,6 +3,8 @@
   hosts: k8s-control-plane-1
   gather_facts: false
   become: false
+  vars:
+    target_namespace: cnpg-system
   tasks:
     - name: Create namespace in Kubernetes
       kubernetes.core.k8s:
@@ -35,7 +37,7 @@
                 # values: |
             destination:
               server: https://kubernetes.default.svc
-              namespace: cnpg-system
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -57,3 +59,34 @@
         - operator_pods.resources | map(attribute='status.phase') | list | intersect(['Running']) | length == operator_pods.resources | length
       retries: 30
       delay: 10
+
+    - name: Deploy plugin-barman-cloud
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: plugin-barman-cloud
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: plugin-barman-cloud
+              repoURL: https://cloudnative-pg.github.io/charts
+              targetRevision: 0.5.0
+              helm:
+                releaseName: plugin-barman-cloud
+                # values: |
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true

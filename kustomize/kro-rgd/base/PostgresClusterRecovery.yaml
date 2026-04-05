@@ -13,7 +13,7 @@ spec:
       # Spec fields that users can provide.
       name: string | required=true immutable=true description="Postgres cluster name"
       # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-      image: string | default="ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba" # UID 26, GID 999
+      image: string | default="ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie" # UID 26, GID 102
       instances: integer | default=1
       db:
         name: string | required=true
@@ -49,9 +49,6 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
-          postgresql:
-            shared_preload_libraries:
-              - "vector.so"
           managed:
             roles:
               - name: ${schema.spec.db.username}
@@ -70,25 +67,35 @@ spec:
                 requests:
                   storage: ${schema.spec.db.size}
               storageClassName: ${schema.spec.db.storageClassName}
-          backup:
-            # 3-day retention for both base backups and WALsgit
-            retentionPolicy: ${schema.spec.backup.retentionPolicy}
-            barmanObjectStore:
-              destinationPath: ${schema.spec.backup.s3Path}
-              # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
-              endpointURL: ${schema.spec.backup.endpointURL}
-              s3Credentials:
-                accessKeyId:
-                  name: ${schema.spec.backup.s3.credentialsSecretName}
-                  key: ${schema.spec.backup.s3.accessKeyId}
-                secretAccessKey:
-                  name: ${schema.spec.backup.s3.credentialsSecretName}
-                  key: ${schema.spec.backup.s3.secretAccessKey}
-              wal:
-                compression: gzip
-              data:
-                compression: gzip
-                jobs: 2
+          plugins:
+            - name: barman-cloud.cloudnative-pg.io
+              isWALArchiver: true
+              parameters:
+                barmanObjectName: ${objectStore.metadata.name}
+
+    - id: objectStore
+      template:
+        apiVersion: barmancloud.cnpg.io/v1
+        kind: ObjectStore
+        metadata:
+          name: ${schema.spec.name}-backup-store
+        spec:
+          configuration:
+            destinationPath: ${schema.spec.backup.s3Path}
+            endpointURL: ${schema.spec.backup.endpointURL}
+            s3Credentials:
+              accessKeyId:
+                name: ${schema.spec.backup.s3.credentialsSecretName}
+                key: ${schema.spec.backup.s3.accessKeyId}
+              secretAccessKey:
+                name: ${schema.spec.backup.s3.credentialsSecretName}
+                key: ${schema.spec.backup.s3.secretAccessKey}
+            wal:
+              compression: gzip
+            data:
+              compression: gzip
+              jobs: 2
+          retentionPolicy: ${schema.spec.backup.retentionPolicy}
 
     - id: scheduledBackup
       includeWhen:
@@ -107,3 +114,6 @@ spec:
           immediate: true
           # 'self' means this ScheduledBackup object owns the resulting Backup records
           backupOwnerReference: self
+          method: plugin
+          pluginConfiguration:
+            name: barman-cloud.cloudnative-pg.io
