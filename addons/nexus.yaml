@@ -59,7 +59,7 @@
             name: nexus
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            # image: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0
+            # image: ghcr.io/cloudnative-pg/postgresql:16-standard-trixie
             db:
               name: nexus
               username: "{{ nexus_db_username }}"
