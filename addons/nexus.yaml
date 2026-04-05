@@ -50,30 +50,45 @@
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: v1beta1
-          kind: PostgresCluster # Use PostgresCluster instead if you don't want to create cluster from backup and remove backupPlan
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
           metadata:
             name: nexus
             namespace: "{{ target_namespace }}"
           spec:
             name: nexus
+            # db version must be compatiable with the backup db version
+            # using tensorchord image that comes with vchord
             image: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0
             db:
               name: nexus
-              username: nexus
+              username: "{{ nexus_db_username }}"
               secretName: nexus-postgres-secrets
-              storageClassName: "nfs-csi-postgres"
-              # backupName: nexus-postgres-daily-s3-backup-20260402020000 # remove me if not creating cluster from backup
-            backup:
-              s3Path: "s3://cnpg/backups/nexus"
+              # size: 1Gi
+              storageClassName: nfs-csi-postgres
+            bootstrap:
+              mode: recovery
+            recovery:
+              backupID: "20260401T020004" # backup will be at s3Path/serverName/base/<backupID>
+              serverName: "nexus-postgres" # backup files will be at s3Path/serverName/base
+            restoreSource:
+              s3Path: "s3://cnpg/backups/nexus-postgres"
               endpointURL: "https://{{ rustfs_endpoint }}"
-              retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            archiveDestination:
+              s3Path: "s3://cnpg/backup2/"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
               s3:
                 credentialsSecretName: s3-creds
                 accessKeyId: ACCESS_KEY_ID
                 secretAccessKey: SECRET_ACCESS_KEY
             scheduledBackup:
               enabled: true
+              # cron: "0 0 2 * * *"
       tags:
         - postgres
 
