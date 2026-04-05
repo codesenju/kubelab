@@ -16,9 +16,9 @@ spec:
       image: string | default="ghcr.io/cloudnative-pg/postgresql:16-standard-trixie" # UID 26, GID 102
       instances: integer | default=1
       sharedLibraries: '[]string | default=[] description="List of shared preload libraries"'
-      imagePullSecretName1: string
-      imagePullSecretName2: string
-      imagePullSecretName3: string
+      imagePullSecretName1: string | default=""
+      imagePullSecretName2: string | default=""
+      imagePullSecretName3: string | default=""
       bootstrap:
         mode: string | enum="initdb,recovery" default="initdb" description="initdb or recovery"
       db:

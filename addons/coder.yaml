@@ -68,8 +68,7 @@
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
             image: registry.local.jazziro.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
-            imagePullSecrets:
-              - name: registry-secret
+            imagePullSecretName1: registry-secret
             db:
               name: coder
               username: "{{ coder_db_username }}"
