@@ -1,69 +1,39 @@
 ---
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+- name: Immich Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: immich
   tasks:
-
     - name: Deploy postgres
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: postgresql.cnpg.io/v1
-          kind: Cluster
+          apiVersion: v1beta1
+          kind: PostgresClusterRecovery # Use PostgresCluster instead if you don't want to create cluster from backup and remove backupPlan
           metadata:
-            name: immich-postgres
+            name: immich
             namespace: "{{ target_namespace }}"
           spec:
-            # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-            imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba # UID 26, GID 999
-            instances: 1
-            postgresql:
-              shared_preload_libraries:
-                - "vectors.so"
-            managed:
-              roles:
-                - name: immich
-                  superuser: true
-                  login: true
-            bootstrap:
-              initdb:
-                database: immich
-                owner: immich
-                secret:
-                  name: immich-postgres-secrets
-                postInitSQL:
-                  - CREATE EXTENSION IF NOT EXISTS "vectors";
-                  - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
-                  - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
-            storage:
-              size: 1Gi
-              pvcTemplate:
-                accessModes:
-                  - ReadWriteOnce
-                resources:
-                  requests:
-                    storage: 3Gi
+            name: immich
+            image: ghcr.io/cloudnative-pg/postgresql:16-system-trixie # db version must be compatiable with the backup db version
+            db:
+              name: immich
+              username: immich
+              secretName: immich-postgres-secrets
+              storageClassName: "nfs-csi-postgres"
+              backupName: daily-s3-backup-20260402020000 # remove me if not creating cluster from backup
             backup:
-              # 3-day retention for both base backups and WALsgit
-              retentionPolicy: "3d"
-              barmanObjectStore:
-                destinationPath: s3://cnpg/backups/immich-postgres
-                # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
-                endpointURL: "https://{{ rustfs_endpoint }}"
-                s3Credentials:
-                  accessKeyId:
-                    name: s3-creds
-                    key: ACCESS_KEY_ID
-                  secretAccessKey:
-                    name: s3-creds
-                    key: SECRET_ACCESS_KEY
-                wal:
-                  compression: gzip
-                data:
-                  compression: gzip
-                  jobs: 2
+              s3Path: "s3://cnpg/backup3" # creates a sub directory of the db name and it should not exist.
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
       tags:
         - postgres
 
@@ -80,28 +50,6 @@
           stringData:
             ACCESS_KEY_ID: "{{ rustfs_access_key }}"
             SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
-      tags:
-        - postgres
-
-    - name: Deploy ScheduledBackup
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: postgresql.cnpg.io/v1
-          kind: ScheduledBackup
-          metadata:
-            name: daily-s3-backup
-            namespace: "{{ target_namespace }}"
-          spec:
-            # Standard Cron: s m h dom mon dow
-            # This runs every day at 2:00 AM
-            schedule: "0 0 2 * * *"
-            cluster:
-              name: immich-postgres
-            # Setting this to true takes a backup immediately upon creation
-            immediate: true
-            # 'self' means this ScheduledBackup object owns the resulting Backup records
-            backupOwnerReference: self
       tags:
         - postgres
 
@@ -132,10 +80,10 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            DB_HOSTNAME: 'immich-postgres-rw'
-            DB_USERNAME: '{{ immich_db_username }}'
-            DB_PASSWORD: '{{ immich_db_password }}'
-            DB_DATABASE_NAME: '{{ immich_db_name }}'
+            DB_HOSTNAME: "immich-postgres-rw"
+            DB_USERNAME: "{{ immich_db_username }}"
+            DB_PASSWORD: "{{ immich_db_password }}"
+            DB_DATABASE_NAME: "{{ immich_db_name }}"
             # GOOGLE_CLIENT_ID: '{{ google_client_id }}'
             # GOOGLE_CLIENT_SECRET: '{{ google_client_secret }}'
             # MOBILE_REDIRECT_URI: '{{ mobile_redirect_uri }}'
@@ -170,7 +118,7 @@
           kind: PersistentVolumeClaim
           metadata:
             name: immich-data-claim
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             accessModes:
               - ReadWriteOnce
@@ -179,7 +127,7 @@
                 storage: 250Gi
             selector:
               matchLabels:
-                service: immich-data  # Add selector to match PV label
+                service: immich-data # Add selector to match PV label
             volumeName: immich-data
             storageClassName: "" # This prevents dynamic provisioning
 
@@ -213,7 +161,7 @@
           kind: PersistentVolumeClaim
           metadata:
             name: immich-cache-claim
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             accessModes:
               - ReadWriteOnce
@@ -222,10 +170,9 @@
                 storage: 250Gi
             selector:
               matchLabels:
-                service: immich-cache  # Add selector to match PV label
+                service: immich-cache # Add selector to match PV label
             volumeName: immich-cache
             storageClassName: "" # This prevents dynamic provisioning
-
 
     - name: Deploy immich
       kubernetes.core.k8s:
@@ -241,16 +188,16 @@
           spec:
             project: default
             sources:
-            - repoURL: ghcr.io/immich-app/immich-charts
-              chart: immich
-              targetRevision: "0.10.3"
-              helm:
-                releaseName: immich
-                valueFiles:
-                - $values/helm/immich_values.yaml
-            - repoURL: 'https://github.com/codesenju/kubelab.git'
-              targetRevision: main
-              ref: values
+              - repoURL: ghcr.io/immich-app/immich-charts
+                chart: immich
+                targetRevision: "0.10.3"
+                helm:
+                  releaseName: immich
+                  valueFiles:
+                    - $values/helm/immich_values.yaml
+              - repoURL: "https://github.com/codesenju/kubelab.git"
+                targetRevision: main
+                ref: values
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -269,7 +216,7 @@
           kind: Certificate
           metadata:
             name: jazziro-com-tls
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: jazziro-com-tls
             issuerRef:
@@ -277,7 +224,7 @@
               kind: ClusterIssuer
             commonName: "{{ public_dns_wildcard }}"
             dnsNames:
-            - "{{ public_dns_wildcard }}"
+              - "{{ public_dns_wildcard }}"
       tags:
         - ingress
         - certificate
@@ -290,7 +237,7 @@
           kind: Certificate
           metadata:
             name: local-jazziro-com-tls
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -298,7 +245,7 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns_wildcard }}"
       tags:
         - ingress
         - certificate
@@ -311,39 +258,39 @@
           kind: Ingress
           metadata:
             name: immich
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
-            - hosts:
-              - "photos.{{ public_dns }}"
-              secretName: jazziro-com-tls
-            - hosts:
-              - "photos.{{ local_dns }}"
-              secretName: local-jazziro-com-tls
+              - hosts:
+                  - "photos.{{ public_dns }}"
+                secretName: jazziro-com-tls
+              - hosts:
+                  - "photos.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
             rules:
-            - host: "photos.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: immich-server
-                      port:
-                        number: 2283
-            - host: "photos.{{ public_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: immich-server
-                      port:
-                        number: 2283
-      tags: 
-      - ingress
+              - host: "photos.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: immich-server
+                          port:
+                            number: 2283
+              - host: "photos.{{ public_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: immich-server
+                          port:
+                            number: 2283
+      tags:
+        - ingress
