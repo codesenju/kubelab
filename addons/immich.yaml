@@ -17,7 +17,7 @@
             namespace: "{{ target_namespace }}"
           spec:
             name: immich
-            image: ghcr.io/cloudnative-pg/postgresql:16-system-trixie # db version must be compatiable with the backup db version
+            # image: ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
             db:
               name: immich
               username: immich
