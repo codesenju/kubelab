@@ -19,20 +19,8 @@
           stringData:
             username: "{{ coder_db_username }}"
             password: "{{ coder_db_password }}"
-
-    - name: Create coder postgres secrets
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: s3-creds
-            namespace: "{{ target_namespace }}"
-          type: Opaque
-          stringData:
-            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
-            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
 
     - name: Create s3 secrets
       kubernetes.core.k8s:
@@ -45,13 +33,74 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            username: "{{ coder_db_username }}"
-            password: "{{ coder_db_password }}"
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Create Registry pull secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: registry-secret
+            namespace: "{{ target_namespace }}"
+          type: kubernetes.io/dockerconfigjson
+          data:
+            .dockerconfigjson: "{{ {'auths': {'https://' + registry_domain: {'username': registry_username, 'password': registry_password, 'auth': (registry_username
+              + ':' + registry_password) | b64encode}}} | to_json | b64encode }}"
+      tags:
+        - postgres
 
     - name: Deploy coder postgres cluster
       kubernetes.core.k8s:
         state: present
         definition:
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
+          metadata:
+            name: coder
+            namespace: "{{ target_namespace }}"
+          spec:
+            name: coder
+            # db version must be compatiable with the backup db version
+            # using tensorchord image that comes with vchord
+            image: registry.local.jazziro.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            imagePullSecrets:
+              - name: registry-secret
+            db:
+              name: coder
+              username: "{{ coder_db_username }}"
+              secretName: coder-postgres-secrets
+              # size: 1Gi
+              storageClassName: nfs-csi-postgres
+            bootstrap:
+              mode: recovery
+            recovery:
+              backupID: "20260403T193212" # backup will be at s3Path/serverName/base/<backupID>
+              serverName: "coder-postgres" # backup files will be at s3Path/serverName/base
+            restoreSource:
+              s3Path: "s3://cnpg/backups/coder"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            archiveDestination:
+              s3Path: "s3://cnpg/backup2"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
+      tags:
+        - postgres
 
     - name: Create coder db url
       kubernetes.core.k8s:
