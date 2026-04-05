@@ -17,7 +17,9 @@
             namespace: "{{ target_namespace }}"
           spec:
             name: immich
-            # image: ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
+            # db version must be compatiable with the backup db version
+            # using tensorchord image that comes with vchord
+            image: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0
             db:
               name: immich
               username: "{{ immich_db_username }}"
@@ -221,89 +223,23 @@
               syncOptions:
                 - CreateNamespace=true
 
-    - name: Create public wildcar certificate
+    - name: Create HTTPRoute
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: jazziro-com-tls
-            namespace: "{{ target_namespace }}"
-          spec:
-            secretName: jazziro-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ public_dns_wildcard }}"
-            dnsNames:
-              - "{{ public_dns_wildcard }}"
-      tags:
-        - ingress
-        - certificate
-
-    - name: Create local wildcar certificate
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: local-jazziro-com-tls
-            namespace: "{{ target_namespace }}"
-          spec:
-            secretName: local-jazziro-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-              - "{{ local_dns_wildcard }}"
-      tags:
-        - ingress
-        - certificate
-
-    - name: Create immich ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: immich
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "photos.{{ public_dns }}"
-                secretName: jazziro-com-tls
-              - hosts:
-                  - "photos.{{ local_dns }}"
-                secretName: local-jazziro-com-tls
+            hostnames:
+              - "photos.{{ public_dns }}"
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure-public
             rules:
-              - host: "photos.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: immich-server
-                          port:
-                            number: 2283
-              - host: "photos.{{ public_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: immich-server
-                          port:
-                            number: 2283
-      tags:
-        - ingress
+              - backendRefs:
+                  - name: immich-server
+                    port: 2283

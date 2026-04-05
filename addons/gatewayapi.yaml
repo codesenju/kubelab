@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Gateway API Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: gateway-infra
   tasks:
-
     - name: Create namespace
       kubernetes.core.k8s:
         state: present
@@ -30,7 +31,7 @@
               kind: ClusterIssuer
             commonName: "{{ public_dns_wildcard }}"
             dnsNames:
-            - "{{ public_dns_wildcard }}"
+              - "{{ public_dns_wildcard }}"
       tags:
         - ingress
         - certificate
@@ -51,12 +52,33 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns_wildcard }}"
       tags:
         - ingress
         - certificate
 
-    - name: Deploy GatewayApi
+    - name: Create public wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: jazziro-com-tls
+            namespace: "{{ target_namespace }}"
+          spec:
+            secretName: jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ public_dns_wildcard }}"
+            dnsNames:
+              - "{{ public_dns_wildcard }}"
+      tags:
+        - ingress
+        - certificate
+
+    - name: Deploy GatewayApi local
       kubernetes.core.k8s:
         state: present
         definition:
@@ -68,23 +90,39 @@
           spec:
             gatewayClassName: traefik
             listeners:
-            - name: web
-              hostname: "{{ local_dns_wildcard }}"
-              port: 8000
-              protocol: HTTP
-              allowedRoutes:
-                namespaces:
-                  from: All
-            - name: websecure
-              hostname: "{{ local_dns_wildcard }}"
-              port: 8443
-              protocol: HTTPS
-              allowedRoutes:
-                namespaces:
-                  from: All
-              tls:
-                mode: Terminate
-                certificateRefs:
-                - name: local-jazziro-com-tls
-
-
+              - name: web
+                hostname: "{{ local_dns_wildcard }}"
+                port: 8000
+                protocol: HTTP
+                allowedRoutes:
+                  namespaces:
+                    from: All
+              - name: web-public
+                hostname: "{{ public_dns_wildcard }}"
+                port: 8000
+                protocol: HTTP
+                allowedRoutes:
+                  namespaces:
+                    from: All
+              - name: websecure
+                hostname: "{{ local_dns_wildcard }}"
+                port: 8443
+                protocol: HTTPS
+                allowedRoutes:
+                  namespaces:
+                    from: All
+                tls:
+                  mode: Terminate
+                  certificateRefs:
+                    - name: local-jazziro-com-tls
+              - name: websecure-public
+                hostname: "{{ public_dns_wildcard }}"
+                port: 8443
+                protocol: HTTPS
+                allowedRoutes:
+                  namespaces:
+                    from: All
+                tls:
+                  mode: Terminate
+                  certificateRefs:
+                    - name: jazziro-com-tls
