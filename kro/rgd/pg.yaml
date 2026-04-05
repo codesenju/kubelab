@@ -1,24 +1,24 @@
 apiVersion: kro.run/v1alpha1
 kind: ResourceGraphDefinition
 metadata:
-  name: pgcluster
+  name: pgclustertest
 spec:
   # kro uses this simple schema to create your CRD schema and apply it
   # The schema defines what users can provide when they instantiate the RGD (create an instance).
   schema:
-    apiVersion: v1beta1
-    kind: PGCluster
+    apiVersion: v1alpha1
+    kind: PGClusterTest
     group: kubelab.io
     spec:
       # Spec fields that users can provide.
       name: string | required=true immutable=true description="Postgres cluster name"
       # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-      image: string | default="ghcr.io/cloudnative-pg/postgresql:16-standard-trixie" # UID 26, GID 102
+      image: string | default="ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie" # UID 26, GID 102
       instances: integer | default=1
       sharedLibraries: '[]string | default=[] description="List of shared preload libraries"'
-      imagePullSecrets: '[]string | default=[] description="Secret credentails for pulling from private registry"'
       bootstrap:
         mode: string | enum="initdb,recovery" default="initdb" description="initdb or recovery"
+      
       db:
         name: string | required=true
         username: string | required=true
@@ -105,7 +105,6 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
-          imagePullSecrets: ${schema.spec.imagePullSecrets}
           postgresql:
             shared_preload_libraries: ${schema.spec.sharedLibraries}
           managed:
@@ -151,7 +150,6 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
-          imagePullSecrets: ${schema.spec.imagePullSecrets}
           postgresql:
             shared_preload_libraries: ${schema.spec.sharedLibraries}
           managed:
@@ -188,7 +186,6 @@ spec:
         kind: ScheduledBackup
         metadata:
           name: ${schema.spec.name}-postgres-daily-s3-backup
-          namespace: ${schema.metadata.namespace}
         spec:
           schedule: ${schema.spec.scheduledBackup.cron}
           cluster:

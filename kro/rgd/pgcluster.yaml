@@ -1,0 +1,89 @@
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: s3-creds
+  namespace: coder
+type: Opaque
+stringData:
+  ACCESS_KEY_ID: "rustadmin"
+  SECRET_ACCESS_KEY: "Rustfs@homelab"
+---
+apiVersion: v1
+kind: Secret
+metadata:
+  name: test-postgres-secrets
+  namespace: coder
+type: Opaque
+stringData:
+  username: "test"
+  password: "test123"
+---
+apiVersion: kubelab.io/v1alpha1
+kind: PGClusterTest
+metadata:
+  name: test-initdb
+  namespace: coder
+spec:
+  name: test-initdb
+  # bootstrap:
+  #   mode: initdb
+  image: ghcr.io/cloudnative-pg/postgresql:18-minimal-trixie
+  # instances: 1
+  db:
+    name: test
+    username: test
+    secretName: test-postgres-secrets
+    # size: 1Gi
+    storageClassName: nfs-csi-postgres
+  archiveDestination:
+    s3Path: s3://cnpg/new-backups/test-postgres
+    endpointURL: https://s3.local.jazziro.com
+    # retentionPolicy: 5d
+    s3:
+      credentialsSecretName: s3-creds
+      accessKeyId: ACCESS_KEY_ID
+      secretAccessKey: SECRET_ACCESS_KEY
+  scheduledBackup:
+    enabled: true
+    # cron: "0 0 2 * * *"
+---
+# apiVersion: kubelab.io/v1alpha1
+# kind: PGClusterTest
+# metadata:
+#   name: test-recovery
+#   namespace: coder
+# spec:
+#   name: test-recovery
+#   bootstrap:
+#     mode: recovery
+#   image: ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie
+#   # instances: 1
+#   db:
+#     name: test
+#     username: test
+#     secretName: test-postgres-secrets
+#     # size: 1Gi
+#     storageClassName: nfs-csi-postgres
+#   recovery:
+#     backupID: 20260402T020000  # backup will be at s3Path/serverName/base/<backupID>
+#     serverName: coder-postgres # backup files will be at s3Path/serverName/base
+#   restoreSource:
+#     s3Path: s3://cnpg/backups
+#     endpointURL: https://s3.local.jazziro.com
+#     # retentionPolicy: 5d
+#     s3:
+#       credentialsSecretName: s3-creds
+#       accessKeyId: ACCESS_KEY_ID
+#       secretAccessKey: SECRET_ACCESS_KEY
+#   archiveDestination:
+#     s3Path: s3://cnpg/new-backups2/
+#     endpointURL: https://s3.local.jazziro.com
+#     # retentionPolicy: 5d
+#     s3:
+#       credentialsSecretName: s3-creds
+#       accessKeyId: ACCESS_KEY_ID
+#       secretAccessKey: SECRET_ACCESS_KEY
+#   scheduledBackup:
+#     enabled: true
+#     # cron: "0 0 2 * * *"
