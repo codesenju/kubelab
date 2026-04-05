@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Mimir Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: mimir
   tasks:
-
     - name: Deploy Mimir ArgoCD Application
       kubernetes.core.k8s:
         state: present
@@ -19,16 +20,16 @@
           spec:
             project: default
             sources:
-            - repoURL: https://grafana.github.io/helm-charts
-              chart: mimir-distributed
-              targetRevision: "6.0.5"
-              helm:
-                releaseName: mimir
-                valueFiles:
-                - $values/helm/mimir_values.yaml
-            - repoURL: 'https://github.com/codesenju/kubelab.git'
-              targetRevision: main
-              ref: values
+              - repoURL: https://grafana.github.io/helm-charts
+                chart: mimir-distributed
+                targetRevision: "6.0.6"
+                helm:
+                  releaseName: mimir
+                  valueFiles:
+                    - $values/helm/mimir_values.yaml
+              - repoURL: "https://github.com/codesenju/kubelab.git"
+                targetRevision: main
+                ref: values
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -37,8 +38,8 @@
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
+                - CreateNamespace=true
+                - ServerSideApply=true
       tags: mimir
 
     - name: Create MinIO S3 configuration secret
