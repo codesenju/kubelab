@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Authentik Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: zero-trust
   tasks:
-
     - name: Deploy Authentik
       kubernetes.core.k8s:
         state: present
@@ -21,7 +22,7 @@
             source:
               chart: authentik
               repoURL: https://charts.goauthentik.io/
-              targetRevision: 2025.10.2
+              targetRevision: 2026.2.1
               helm:
                 releaseName: authentik
                 values: |
@@ -78,7 +79,7 @@
             name: authentik-db
             namespace: "{{ target_namespace }}"
             labels:
-              service: authentik-db  # This matches the PVC selector
+              service: authentik-db # This matches the PVC selector
           spec:
             capacity:
               storage: 8Gi
@@ -108,7 +109,7 @@
                 storage: 8Gi
             selector:
               matchLabels:
-                service: authentik-db  # Add selector to match PV label
+                service: authentik-db # Add selector to match PV label
             volumeName: authentik-db
             storageClassName: "" # This prevents dynamic provisioning
 
@@ -122,7 +123,7 @@
             name: authentik-redis
             namespace: "{{ target_namespace }}"
             labels:
-              service: authentik-redis  # This matches the PVC selector
+              service: authentik-redis # This matches the PVC selector
           spec:
             capacity:
               storage: 8Gi
@@ -152,6 +153,6 @@
                 storage: 8Gi
             selector:
               matchLabels:
-                service: authentik-redis  # Add selector to match PV label
+                service: authentik-redis # Add selector to match PV label
             volumeName: authentik-redis
             storageClassName: "" # This prevents dynamic provisioning

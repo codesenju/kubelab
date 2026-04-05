@@ -20,6 +20,8 @@
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
             image: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0
+            sharedLibraries:
+              - vectors.so
             db:
               name: immich
               username: "{{ immich_db_username }}"
