@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  become: no
-  gather_facts: no
+---
+- name: Coder Playbook
+  hosts: k8s-control-plane-1
+  become: false
+  gather_facts: false
   vars:
     target_namespace: coder
   tasks:
-
     - name: Create coder postgres secrets
       kubernetes.core.k8s:
         state: present
@@ -51,76 +52,6 @@
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: postgresql.cnpg.io/v1
-          kind: Cluster
-          metadata:
-            name: coder-postgres
-            namespace: "{{ target_namespace }}"
-          spec:
-            # At the time of writing, coder is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-            imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba # UID 26, GID 999
-            instances: 1
-            postgresql:
-              shared_preload_libraries:
-                - "vectors.so"
-            bootstrap:
-              initdb:
-                database: coder
-                owner: coder
-                secret:
-                  name: coder-postgres-secrets
-                postInitSQL:
-                  - CREATE EXTENSION IF NOT EXISTS "vectors";
-                  - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
-                  - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
-            storage:
-              size: 5Gi
-              pvcTemplate:
-                accessModes:
-                  - ReadWriteOnce
-                resources:
-                  requests:
-                    storage: 5Gi
-                # storageClassName: ""
-            backup:
-              # 3-day retention for both base backups and WALsgit
-              retentionPolicy: "3d"
-              barmanObjectStore:
-                destinationPath: s3://cnpg/backups
-                # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
-                endpointURL: "https://{{ rustfs_endpoint }}"
-                s3Credentials:
-                  accessKeyId:
-                    name: s3-creds
-                    key: ACCESS_KEY_ID
-                  secretAccessKey:
-                    name: s3-creds
-                    key: SECRET_ACCESS_KEY
-                wal:
-                  compression: gzip
-                data:
-                  compression: gzip
-                  jobs: 2
-
-    - name: Deploy ScheduledBackup
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: postgresql.cnpg.io/v1
-          kind: ScheduledBackup
-          metadata:
-            name: daily-s3-backup
-            namespace: '{{ target_namespace }}'
-          spec:
-            # Standard Cron: s m h dom mon dow
-            # This runs every day at 2:00 AM
-            schedule: "0 0 2 * * *"
-            cluster:
-              name: coder-postgres
-            # Setting this to true takes a backup immediately upon creation
-            immediate: true
-            # 'self' means this ScheduledBackup object owns the resulting Backup records
-            backupOwnerReference: self
 
     - name: Create coder db url
       kubernetes.core.k8s:
@@ -130,7 +61,7 @@
           kind: Secret
           metadata:
             name: coder-config
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
             url: "{{ coder_db_url }}"
@@ -172,7 +103,7 @@
                         value: "false"
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -189,10 +120,10 @@
           kind: HTTPRoute
           metadata:
             name: coder
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             hostnames:
-            - "coder.{{ local_dns }}"
+              - "coder.{{ local_dns }}"
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
