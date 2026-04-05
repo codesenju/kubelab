@@ -69,17 +69,17 @@
             bootstrap:
               mode: recovery
             recovery:
-              backupID: "20260401T020004" # backup will be at s3Path/serverName/base/<backupID>
+              backupID: "20260403T193212" # backup will be at s3Path/serverName/base/<backupID>
               serverName: "nexus-postgres" # backup files will be at s3Path/serverName/base
             restoreSource:
-              s3Path: "s3://cnpg/backups/nexus-postgres"
+              s3Path: "s3://cnpg/backups/nexus"
               endpointURL: "https://{{ rustfs_endpoint }}"
               s3:
                 credentialsSecretName: s3-creds
                 accessKeyId: ACCESS_KEY_ID
                 secretAccessKey: SECRET_ACCESS_KEY
             archiveDestination:
-              s3Path: "s3://cnpg/backup2/"
+              s3Path: "s3://cnpg/backup2"
               endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:
