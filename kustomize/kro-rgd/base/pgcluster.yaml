@@ -15,6 +15,7 @@ spec:
       # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
       image: string | default="ghcr.io/cloudnative-pg/postgresql:16-standard-trixie" # UID 26, GID 102
       instances: integer | default=1
+      sharedLibraries: '[]string | default=[] description="List of shared preload libraries"'
       bootstrap:
         mode: string | enum="initdb,recovery" default="initdb" description="initdb or recovery"
       db:
@@ -104,8 +105,7 @@ spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
           postgresql:
-            shared_preload_libraries:
-              - vectors.so
+            shared_preload_libraries: ${schema.spec.sharedLibraries}
           managed:
             roles:
               - name: ${schema.spec.db.username}
@@ -150,8 +150,7 @@ spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
           postgresql:
-            shared_preload_libraries:
-              - vectors.so
+            shared_preload_libraries: ${schema.spec.sharedLibraries}
           managed:
             roles:
               - name: ${schema.spec.db.username}
