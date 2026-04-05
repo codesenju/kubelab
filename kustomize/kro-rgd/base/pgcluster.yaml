@@ -103,6 +103,9 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
+          postgresql:
+            shared_preload_libraries:
+              - vectors.so
           managed:
             roles:
               - name: ${schema.spec.db.username}
@@ -146,6 +149,9 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
+          postgresql:
+            shared_preload_libraries:
+              - vectors.so
           managed:
             roles:
               - name: ${schema.spec.db.username}
