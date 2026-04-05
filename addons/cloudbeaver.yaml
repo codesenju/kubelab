@@ -58,7 +58,7 @@
             namespace: "{{ target_namespace }}"
           spec:
             name: cloudbeaver
-            # image: ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
+            image: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0 # ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
             db:
               name: cloudbeaver
               username: "{{ cloudbeaver_db_username }}"
