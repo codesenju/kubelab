@@ -16,7 +16,8 @@ spec:
       image: string | default="ghcr.io/cloudnative-pg/postgresql:16-standard-trixie" # UID 26, GID 102
       instances: integer | default=1
       sharedLibraries: '[]string | default=[] description="List of shared preload libraries"'
-      imagePullSecrets: string
+      imagePullSecretsName1: string
+      imagePullSecretsName2: string
       bootstrap:
         mode: string | enum="initdb,recovery" default="initdb" description="initdb or recovery"
       db:
@@ -105,7 +106,10 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
-          imagePullSecrets: ${schema.spec.imagePullSecrets}
+          imagePullSecrets:
+            - name: ${schema.spec.imagePullSecretName1}
+            - name: ${schema.spec.imagePullSecretName2}
+            - name: ${schema.spec.imagePullSecretName3}
           postgresql:
             shared_preload_libraries: ${schema.spec.sharedLibraries}
           managed:
@@ -151,8 +155,10 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
-          imagePullSecrets: 
-            - name: ${schema.spec.imagePullSecrets}
+          imagePullSecrets:
+            - name: ${schema.spec.imagePullSecretName1}
+            - name: ${schema.spec.imagePullSecretName2}
+            - name: ${schema.spec.imagePullSecretName3}
           postgresql:
             shared_preload_libraries: ${schema.spec.sharedLibraries}
           managed:
