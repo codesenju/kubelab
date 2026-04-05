@@ -18,29 +18,35 @@
           spec:
             name: immich
             # image: ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
-          bootstrap:
-            mode: recovery
-          recovery:
-            backupID: "20260401T020004" # backup will be at s3Path/serverName/base/<backupID>
-            serverName: "immich-postgres" # backup files will be at s3Path/serverName/base
-          restoreSource:
-            s3Path: "s3://cnpg/backups/immich-postgres"
-            endpointURL: "https://{{ rustfs_endpoint }}"
-            s3:
-              credentialsSecretName: s3-creds
-              accessKeyId: ACCESS_KEY_ID
-              secretAccessKey: SECRET_ACCESS_KEY
-          archiveDestination:
-            s3Path: "s3://cnpg/backup2/"
-            endpointURL: "https://{{ rustfs_endpoint }}"
-            # retentionPolicy: "5d"
-            s3:
-              credentialsSecretName: s3-creds
-              accessKeyId: ACCESS_KEY_ID
-              secretAccessKey: SECRET_ACCESS_KEY
-          scheduledBackup:
-            enabled: true
-            # cron: "0 0 2 * * *"
+            db:
+              name: immich
+              username: "{{ immich_db_username }}"
+              secretName: immich-postgres-secrets
+              # size: 1Gi
+              storageClassName: nfs-csi-postgres
+            bootstrap:
+              mode: recovery
+            recovery:
+              backupID: "20260401T020004" # backup will be at s3Path/serverName/base/<backupID>
+              serverName: "immich-postgres" # backup files will be at s3Path/serverName/base
+            restoreSource:
+              s3Path: "s3://cnpg/backups/immich-postgres"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            archiveDestination:
+              s3Path: "s3://cnpg/backup2/"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
       tags:
         - postgres
 
