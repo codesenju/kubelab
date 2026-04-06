@@ -144,7 +144,7 @@
                 values: |
                   cloudbeaver:
                     replicaCount: 1
-                    image: harbor.example.com/dockerio/dbeaver/cloudbeaver
+                    image: registry.local.example.com/dockerio/dbeaver/cloudbeaver
                     imageTag: "26.0.0"
                     pullPolicy: IfNotPresent
                     pullCredsName: harbor-secret
