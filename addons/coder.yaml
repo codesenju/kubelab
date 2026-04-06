@@ -56,7 +56,7 @@
 
     - name: Deploy coder postgres cluster
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: kubelab.io/v1beta1
           kind: PGCluster
