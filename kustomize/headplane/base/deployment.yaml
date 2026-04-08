@@ -1,0 +1,37 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: headplane
+  labels:
+    app: headplane
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: headplane
+  template:
+    metadata:
+      labels:
+        app: headplane
+    spec:
+      containers:
+        - name: headplane
+          image: IMAGE_TEMPLATE
+          imagePullPolicy: IfNotPresent
+          ports:
+            - containerPort: 3000
+              name: http
+          volumeMounts:
+            - name: headplane-config
+              mountPath: /etc/headplane/config.yaml
+              subPath: config.yaml
+              readOnly: true
+            - name: headplane-data
+              mountPath: /var/lib/headplane
+      volumes:
+        - name: headplane-config
+          configMap:
+            name: headplane-config
+        - name: headplane-data
+          persistentVolumeClaim:
+            claimName: headplane-data

@@ -31,9 +31,14 @@ ansible-vault create group_vars/all/secrets.yaml --vault-password-file ~/vault-p
 ### 3. Deploy Core Infrastructure
 ```bash
 cd ansible
-ansible-playbook ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
+
+# Choose your environment inventory
+export INVENTORY=inventories/local/hosts.ini
+# export INVENTORY=inventories/prod/hosts.ini
+
+ansible-playbook -i "$INVENTORY" ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
 ```
 
 ### 4. Deploy Applications
@@ -42,10 +47,18 @@ ansible-playbook ../addons/cert-manager.yaml --vault-password-file ~/vault-passw
 ls ../addons/
 
 # Deploy any application
-ansible-playbook ../addons/<app-name>.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/<app-name>.yaml --vault-password-file ~/vault-password.txt
 ```
 
 ## 📦 Available Addons
+
+All commands in the tables below should be run with an environment inventory, for example:
+
+```bash
+export INVENTORY=inventories/local/hosts.ini
+# export INVENTORY=inventories/prod/hosts.ini
+ansible-playbook -i "$INVENTORY" <playbook> --vault-password-file ~/vault-password.txt
+```
 
 ### Core Infrastructure
 | Addon | Purpose | Deployment |
@@ -160,30 +173,33 @@ opensearch_admin_password: "admin-password"
 ### Complete Observability Stack
 ```bash
 cd ansible
-ansible-playbook ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/minio.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/kube-prometheus-stack.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/tempo.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/mimir.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/obi.yaml --vault-password-file ~/vault-password.txt
+export INVENTORY=inventories/local/hosts.ini
+ansible-playbook -i "$INVENTORY" ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/minio.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/kube-prometheus-stack.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/tempo.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/mimir.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/obi.yaml --vault-password-file ~/vault-password.txt
 ```
 
 ### GitOps + Security
 ```bash
 cd ansible
-ansible-playbook ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/cnpg.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/authentik.yaml --vault-password-file ~/vault-password.txt
+export INVENTORY=inventories/local/hosts.ini
+ansible-playbook -i "$INVENTORY" ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/cnpg.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/authentik.yaml --vault-password-file ~/vault-password.txt
 ```
 
 ### Service Mesh + Advanced Networking
 ```bash
 cd ansible
-ansible-playbook ../addons/cilium.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/istio.yaml --vault-password-file ~/vault-password.txt
-ansible-playbook ../addons/kube-prometheus-stack.yaml --vault-password-file ~/vault-password.txt
+export INVENTORY=inventories/local/hosts.ini
+ansible-playbook -i "$INVENTORY" ../addons/cilium.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/istio.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i "$INVENTORY" ../addons/kube-prometheus-stack.yaml --vault-password-file ~/vault-password.txt
 ```
 
 ## 🔧 Management Commands
