@@ -1,16 +1,18 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Harbbor Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: harbor
   tasks:
-
     - name: Create Harbor Namespace
       kubernetes.core.k8s:
         name: "{{ target_namespace }}"
         api_version: v1
         kind: Namespace
         state: present
+      when: false
 
     - name: Create Harbor S3 Secret
       kubernetes.core.k8s:
@@ -153,8 +155,7 @@
                 name: harbor-ingress
                 jqPathExpressions:
                   - .status.loadBalancer
-      tags:
-        argocd
+      tags: argocd
 
     - name: Create public wildcar certificate
       kubernetes.core.k8s:
@@ -172,7 +173,7 @@
               kind: ClusterIssuer
             commonName: "{{ public_dns_wildcard }}"
             dnsNames:
-            - "{{ public_dns_wildcard }}"
+              - "{{ public_dns_wildcard }}"
       tags:
         - ingress
         - certificate
@@ -193,7 +194,7 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns_wildcard }}"
       tags:
         - ingress
         - certificate

@@ -58,7 +58,8 @@
             namespace: "{{ target_namespace }}"
           spec:
             name: cloudbeaver
-            image: ghcr.io/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
+            image: registry.local.jazziro.com/ghcrio/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
+            imagePullSecretName1: nexus-registry-creds
             db:
               name: cloudbeaver
               username: "{{ cloudbeaver_db_username }}"
@@ -147,7 +148,7 @@
                     image: registry.local.jazziro.com/dockerio/dbeaver/cloudbeaver
                     imageTag: "26.0.0"
                     pullPolicy: IfNotPresent
-                    pullCredsName: harbor-secret
+                    pullCredsName: nexus-registry-creds
                   cloudbeaverBaseDomain: "cloudbeaver.local.jazziro.com"
                   httpScheme: http
                   cloudProvider: None
@@ -173,20 +174,6 @@
                 - RespectIgnoreDifferences=true
       tags:
         - cloudbeaver
-
-    - name: Create Harbor pull secret
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: harbor-secret
-            namespace: "{{ target_namespace }}"
-          type: kubernetes.io/dockerconfigjson
-          data:
-            .dockerconfigjson: "{{ {'auths': {'https://' + harbor_domain: {'username': harbor_username, 'password': harbor_password, 'auth': (harbor_username + ':'
-              + harbor_password) | b64encode}}} | to_json | b64encode }}"
 
     - name: Create HTTPRoute
       kubernetes.core.k8s:

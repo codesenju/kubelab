@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: TruenNAS CSI Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: csi-truenas
   tasks:
-
     - name: Deploy csi-truenas
       kubernetes.core.k8s:
         state: present
@@ -24,13 +25,13 @@
               targetRevision: HEAD
               kustomize:
                 images:
-                  - ghcr.io/truenas/truenas-csi=harbor.jazziro.com/ghcrio/truenas/truenas-csi
-                  - registry.k8s.io/sig-storage/csi-provisioner=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-provisioner
-                  - registry.k8s.io/sig-storage/csi-attacher=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-attacher
-                  - registry.k8s.io/sig-storage/csi-snapshotter=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-snapshotter
-                  - registry.k8s.io/sig-storage/csi-resizer=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-resizer
-                  - registry.k8s.io/sig-storage/livenessprobe=harbor.jazziro.com/registry-k8s-io/sig-storage/livenessprobe
-                  - registry.k8s.io/sig-storage/csi-node-driver-registrar=harbor.jazziro.com/registry-k8s-io/sig-storage/csi-node-driver-registrar
+                  - ghcr.io/truenas/truenas-csi=registry.local.jazziro.com/ghcrio/truenas/truenas-csi
+                  - registry.k8s.io/sig-storage/csi-provisioner=registry.local.jazziro.com/registry-k8s-io/sig-storage/csi-provisioner
+                  - registry.k8s.io/sig-storage/csi-attacher=registry.local.jazziro.com/registry-k8s-io/sig-storage/csi-attacher
+                  - registry.k8s.io/sig-storage/csi-snapshotter=registry.local.jazziro.com/registry-k8s-io/sig-storage/csi-snapshotter
+                  - registry.k8s.io/sig-storage/csi-resizer=registry.local.jazziro.com/registry-k8s-io/sig-storage/csi-resizer
+                  - registry.k8s.io/sig-storage/livenessprobe=registry.local.jazziro.com/registry-k8s-io/sig-storage/livenessprobe
+                  - registry.k8s.io/sig-storage/csi-node-driver-registrar=registry.local.jazziro.com/registry-k8s-io/sig-storage/csi-node-driver-registrar
                 patches:
                   - target:
                       kind: Deployment
@@ -39,7 +40,7 @@
                       - op: add
                         path: /spec/template/spec/imagePullSecrets
                         value:
-                          - name: harbor-secret
+                          - name: nexus-registry-creds
                   - target:
                       kind: DaemonSet
                       name: truenas-csi-node
@@ -47,7 +48,7 @@
                       - op: add
                         path: /spec/template/spec/imagePullSecrets
                         value:
-                          - name: harbor-secret
+                          - name: nexus-registry-creds
                   - target:
                       kind: Secret
                       name: truenas-api-credentials
@@ -112,15 +113,3 @@
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
 
-    - name: Create Harbor pull secret
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: harbor-secret
-            namespace: '{{ target_namespace }}'
-          type: kubernetes.io/dockerconfigjson
-          data:
-            .dockerconfigjson: "{{ {'auths': {'https://' + harbor_domain: {'username': harbor_username, 'password': harbor_password, 'auth': (harbor_username + ':' + harbor_password) | b64encode}}} | to_json | b64encode }}"

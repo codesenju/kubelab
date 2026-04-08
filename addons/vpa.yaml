@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: VPA Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: autoscalers
   tasks:
-
     - name: Deploy VPA
       kubernetes.core.k8s:
         state: present
@@ -25,20 +26,20 @@
               helm:
                 releaseName: vertical-pod-autoscaler
                 values: |
-                  imagePullSecrets: 
-                    - name: "harbor-secret"
+                  imagePullSecrets:
+                    - name: "nexus-registry-creds"
                   admissionController:
                     image:
-                      repository:  "harbor.jazziro.com/registry-k8s-io/autoscaling/vpa-admission-controller"
+                      repository:  "registry.local.jazziro.com/registry-k8s-io/autoscaling/vpa-admission-controller"
                   certGen:
                     image:
-                      repository: "harbor.jazziro.com/registry-k8s-io/ingress-nginx/kube-webhook-certgen"
+                      repository: "registry.local.jazziro.com/registry-k8s-io/ingress-nginx/kube-webhook-certgen"
                   recommender:
                     image:
-                      repository: "harbor.jazziro.com/registry-k8s-io/autoscaling/vpa-recommender"
+                      repository: "registry.local.jazziro.com/registry-k8s-io/autoscaling/vpa-recommender"
                   updater:
                     image:
-                      repository: harbor.jazziro.com/registry-k8s-io/autoscaling/vpa-updater
+                      repository: "registry.local.jazziro.com/registry-k8s-io/autoscaling/vpa-updater"
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -49,16 +50,3 @@
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
-
-    - name: Create Harbor pull secret
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: harbor-secret
-            namespace: '{{ target_namespace }}'
-          type: kubernetes.io/dockerconfigjson
-          data:
-            .dockerconfigjson: "{{ {'auths': {'https://harbor.jazziro.com': {'username': harbor_username, 'password': harbor_password, 'auth': (harbor_username + ':' + harbor_password) | b64encode}}} | to_json | b64encode }}"
