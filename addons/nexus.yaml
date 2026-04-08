@@ -125,6 +125,8 @@
                         value:
                           - "nexus.{{ local_dns }}"
                           - "registry.{{ local_dns }}"
+                          - "nexus.{{ public_dns }}"
+                          - "registry.{{ public_dns }}"
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
