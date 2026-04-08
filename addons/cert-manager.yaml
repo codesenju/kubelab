@@ -1,5 +1,6 @@
 ---
-- hosts: k8s-control-plane-1
+- name: Cert-manager Playbook
+  hosts: k8s-control-plane-1
   become: false
   tasks:
     - name: Deploy Cert Manager

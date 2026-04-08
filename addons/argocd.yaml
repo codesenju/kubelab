@@ -1,10 +1,10 @@
 ---
-- name: Install k9s
+- name: Argocd Playbook
   hosts: k8s-control-plane-1
   become: false
   gather_facts: false
   vars:
-    namespace: argocd
+    target_namespace: argocd
   tasks:
     # kubectl get crd -o name | grep argoproj.io | xargs kubectl delete
     - name: Deploy Argocd
@@ -14,31 +14,31 @@
         chart_repo_url: https://argoproj.github.io/argo-helm
         chart_ref: argo-cd
         chart_version: 9.4.14
-        release_namespace: "{{ namespace }}"
+        release_namespace: "{{ target_namespace }}"
         create_namespace: true
         release_values:
           global:
             domain: "{{ argocd_domain }}"
           controller:
-            replicas: 1
+            replicas: "{{ argocd_replicas.controller }}"
             metrics:
               enabled: true
               serviceMonitor:
                 enabled: false
           server:
-            replicas: 2
+            replicas: "{{ argocd_replicas.server }}"
             metrics:
               enabled: true
               serviceMonitor:
                 enabled: false
           repoServer:
-            replicas: 2
+            replicas: "{{ argocd_replicas.repo_server }}"
             metrics:
               enabled: true
               serviceMonitor:
                 enabled: false
           applicationSet:
-            replicas: 2
+            replicas: "{{ argocd_replicas.application_set }}"
             metrics:
               enabled: true
               serviceMonitor:
@@ -68,7 +68,7 @@
                     clientID: "{{ github_client_id }}"
                     clientSecret: "{{ github_client_secret }}"
                     orgs:
-                    - name: jazziro-kubelab
+                    - name: kubelab17
                       teams:
                       - kubelab
                 # Authentik OIDC connector configuration
@@ -93,18 +93,30 @@
             enabled: true
             # extraArgs:
             #   - --disable-tls 
-    # - name: Wait for ArgoCD pods to be ready
-    #   kubernetes.core.k8s_info:
-    #     kind: Pod
-    #     namespace: argocd
-    #     label_selectors:
-    #       - app.kubernetes.io/part-of=argocd
-    #     wait: yes
-    #     wait_sleep: 10
-    #     wait_timeout: 300
-    #     wait_condition:
-    #       type: Ready
-    #       status: "True"
+      tags:
+        - argocd
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: argocd-server
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+            hostnames:
+              - "argocd.{{ public_dns }}"
+            rules:
+              - backendRefs:
+                  - name: argocd-server
+                    port: 80
+      tags:
+        - ingress
 
     - name: Get Argo CD admin password
       ansible.builtin.shell: kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
@@ -128,7 +140,7 @@
           kind: Certificate
           metadata:
             name: local-jazziro-com-tls
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -140,6 +152,7 @@
       tags:
         - ingress
         - certificate
+      when: false
 
     - name: Create Traefik dashboard IngressRoute
       kubernetes.core.k8s:
@@ -149,7 +162,7 @@
           kind: IngressRoute
           metadata:
             name: argocd-server
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
@@ -167,6 +180,7 @@
               secretName: local-jazziro-com-tls
       tags:
         - ingress
+      when: false
 
     - name: Create ServiceMonitor for ArgoCD Application Controller
       kubernetes.core.k8s:
@@ -176,7 +190,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-metrics
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:
@@ -194,7 +208,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-server-metrics
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:
@@ -212,7 +226,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-repo-server-metrics
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:
@@ -230,7 +244,7 @@
           kind: ServiceMonitor
           metadata:
             name: argocd-applicationset-controller-metrics
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             labels:
               release: kube-prometheus-stack
           spec:

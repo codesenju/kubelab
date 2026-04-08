@@ -40,7 +40,8 @@ You can also provide credentials through inventory/group vars instead of environ
 ## Run the playbook
 
 ```bash
-ansible-playbook -i ansible/inventory.ini addons/hf-tuning.yaml
+ansible-playbook -i ansible/inventories/local/hosts.ini addons/hf-tuning.yaml
+ansible-playbook -i ansible/inventories/prod/hosts.ini addons/hf-tuning.yaml
 ```
 
 ## Optional overrides
@@ -48,7 +49,7 @@ ansible-playbook -i ansible/inventory.ini addons/hf-tuning.yaml
 Override defaults at runtime with `-e`:
 
 ```bash
-ansible-playbook -i ansible/inventory.ini addons/hf-tuning.yaml \
+ansible-playbook -i ansible/inventories/local/hosts.ini addons/hf-tuning.yaml \
   -e hf_http_timeout_seconds=240 \
   -e hf_http_retries=4 \
   -e hf_proxy_metadata_max_age_minutes=4320 \
@@ -74,6 +75,6 @@ Check these fields in the response:
 - `Set nexus_admin_password ...` assertion failure:
   - Export `NEXUS_ADMIN_PASSWORD` or set `nexus_admin_password` in inventory vars.
 - Host not matched / inventory warnings:
-  - Ensure `-i ansible/inventory.ini` is provided and `k8s-control-plane-1` exists in inventory.
+  - Ensure `-i ansible/inventories/<env>/hosts.ini` is provided and `k8s-control-plane-1` exists in that environment inventory.
 - TLS errors with custom certs:
   - Current playbook uses `validate_certs: false`. If you later enforce cert validation, add trusted CA setup first.

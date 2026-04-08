@@ -22,10 +22,10 @@
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
-            name: jazziro-com-tls
+            name: "{{ certificate_ref }}" # jazziro-com-tls
             namespace: "{{ target_namespace }}"
           spec:
-            secretName: jazziro-com-tls
+            secretName: "{{ certificate_ref }}" # jazziro-com-tls
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
@@ -43,10 +43,10 @@
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
-            name: local-jazziro-com-tls
+            name: "{{ local_certificate_ref }}" # local-jazziro-com-tls
             namespace: "{{ target_namespace }}"
           spec:
-            secretName: local-jazziro-com-tls
+            secretName: "{{ local_certificate_ref }}" # local-jazziro-com-tls
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
@@ -64,10 +64,10 @@
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
-            name: jazziro-com-tls
+            name: "{{ certificate_ref }}" # jazziro-com-tls
             namespace: "{{ target_namespace }}"
           spec:
-            secretName: jazziro-com-tls
+            secretName: "{{ certificate_ref }}" # jazziro-com-tls
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer
@@ -92,21 +92,21 @@
             listeners:
               - name: web
                 hostname: "{{ local_dns_wildcard }}"
-                port: 8000
+                port: "{{ traefik_web_port }}" # 8000
                 protocol: HTTP
                 allowedRoutes:
                   namespaces:
                     from: All
               - name: web-public
                 hostname: "{{ public_dns_wildcard }}"
-                port: 8000
+                port: "{{ traefik_web_port }}" # 8000
                 protocol: HTTP
                 allowedRoutes:
                   namespaces:
                     from: All
               - name: websecure
                 hostname: "{{ local_dns_wildcard }}"
-                port: 8443
+                port: "{{ traefik_websecure_port }}" # 8443
                 protocol: HTTPS
                 allowedRoutes:
                   namespaces:
@@ -114,10 +114,10 @@
                 tls:
                   mode: Terminate
                   certificateRefs:
-                    - name: local-jazziro-com-tls
+                    - name: "{{ local_certificate_ref }}"
               - name: websecure-public
                 hostname: "{{ public_dns_wildcard }}"
-                port: 8443
+                port: "{{ traefik_websecure_port }}" # 8443
                 protocol: HTTPS
                 allowedRoutes:
                   namespaces:
@@ -125,4 +125,4 @@
                 tls:
                   mode: Terminate
                   certificateRefs:
-                    - name: jazziro-com-tls
+                    - name: "{{ certificate_ref }}"

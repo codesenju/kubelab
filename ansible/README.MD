@@ -13,7 +13,7 @@ This directory contains Ansible playbooks and configurations for deploying and m
 
 | File/Directory  | Description                              |
 | --------------- | ---------------------------------------- |
-| `inventory.ini` | Inventory file with host definitions     |
+| `inventories/`  | Environment-specific inventories (`local`, `prod`) |
 | `main.yaml`     | Main playbook for cluster deployment     |
 | `roles/`        | Ansible roles for different components   |
 | `templates/`    | Jinja2 templates for configuration files |
@@ -37,22 +37,23 @@ Before running playbooks, verify that Ansible can connect to all nodes:
 
 ```bash
 export ANSIBLE_CONFIG=ansible.cfg
+export INVENTORY=inventories/local/hosts.ini
 ```
 
 ```bash
-ansible all -m ping
+ansible -i "$INVENTORY" all -m ping
 ```
 
 ### Deploy Kubernetes Cluster
 
 ```bash
-ansible-playbook main.yaml
+ansible-playbook -i "$INVENTORY" main.yaml
 ```
 
 ### Deploy Specific Components
 
 ```bash
-ansible-playbook main.yaml --tags <tag>
+ansible-playbook -i "$INVENTORY" main.yaml --tags <tag>
 ```
 
 #### Available Tags
@@ -70,7 +71,7 @@ ansible-playbook main.yaml --tags <tag>
 Enable volume expansion for storage classes:
 
 ```bash
-ansible-playbook main.yaml --tags adhoc,enable_volume_expansion
+ansible-playbook -i "$INVENTORY" main.yaml --tags adhoc,enable_volume_expansion
 ```
 
 ---
@@ -79,19 +80,27 @@ ansible-playbook main.yaml --tags adhoc,enable_volume_expansion
 
 ### Inventory
 
-The inventory file (`inventory.ini`) defines the hosts and their roles:
+Inventories are separated by environment:
+
+- `inventories/local/hosts.ini`
+- `inventories/prod/hosts.ini`
+
+Example:
 
 ```ini
-[control_plane]
+[control-plane]
 k8s-control-plane-1 ansible_host=192.168.0.41
-k8s-control-plane-2 ansible_host=192.168.0.42
 
-[workers]
-k8s-worker-1 ansible_host=192.168.0.51
-k8s-worker-2 ansible_host=192.168.0.52
+[all:vars]
+ansible_user=ubuntu
+ansible_ssh_private_key_file=~/codesenju/kubelab.pem
+```
 
-[lb]
-k8s-lb ansible_host=192.168.0.40
+Use the environment you want at runtime:
+
+```bash
+ansible-playbook -i inventories/local/hosts.ini main.yaml
+ansible-playbook -i inventories/prod/hosts.ini main.yaml
 ```
 
 ### Variables
