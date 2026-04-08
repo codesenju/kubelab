@@ -76,6 +76,42 @@ kubectl get storageclass
 kubectl get nodes --show-labels
 ```
 
+**Headscale Client Registration Fails (HTTPS to in-cluster service):**
+```bash
+# Symptoms in client logs:
+# Post "https://headscale:8080/machine/register": connection attempts aborted
+
+# Validate external endpoints first
+curl -vk https://headscale.<your-public-dns>/health
+curl -vkI https://headscale-ui.<your-public-dns>
+
+# Check ArgoCD application condition
+kubectl -n argocd describe application headscale
+```
+
+Root cause:
+- The in-cluster `headscale` service listens on HTTP (`http://headscale:8080`).
+- Forcing HTTPS to that service breaks registration loops for the optional chart test client.
+
+Fix applied in `addons/headscale.yaml`:
+- Set `config.server_url` to public TLS endpoint (`https://headscale.{{ public_dns }}`).
+- Set `ui.headscaleUrl` to the same public endpoint.
+- Disable optional in-cluster chart client (`client.enabled: false`) to avoid internal login-server mismatch.
+
+Apply the fix:
+```bash
+export KUBECONFIG=~/.kube/k3s-cloud.yaml
+cd ansible
+ansible-playbook -i inventories/prod/hosts.ini ../addons/headscale.yaml --vault-password-file ~/vault-password.txt
+```
+
+Verify:
+```bash
+kubectl -n argocd get application headscale
+kubectl -n headscale get deploy,pod,svc
+curl -sk https://headscale.<your-public-dns>/health
+```
+
 **Pods Crash Looping:**
 ```bash
 # Check logs
