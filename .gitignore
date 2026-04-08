@@ -82,3 +82,7 @@ limactl/kube-bench
 addons/robusta.yaml
 kro/rgd/postgres.yaml
 .gitignore
+.playwright-mcp/
+.gitignore
+*/kube-bench_*.tar.gz
+nohup.out
