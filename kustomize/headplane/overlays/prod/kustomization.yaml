@@ -1,0 +1,12 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: headscale
+
+images:
+- name: IMAGE_TEMPLATE
+  newName: ghcr.io/tale/headplane
+  newTag: latest
+
+resources:
+- ../../base

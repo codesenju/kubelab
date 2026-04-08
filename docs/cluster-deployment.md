@@ -58,19 +58,12 @@ tofu apply
 ### 3. Configure Ansible Inventory
 ```bash
 cd ../ansible
-cp inventory.ini.example inventory.ini
+# Use environment-specific inventories
+# local: ansible/inventories/local/hosts.ini
+# prod:  ansible/inventories/prod/hosts.ini
 
-# Edit inventory with VM IPs:
-[control_plane]
-k8s-control-plane-1 ansible_host=192.168.0.41
-k8s-control-plane-2 ansible_host=192.168.0.42
-
-[workers]
-k8s-worker-1 ansible_host=192.168.0.51
-k8s-worker-2 ansible_host=192.168.0.52
-
-[lb]
-k8s-lb ansible_host=192.168.0.40
+# Example: update local inventory with VM IPs
+nano inventories/local/hosts.ini
 ```
 
 ### 4. Create Secrets
@@ -99,10 +92,10 @@ nfs_path: "/mnt/pool1/AppData"
 ### 5. Deploy Kubernetes
 ```bash
 # Test connectivity
-ansible all -m ping
+ansible -i inventories/local/hosts.ini all -m ping
 
 # Deploy cluster
-ansible-playbook main.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/local/hosts.ini main.yaml --vault-password-file ~/vault-password.txt
 
 # Deployment includes:
 # - OS hardening and updates
@@ -174,16 +167,16 @@ kubectl get pvc test-nfs
 cd ansible
 
 # GitOps controller
-ansible-playbook ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/local/hosts.ini ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
 
 # Ingress controller
-ansible-playbook ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/local/hosts.ini ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
 
 # Certificate management
-ansible-playbook ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/local/hosts.ini ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
 
 # Metrics
-ansible-playbook ../addons/metrics-server.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/local/hosts.ini ../addons/metrics-server.yaml --vault-password-file ~/vault-password.txt
 ```
 
 ### Access ArgoCD
