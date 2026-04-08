@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: RustFS Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: rustfs
   tasks:
-
     - name: Deploy rustfs ArgoCD Application
       kubernetes.core.k8s:
         state: present
@@ -29,7 +30,7 @@
                   app.kubernetes.io/instance: rustfs-prod
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -48,12 +49,12 @@
           kind: Secret
           metadata:
             name: rustfs-secrets
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            rustfs_access_key: '{{ rustfs_access_key }}'
-            rustfs_secret_key: '{{ rustfs_secret_key }}'
-            rustfs_server_domains: '{{ rustfs_server_domains }}'
+            rustfs_access_key: "{{ rustfs_access_key }}"
+            rustfs_secret_key: "{{ rustfs_secret_key }}"
+            rustfs_server_domains: "{{ rustfs_server_domains }}"
       tags: rustfs
 
     - name: Create local wildcar certificate
@@ -64,7 +65,7 @@
           kind: Certificate
           metadata:
             name: local-jazziro-com-tls
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -72,9 +73,10 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns_wildcard }}"
       tags:
-      - ingress
+        - ingress
+      when: false
 
     - name: Create rustfs ingress
       kubernetes.core.k8s:
@@ -84,25 +86,27 @@
           kind: Ingress
           metadata:
             name: rustfs
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-staging
           spec:
             ingressClassName: traefik
             tls:
-            - hosts:
-              - "s3.{{ local_dns }}"
-              secretName: local-jazziro-com-tls
+              - hosts:
+                  - "s3.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
             rules:
-            - host: "s3.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: rustfs
-                      port:
-                        number: 9001
+              - host: "s3.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: rustfs
+                          port:
+                            number: 9001
       tags: ingress
+      when: false
+
