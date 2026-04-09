@@ -8,7 +8,7 @@
   tasks:
     - name: Deploy rustfs ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -21,7 +21,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/rustfs/overlays/prod
+              path: kustomize/rustfs/overlays/"{{ target_environment }}" # prod
               targetRevision: main
               kustomize:
                 commonAnnotations:
@@ -56,6 +56,29 @@
             rustfs_secret_key: "{{ rustfs_secret_key }}"
             rustfs_server_domains: "{{ rustfs_server_domains }}"
       tags: rustfs
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: argocd-server
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+            hostnames:
+              - "argocd.{{ public_dns }}"
+            rules:
+              - backendRefs:
+                  - name: argocd-server
+                    port: 80
+      tags:
+        - ingress
+      when: false
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
