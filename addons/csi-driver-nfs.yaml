@@ -1,5 +1,6 @@
 ---
-- hosts: k8s-control-plane-1
+- name: NFS CSI Driver Playbook
+  hosts: k8s-control-plane-1
   gather_facts: false
   become: false
   tasks:

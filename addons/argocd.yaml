@@ -69,8 +69,8 @@
                     clientSecret: "{{ github_client_secret }}"
                     orgs:
                     - name: kubelab17
-                      # teams:
-                      # - kubelab
+                      teams:
+                      - kubelab
                 # Authentik OIDC connector configuration
                 - type: oidc
                   name: authentik

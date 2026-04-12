@@ -33,7 +33,7 @@ ansible-vault create group_vars/all/secrets.yaml --vault-password-file ~/vault-p
 cd ansible
 
 # Choose your environment inventory
-export INVENTORY=inventories/local/hosts.ini
+export INVENTORY=inventories/oci/hosts.ini
 # export INVENTORY=inventories/prod/hosts.ini
 
 ansible-playbook -i "$INVENTORY" ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
@@ -55,10 +55,14 @@ ansible-playbook -i "$INVENTORY" ../addons/<app-name>.yaml --vault-password-file
 All commands in the tables below should be run with an environment inventory, for example:
 
 ```bash
-export INVENTORY=inventories/local/hosts.ini
+export INVENTORY=inventories/oci/hosts.ini
 # export INVENTORY=inventories/prod/hosts.ini
 ansible-playbook -i "$INVENTORY" <playbook> --vault-password-file ~/vault-password.txt
 ```
+
+Environment mapping:
+- `inventories/oci/hosts.ini` -> OCI VM cluster
+- `inventories/prod/hosts.ini` -> Homelab cluster on Proxmox
 
 ### Core Infrastructure
 | Addon | Purpose | Deployment |
@@ -173,7 +177,7 @@ opensearch_admin_password: "admin-password"
 ### Complete Observability Stack
 ```bash
 cd ansible
-export INVENTORY=inventories/local/hosts.ini
+export INVENTORY=inventories/oci/hosts.ini
 ansible-playbook -i "$INVENTORY" ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
 ansible-playbook -i "$INVENTORY" ../addons/minio.yaml --vault-password-file ~/vault-password.txt
 ansible-playbook -i "$INVENTORY" ../addons/kube-prometheus-stack.yaml --vault-password-file ~/vault-password.txt
@@ -185,7 +189,7 @@ ansible-playbook -i "$INVENTORY" ../addons/obi.yaml --vault-password-file ~/vaul
 ### GitOps + Security
 ```bash
 cd ansible
-export INVENTORY=inventories/local/hosts.ini
+export INVENTORY=inventories/oci/hosts.ini
 ansible-playbook -i "$INVENTORY" ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
 ansible-playbook -i "$INVENTORY" ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
 ansible-playbook -i "$INVENTORY" ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
@@ -196,7 +200,7 @@ ansible-playbook -i "$INVENTORY" ../addons/authentik.yaml --vault-password-file 
 ### Service Mesh + Advanced Networking
 ```bash
 cd ansible
-export INVENTORY=inventories/local/hosts.ini
+export INVENTORY=inventories/oci/hosts.ini
 ansible-playbook -i "$INVENTORY" ../addons/cilium.yaml --vault-password-file ~/vault-password.txt
 ansible-playbook -i "$INVENTORY" ../addons/istio.yaml --vault-password-file ~/vault-password.txt
 ansible-playbook -i "$INVENTORY" ../addons/kube-prometheus-stack.yaml --vault-password-file ~/vault-password.txt
