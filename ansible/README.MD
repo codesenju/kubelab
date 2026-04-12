@@ -13,7 +13,7 @@ This directory contains Ansible playbooks and configurations for deploying and m
 
 | File/Directory  | Description                              |
 | --------------- | ---------------------------------------- |
-| `inventories/`  | Environment-specific inventories (`local`, `prod`) |
+| `inventories/`  | Environment-specific inventories (`oci`, `prod`) |
 | `main.yaml`     | Main playbook for cluster deployment     |
 | `roles/`        | Ansible roles for different components   |
 | `templates/`    | Jinja2 templates for configuration files |
@@ -37,7 +37,7 @@ Before running playbooks, verify that Ansible can connect to all nodes:
 
 ```bash
 export ANSIBLE_CONFIG=ansible.cfg
-export INVENTORY=inventories/local/hosts.ini
+export INVENTORY=inventories/oci/hosts.ini
 ```
 
 ```bash
@@ -82,8 +82,12 @@ ansible-playbook -i "$INVENTORY" main.yaml --tags adhoc,enable_volume_expansion
 
 Inventories are separated by environment:
 
-- `inventories/local/hosts.ini`
+- `inventories/oci/hosts.ini`
 - `inventories/prod/hosts.ini`
+
+Environment mapping:
+- `oci` -> OCI VM cluster
+- `prod` -> homelab cluster on Proxmox
 
 Example:
 
@@ -99,7 +103,7 @@ ansible_ssh_private_key_file=~/codesenju/kubelab.pem
 Use the environment you want at runtime:
 
 ```bash
-ansible-playbook -i inventories/local/hosts.ini main.yaml
+ansible-playbook -i inventories/oci/hosts.ini main.yaml
 ansible-playbook -i inventories/prod/hosts.ini main.yaml
 ```
 

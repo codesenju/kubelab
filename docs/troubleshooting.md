@@ -102,7 +102,7 @@ Apply the fix:
 ```bash
 export KUBECONFIG=~/.kube/k3s-cloud.yaml
 cd ansible
-ansible-playbook -i inventories/prod/hosts.ini ../addons/headscale.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/oci/hosts.ini ../addons/headscale.yaml --vault-password-file ~/vault-password.txt
 ```
 
 Verify:
