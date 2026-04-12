@@ -8,7 +8,7 @@
   tasks:
     - name: Deploy databasus ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -67,7 +67,7 @@
 
     - name: Deploy Databasus
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -89,13 +89,13 @@
                     enabled: true
                     # Storage class name. Leave empty to use cluster default.
                     # Examples: "longhorn", "standard", "gp2", etc.
-                    storageClassName: "" # leave empty to use default
+                    storageClassName: "{{ databasus_sc }}" # leave empty to use default
                     accessMode: ReadWriteOnce
                     size: 10Gi
                     # Mount path in container
                     mountPath: /databasus-data
                   ingress:
-                    enabled: true
+                    enabled: false
                     className: traefik
                     annotations:
                        traefik.ingress.kubernetes.io/router.middlewares: "{{ target_namespace }}-redirect-https@kubernetescrd"

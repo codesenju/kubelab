@@ -59,11 +59,11 @@ tofu apply
 ```bash
 cd ../ansible
 # Use environment-specific inventories
-# local: ansible/inventories/local/hosts.ini
-# prod:  ansible/inventories/prod/hosts.ini
+# oci:  ansible/inventories/oci/hosts.ini    (OCI VM)
+# prod: ansible/inventories/prod/hosts.ini   (homelab on Proxmox)
 
-# Example: update local inventory with VM IPs
-nano inventories/local/hosts.ini
+# Example: update homelab inventory with Proxmox VM IPs
+nano inventories/prod/hosts.ini
 ```
 
 ### 4. Create Secrets
@@ -92,10 +92,10 @@ nfs_path: "/mnt/pool1/AppData"
 ### 5. Deploy Kubernetes
 ```bash
 # Test connectivity
-ansible -i inventories/local/hosts.ini all -m ping
+ansible -i inventories/prod/hosts.ini all -m ping
 
 # Deploy cluster
-ansible-playbook -i inventories/local/hosts.ini main.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/prod/hosts.ini main.yaml --vault-password-file ~/vault-password.txt
 
 # Deployment includes:
 # - OS hardening and updates
@@ -167,16 +167,16 @@ kubectl get pvc test-nfs
 cd ansible
 
 # GitOps controller
-ansible-playbook -i inventories/local/hosts.ini ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/prod/hosts.ini ../addons/argocd.yaml --vault-password-file ~/vault-password.txt
 
 # Ingress controller
-ansible-playbook -i inventories/local/hosts.ini ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/prod/hosts.ini ../addons/traefik.yaml --vault-password-file ~/vault-password.txt
 
 # Certificate management
-ansible-playbook -i inventories/local/hosts.ini ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/prod/hosts.ini ../addons/cert-manager.yaml --vault-password-file ~/vault-password.txt
 
 # Metrics
-ansible-playbook -i inventories/local/hosts.ini ../addons/metrics-server.yaml --vault-password-file ~/vault-password.txt
+ansible-playbook -i inventories/prod/hosts.ini ../addons/metrics-server.yaml --vault-password-file ~/vault-password.txt
 ```
 
 ### Access ArgoCD

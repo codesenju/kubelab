@@ -15,7 +15,7 @@
           metadata:
             name: "{{ target_namespace }}"
 
-    - name: Create public wildcar certificate
+    - name: Create public wildcar certificate | IY Synergy
       kubernetes.core.k8s:
         state: present
         definition:
@@ -36,7 +36,7 @@
         - ingress
         - certificate
 
-    - name: Create local wildcar certificate
+    - name: Create local wildcar certificate | IY Synergy
       kubernetes.core.k8s:
         state: present
         definition:

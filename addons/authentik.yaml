@@ -6,6 +6,102 @@
   vars:
     target_namespace: zero-trust
   tasks:
+
+    - name: Create authentik postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: authentik-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ authentik_db_username }}"
+            password: "{{ authentik_db_password }}"
+      tags:
+        - postgres
+
+    - name: Create s3 creds
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Create s3 creds for source
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds-source
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key_source }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key_source }}"
+      tags:
+        - postgres
+
+    - name: Deploy postgres
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
+          metadata:
+            name: authentik
+            namespace: "{{ target_namespace }}"
+          spec:
+            name: authentik
+            # db version must be compatiable with the backup db version
+            # using tensorchord image that comes with vchord
+            image: registry.local.jazziro.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            imagePullSecretName1: registry-secret
+            db:
+              name: authentik
+              username: "{{ authentik_db_username }}"
+              secretName: authentik-postgres-secrets
+              # size: 1Gi
+              storageClassName: "{{ postgresStorageClass }}" # nfs-csi-postgres
+            bootstrap:
+              mode: recovery
+            recovery:
+              backupID: "20260412T163044" # backup will be at s3Path/serverName/base/<backupID>
+              serverName: "authentik-postgres" # backup files will be at s3Path/serverName/base
+            restoreSource:
+              s3Path: "s3://cnpg/backup2"
+              endpointURL: "https://{{ rustfs_endpoint_source }}"
+              s3:
+                credentialsSecretName: s3-creds-source
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            archiveDestination:
+              s3Path: "s3://cnpg/backup"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
+      tags:
+        - postgres
+
     - name: Deploy Authentik
       kubernetes.core.k8s:
         state: present
@@ -33,41 +129,33 @@
                     error_reporting:
                       enabled: true
                     postgresql:
-                      password: {{ authentik_postgresql_password }}
+                      host: "{{ authentik_db_host }}"
+                      name: "authentik" # DB name
+                      user: "authentik"
+                      password: "d0e0300e981c6aaadb45f3d4c08f3896"
+                      port: 5432
                   server:
                     ingress:
                       enabled: false
                   postgresql:
-                    enabled: true
-                    image:
-                      registry: docker.io
-                      repository: library/postgres
-                      tag: "16.6-bookworm"
-                    auth:
-                      password: {{ authentik_postgresql_password }}
-                    primary:
-                      persistence:
-                        enabled: true
-                        mountPath: /bitnami/postgresql/data
-                        existingClaim: authentik-db
-                      extraVolumeMounts:
-                        - name: postgresql-config
-                          mountPath: /bitnami/postgresql/conf
-                  redis:
-                    enabled: true
-                    master:
-                      persistence:
-                        enabled: true
-                        existingClaim: authentik-redis
+                    enabled: false
+                  # redis:
+                  #   enabled: false
+                  #   master:
+                  #     persistence:
+                  #       enabled: true
+                  #       existingClaim: authentik-redis
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
-                prune: true
-                selfHeal: true
+                prune: false
+                selfHeal: false
               syncOptions:
                 - CreateNamespace=true
+      tags:
+        - argocd
 
     - name: Deploy Authentik postgresql pv
       kubernetes.core.k8s:
@@ -91,6 +179,7 @@
             mountOptions:
               - noatime
               - nfsvers=4.2
+      when: false
 
     - name: Deploy Authentik postgresql db pvc
       kubernetes.core.k8s:
@@ -112,6 +201,7 @@
                 service: authentik-db # Add selector to match PV label
             volumeName: authentik-db
             storageClassName: "" # This prevents dynamic provisioning
+      when: false
 
     - name: Deploy Authentik redis pv
       kubernetes.core.k8s:
@@ -135,6 +225,7 @@
             mountOptions:
               - noatime
               - nfsvers=4.2
+      when: false
 
     - name: Deploy Authentik redis pvc
       kubernetes.core.k8s:
@@ -156,3 +247,27 @@
                 service: authentik-redis # Add selector to match PV label
             volumeName: authentik-redis
             storageClassName: "" # This prevents dynamic provisioning
+      when: false
+
+    - name: Deploy svc lb
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: authentik-postgres-rw-lb
+            namespace: "{{ target_namespace }}"
+          spec:
+            ports:
+              - name: postgres
+                port: 5432
+                protocol: TCP
+                targetPort: 5432
+            selector:
+              cnpg.io/cluster: authentik-postgres
+              cnpg.io/instanceRole: primary
+            type: LoadBalancer
+      tags:
+        - postgres
+      when: false
