@@ -1,0 +1,18 @@
+---
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: databasus-data
+  labels:
+    service: databasus-data
+spec:
+  $patch: replace
+  capacity:
+    storage: 1Gi
+  accessModes:
+    - ReadWriteOnce
+  persistentVolumeReclaimPolicy: Retain
+  storageClassName: ""
+  hostPath:
+    path: /opt/k8s-storage/databasus
+    type: DirectoryOrCreate

@@ -40,7 +40,7 @@ You can also provide credentials through inventory/group vars instead of environ
 ## Run the playbook
 
 ```bash
-ansible-playbook -i ansible/inventories/local/hosts.ini addons/hf-tuning.yaml
+ansible-playbook -i ansible/inventories/oci/hosts.ini addons/hf-tuning.yaml
 ansible-playbook -i ansible/inventories/prod/hosts.ini addons/hf-tuning.yaml
 ```
 
@@ -49,7 +49,7 @@ ansible-playbook -i ansible/inventories/prod/hosts.ini addons/hf-tuning.yaml
 Override defaults at runtime with `-e`:
 
 ```bash
-ansible-playbook -i ansible/inventories/local/hosts.ini addons/hf-tuning.yaml \
+ansible-playbook -i ansible/inventories/oci/hosts.ini addons/hf-tuning.yaml \
   -e hf_http_timeout_seconds=240 \
   -e hf_http_retries=4 \
   -e hf_proxy_metadata_max_age_minutes=4320 \
