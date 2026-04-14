@@ -76,17 +76,7 @@
               # size: 1Gi
               storageClassName: nfs-csi-postgres
             bootstrap:
-              mode: recovery
-            recovery:
-              backupID: "20260402T020000" # backup will be at s3Path/serverName/base/<backupID>
-              serverName: "coder-postgres" # backup files will be at s3Path/serverName/base
-            restoreSource:
-              s3Path: "s3://cnpg/backups"
-              endpointURL: "https://{{ rustfs_endpoint }}"
-              s3:
-                credentialsSecretName: s3-creds
-                accessKeyId: ACCESS_KEY_ID
-                secretAccessKey: SECRET_ACCESS_KEY
+              mode: initdb
             archiveDestination:
               s3Path: "s3://cnpg/backup2"
               endpointURL: "https://{{ rustfs_endpoint }}"

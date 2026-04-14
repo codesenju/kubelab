@@ -86,3 +86,15 @@ kro/rgd/postgres.yaml
 .gitignore
 */kube-bench_*.tar.gz
 nohup.out
+zero-trust/NetworkPolicies/masterclass/CKS_Network_Masterclass
+.gitignore
+ansible/inventories/*/group_vars/all/secrets.yaml
+zero-trust/kube-bench/kube-bench
+.gitignore
+zero-trust/NetworkPolicies/masterclass/CKS_Network_Masterclass.zip
+.gitignore
+authentik_backup_2026-04-11_00-00-27.dump
+ansible/db.sqlite
+ansible/jazziro-com-tls.yaml
+ansible/k3s-config.yaml
+*.tar.gz

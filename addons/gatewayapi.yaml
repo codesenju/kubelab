@@ -78,6 +78,27 @@
         - ingress
         - certificate
 
+    - name: Create public2 wildcar certificate
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: cert-manager.io/v1
+          kind: Certificate
+          metadata:
+            name: "{{ certificate_ref_2 }}" # jazziro-com-tls
+            namespace: "{{ target_namespace }}"
+          spec:
+            secretName: "{{ certificate_ref_2 }}" # jazziro-com-tls
+            issuerRef:
+              name: letsencrypt-production
+              kind: ClusterIssuer
+            commonName: "{{ public_dns_wildcard_2 }}"
+            dnsNames:
+              - "{{ public_dns_wildcard_2 }}"
+      tags:
+        - ingress
+        - certificate
+
     - name: Deploy GatewayApi local
       kubernetes.core.k8s:
         state: present
@@ -99,6 +120,13 @@
                     from: All
               - name: web-public
                 hostname: "{{ public_dns_wildcard }}"
+                port: "{{ traefik_web_port }}" # 8000
+                protocol: HTTP
+                allowedRoutes:
+                  namespaces:
+                    from: All
+              - name: web-public-2
+                hostname: "{{ public_dns_wildcard_2 }}"
                 port: "{{ traefik_web_port }}" # 8000
                 protocol: HTTP
                 allowedRoutes:
@@ -126,3 +154,14 @@
                   mode: Terminate
                   certificateRefs:
                     - name: "{{ certificate_ref }}"
+              - name: websecure-public-2
+                hostname: "{{ public_dns_wildcard_2 }}"
+                port: "{{ traefik_websecure_port }}" # 8443
+                protocol: HTTPS
+                allowedRoutes:
+                  namespaces:
+                    from: All
+                tls:
+                  mode: Terminate
+                  certificateRefs:
+                    - name: "{{ certificate_ref_2 }}"
