@@ -76,7 +76,7 @@ images:
   newTag: "2.58.01"
 - name: docker.io/fallenbagel/jellyseerr
   newName: ghcr.io/seerr-team/seerr
-  newTag: "v3.1.0"
+  newTag: "v3.1.1"
 - name: lscr.io/linuxserver/readarr
   newTag: "develop-version-0.4.14.2782"
 - name: ghcr.io/flaresolverr/flaresolverr
