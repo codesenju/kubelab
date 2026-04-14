@@ -8,7 +8,7 @@
   tasks:
     - name: Deploy databasus ArgoCD Application
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -21,7 +21,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/databasus/overlays/prod
+              path: "kustomize/databasus/overlays/oci"
               targetRevision: main
               kustomize:
                 commonAnnotations:
@@ -158,9 +158,9 @@
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
-                sectionName: websecure
+                sectionName: websecure-public
             hostnames:
-              - "databasus.{{ local_dns }}"
+              - "databasus.{{ public_dns }}"
             rules:
               - backendRefs:
                   - name: databasus
