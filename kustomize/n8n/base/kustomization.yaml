@@ -4,5 +4,5 @@ kind: Kustomization
 resources:
   - deployment.yaml
   - service.yaml
-  - postgres.yaml
+  # - postgres.yaml
   - storage.yaml
