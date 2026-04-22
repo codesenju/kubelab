@@ -14,6 +14,9 @@ spec:
         app: n8n
     spec:
       $patch: replace
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
       containers:
         - name: n8n
           image: n8n_image
@@ -36,6 +39,10 @@ spec:
               value: "true"
             - name: N8N_RUNNERS_ENABLED
               value: "true"
+            - name: N8N_USER_FOLDER
+              value: "/home/node"
+            - name: HOME
+              value: "/home/node"
             # - name: DB_TYPE
             #   value: "postgresdb"
             # - name: DB_POSTGRESDB_DATABASE
@@ -76,7 +83,6 @@ spec:
           volumeMounts:
             - name: n8n-data
               mountPath: /home/node/.n8n
-              subPath: n8n
       volumes:
       - name: n8n-data
         persistentVolumeClaim:
