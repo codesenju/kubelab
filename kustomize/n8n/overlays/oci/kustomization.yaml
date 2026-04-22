@@ -1,0 +1,33 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+  - ../../base/
+
+namespace: n8n
+
+images:
+- name: n8n_image
+  newName: docker.io/codesenju/n8n
+  newTag: 1.110.1
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+secretGenerator:
+- name: n8n-postgres-secrets
+  envs:
+    - .env
+
+patches:
+  - path: pv.patch.yaml
+    target:
+      group: ""
+      version: v1
+      kind: PersistentVolume
+      name: n8n-data
+  - path: pvc.patch.yaml
+    target:
+      group: ""
+      version: v1
+      kind: PersistentVolumeClaim
+      name: n8n-data
