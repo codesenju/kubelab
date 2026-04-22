@@ -20,7 +20,7 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: kustomize/n8n/overlays/prod
+              path: "kustomize/n8n/overlays/{{ target_environment }}"
               targetRevision: main
               kustomize:
                 labels:
