@@ -29,6 +29,14 @@
                   image:
                     repository: registry.k8s.io/kro/kro
                     # tag: "v0.9.0"
+                  deployment:
+                    resources:
+                      requests:
+                        cpu: 60m
+                        memory: 64Mi
+                      limits:
+                        cpu: 250m
+                        memory: 256Mi
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
