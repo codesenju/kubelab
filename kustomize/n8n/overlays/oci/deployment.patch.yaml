@@ -82,7 +82,7 @@ spec:
                   key: WEBHOOK_URL
           volumeMounts:
             - name: n8n-data
-              mountPath: /home/node/.n8n
+              mountPath: /home/node/
       volumes:
       - name: n8n-data
         persistentVolumeClaim:
