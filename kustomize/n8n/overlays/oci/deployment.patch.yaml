@@ -28,7 +28,7 @@ spec:
               memory: "256M"
               cpu: "256m"
             limits:
-              memory: "512G"
+              memory: "512M"
               cpu: "512m"
           env:
             - name: GENERIC_TIMEZONE
