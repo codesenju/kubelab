@@ -1,0 +1,110 @@
+---
+- name: Anteon Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: anteon
+  tasks:
+    - name: Deploy Argocd App
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: anteon
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+            source:
+              repoURL: https://getanteon.github.io/anteon-helm-charts/
+              chart: anteon
+              targetRevision: "2.6.4"
+              helm:
+                releaseName: anteon
+                values: |
+                ingress:
+                  enabled: false
+                  className: "traefik"
+                  annotations:
+                    external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+                  hosts:
+                    - host: "anteon.{{ local_dns }}"
+                      paths:
+                        - path: /
+                          pathType: Prefix
+                  tls:
+                    - secretName: something-cert
+                      hosts:
+                        - "anteon.{{ local_dns }}"
+
+    - name: Deploy Argocd App
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: alaz
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+            source:
+              repoURL: https://getanteon.github.io/anteon-helm-charts/
+              chart: alaz
+              targetRevision: "0.12.0"
+              helm:
+                releaseName: alaz
+                values: |
+                  monitoringID: "{{ anteon_monitoring_id }}"
+                  backendHost: http://nginx-service.anteon.svc/api-alaz
+            ignoreDifferences:
+              - group: "apps"
+                kind: DaemonSet
+                name: alaz-daemonset
+                jqPathExpressions:
+                  - .spec.template.spec.containers[] | select(.name=="alaz-pod").resources.limits.cpu
+
+    - name: Create Anteon HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: anteon
+            namespace: "{{ target_namespace }}"
+          spec:
+            hostnames:
+              - "anteon.{{ local_dns }}"
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            rules:
+              - backendRefs:
+                  - name: nginx-service
+                    port: 80

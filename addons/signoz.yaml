@@ -1,13 +1,14 @@
-- hosts: k8s-control-plane-1
-  become: no
-  gather_facts: no
+---
+- name: Signoz Playbook
+  hosts: k8s-control-plane-1
+  become: false
+  gather_facts: false
   vars:
     target_namespace: signoz
   tasks:
-
     - name: Deploy signoz postgres
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: postgresql.cnpg.io/v1
           kind: Cluster
@@ -61,10 +62,10 @@
                   jobs: 2
       tags:
         - postgres
-  
+
     - name: Create coder postgres secrets
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -80,7 +81,7 @@
 
     - name: Create signoz postgres secrets
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -96,7 +97,7 @@
 
     - name: Deploy ScheduledBackup
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: postgresql.cnpg.io/v1
           kind: ScheduledBackup
@@ -118,7 +119,7 @@
 
     - name: Deploy Signoz
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -206,7 +207,7 @@
                           <parts_to_delay_insert>1000</parts_to_delay_insert>
                         </merge_tree>
                       </clickhouse>
-                  
+
                   # OTel Collector optimization
                   otelCollector:
                     imagePullSecrets:
@@ -242,7 +243,7 @@
                       processors:
                         batch:
                           timeout: 10s
-                          send_batch_size: 50000     
+                          send_batch_size: 50000
                           send_batch_max_size: 100000
             destination:
               server: https://kubernetes.default.svc
@@ -258,20 +259,21 @@
 
     - name: Create Docker pull secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
           metadata:
             name: dockerhub-secret
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           type: kubernetes.io/dockerconfigjson
           data:
-            .dockerconfigjson: "{{ {'auths': {'https://index.docker.io/v1/': {'username': docker_username, 'password': docker_password, 'auth': (docker_username + ':' + docker_password) | b64encode}}} | to_json | b64encode }}"
+            .dockerconfigjson: "{{ {'auths': {'https://index.docker.io/v1/': {'username': docker_username, 'password': docker_password, 'auth': (docker_username +
+              ':' + docker_password) | b64encode}}} | to_json | b64encode }}"
 
     - name: Deploy Signoz k8s-infra
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -323,7 +325,7 @@
                       enabled: true
                       blacklist:
                         enabled: true
-                        namespaces: 
+                        namespaces:
                           - kube-system
                     kubeletMetrics:
                       enabled: true
@@ -355,13 +357,13 @@
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
             name: local-jazziro-com
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: local-jazziro-com-tls
             issuerRef:
@@ -369,21 +371,21 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns }}"
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns }}"
+              - "{{ local_dns_wildcard }}"
 
     - name: Create signoz IngressRoute
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
           metadata:
             name: signoz
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
             annotations:
               kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
           spec:
             entryPoints:
               - websecure
@@ -396,69 +398,70 @@
                     port: 8080
             tls:
               secretName: local-jazziro-com-tls
-      tags: 
-      - ingress
+      tags:
+        - ingress
+      when: false
 
     - name: Create signoz-otel-collector Ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
           metadata:
             name: signoz-otel-collector
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
-            - hosts:
-              - "signoz-otel-collector.{{ local_dns }}"
-              secretName: local-jazziro-com-tls
+              - hosts:
+                  - "signoz-otel-collector.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
             rules:
-            - host: "signoz-otel-collector.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: signoz-otel-collector
-                      port:
-                        number: 4318
-      tags: 
-      - ingress
+              - host: "signoz-otel-collector.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: signoz-otel-collector
+                          port:
+                            number: 4318
+      tags:
+        - ingress
 
     - name: Create signoz frontend Ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
           metadata:
             name: signoz
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
             annotations:
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
+              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
             ingressClassName: traefik
             tls:
-            - hosts:
-              - "signoz.{{ local_dns }}"
-              secretName: local-jazziro-com-tls
+              - hosts:
+                  - "signoz.{{ local_dns }}"
+                secretName: local-jazziro-com-tls
             rules:
-            - host: "signoz.{{ local_dns }}"
-              http:
-                paths:
-                - path: /
-                  pathType: Prefix
-                  backend:
-                    service:
-                      name: signoz
-                      port:
-                        number: 8080
-      tags: 
-      - ingress
+              - host: "signoz.{{ local_dns }}"
+                http:
+                  paths:
+                    - path: /
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: signoz
+                          port:
+                            number: 8080
+      tags:
+        - ingress

@@ -3,7 +3,75 @@
   hosts: k8s-control-plane-1
   gather_facts: false
   become: false
+  vars:
+    target_namespace: cloudflared
   tasks:
+    - name: Create tunnel token secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: tunnel-token
+            namespace: "{{ target_namespace }}"
+          stringData:
+            token: "{{ cf_tunnel_token }}"
+
+    - name: Deploy Cloudflared
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: cloudflared
+            namespace: "{{ target_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                pod: cloudflared
+            template:
+              metadata:
+                labels:
+                  pod: cloudflared
+              spec:
+                securityContext:
+                  sysctls:
+                    # Allows ICMP traffic (ping, traceroute) to resources behind cloudflared.
+                    - name: net.ipv4.ping_group_range
+                      value: "65532 65532"
+                containers:
+                  - image: cloudflare/cloudflared:2026.3.0
+                    name: cloudflared
+                    env:
+                      # Defines an environment variable for the tunnel token.
+                      - name: TUNNEL_TOKEN
+                        valueFrom:
+                          secretKeyRef:
+                            name: tunnel-token
+                            key: token
+                    command:
+                      # Configures tunnel run parameters
+                      - cloudflared
+                      - tunnel
+                      - --no-autoupdate
+                      - --loglevel
+                      - info
+                      - --metrics
+                      - 0.0.0.0:2000
+                      - run
+                    livenessProbe:
+                      httpGet:
+                        # Cloudflared has a /ready endpoint which returns 200 if and only if
+                        # it has an active connection to Cloudflare's network.
+                        path: /ready
+                        port: 2000
+                      failureThreshold: 1
+                      initialDelaySeconds: 10
+                      periodSeconds: 10
+
     - name: Deploy Cloudflared deployment
       kubernetes.core.k8s:
         state: present
@@ -71,6 +139,7 @@
                         - key: config.yaml
                           path: config.yaml
       tags: cloudflared
+      when: false
 
     - name: Deploy Cloudflared configmap
       kubernetes.core.k8s:
@@ -118,3 +187,4 @@
                 service: hello_world
               # This rule matches any traffic which didn't match a previous rule, and responds with HTTP 404.
               - service: http_status:404
+      when: false
