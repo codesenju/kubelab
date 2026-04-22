@@ -13,9 +13,6 @@ spec:
       labels:
         app: n8n
     spec:
-      securityContext:
-        runAsUser: 1001
-        runAsGroup: 1001
       containers:
         - name: n8n
           image: n8n_image
@@ -33,23 +30,27 @@ spec:
               value: "true"
             - name: N8N_DEFAULT_BINARY_DATA_MODE
               value: filesystem
-            # - name: DB_TYPE
-            #   value: "postgresdb"
-            # - name: DB_POSTGRESDB_DATABASE
-            #   value: "n8n"
-            # - name: DB_POSTGRESDB_HOST
-            #   value: "n8n-postgres-rw"
-            # - name: DB_POSTGRESDB_PORT
-            #   value: "5432"
-            # - name: DB_POSTGRESDB_USER
-            #   value: "n8n"
-            # - name: DB_POSTGRESDB_SCHEMA
-            #   value: "public"
-            # - name: DB_POSTGRESDB_PASSWORD
-            #   valueFrom:
-            #     secretKeyRef:
-            #       name: n8n-postgres-secrets
-            #       key: password
+            - name: N8N_USER_FOLDER
+              value: "/home/node"
+            - name: HOME
+              value: "/home/node"
+            - name: DB_TYPE
+              value: "postgresdb"
+            - name: DB_POSTGRESDB_DATABASE
+              value: "n8n"
+            - name: DB_POSTGRESDB_HOST
+              value: "n8n-postgres-rw"
+            - name: DB_POSTGRESDB_PORT
+              value: "5432"
+            - name: DB_POSTGRESDB_USER
+              value: "n8n"
+            - name: DB_POSTGRESDB_SCHEMA
+              value: "public"
+            - name: DB_POSTGRESDB_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-postgres-secrets
+                  key: password
             - name: N8N_HOST
               valueFrom:
                 configMapKeyRef:
