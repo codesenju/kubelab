@@ -13,11 +13,6 @@ images:
 generatorOptions:
   disableNameSuffixHash: true
 
-secretGenerator:
-- name: n8n-postgres-secrets
-  envs:
-    - .env
-
 patches:
   - path: pv.patch.yaml
     target:
