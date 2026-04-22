@@ -14,5 +14,5 @@ spec:
   persistentVolumeReclaimPolicy: Retain
   storageClassName: ""
   hostPath:
-    path: /opt/k8s-storage/n8n/data/.n8n
+    path: /opt/k8s-storage/n8n/data/
     type: Directory
