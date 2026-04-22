@@ -25,11 +25,11 @@ spec:
             - containerPort: 5678
           resources:
             requests:
-              memory: "512M"
-              cpu: "0.5"
+              memory: "256M"
+              cpu: "256m"
             limits:
-              memory: "1G"
-              cpu: "1"
+              memory: "512G"
+              cpu: "512m"
           env:
             - name: GENERIC_TIMEZONE
               value: "UTC"
