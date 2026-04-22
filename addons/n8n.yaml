@@ -1,7 +1,6 @@
 ---
 - name: N8n Playbook
   hosts: k8s-control-plane-1
-  become: true
   gather_facts: false
   vars:
     target_namespace: n8n
