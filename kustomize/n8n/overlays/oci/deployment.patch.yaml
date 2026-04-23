@@ -43,6 +43,8 @@ spec:
               value: "/home/node"
             - name: HOME
               value: "/home/node"
+            - name: NODES_EXCLUDE
+              value: "[]"
             # - name: DB_TYPE
             #   value: "postgresdb"
             # - name: DB_POSTGRESDB_DATABASE
