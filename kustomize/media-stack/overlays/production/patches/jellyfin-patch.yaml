@@ -99,10 +99,10 @@ spec:
           subPath: music
         resources:
           requests:
-            cpu: "256m"
+            cpu: "512m"
             memory: "512Mi"
           limits:
-            cpu: "512m"
+            cpu: "1"
             memory: "1Gi"
       volumes:
       - name: data
