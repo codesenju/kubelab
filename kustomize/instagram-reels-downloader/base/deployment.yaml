@@ -1,0 +1,30 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: instagram-reels-downloader
+  labels:
+    app: instagram-reels-downloader
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: instagram-reels-downloader
+  template:
+    metadata:
+      labels:
+        app: instagram-reels-downloader
+    spec:
+      containers:
+      - name: instagram-reels-downloader
+        image: IMAGE_TEMPLATE
+        ports:
+        - containerPort: 3000
+          name: http
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "60m"
+          limits:
+            memory: "128Mi"
+            cpu: "120m"
