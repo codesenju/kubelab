@@ -1,8 +1,9 @@
-- hosts: k8s-control-plane-1
+- name: Npm Playbook
+  hosts: k8s-control-plane-1
   gather_facts: no 
   become: no
   vars:
-    namespace: nginx-proxy-manager
+    target_namespace: nginx-proxy-manager
   tasks:
 
     - name: Deploy nginx-proxy-manager
@@ -74,7 +75,7 @@
           kind: IngressRoute
           metadata:
             name: nginx-proxy-manager
-            namespace: '{{ namespace }}'
+            namespace: '{{ target_namespace }}'
             annotations:
               kubernetes.io/ingress.class: traefik
               # external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
@@ -90,4 +91,3 @@
                     port: 81
             # tls:
             #   secretName: local-jazziro-com-tls
-
