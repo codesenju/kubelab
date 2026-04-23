@@ -1,0 +1,12 @@
+---
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+resources:
+- ../../base
+
+images:
+- name: IMAGE_TEMPLATE
+  newName: codesenju/instagram-reels-downloader
+  newTag: stable
+
+namespace: instagram-reels-downloader

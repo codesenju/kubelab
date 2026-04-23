@@ -61,6 +61,7 @@ spec:
           volumeMounts:
             - name: rustfs-data
               mountPath: /data
+              subPath: rustfs-data
       volumes:
         - name: rustfs-data
           persistentVolumeClaim:
