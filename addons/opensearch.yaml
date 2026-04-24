@@ -4,7 +4,7 @@
   become: true
   gather_facts: false
   vars:
-    target_namespace: opensearch-system
+    target_namespace: opensearch
   tasks:
 
     - name: Deploy OpenSearch Operator ArgoCD Application
@@ -23,7 +23,7 @@
             source:
               chart: opensearch-operator
               repoURL: https://opensearch-project.github.io/opensearch-k8s-operator
-              targetRevision: 2.8.0
+              targetRevision: 3.0.2
               helm:
                 releaseName: opensearch-operator
             destination:
@@ -37,11 +37,11 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
-            ignoreDifferences:
-              - group: "postgresql.cnpg.io"
-                kind: Cluster
-                jsonPointers:
-                  - /spec/managed/roles
+            # ignoreDifferences:
+            #     jqPathExpressions:
+            #       - .spec.template.spec.
+      tags:
+        - operator
 
     - name: Deploy OpenSearch master-0 PV
       kubernetes.core.k8s:
@@ -58,7 +58,7 @@
               storage: 10Gi
             nfs:
               server: 192.168.0.16
-              path: /mnt/pool1/AppData/opensearch/master-0
+              path: /mnt/pool2/AppData/opensearch/master-0
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -80,7 +80,7 @@
               storage: 10Gi
             nfs:
               server: 192.168.0.16
-              path: /mnt/pool1/AppData/opensearch/master-1
+              path: /mnt/pool2/AppData/opensearch/master-1
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -159,6 +159,17 @@
               kustomize:
                 labels:
                   app.kubernetes.io/instance: opensearch-cluster
+                patches:
+                  - target:
+                      kind: DepOpenSearchClusterloyment
+                      name: opensearch-domain
+                    patch: |-
+                      - op: replace
+                        path: /spec/template/spec/general/version
+                        value: 3.6.0
+                      - op: replace
+                        path: /spec/template/spec/dashboards/version
+                        value: 3.6.0
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -170,11 +181,6 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
-            ignoreDifferences:
-              - group: "postgresql.cnpg.io"
-                kind: Cluster
-                jsonPointers:
-                  - /spec/managed/roles
 
     - name: Create ServersTransport for OpenSearch
       kubernetes.core.k8s:
@@ -189,6 +195,7 @@
             insecureSkipVerify: true
       tags:
         - ingress
+      when: false
 
     - name: Create OpenSearch Ingress
       kubernetes.core.k8s:
@@ -222,3 +229,53 @@
                             number: 5601
       tags:
         - ingress
+      when: false
+
+    - name: Create HTTPRoute http redirect
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: opensearch-dashboard-redirect
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web
+            hostnames:
+              - "opensearch.{{ local_dns }}"
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      scheme: https
+                      statusCode: 301
+                      port: 443
+      tags: 
+      - ingress
+
+    - name: Create HTTPRoute for odigos
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: opensearch-dashboard
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
+              - "opensearch.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: opensearch-domain-dashboards
+                    port: 5601
+      tags: 
+      - ingress
