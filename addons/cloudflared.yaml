@@ -45,6 +45,13 @@
                 containers:
                   - image: cloudflare/cloudflared:2026.3.0
                     name: cloudflared
+                    resources:
+                      requests:
+                        cpu: 25m
+                        memory: 32Mi
+                      limits:
+                        cpu: 100m
+                        memory: 128Mi
                     env:
                       # Defines an environment variable for the tunnel token.
                       - name: TUNNEL_TOKEN
