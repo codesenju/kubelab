@@ -24,7 +24,7 @@ spec:
       enable: true
       generate: true
     version: 3.3.0
-    enable: true
+    enable: false
     replicas: 1
     resources:
       requests:
