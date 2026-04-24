@@ -15,6 +15,13 @@ spec:
       # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
       image: string | default="ghcr.io/cloudnative-pg/postgresql:16-standard-trixie" # UID 26, GID 102
       instances: integer | default=1
+      resources:
+        requests:
+          memory: string | default="512Mi"
+          cpu: integer | default="256m"
+        limits:
+          memory: string | default="512Mi"
+          cpu: integer | default="256m"
       sharedLibraries: '[]string | default=[] description="List of shared preload libraries"'
       imagePullSecretName1: string | default=""
       imagePullSecretName2: string | default=""
@@ -107,6 +114,13 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
+          resources:
+            requests:
+              memory: ${schema.spec.resources.requests.memory}
+              cpu: ${schema.spec.resources.requests.cpu}
+            limits:
+              memory: ${schema.spec.resources.limits.memory}
+              cpu: ${schema.spec.resources.limits.cpu}
           imagePullSecrets:
             - name: ${schema.spec.imagePullSecretName1}
             - name: ${schema.spec.imagePullSecretName2}
@@ -156,6 +170,13 @@ spec:
         spec:
           imageName: ${schema.spec.image}
           instances: ${schema.spec.instances}
+          resources:
+            requests:
+              memory: ${schema.spec.resources.requests.memory}
+              cpu: ${schema.spec.resources.requests.cpu}
+            limits:
+              memory: ${schema.spec.resources.limits.memory}
+              cpu: ${schema.spec.resources.limits.cpu}
           imagePullSecrets:
             - name: ${schema.spec.imagePullSecretName1}
             - name: ${schema.spec.imagePullSecretName2}
