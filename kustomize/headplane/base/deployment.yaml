@@ -18,6 +18,13 @@ spec:
         - name: headplane
           image: IMAGE_TEMPLATE
           imagePullPolicy: IfNotPresent
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 256Mi
           ports:
             - containerPort: 3000
               name: http
