@@ -24,6 +24,29 @@
                 releaseName: cert-manager
                 values: |
                   installCRDs: true
+                  resources:
+                    requests:
+                      cpu: 25m
+                      memory: 64Mi
+                    limits:
+                      cpu: 100m
+                      memory: 128Mi
+                  cainjector:
+                    resources:
+                      requests:
+                        cpu: 25m
+                        memory: 128Mi
+                      limits:
+                        cpu: 100m
+                        memory: 256Mi
+                  webhook:
+                    resources:
+                      requests:
+                        cpu: 25m
+                        memory: 32Mi
+                      limits:
+                        cpu: 100m
+                        memory: 128Mi
             destination:
               server: https://kubernetes.default.svc
               namespace: cert-manager

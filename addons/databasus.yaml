@@ -85,6 +85,13 @@
               helm:
                 releaseName: databasus
                 values: |
+                  resources:
+                    requests:
+                      cpu: 25m
+                      memory: 128Mi
+                    limits:
+                      cpu: 250m
+                      memory: 256Mi
                   persistence:
                     enabled: true
                     # Storage class name. Leave empty to use cluster default.
