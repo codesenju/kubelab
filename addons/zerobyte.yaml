@@ -1,0 +1,56 @@
+---
+- name: Zerobyte Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    namespace: zerobyte
+  tasks:
+    - name: Create zerobyte secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: zerobyte-secrets
+            namespace: zerobyte
+          type: Opaque
+          stringData:
+            TZ: "{{ zerobyte_tz | default('Europe/Zurich') }}"
+            BASE_URL: "{{ zerobyte_base_url }}"
+            APP_SECRET: "{{ zerobyte_app_secret }}"
+      tags: zerobyte
+
+    - name: Deploy zerobyte ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: zerobyte
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/zerobyte/overlays/prod
+              targetRevision: main
+              kustomize:
+                commonLabels:
+                  app.kubernetes.io/instance: zerobyte
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags: zerobyte

@@ -21,24 +21,52 @@
             domain: "{{ argocd_domain }}"
           controller:
             replicas: "{{ argocd_replicas.controller }}"
+            resources:
+              requests:
+                cpu: 100m
+                memory: 768Mi
+              limits:
+                cpu: 500m
+                memory: 1Gi
             metrics:
               enabled: true
               serviceMonitor:
                 enabled: false
           server:
             replicas: "{{ argocd_replicas.server }}"
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 250m
+                memory: 256Mi
             metrics:
               enabled: true
               serviceMonitor:
                 enabled: false
           repoServer:
             replicas: "{{ argocd_replicas.repo_server }}"
+            resources:
+              requests:
+                cpu: 100m
+                memory: 128Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
             metrics:
               enabled: true
               serviceMonitor:
                 enabled: false
           applicationSet:
             replicas: "{{ argocd_replicas.application_set }}"
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 250m
+                memory: 256Mi
             metrics:
               enabled: true
               serviceMonitor:
@@ -89,8 +117,31 @@
               server.insecure: true
           redis-ha:
             enabled: false
+          redis:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 32Mi
+              limits:
+                cpu: 100m
+                memory: 128Mi
           dex:
             enabled: true
+            resources:
+              requests:
+                cpu: 50m
+                memory: 64Mi
+              limits:
+                cpu: 250m
+                memory: 256Mi
+          notifications:
+            resources:
+              requests:
+                cpu: 25m
+                memory: 64Mi
+              limits:
+                cpu: 100m
+                memory: 256Mi
             # extraArgs:
             #   - --disable-tls
       tags:

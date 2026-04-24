@@ -34,7 +34,14 @@
               targetRevision: 0.28.0
               helm:
                 releaseName: cnpg
-                # values: |
+                values: |
+                  resources:
+                    requests:
+                      cpu: 25m
+                      memory: 64Mi
+                    limits:
+                      cpu: 100m
+                      memory: 128Mi
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -79,7 +86,14 @@
               targetRevision: 0.5.0
               helm:
                 releaseName: plugin-barman-cloud
-                # values: |
+                values: |
+                  resources:
+                    requests:
+                      cpu: 25m
+                      memory: 32Mi
+                    limits:
+                      cpu: 100m
+                      memory: 64Mi
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
