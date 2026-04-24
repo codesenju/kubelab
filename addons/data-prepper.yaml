@@ -2,7 +2,7 @@
   gather_facts: no
   become: no
   vars:
-    target_namespace: opensearch-system
+    target_namespace: opensearch
   tasks:
     - name: Deploy Data Prepper
       kubernetes.core.k8s:
