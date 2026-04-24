@@ -18,10 +18,10 @@ spec:
       resources:
         requests:
           memory: string | default="512Mi"
-          cpu: integer | default="256m"
+          cpu: string | default="256m"
         limits:
           memory: string | default="512Mi"
-          cpu: integer | default="256m"
+          cpu: string | default="256m"
       sharedLibraries: '[]string | default=[] description="List of shared preload libraries"'
       imagePullSecretName1: string | default=""
       imagePullSecretName2: string | default=""
