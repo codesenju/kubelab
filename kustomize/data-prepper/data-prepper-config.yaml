@@ -2,7 +2,7 @@ apiVersion: v1
 kind: ConfigMap
 metadata:
   name: data-prepper-config
-  namespace: opensearch-system
+  namespace: opensearch
 data:
   pipelines.yaml: |
     entry-pipeline:
