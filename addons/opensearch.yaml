@@ -161,15 +161,18 @@
                   app.kubernetes.io/instance: opensearch-cluster
                 patches:
                   - target:
-                      kind: DepOpenSearchClusterloyment
+                      kind: OpenSearchCluster
                       name: opensearch-domain
                     patch: |-
                       - op: replace
-                        path: /spec/template/spec/general/version
+                        path: /spec/general/version
                         value: 3.6.0
                       - op: replace
-                        path: /spec/template/spec/dashboards/version
+                        path: /spec/dashboards/version
                         value: 3.6.0
+                      - op: replace
+                        path: /spec/dashboards/enable
+                        value: false
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -181,10 +184,12 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+      tags:
+        - cluster
 
     - name: Create ServersTransport for OpenSearch
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: ServersTransport
@@ -195,7 +200,7 @@
             insecureSkipVerify: true
       tags:
         - ingress
-      when: false
+      # when: false
 
     - name: Create OpenSearch Ingress
       kubernetes.core.k8s:
@@ -229,11 +234,11 @@
                             number: 5601
       tags:
         - ingress
-      when: false
+      # when: false
 
     - name: Create HTTPRoute http redirect
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: gateway.networking.k8s.io/v1
           kind: HTTPRoute
@@ -246,7 +251,7 @@
                 namespace: gateway-infra
                 sectionName: web
             hostnames:
-              - "opensearch.{{ local_dns }}"
+              - "os.{{ local_dns }}"
             rules:
               - filters:
                   - type: RequestRedirect
@@ -255,9 +260,10 @@
                       statusCode: 301
                       port: 443
       tags: 
-      - ingress
+        - ingress
+      # when: false
 
-    - name: Create HTTPRoute for odigos
+    - name: Create HTTPRoute
       kubernetes.core.k8s:
         state: present
         definition:
@@ -272,10 +278,31 @@
                 namespace: gateway-infra
                 sectionName: websecure
             hostnames:
-              - "opensearch.{{ local_dns }}"
+              - "os.{{ local_dns }}"
             rules:
               - backendRefs:
                   - name: opensearch-domain-dashboards
                     port: 5601
       tags: 
-      - ingress
+        - ingress
+
+    - name: Create BackendTLSPolicy
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: BackendTLSPolicy
+          metadata:
+            name: opensearch-dashboard-backend-tls
+            namespace: opensearch
+          spec:
+            targetRefs:
+              - group: ""
+                kind: Service
+                name: opensearch-domain-dashboards
+            validation:
+              hostname: "os.{{ local_dns }}"
+              wellKnownCACertificates: System
+      tags: 
+        - ingress
+      # when: false
