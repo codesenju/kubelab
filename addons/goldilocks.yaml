@@ -1,8 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Goldilocks Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: goldilocks
   tasks:
-
     - name: Deploy Goldilocks
       kubernetes.core.k8s:
         state: present
@@ -19,13 +22,21 @@
             source:
               chart: goldilocks
               repoURL: https://charts.fairwinds.com/stable
-              targetRevision: 9.0.1
+              targetRevision: 10.3.0
               helm:
                 releaseName: goldilocks
                 values: |
                   vpa:
                     # vpa.enabled -- If true, the vpa will be installed as a sub-chart
                     enabled: true
+                  dashboard:
+                    resources:
+                      limits:
+                        cpu: 50m
+                        memory: 256Mi
+                      requests:
+                        cpu: 25m
+                        memory: 60Mi
             destination:
               server: https://kubernetes.default.svc
               namespace: goldilocks
@@ -35,3 +46,26 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+
+    - name: Create n8n HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: n8n
+            namespace: "{{ target_namespace }}"
+          spec:
+            hostnames:
+              - "goldilocks.{{ local_dns }}"
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            rules:
+              - backendRefs:
+                  - name: goldilocks-dashboard
+                    port: 80
+      tags:
+        - ingress
