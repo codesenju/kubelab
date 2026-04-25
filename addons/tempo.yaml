@@ -58,7 +58,7 @@
                     config:
                       storage:
                         remote_write:
-                          - url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local/api/v1/push
+                          - url: http://mimir-gateway.mimir.svc.cluster.local/api/v1/push
                             send_exemplars: true
                       registry:
                         external_labels:
