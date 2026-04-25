@@ -292,6 +292,15 @@ kubectl port-forward -n grafana-system svc/tempo-distributor 14268:14268
 curl -X POST http://localhost:14268/api/traces -d '{"spans":[{"traceID":"test"}]}'
 ```
 
+**OpenSearch Auth Check:**
+```bash
+# Port-forward the OpenSearch service
+kubectl port-forward -n opensearch svc/opensearch-domain-masters 9200:9200
+
+# In another terminal, verify auth and cluster health
+curl -k -u admin:"$(kubectl get secret opensearch-credentials -n opensearch -o jsonpath='{.data.password}' | base64 -d)" "https://127.0.0.1:9200/_cluster/health?pretty"
+```
+
 ## 🔧 Diagnostic Commands
 
 ### Cluster Health Check
