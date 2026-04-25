@@ -9,7 +9,7 @@
 
     - name: Deploy OpenSearch Operator ArgoCD Application
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -45,7 +45,7 @@
 
     - name: Deploy OpenSearch master-0 PV
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -67,7 +67,7 @@
 
     - name: Deploy OpenSearch master-1 PV
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolume
@@ -89,7 +89,7 @@
 
     - name: Deploy OpenSearch master-0 PVC
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -107,7 +107,7 @@
 
     - name: Deploy OpenSearch master-1 PVC
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: PersistentVolumeClaim
@@ -125,7 +125,7 @@
 
     - name: Create admin credentials secret
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: v1
           kind: Secret
@@ -142,7 +142,7 @@
 
     - name: Deploy OpenSearch Cluster CRD
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
