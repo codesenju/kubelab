@@ -3917,7 +3917,8 @@ prometheus:
 
     # EnableFeatures API enables access to Prometheus disabled features.
     # ref: https://prometheus.io/docs/prometheus/latest/feature_flags/
-    enableFeatures: []
+    enableFeatures:
+      - remote-write-receiver
     # - exemplar-storage
 
     ##
