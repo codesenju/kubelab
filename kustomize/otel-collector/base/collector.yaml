@@ -75,12 +75,12 @@ spec:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/alloy, otlp/signoz]
+          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz]
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/alloy, otlp/signoz]
+          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz]
         logs:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/alloy, otlp/signoz]
+          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz]
