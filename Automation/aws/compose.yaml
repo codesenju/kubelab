@@ -1,0 +1,31 @@
+services:
+  ministack:
+    image: ministackorg/ministack:latest
+    container_name: infra_ministack
+    ports:
+      - "4566:4566"
+    environment:
+      LAMBDA_EXECUTOR: docker
+      DOCKER_NETWORK: ${COMPOSE_PROJECT_NAME}_infra-network
+      LAMBDA_REMOTE_DOCKER_VOLUME_MOUNT: ${COMPOSE_PROJECT_NAME}_lambda-docker-volume
+      AWS_DEFAULT_REGION: ${AWS_REGION:-eu-central-1}
+      S3_PERSIST: 1
+      RDS_PERSIST: 1
+      PERSIST_STATE: 1
+      S3_DATA_DIR: /data/ministack-data/s3
+      STATE_DIR: /data/ministack-state
+    volumes:
+      - /var/run/docker.sock:/var/run/docker.sock
+      - lambda-docker-volume:/var/task
+      - s3-data:/data/ministack-data/s3
+      - ministack-state:/data/ministack-state
+    networks:
+      - infra-network
+
+volumes:
+  lambda-docker-volume:
+  s3-data:
+  ministack-state:
+
+networks:
+  infra-network:
