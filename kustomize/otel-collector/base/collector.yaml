@@ -60,7 +60,7 @@ spec:
           max_elapsed_time: 300s
       
       otlp/data-prepper:
-        endpoint: data-prepper.opensearch.svc.cluster.local:21890
+        endpoint: observability-stack-opentelemetry-collector.opensearch.svc.cluster.local:4317
         tls:
           insecure: true
         sending_queue:
