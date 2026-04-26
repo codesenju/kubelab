@@ -166,7 +166,7 @@ customRules: {}
 ## Create default rules for monitoring the cluster
 ##
 defaultRules:
-  create: true
+  create: false
   rules:
     alertmanager: true
     etcd: true
@@ -390,7 +390,7 @@ alertmanager:
 
   ## Deploy alertmanager
   ##
-  enabled: true
+  enabled: false
 
   ## Annotations for Alertmanager
   ##
@@ -1383,7 +1383,17 @@ grafana:
 
   ## Configure additional grafana datasources (passed through tpl)
   ## ref: https://grafana.com/docs/grafana/latest/administration/provisioning/#datasources
-  additionalDataSources: []
+  additionalDataSources:
+    - name: Mimir
+      type: prometheus
+      uid: mimir
+      access: proxy
+      url: http://mimir-gateway.mimir.svc.cluster.local/prometheus
+      isDefault: true
+      jsonData:
+        httpHeaderName1: X-Scope-OrgID
+      secureJsonData:
+        httpHeaderValue1: kube-prometheus-stack
   # - name: prometheus-sample
   #   access: proxy
   #   basicAuth: true
@@ -3320,7 +3330,7 @@ prometheus:
   ## Note many of features described below (e.g. rules, query, alerting, remote read, thanos) will not work in agent mode.
   ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/platform/prometheus-agent.md
   ##
-  agentMode: false
+  agentMode: true
 
   ## Annotations for Prometheus
   ##
@@ -3918,7 +3928,7 @@ prometheus:
     # EnableFeatures API enables access to Prometheus disabled features.
     # ref: https://prometheus.io/docs/prometheus/latest/feature_flags/
     enableFeatures:
-      - remote-write-receiver
+      # - remote-write-receiver
     # - exemplar-storage
 
     ##
@@ -3973,7 +3983,7 @@ prometheus:
 
     ## enable --web.enable-remote-write-receiver flag on prometheus-server
     ##
-    enableRemoteWriteReceiver: true
+    enableRemoteWriteReceiver: false
 
     ## Name of the external label used to denote replica name
     ##
