@@ -1,23 +1,23 @@
----
-apiVersion: grafana.integreatly.org/v1beta1
-kind: GrafanaDatasource
-metadata:
-  name: prometheus-ds
-spec:
-  instanceSelector:
-    matchLabels:
-      dashboards: "grafana"
-  datasource:
-    name: Prometheus
-    type: prometheus
-    access: proxy
-    basicAuth: false
-    url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local:9090
-    isDefault: true
-    editable: true
-    jsonData:
-      'tlsSkipVerify': false
-      'timeInterval': "5s"
+# ---
+# apiVersion: grafana.integreatly.org/v1beta1
+# kind: GrafanaDatasource
+# metadata:
+#   name: prometheus-ds
+# spec:
+#   instanceSelector:
+#     matchLabels:
+#       dashboards: "grafana"
+#   datasource:
+#     name: Prometheus
+#     type: prometheus
+#     access: proxy
+#     basicAuth: false
+#     url: http://kube-prometheus-stack-prometheus.kube-prometheus-stack.svc.cluster.local:9090
+#     isDefault: true
+#     editable: true
+#     jsonData:
+#       'tlsSkipVerify': false
+#       'timeInterval': "5s"
 ---
 apiVersion: grafana.integreatly.org/v1beta1
 kind: GrafanaDatasource
@@ -34,7 +34,7 @@ spec:
     access: proxy
     basicAuth: false
     url: http://mimir-gateway.mimir.svc.cluster.local/prometheus
-    isDefault: false
+    isDefault: true
     editable: true
     jsonData:
       'tlsSkipVerify': false
@@ -63,7 +63,7 @@ spec:
     jsonData:
       httpMethod: GET
       serviceMap:
-        datasourceUid: 'Mimir'
+        datasourceUid: 'mimir'
 # ---
 # apiVersion: grafana.integreatly.org/v1beta1
 # kind: GrafanaDatasource
