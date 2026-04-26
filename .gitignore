@@ -99,3 +99,4 @@ ansible/jazziro-com-tls.yaml
 ansible/k3s-config.yaml
 *.tar.gz
 .opencode/
+Automation/aws/out.tfplan
