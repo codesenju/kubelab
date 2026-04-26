@@ -28,6 +28,9 @@ spec:
         send_batch_max_size: 1024
     
     exporters:
+      debug:
+        verbosity: basic
+
       otlp/alloy:
         endpoint: alloy.grafana-system.svc.cluster.local:4317
         tls:
@@ -75,12 +78,12 @@ spec:
         traces:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz]
+          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz, debug]
         metrics:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz]
+          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz, debug]
         logs:
           receivers: [otlp]
           processors: [batch]
-          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz]
+          exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz, debug]
