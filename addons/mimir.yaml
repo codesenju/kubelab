@@ -85,3 +85,52 @@
                   max_series_per_metric: 5000
                   max_series_per_query: 50000
       tags: mimir
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: mimir-redirect
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web
+            hostnames:
+              - "mimir.{{ local_dns }}"
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      scheme: https
+                      statusCode: 301
+                      port: 443
+      tags:
+        - ingress
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: mimir
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
+              - "mimir.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: mimir-query-frontend
+                    port: 8080
+      tags:
+        - ingress
