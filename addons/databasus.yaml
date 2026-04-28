@@ -21,9 +21,20 @@
             project: default
             source:
               repoURL: https://github.com/codesenju/kubelab.git
-              path: "kustomize/databasus/overlays/oci"
+              path: "kustomize/databasus/overlays/{{ target_environment }}"
               targetRevision: main
               kustomize:
+                images:
+                  - databasus/databasus=registry.jazziro.com/dockerio/databasus/databasus:v3.32.0
+                patches:
+                  - target:
+                      kind: Deployment
+                      name: databasus
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/imagePullSecrets
+                        value:
+                          - name: {{ registry_name }}
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 labels:

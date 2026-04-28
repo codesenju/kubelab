@@ -1,0 +1,440 @@
+---
+- name: Observability Stack Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: opensearch
+  tasks:
+    - name: Deploy Observability Stack ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: observability-stack
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/opensearch-project/observability-stack.git
+              path: charts/observability-stack
+              targetRevision: main
+              helm:
+                releaseName: observability-stack
+                values: |
+                  opentelemetry-collector:
+                    enabled: true
+                    configMap:
+                      create: false
+                      existingName: otel-collector-config-cx
+                  prometheus:
+                    enabled: true
+                  opensearch:
+                    enabled: true
+                    singleNode: false
+                    replicas: 2
+                    image:
+                      repository: "opensearchproject/opensearch"
+                    resources:
+                      requests:
+                        memory: "2Gi"
+                        cpu: "1000m"
+                      limits:
+                        memory: "2Gi"
+                        cpu: "2000m"
+                    persistence:
+                      enabled: true
+                      size: 100Gi
+                      storageClass: "nfs-csi"
+                    opensearchJavaOpts: "-Xms1g -Xmx1g"
+                  examples:
+                    enabled: true
+                  data-prepper:
+                    enabled: false
+                  opentelemetry-demo:
+                   enabled: false
+                  opensearchUsername: "{{ obs_os_username }}"
+                  opensearchPassword: "{{ obs_os_password }}"
+                  opensearch-dashboards:
+                    replicaCount: 1
+                    opensearchHosts: "https://{{ obs_os_host }}:{{ obs_os_port }}"
+                    config:
+                      opensearch_dashboards.yml: |
+                        server.host: "0.0.0.0"
+                        server.name: "observability-stack-dashboards"
+                        opensearch.hosts: ["https://opensearch-cluster-master:9200"]
+                        opensearch.ssl.verificationMode: none
+                        opensearch.requestTimeout: 30000
+                        opensearch.requestHeadersAllowlist: ["authorization", "securitytenant"]
+                        opensearch_security.multitenancy.enabled: false
+                        opensearch_security.readonly_mode.roles: ["kibana_read_only"]
+                        console.enabled: true
+                        server.maxPayloadBytes: 1048576
+                        savedObjects.maxImportPayloadBytes: 26214400
+                        csp.strict: false
+                        explore.enabled: true
+                        explore.discoverTraces.enabled: true
+                        explore.discoverMetrics.enabled: true
+                        explore.agentTraces.enabled: true
+                        workspace.enabled: true
+                        data_source.enabled: true
+                        data_source.ssl.verificationMode: none
+                        datasetManagement.enabled: true
+                        data.savedQueriesNewUI.enabled: true
+                        opensearchDashboards.branding.useExpandedHeader: false
+                        uiSettings.overrides.home:useNewHomePage: true
+                        uiSettings.overrides.query:enhancements:enabled: true
+                        uiSettings.overrides.explore:experimental: true
+                        # OIDC auth customization and start settings #
+                        opensearch_security.ui.openid.login.buttonname: Log in with Authentik
+                        opensearch_security.ui.openid.login.brandimage: https://cdn.jsdelivr.net/gh/selfhst/icons@main/png/argo-cd.png
+                        opensearch_security.ui.openid.login.showbrandimage: true
+                        opensearch_security.openid.base_redirect_url: <"OIDC redirect URL">
+                        opensearch_security.openid.verify_hostnames: false
+                        opensearch_security.openid.refresh_tokens: false
+                        opensearch_security.openid.logout_url: <"OIDC logout URL">
+                        opensearch_security.openid.connect_url: <"OIDC connect URL">
+                        opensearch_security.openid.client_id: <Client ID>
+                        opensearch_security.openid.client_secret: <Client secret>
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+      tags:
+        - argocd
+
+    - name: Deploy Data Prepper
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: data-prepper
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://opensearch-project.github.io/helm-charts/
+              chart: data-prepper
+              targetRevision: 0.3.1
+              helm:
+                releaseName: data-prepper
+                values: |
+                  # imagePullSecrets:
+                  #   - name: nexus-registry-creds
+                  image:
+                    repository: sgguruda62324/opensearch-data-prepper
+                    pullPolicy: IfNotPresent
+                    tag: "2.15.0-SNAPSHOT-rc2"
+                  pipelineConfig:
+                    existingSecret: data-prepper-pipeline
+                  config:
+                    data-prepper-config.yaml: |
+                      ssl: false
+                      peer_forwarder:
+                        ssl: false
+                      experimental:
+                        enabled_plugins:
+                          processor:
+                            - otel_apm_service_map
+                          sink:
+                            - prometheus
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+      tags:
+        - argocd
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: opensearch-dashboard
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
+              - "os.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: observability-stack-opensearch-dashboards
+                    port: 5601
+      tags:
+        - ingress
+
+    - name: Create Data Prepper pipeline secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: data-prepper-pipeline
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            pipelines.yaml: |
+              # Data Prepper Pipeline Configuration
+              # Processes and transforms logs, traces, and metrics before writing to OpenSearch
+
+              # Main OTLP pipeline - receives all telemetry and routes by type
+              otlp-pipeline:
+                delay: 10
+                source:
+                  # OTLP source receives telemetry via OpenTelemetry Protocol
+                  otlp:
+                    # Listen on port 21890 for gRPC connections from OpenTelemetry Collector
+                    port: 21890
+                    # Disable SSL for development
+                    ssl: false
+                # Route telemetry by signal type
+                route:
+                  - logs: "getEventType() == \"LOG\""
+                  - traces: "getEventType() == \"TRACE\""
+                  - metrics: "getEventType() == \"METRIC\""
+                # Send to appropriate sub-pipelines
+                sink:
+                  - pipeline:
+                      name: "otel-logs-pipeline"
+                      routes:
+                        - "logs"
+                  - pipeline:
+                      name: "otel-traces-pipeline"
+                      routes:
+                        - "traces"
+
+              # Log processing pipeline
+              # Receives logs from main pipeline and writes to OpenSearch
+              otel-logs-pipeline:
+                workers: 5
+                delay: 10
+                source:
+                  pipeline:
+                    name: "otlp-pipeline"
+                buffer:
+                  bounded_blocking:
+                processor:
+                  - copy_values:
+                      entries:
+                        - from_key: "time"
+                          to_key: "@timestamp"
+                # Write processed logs to OpenSearch
+                sink:
+                  - opensearch:
+                      hosts: ["https://{{ obs_os_host }}:{{ obs_os_port }}"]
+                      username: '{{ obs_os_username }}'
+                      password: '{{ obs_os_password }}'
+                      # Disable SSL verification for development
+                      insecure: true
+                      # Use log analytics index type for automatic index management
+                      index_type: log-analytics-plain
+
+              # Trace processing pipeline
+              # Receives traces from main pipeline and distributes to raw and service map pipelines
+              otel-traces-pipeline:
+                delay: 100
+                source:
+                  pipeline:
+                    name: "otlp-pipeline"
+                # Send traces to both raw storage and service map generation
+                sink:
+                  - pipeline:
+                      name: "traces-raw-pipeline"
+                  - pipeline:
+                      name: "service-map-pipeline"
+
+              # Raw trace storage pipeline
+              # Stores individual trace spans in OpenSearch
+              traces-raw-pipeline:
+                source:
+                  pipeline:
+                    name: "otel-traces-pipeline"
+                processor:
+                  # Process raw trace data for OpenSearch storage
+                  - otel_traces:
+                sink:
+                  - opensearch:
+                      hosts: ["https://{{ obs_os_host }}:{{ obs_os_port }}"]
+                      username: '{{ obs_os_username }}'
+                      password: '{{ obs_os_password }}'
+                      insecure: true
+                      # Use trace analytics index type for automatic index management
+                      index_type: trace-analytics-plain-raw
+
+              # Service map generation pipeline (APM)
+              # Builds service dependency maps and RED metrics from trace relationships
+              service-map-pipeline:
+                delay: 100
+                source:
+                  pipeline:
+                    name: "otel-traces-pipeline"
+                processor:
+                  # APM service map processor - generates topology, service details, and RED metrics
+                  - otel_apm_service_map:
+                      group_by_attributes: [telemetry.sdk.language]
+                      window_duration: 10s
+                route:
+                  - otel_apm_service_map_route: 'getEventType() == "SERVICE_MAP"'
+                  - service_processed_metrics: 'getEventType() == "METRIC"'
+                sink:
+                  - opensearch:
+                      hosts: ["https://{{ obs_os_host }}:{{ obs_os_port }}"]
+                      username: '{{ obs_os_username }}'
+                      password: '{{ obs_os_password }}'
+                      index_type: otel-v2-apm-service-map
+                      routes: [otel_apm_service_map_route]
+                      insecure: true
+                  # Route RED metrics to local Prometheus via remote write
+                  - prometheus:
+                      url: "{{ obs_prom_remote_write_url }}"
+                      threshold:
+                        max_events: 500
+                        flush_interval: 5s
+                      routes: [service_processed_metrics]
+                  - prometheus:
+                      url: "{{ obs_prom_remote_write_url_2 }}"
+                      threshold:
+                        max_events: 500
+                        flush_interval: 5s
+                      routes: [service_processed_metrics]
+      tags:
+        - argocd
+
+    - name: Deploy Custom OTel Collector ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: otel-collector-config-cx
+            namespace: "{{ target_namespace }}"
+          data:
+            relay: |
+              receivers:
+                otlp:
+                  protocols:
+                    grpc:
+                      endpoint: 0.0.0.0:4317
+                    http:
+                      endpoint: 0.0.0.0:4318
+                      cors:
+                        allowed_origins:
+                          - "http://*"
+                          - "https://*"
+              processors:
+                memory_limiter:
+                  check_interval: 5s
+                  limit_percentage: 80
+                  spike_limit_percentage: 25
+                batch:
+                  timeout: 10s
+                  send_batch_size: 1024
+                resourcedetection:
+                  detectors: [env, system]
+                transform:
+                  error_mode: ignore
+                  trace_statements:
+                    - context: span
+                      statements:
+                        - replace_pattern(name, "\\?.*", "")
+                        - replace_match(name, "GET /api/products/*", "GET /api/products/{productId}")
+                        # Workaround for https://github.com/opensearch-project/data-prepper/issues/5616
+                        # Flatten nested dotted attribute keys to prevent OpenSearch mapping conflicts
+                        - set(attributes["db_system_name"], attributes["db.system.name"]) where attributes["db.system.name"] != nil
+                        - delete_key(attributes, "db.system.name")
+                        - set(attributes["code_function_name"], attributes["code.function.name"]) where attributes["code.function.name"] != nil
+                        - delete_key(attributes, "code.function.name")
+                        - set(attributes["user_agent_original"], attributes["user_agent.original"]) where attributes["user_agent.original"] != nil
+                        - delete_key(attributes, "user_agent.original")
+                        - set(attributes["upstream_cluster_name"], attributes["upstream_cluster.name"]) where attributes["upstream_cluster.name"] != nil
+                        - delete_key(attributes, "upstream_cluster.name")
+                        - set(attributes["error_type"], attributes["error.type"]) where attributes["error.type"] != nil
+                        - delete_key(attributes, "error.type")
+                        - set(attributes["app_ads_contextKeys"], attributes["app.ads.contextKeys"]) where attributes["app.ads.contextKeys"] != nil
+                        - delete_key(attributes, "app.ads.contextKeys")
+                        - set(attributes["rpc_system"], attributes["rpc.system"]) where attributes["rpc.system"] != nil
+                        - delete_key(attributes, "rpc.system")
+                        # Rename flat-string attributes that conflict with dotted-key object mappings
+                        - set(attributes["user_agent_string"], attributes["user_agent"]) where attributes["user_agent"] != nil and not IsMap(attributes["user_agent"])
+                        - delete_key(attributes, "user_agent") where attributes["user_agent_string"] != nil
+                        - set(attributes["db_system"], attributes["db.system"]) where attributes["db.system"] != nil
+                        - delete_key(attributes, "db.system")
+                    - context: spanevent
+                      statements:
+                        - set(attributes["message_type"], attributes["message.type"]) where attributes["message.type"] != nil
+                        - delete_key(attributes, "message.type")
+                        - set(attributes["message_id"], attributes["message.id"]) where attributes["message.id"] != nil
+                        - delete_key(attributes, "message.id")
+                        - set(attributes["message_uncompressed_size"], attributes["message.uncompressed_size"]) where attributes["message.uncompressed_size"] != nil
+                        - delete_key(attributes, "message.uncompressed_size")
+                  log_statements:
+                    - context: log
+                      statements:
+                        - flatten(body) where IsMap(body)
+                        - set(body, ToKeyValueString(body)) where IsMap(body)
+              exporters:
+                debug:
+                  verbosity: basic
+                otlp/opensearch:
+                  endpoint: "{{ obs_otlp_opensearch_endpoint }}"
+                  tls:
+                    insecure: true
+                otlphttp/prometheus:
+                  endpoint: "{{ obs_otlphttp_prometheus_endpoint }}"
+                  tls:
+                    insecure: true
+              extensions:
+                health_check:
+                  endpoint: ${env:MY_POD_IP}:13133
+              service:
+                extensions: [health_check]
+                telemetry:
+                  metrics:
+                    readers:
+                      - pull:
+                          exporter:
+                            prometheus:
+                              host: "0.0.0.0"
+                              port: 8888
+                pipelines:
+                  traces:
+                    receivers: [otlp]
+                    processors: [resourcedetection, memory_limiter, transform, batch]
+                    exporters: [otlp/opensearch, debug]
+                  metrics:
+                    receivers: [otlp]
+                    processors: [resourcedetection, memory_limiter, batch]
+                    exporters: [otlphttp/prometheus, debug]
+                  logs:
+                    receivers: [otlp]
+                    processors: [resourcedetection, memory_limiter, transform, batch]
+                    exporters: [otlp/opensearch, debug]
+      tags:
+        - argocd
