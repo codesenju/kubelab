@@ -1,10 +1,11 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Odigos Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: odigos
   tasks:
-
     - name: Deploy Odigos
       kubernetes.core.k8s:
         state: present
@@ -56,8 +57,8 @@
               - backendRefs:
                   - name: ui
                     port: 3000
-      tags: 
-      - ingress
+      tags:
+        - ingress
 
     - name: Create HTTPRoute http redirect
       kubernetes.core.k8s:
@@ -82,5 +83,5 @@
                       scheme: https
                       statusCode: 301
                       port: 443
-      tags: 
-      - ingress
+      tags:
+        - ingress
