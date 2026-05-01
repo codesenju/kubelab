@@ -80,7 +80,7 @@
                 g, ArgoCD Admins, role:admin
                 g, authentik Admins, role:admin
                 g, ArgoCD Viewers, role:readonly
-                g, kubelab17:kubelab, role:readonly
+                g, kubelab17:kubelab, role:admin
             cm:
               accounts.devops: apiKey, login
               accounts.devops.enabled: "true"
