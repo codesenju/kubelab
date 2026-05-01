@@ -24,3 +24,15 @@ data:
       traffic_control_backend: tcx
       disable_blackbox_cp: true
       track_request_headers: true
+      log_enricher:
+        services:
+          - service:
+              - k8s_namespace: "media-stack"
+          - service:
+              - k8s_namespace: "immich"
+          - service:
+              - k8s_namespace: "homarr"
+          - service:
+              - k8s_namespace: "ddns"
+          - service:
+              - k8s_namespace: "cloudflared"
