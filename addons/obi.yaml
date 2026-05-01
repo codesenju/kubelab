@@ -1,7 +1,8 @@
 ---
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+- name: OBI Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: obi-system
   tasks:
@@ -27,12 +28,12 @@
                   app.kubernetes.io/instance: obi
             destination:
               server: https://kubernetes.default.svc
-              namespace: '{{ target_namespace }}'
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
