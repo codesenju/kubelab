@@ -1,9 +1,10 @@
 ---
-- hosts: k8s-control-plane-1
+- name: Media Stack Playbook
+  hosts: k8s-control-plane-1
   gather_facts: false
   become: false
   vars:
-    namespace: media-stack
+    target_namespace: media-stack
   tasks:
     - name: Deploy Media Stack
       kubernetes.core.k8s:
@@ -67,6 +68,15 @@
                       group: apps
                       version: v1
                       kind: Deployment
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/imagePullSecrets
+                        value:
+                          - name: nexus-registry-creds
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
                       name: prowlarr
                     patch: |-
                       - op: add
@@ -76,11 +86,65 @@
                       group: apps
                       version: v1
                       kind: Deployment
+                      name: radarr
                     patch: |-
                       - op: add
-                        path: /spec/template/spec/imagePullSecrets
-                        value:
-                          - name: nexus-registry-creds
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ radarr_image }}
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: sonarr
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ sonarr_image }}
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: tdarr
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ tdarr_image }}
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: tdarr-worker
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ tdarr_node_image }}
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: flaresolverr
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ flaresolverr_image }}
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: jellyseerr
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ jellyseerr_image }}
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: jellyfin
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ jellyfin_image }}
             destination:
               server: https://kubernetes.default.svc
               namespace: media-stack
@@ -99,7 +163,9 @@
       #   kind: PersistentVolumeClaim
       #   jsonPointers:
       #   - /status  # Ignore PVC status changes
-      tags: media-stack
+      tags:
+        - media-stack
+        - argocd
 
     - name: Create public wildcar certificate
       kubernetes.core.k8s:
@@ -151,7 +217,7 @@
           kind: Ingress
           metadata:
             name: flaresolverr
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -183,7 +249,7 @@
           kind: Ingress
           metadata:
             name: lidarr
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -215,7 +281,7 @@
           kind: Ingress
           metadata:
             name: prowlarr
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -247,7 +313,7 @@
           kind: Ingress
           metadata:
             name: tdarr
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -279,7 +345,7 @@
           kind: Ingress
           metadata:
             name: jellyfin
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -325,7 +391,7 @@
           kind: Ingress
           metadata:
             name: jellyseer
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -370,7 +436,7 @@
           kind: Ingress
           metadata:
             name: sonarr
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -402,7 +468,7 @@
           kind: Ingress
           metadata:
             name: radarr
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
@@ -434,7 +500,7 @@
           kind: Ingress
           metadata:
             name: jackett
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
               # cert-manager.io/cluster-issuer: letsencrypt-production
