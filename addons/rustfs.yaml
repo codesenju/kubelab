@@ -45,7 +45,7 @@
                 name: rustfs
                 jqPathExpressions:
                   - .spec.template.spec.containers[].resources
-      tags: rustfs
+      tags: argocd
 
     - name: Create rustfs secret
       kubernetes.core.k8s:
@@ -137,4 +137,3 @@
                             number: 9001
       tags: ingress
       when: false
-

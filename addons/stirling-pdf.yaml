@@ -1,9 +1,11 @@
-- hosts: k8s-control-plane-1
-  become: no
-  gather_facts: no
+- name: Stirling pdf Playbook
+  hosts: k8s-control-plane-1
+  become: false
+  gather_facts: false
   vars:
     nfs_server_ip: 192.168.0.16
-    nfs_server_path: /mnt/pool1/AppData/stirlingpdf/
+    nfs_server_path: /mnt/pool2/AppData/stirlingpdf/
+    target_namespace: pdf
   tasks:
 
     - name: Deploy stirling-pdf
@@ -26,6 +28,9 @@
               helm:
                 releaseName: stirling-pdf
                 values: |
+                  probes:
+                    liveness:
+                      enabled: false
                   persistence:
                     enabled: true
                     accessMode: ReadWriteOnce
@@ -45,7 +50,7 @@
                         path: {{ nfs_server_path }}
             destination:
               server: https://kubernetes.default.svc
-              namespace: pdf
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -53,47 +58,25 @@
               syncOptions:
                 - CreateNamespace=true
 
-    - name: Create local wildcar certificate
+    - name: Create n8n HTTPRoute
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
-            name: local-jazziro-com
-            namespace: pdf
+            name: pdf
+            namespace: "{{ target_namespace }}"
           spec:
-            secretName: local-jazziro-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-            - "{{ local_dns }}"
-            - "{{ local_dns_wildcard }}"
-
-    - name: Create Traefik dashboard IngressRoute
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
-          metadata:
-            name: stirling-pdf
-            namespace: pdf
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-          spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`pdf.{{ local_dns }}`)
-                kind: Rule
-                services:
+            hostnames:
+              - "pdf.{{ local_dns }}"
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            rules:
+              - backendRefs:
                   - name: stirling-pdf-stirling-pdf-chart
-                    kind: Service
-                    namespace: pdf
                     port: 8080
-            tls:
-              secretName: local-jazziro-com-tls
+      tags:
+        - ingress
