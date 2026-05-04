@@ -284,11 +284,13 @@
           spec:
             parentRefs:
               - name: local-gateway
-                namespace: gateway-infra
-                sectionName: websecure-public-2
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure-2
             hostnames:
               - "auth.{{ public_dns_2 }}"
             rules:
               - backendRefs:
                   - name: authentik-server
                     port: 80
+      tags:
+        - ingress
