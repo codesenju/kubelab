@@ -159,7 +159,7 @@
           spec:
             parentRefs:
               - name: local-gateway
-                namespace: gateway-infra
+                namespace: "{{ gatewayapi_namespace }}" # gateway-infra
             hostnames:
               - "argocd.{{ public_dns }}"
             rules:

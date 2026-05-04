@@ -75,7 +75,7 @@
           spec:
             parentRefs:
               - name: local-gateway
-                namespace: gateway-infra
+                namespace: "{{ gatewayapi_namespace }}"
             hostnames:
               - "s3.{{ public_dns }}"
             rules:
