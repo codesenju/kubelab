@@ -15,6 +15,6 @@ patches:
       version: v1
       kind: PersistentVolume
       name: rustfs-data
-
+  - path: deployment.patch.yaml
 resources:
 - ../../base
