@@ -20,10 +20,49 @@ spec:
         runAsGroup: 0
       containers:
         - name: rustfs
-          image: IMAGE_PLACEHOLDERi"
+          image: IMAGE_PLACEHOLDER
+          # command: 
+          #   - /data
+          resources:
+            requests:
+              memory: "256Mi"
+              cpu: "10m"
+            limits:
+              memory: "512Mi"
+              cpu: "60m"
+          env:
+            - name: RUST_BACKTRACE
+              value: "1"
+            - name: RUSTFS_REGION
+              value: joburg-north-1
+            - name: RUSTFS_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-secrets
+                  key: rustfs_access_key
+            - name: RUSTFS_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-secrets
+                  key: rustfs_secret_key
+            - name: RUSTFS_CONSOLE_ENABLE
+              value: "true"
+            - name: RUSTFS_SERVER_DOMAINS
+              valueFrom:
+                secretKeyRef:
+                  name: rustfs-secrets
+                  key: rustfs_server_domains
+            - name: RUSTFS_ADDRESS
+              value: ":9000"
+          ports:
+            - containerPort: 9000
+              name: http-rustfs-1
+            - containerPort: 9001
+              name: http-rustfs-2
           volumeMounts:
             - name: rustfs-data
               mountPath: /data
+              subPath: rustfs-data
       volumes:
         - name: rustfs-data
           persistentVolumeClaim:
