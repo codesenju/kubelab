@@ -175,10 +175,10 @@
           spec:
             parentRefs:
               - name: local-gateway
-                namespace: gateway-infra
-                sectionName: websecure-public
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure
             hostnames:
-              - "databasus.{{ public_dns }}"
+              - "databasus.{{ local_dns }}"
             rules:
               - backendRefs:
                   - name: databasus

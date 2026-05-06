@@ -21,6 +21,6 @@ patches:
       version: v1
       kind: PersistentVolumeClaim
       name: databasus-data
-
+  - path: deployment.patch.yaml
 resources:
 - ../../base
