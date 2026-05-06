@@ -221,6 +221,13 @@ kubectl port-forward -n minio-system svc/minio-console 9001:9001
 kubectl top nodes
 kubectl top pods -A
 ```
+## Building container image
+```bash
+docker build \
+  $(grep -v '^#' .env.production | xargs -I {} echo --build-arg {}) \
+  -f Dockerfile \
+  -t registry.gitlab.com/iysynergy/imbizo:prod-test .
+```
 
 ## 📚 Documentation
 
