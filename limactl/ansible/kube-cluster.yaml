@@ -26,12 +26,12 @@
               apiVersion: kubeadm.k8s.io/v1beta4
               networking:
                 podSubnet: "{{ pod_cidr }}"
-              controlPlaneEndpoint:  "{{ hostvars['control-plane-0'].ansible_default_ipv4.address }}:6443"
+              controlPlaneEndpoint:  "{{ hostvars['cp1'].ansible_default_ipv4.address }}:6443"
               apiServer:
                 certSANs:
                   - 127.0.0.1
                   - localhost
-                  - {{ hostvars['control-plane-0'].ansible_default_ipv4.address }}
+                  - {{ hostvars['cp1'].ansible_default_ipv4.address }}
               ---
               kind: KubeletConfiguration
               apiVersion: kubelet.config.k8s.io/v1beta1
@@ -59,7 +59,7 @@
       ansible.builtin.shell: kubeadm init --config /etc/kubernetes/kubeadm-config.yaml --upload-certs >> cluster_initialized.log
       args:
         chdir: $HOME
-      when: inventory_hostname == "control-plane-0" and not admin_conf_exists.stat.exists
+      when: inventory_hostname == "cp1" and not admin_conf_exists.stat.exists
 
     - name: Create .kube directory
       ansible.builtin.file:
@@ -74,10 +74,10 @@
         remote_src: true
         mode: "0600"
         owner: "{{ ansible_user }}"
-      when: inventory_hostname == "control-plane-0"
+      when: inventory_hostname == "cp1"
 
 - name: Join Cluster
-  hosts: control-plane-0
+  hosts: cp1
   become: true
   tasks:
     - name: Get join command for control plane
@@ -101,7 +101,7 @@
       ansible.builtin.service:
         name: kubelet
         state: stopped
-      when: inventory_hostname != "control-plane-0"
+      when: inventory_hostname != "cp1"
       ignore_errors: true
 
     - name: Kill processes using kubernetes ports
@@ -111,7 +111,7 @@
         pkill -f kube-scheduler || true
         pkill -f etcd || true
         sleep 3
-      when: inventory_hostname != "control-plane-0"
+      when: inventory_hostname != "cp1"
       ignore_errors: true
 
     - name: Clean up previous failed join attempts
@@ -125,22 +125,22 @@
         - /etc/kubernetes/pki
         - /var/lib/etcd
         - /etc/kubernetes/manifests
-      when: inventory_hostname != "control-plane-0"
+      when: inventory_hostname != "cp1"
       ignore_errors: true
 
     - name: Join additional control plane nodes
-      ansible.builtin.command: "{{ hostvars['control-plane-0']['control_plane_join_command'] }} --control-plane --certificate-key {{ hostvars['control-plane-0']['certificate_key']
+      ansible.builtin.command: "{{ hostvars['cp1']['control_plane_join_command'] }} --control-plane --certificate-key {{ hostvars['cp1']['certificate_key']
         }}"
-      when: inventory_hostname != "control-plane-0"
+      when: inventory_hostname != "cp1"
 
     - name: Install Pod Network
       ansible.builtin.shell: kubectl apply -f https://github.com/flannel-io/flannel/releases/latest/download/kube-flannel.yml >> pod_network_setup.log
       args:
         chdir: $HOME
         creates: pod_network_setup.log
-      when: inventory_hostname == "control-plane-0"
+      when: inventory_hostname == "cp1"
 
-- hosts: control-plane-0
+- hosts: cp1
   become: true
   tasks:
     - name: Get worker join command
@@ -187,14 +187,14 @@
       ansible.builtin.shell: |
         kubectl get node {{ inventory_hostname }} --no-headers 2>/dev/null || echo "NotFound"
       register: node_status
-      delegate_to: control-plane-0
+      delegate_to: cp1
       ignore_errors: true
 
     - name: Delete existing node from cluster
       ansible.builtin.shell: |
         kubectl delete node {{ inventory_hostname }} --ignore-not-found=true
-      delegate_to: control-plane-0
+      delegate_to: cp1
       when: node_status.stdout != "NotFound"
 
     - name: Join worker nodes
-      ansible.builtin.command: "{{ hostvars['control-plane-0']['worker_join_command'] }}"
+      ansible.builtin.command: "{{ hostvars['cp1']['worker_join_command'] }}"

@@ -6,16 +6,16 @@ brew install lima-additional-guestagents
 ## connected via the `lima:user-v2` network.
 #
 ```bash
-limactl start control-plane.yaml --name control-plane-0
-limactl start worker.yaml --name worker-0
-limactl start worker_x86_64.yaml --name worker-1
+limactl start control-plane.yaml --name cp1
+limactl start worker1.yaml --name worker-1
+limactl start worker2.yaml --name worker-2
 ```
 ```bash
-limactl shell control-plane-0 sudo kubeadm token create --print-join-command
+limactl shell cp1 sudo kubeadm token create --print-join-command
 
 # or
 
-eval $(limactl shell control-plane-0 sudo kubeadm token create --print-join-command | \
+eval $(limactl shell cp1 sudo kubeadm token create --print-join-command | \
 sed -E 's/.*join ([^:]+):([0-9]+) --token ([^ ]+) --discovery-token-ca-cert-hash ([^ ]+)/HOST=\1 PORT=\2 TOKEN=\3 HASH=\4/')
 ```
 
