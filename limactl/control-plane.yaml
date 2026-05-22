@@ -1,13 +1,13 @@
-vmType: vz
-arch: aarch64
+vmType: qemu
+arch: x86_64
 
 cpus: 4
-memory: "12GiB"
-disk: "30GiB"
+memory: "4GiB"
+disk: "10GiB"
 
 images:
-  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-arm64.img"
-    arch: "aarch64"
+  - location: "https://cloud-images.ubuntu.com/releases/24.04/release/ubuntu-24.04-server-cloudimg-amd64.img"
+    arch: "x86_64"
 
 mounts:
   - location: "~"
@@ -37,7 +37,6 @@ provision:
       chmod 0440 /etc/sudoers.d/99-k8s
       
       mkdir /home/k8s/.ssh/ -p
-      HOST_USER=changeme # change me
-      cat /Users/${HOST_USER}/.ssh/id_ed25519.pub > /home/k8s/.ssh/authorized_keys
+      cat $HOME/.ssh/id_ed25519.pub > /home/k8s/.ssh/authorized_keys
       chown k8s:k8s /home/k8s/.ssh/authorized_keys
       chmod 600 /home/k8s/.ssh/authorized_keys
