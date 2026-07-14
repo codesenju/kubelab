@@ -31,6 +31,7 @@ provision:
       chmod 0440 /etc/sudoers.d/99-k8s
 
       mkdir /home/k8s/.ssh/ -p
-      cat $HOME/.ssh/id_ed25519.pub > /home/k8s/.ssh/authorized_keys
+      USER=changeme
+      cat /Users/$USER/.ssh/id_ed25519.pub > /home/k8s/.ssh/authorized_keys
       chown k8s:k8s /home/k8s/.ssh/authorized_keys
       chmod 600 /home/k8s/.ssh/authorized_keys

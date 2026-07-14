@@ -1,0 +1,534 @@
+---
+- name: Postiz Playbook
+  hosts: k8s-control-plane-1
+  become: false
+  gather_facts: false
+  vars:
+    target_namespace: postiz
+  tasks:
+    - name: Create Temporal postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: temporal-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: temporal
+            password: temporal
+      tags:
+        - temporal
+        - postgres
+
+    - name: Create Temporal dynamic config
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: temporal-dynamic-config
+            namespace: "{{ target_namespace }}"
+          data:
+            development-sql.yaml: |
+              system.forceSearchAttributesCacheRefreshOnRead:
+                - value: true
+      tags:
+        - temporal
+
+    - name: Create postiz postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: postiz-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ postiz_db_username }}"
+            password: "{{ postiz_db_password }}"
+      tags:
+        - postgres
+
+    - name: Deploy Temporal postgres cluster
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
+          metadata:
+            name: temporal
+            namespace: "{{ target_namespace }}"
+          spec:
+            name: temporal
+            image: registry.local.example.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            imagePullSecretName1: registry-secret
+            db:
+              name: temporal
+              username: temporal
+              secretName: temporal-postgres-secrets
+              storageClassName: local-path
+            bootstrap:
+              mode: initdb
+            archiveDestination:
+              s3Path: "s3://cnpg/backup"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
+      tags:
+        - temporal
+        - postgres
+
+    - name: Deploy Temporal server
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: temporal
+            namespace: "{{ target_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: temporal
+            template:
+              metadata:
+                labels:
+                  app: temporal
+              spec:
+                containers:
+                  - name: temporal
+                    image: temporalio/auto-setup:1.28.1
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 256Mi
+                      limits:
+                        cpu: 500m
+                        memory: 512Mi
+                    env:
+                      - name: DB
+                        value: postgres12
+                      - name: DB_PORT
+                        value: "5432"
+                      - name: POSTGRES_USER
+                        valueFrom:
+                          secretKeyRef:
+                            name: temporal-postgres-secrets
+                            key: username
+                      - name: POSTGRES_PWD
+                        valueFrom:
+                          secretKeyRef:
+                            name: temporal-postgres-secrets
+                            key: password
+                      - name: POSTGRES_SEEDS
+                        value: temporal-postgres-rw
+                      - name: DYNAMIC_CONFIG_FILE_PATH
+                        value: /etc/temporal/config/dynamicconfig/development-sql.yaml
+                      - name: TEMPORAL_NAMESPACE
+                        value: default
+                      - name: ENABLE_ES
+                        value: "true"
+                      - name: ES_SEEDS
+                        value: temporal-elasticsearch
+                      - name: ES_VERSION
+                        value: v7
+                    ports:
+                      - name: grpc
+                        containerPort: 7233
+                    volumeMounts:
+                      - name: temporal-dynamic-config
+                        mountPath: /etc/temporal/config/dynamicconfig
+                volumes:
+                  - name: temporal-dynamic-config
+                    configMap:
+                      name: temporal-dynamic-config
+      tags:
+        - temporal
+
+    - name: Deploy Temporal Elasticsearch
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: temporal-elasticsearch
+            namespace: "{{ target_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: temporal-elasticsearch
+            template:
+              metadata:
+                labels:
+                  app: temporal-elasticsearch
+              spec:
+                containers:
+                  - name: elasticsearch
+                    image: elasticsearch:7.17.27
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 1Gi
+                      limits:
+                        cpu: 500m
+                        memory: 1500Mi
+                    env:
+                      - name: cluster.routing.allocation.disk.threshold_enabled
+                        value: "true"
+                      - name: cluster.routing.allocation.disk.watermark.low
+                        value: 512mb
+                      - name: cluster.routing.allocation.disk.watermark.high
+                        value: 256mb
+                      - name: cluster.routing.allocation.disk.watermark.flood_stage
+                        value: 128mb
+                      - name: discovery.type
+                        value: single-node
+                      - name: ES_JAVA_OPTS
+                        value: "-Xms256m -Xmx256m"
+                      - name: xpack.security.enabled
+                        value: "false"
+                    ports:
+                      - name: http
+                        containerPort: 9200
+      tags:
+        - temporal
+
+    - name: Create Temporal Elasticsearch service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: temporal-elasticsearch
+            namespace: "{{ target_namespace }}"
+          spec:
+            selector:
+              app: temporal-elasticsearch
+            ports:
+              - name: http
+                port: 9200
+                targetPort: 9200
+      tags:
+        - temporal
+
+    - name: Create Temporal service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: temporal
+            namespace: "{{ target_namespace }}"
+          spec:
+            selector:
+              app: temporal
+            ports:
+              - name: grpc
+                port: 7233
+                targetPort: 7233
+      tags:
+        - temporal
+
+    - name: Deploy Temporal admin tools
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: temporal-admin-tools
+            namespace: "{{ target_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: temporal-admin-tools
+            template:
+              metadata:
+                labels:
+                  app: temporal-admin-tools
+              spec:
+                containers:
+                  - name: temporal-admin-tools
+                    image: temporalio/admin-tools:1.28.1-tctl-1.18.4-cli-1.4.1
+                    resources:
+                      requests:
+                        cpu: 10m
+                        memory: 32Mi
+                      limits:
+                        cpu: 100m
+                        memory: 128Mi
+                    env:
+                      - name: TEMPORAL_ADDRESS
+                        value: temporal:7233
+                      - name: TEMPORAL_CLI_ADDRESS
+                        value: temporal:7233
+                    command: ["sleep", "infinity"]
+      tags:
+        - temporal
+
+    - name: Create s3 secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Deploy postgres cluster
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
+          metadata:
+            name: postiz
+            namespace: "{{ target_namespace }}"
+          spec:
+            name: postiz
+            # db version must be compatiable with the backup db version
+            # using tensorchord image that comes with vchord
+            image: registry.local.example.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            imagePullSecretName1: registry-secret
+            db:
+              name: postiz
+              username: "{{ postiz_db_username }}"
+              secretName: postiz-postgres-secrets
+              # size: 1Gi
+              storageClassName: "local-path"
+            bootstrap:
+              mode: initdb
+            archiveDestination:
+              s3Path: "s3://cnpg/backup"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
+      tags:
+        - postgres
+
+    - name: Create postiz db url
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: postiz-config
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            url: "{{ postiz_db_url }}"
+            postiz_access_url: "https://postiz.{{ public_dns }}"
+      when: false
+
+    - name: Deploy Postiz
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: postiz
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: postiz-app
+              repoURL: ghcr.io/gitroomhq/postiz-helmchart/charts
+              targetRevision: 1.0.5
+              helm:
+                releaseName: postiz
+                values: |
+                  image:
+                    tag: v2.21.6
+                  resources:
+                    requests:
+                      cpu: 250m
+                      memory: 2500Mi
+                    limits:
+                      cpu: 1000m
+                      memory: 3Gi
+                  redis:
+                    enabled: false
+                    auth:
+                      password: "{{ postiz_redis_password }}"
+                  postgresql:
+                    enabled: false
+                    auth:
+                      username: "{{ postiz_db_username }}"
+                      password: "{{ postiz_db_password }}"
+                      database: "{{ postiz_db_name }}"
+                  env:
+                    # === Storage Settings
+                    STORAGE_PROVIDER: local
+                    UPLOAD_DIRECTORY: /uploads
+                    NEXT_PUBLIC_UPLOAD_DIRECTORY: /uploads
+                    NX_ADD_PLUGINS: "false"
+                    IS_GENERAL: "true"
+
+                  # Sensitive environment variables (to be stored in Secrets)
+                  secrets:
+                    # === Required Settings
+                    MAIN_URL: "https://postiz.{{ public_dns_2 }}"
+                    FRONTEND_URL: https://postiz.{{ public_dns_2 }}
+                    NEXT_PUBLIC_BACKEND_URL: "https://postiz.{{ public_dns_2 }}/api"
+                    JWT_SECRET: "7a6fbca5add1ee79eb11cf4fe41b8f14ff43b9eb8c53a912863f73fc74d64c70"
+                    DATABASE_URL: "postgresql://{{ postiz_db_username }}:{{ postiz_db_password }}@{{ postiz_db_host }}:5432/{{ postiz_db_name }}"
+                    REDIS_URL: "redis://default:{{ postiz_redis_password }}@postiz-redis:{{ postiz_redis_port }}"
+                    BACKEND_INTERNAL_URL: "http://postiz-postiz-app.postiz.svc.cluster.local/api"
+                    TEMPORAL_ADDRESS: "temporal:7233"
+                    IS_GENERAL: "true"
+                    DISABLE_REGISTRATION: "true"
+                    RUN_CRON: "true"
+                    # === Cloudflare (R2) Settings
+                    # STORAGE_PROVIDER: 'cloudflare'
+                    # CLOUDFLARE_ACCOUNT_ID: 'your-account-id'
+                    # CLOUDFLARE_ACCESS_KEY: 'your-access-key'
+                    # CLOUDFLARE_SECRET_ACCESS_KEY: 'your-secret-access-key'
+                    # CLOUDFLARE_BUCKETNAME: 'your-bucket-name'
+                    # CLOUDFLARE_BUCKET_URL: 'https://your-bucket-url.r2.cloudflarestorage.com/'
+                    # CLOUDFLARE_REGION: 'auto'
+                    # === Social Media API Settings
+                    X_API_KEY: "{{ x_api_key }}"
+                    X_API_SECRET: "{{ x_api_secret }}"
+                    X_CLIENT_ID: "{{ x_client_id }}"
+                    X_CLIENT_SECRET: "{{ x_client_secret }}"
+                    LINKEDIN_CLIENT_ID: "{{ linkedin_client_id }}"
+                    LINKEDIN_CLIENT_SECRET: "{{ linkedin_client_secret }}"
+                    REDDIT_CLIENT_ID: ""
+                    REDDIT_CLIENT_SECRET: ""
+                    GITHUB_CLIENT_ID: ""
+                    GITHUB_CLIENT_SECRET: ""
+                    BEEHIIVE_API_KEY: ""
+                    BEEHIIVE_PUBLICATION_ID: ""
+                    THREADS_APP_ID: ""
+                    THREADS_APP_SECRET: ""
+                    FACEBOOK_APP_ID: "{{ fb_app_id }}"
+                    FACEBOOK_APP_SECRET: "{{ fb_app_secret }}"
+                    INSTAGRAM_APP_ID: "{{ insta_app_id }}"
+                    INSTAGRAM_APP_SECRET: "{{ insta_app_secret }}"
+                    YOUTUBE_CLIENT_ID: "{{ yt_client_id }}"
+                    YOUTUBE_CLIENT_SECRET: "{{ yt_client_secret }}"
+                    TIKTOK_CLIENT_ID: ""
+                    TIKTOK_CLIENT_SECRET: ""
+                    PINTEREST_CLIENT_ID: ""
+                    PINTEREST_CLIENT_SECRET: ""
+                    DRIBBBLE_CLIENT_ID: ""
+                    DRIBBBLE_CLIENT_SECRET: ""
+                    DISCORD_CLIENT_ID: ""
+                    DISCORD_CLIENT_SECRET: ""
+                    DISCORD_BOT_TOKEN_ID: ""
+                    SLACK_ID: ""
+                    SLACK_SECRET: ""
+                    SLACK_SIGNING_SECRET: ""
+                    MASTODON_URL: https://mastodon.social
+                    MASTODON_CLIENT_ID: ""
+                    MASTODON_CLIENT_SECRET: ""
+                    # === OAuth & Authentik Settings
+                    # POSTIZ_GENERIC_OAUTH: "true"
+                    # POSTIZ_OAUTH_URL: https://auth.domain.com
+                    # POSTIZ_OAUTH_AUTH_URL: https://auth.domain.com/application/o/authorize
+                    # POSTIZ_OAUTH_TOKEN_URL: https://auth.domain.com/application/o/token
+                    # POSTIZ_OAUTH_USERINFO_URL: https://auth.domain.com/application/o/userinfo
+                    # POSTIZ_OAUTH_CLIENT_ID: xxxxxxx
+                    # POSTIZ_OAUTH_CLIENT_SECRET: xxxxxxxx
+                    # NEXT_PUBLIC_POSTIZ_OAUTH_DISPLAY_NAME: Authentik
+                    # NEXT_PUBLIC_POSTIZ_OAUTH_LOGO_URL: https://raw.githubusercontent.com/walkxcode/dashboard-icons/master/png/authentik.png
+                    # POSTIZ_OAUTH_SCOPE: openid profile email
+                    # Optional: uncomment to override default scope
+                    # === Sentry
+                    # NEXT_PUBLIC_SENTRY_DSN: 'http://spotlight:8969/stream'
+                    # SENTRY_SPOTLIGHT: '1'
+                    # === Misc Settings
+                    # OPENAI_API_KEY: ""
+                    # NEXT_PUBLIC_DISCORD_SUPPORT: ""
+                    # NEXT_PUBLIC_POLOTNO: ""
+                    API_LIMIT: "30"
+                    # === Payment / Stripe Settings
+                    # FEE_AMOUNT: 0.05
+                    # STRIPE_PUBLISHABLE_KEY: ""
+                    # STRIPE_SECRET_KEY: ""
+                    # STRIPE_SIGNING_KEY: ""
+                    # STRIPE_SIGNING_KEY_CONNECT: ""
+                    # === Developer Settings
+                    NX_ADD_PLUGINS: "false"
+                    # === Short Link Service Settings (Optional - leave blank if unused)
+                    # DUB_TOKEN: ""
+                    # DUB_API_ENDPOINT: "https://api.dub.co"
+                    # DUB_SHORT_LINK_DOMAIN: "dub.sh"
+                    # SHORT_IO_SECRET_KEY: ""
+                    # KUTT_API_KEY: ""
+                    # KUTT_API_ENDPOINT: "https://kutt.it/api/v2"
+                    # KUTT_SHORT_LINK_DOMAIN: "kutt.it"
+                    # LINK_DRIP_API_KEY: ""
+                    # LINK_DRIP_API_ENDPOINT: "https://api.linkdrip.com/v1/"
+                    # LINK_DRIP_SHORT_LINK_DOMAIN: "dripl.ink"
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+      tags:
+        - argocd
+
+    - name: Create postiz HTTPRoute
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: postiz
+            namespace: "{{ target_namespace }}"
+          spec:
+            hostnames:
+              - "postiz.{{ public_dns }}"
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure-public
+            rules:
+              - backendRefs:
+                  - name: postiz-postiz-app
+                    port: 80
+      tags:
+        - ingress

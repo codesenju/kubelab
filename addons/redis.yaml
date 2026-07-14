@@ -1,0 +1,205 @@
+---
+- name: Postiz Playbook
+  hosts: k8s-control-plane-1
+  become: false
+  gather_facts: false
+  vars:
+    target_namespace: redis-system
+    redis_cluster_name: redis-enterprise
+  tasks:
+    - name: Deploy Redis Operator
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: redis-enterprise-operator
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: redis-enterprise-operator
+              repoURL: https://helm.redis.io
+              targetRevision: 8.0.16-25
+              helm:
+                releaseName: redis-enterprise-operator
+                values: |
+                  operator:
+                    resources:
+                      requests:
+                        cpu: 100m
+                        memory: 256Mi
+                      limits:
+                        cpu: 500m
+                        memory: 512Mi
+                  admission:
+                    resources:
+                      requests:
+                        cpu: 50m
+                        memory: 128Mi
+                      limits:
+                        cpu: 250m
+                        memory: 256Mi
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+      tags:
+        - argocd
+
+    - name: Deploy Redis ClusterRole
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          kind: ClusterRole
+          apiVersion: rbac.authorization.k8s.io/v1
+          metadata:
+            name: redb-role
+            labels:
+              app: redis-enterprise
+          rules:
+            - apiGroups:
+                - app.redislabs.com
+              resources:
+                - "redisenterpriseclusters"
+                - "redisenterpriseclusters/status"
+                - "redisenterpriseclusters/finalizers"
+                - "redisenterprisedatabases"
+                - "redisenterprisedatabases/status"
+                - "redisenterprisedatabases/finalizers"
+                - "redisenterpriseactiveactivedatabases"
+                - "redisenterpriseactiveactivedatabases/status"
+                - "redisenterpriseactiveactivedatabases/finalizers"
+              verbs: ["delete", "get", "list", "patch", "create", "update", "watch"]
+            - apiGroups: ["rbac.authorization.k8s.io"]
+              resources: ["roles", "rolebindings"]
+              verbs: ["create", "get", "update", "patch", "delete"]
+            - apiGroups: [""]
+              resources: ["serviceaccounts"]
+              verbs: ["create", "get", "update", "patch", "delete"]
+            - apiGroups: [""]
+              resources: ["secrets"]
+              verbs: ["update", "get", "watch", "create", "patch", "list", "delete"]
+            - apiGroups: ["discovery.k8s.io"]
+              resources: ["endpointslices"]
+              verbs: ["get", "list", "watch"]
+            - apiGroups: [""]
+              resources: ["events"]
+              verbs: ["create", "patch"]
+            - apiGroups: ["apps"]
+              resources: ["deployments", "statefulsets", "replicasets"]
+              verbs: ["create", "delete", "get", "patch", "update", "list", "watch"]
+            - apiGroups: ["batch"]
+              resources: ["cronjobs"]
+              verbs: ["create", "delete", "get", "patch", "update", "list", "watch"]
+            - apiGroups: ["policy"]
+              resources: ["poddisruptionbudgets"]
+              verbs: ["create", "delete", "get", "list", "watch", "update"]
+            - apiGroups: [""]
+              resources: ["configmaps"]
+              verbs: ["create", "delete", "get", "update", "watch", "list"]
+            - apiGroups: [""]
+              resources: ["persistentvolumeclaims"]
+              verbs: ["create", "delete", "get", "update", "list", "watch"]
+            - apiGroups: [""]
+              resources: ["pods"]
+              verbs: ["get", "list", "update", "patch", "delete", "watch"]
+            - apiGroups: [""]
+              resources: ["services"]
+              verbs: ["get", "list", "update", "patch", "create", "delete", "watch"]
+            - apiGroups: ["networking.k8s.io"]
+              resources: ["ingresses"]
+              verbs: ["create", "patch", "delete", "list", "update", "get", "watch"]
+            - apiGroups: ["networking.istio.io"]
+              resources: ["gateways", "virtualservices"]
+              verbs: ["get", "list", "update", "patch", "create", "delete", "watch"]
+
+    - name: Deploy Redis RoleBinding in postiz ns
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          kind: RoleBinding
+          apiVersion: rbac.authorization.k8s.io/v1
+          metadata:
+            name: redb-role
+            labels:
+              app: redis-enterprise
+            namespace: postiz
+          subjects:
+            - kind: ServiceAccount
+              name: redis-enterprise-operator
+              namespace: redis-system # same ns as operator
+            - kind: ServiceAccount
+              name: postiz-redis # service account of the REC, usually the same as the name of the custom resource
+              namespace: postiz
+          roleRef:
+            kind: ClusterRole
+            name: redb-role
+            apiGroup: rbac.authorization.k8s.io
+
+    - name: Deploy REC
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          kind: RedisEnterpriseCluster
+          apiVersion: app.redislabs.com/v1
+          metadata:
+            name: "{{ redis_cluster_name }}"
+            namespace: "{{ target_namespace }}"
+          spec:
+            nodes: 1
+            redisEnterpriseNodeResources:
+              requests:
+                cpu: 256m
+                memory: 1Gi
+              limits:
+                cpu: 512m
+                memory: 2Gi
+            redisEnterpriseServicesRiggerResources:
+              requests:
+                cpu: 50m
+                memory: 128Mi
+              limits:
+                cpu: 250m
+                memory: 256Mi
+      tags:
+        - rec
+
+    - name: Deploy REDB in postiz
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          kind: RedisEnterpriseDatabase
+          apiVersion: app.redislabs.com/v1alpha1
+          metadata:
+            name: postiz-redis
+            namespace: postiz
+          spec:
+            memorySize: 100MB
+            redisEnterpriseCluster:
+              name: "{{ redis_cluster_name }}"
+      tags:
+        - redb
+
+    - name: Patch config map
+      kubernetes.core.k8s:
+        state: patched
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            annotations:
+            labels:
+              app: redis-enterprise
+            name: operator-environment-config
+            namespace: "{{ target_namespace }}"
+          data:
+            REDB_NAMESPACES: postiz # comma,separated,list,of,namespaces,to,watch

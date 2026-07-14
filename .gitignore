@@ -100,3 +100,5 @@ ansible/k3s-config.yaml
 *.tar.gz
 .opencode/
 Automation/aws/out.tfplan
+ansible/example-local-tls.yaml
+zero-trust/NetworkPolicies/

@@ -1,4 +1,16 @@
 ---
+- name: Validate inventory
+  hosts: localhost
+  gather_facts: false
+  tasks:
+    - name: Fail when multiple hosts share an SSH endpoint
+      ansible.builtin.assert:
+        that:
+          - ssh_endpoints | length == ssh_endpoints | unique | length
+        fail_msg: "Inventory has duplicate ansible_host:ansible_port entries; refusing to run destructive cluster tasks."
+      vars:
+        ssh_endpoints: "{{ groups['all'] | map('extract', hostvars, ['ansible_host']) | zip(groups['all'] | map('extract', hostvars, ['ansible_port'])) | map('join', ':') | list }}"
+
 - name: Import Kubernetes Dependencies Playbook
   import_playbook: kube-dependencies.yaml
 

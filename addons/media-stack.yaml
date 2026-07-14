@@ -167,359 +167,214 @@
         - media-stack
         - argocd
 
-    - name: Create public wildcar certificate
+    - name: Create HTTPRoute flaresolverr
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: example-com-tls
-            namespace: media-stack
-          spec:
-            secretName: example-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ public_dns_wildcard }}"
-            dnsNames:
-              - "{{ public_dns_wildcard }}"
-      tags:
-        - ingress
-        - certificate
-
-    - name: Create local wildcar certificate
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: local-example-com-tls
-            namespace: media-stack
-          spec:
-            secretName: local-example-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-              - "{{ local_dns_wildcard }}"
-      tags:
-        - ingress
-        - certificate
-
-    - name: Create flaresolverr Ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: flaresolverr
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "flaresolverr.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "flaresolverr.{{ local_dns }}"
             rules:
-              - host: "flaresolverr.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: flaresolverr
-                          port:
-                            number: 8191
+              - backendRefs:
+                  - name: flaresolverr
+                    port: 8191
       tags:
         - ingress
+        - httproute
 
-    - name: Create lidarr Ingress
+    - name: Create HTTPRoute lidarr
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: lidarr
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "lidarr.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "lidarr.{{ local_dns }}"
             rules:
-              - host: "lidarr.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: lidarr
-                          port:
-                            number: 8686
+              - backendRefs:
+                  - name: lidarr
+                    port: 8686
       tags:
         - ingress
+        - httproute
+      when: false
 
-    - name: Create prowlarr Ingress
+    - name: Create HTTPRoute prowlarr
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: prowlarr
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "prowlarr.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "prowlarr.{{ local_dns }}"
             rules:
-              - host: "prowlarr.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: prowlarr
-                          port:
-                            number: 9696
+              - backendRefs:
+                  - name: prowlarr
+                    port: 9696
       tags:
         - ingress
+        - httproute
 
-    - name: Create tdarr Ingress
+    - name: Create HTTPRoute tdarr
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: tdarr
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "tdarr.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "tdarr.{{ local_dns }}"
             rules:
-              - host: "tdarr.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: tdarr
-                          port:
-                            number: 8265
+              - backendRefs:
+                  - name: tdarr
+                    port: 8265
       tags:
         - ingress
+        - httproute
 
-    - name: Create Jellyfin Ingress
+    - name: Create HTTPRoute jellyseerr
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: jellyseerr
+            namespace: "{{ target_namespace }}"
+            # annotations:
+            #   external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure
+
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure-pvt
+
+            hostnames:
+              - "catalog.{{ public_dns }}"
+              - "catalog.{{ local_dns }}"
+
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: jellyseerr
+                    port: 5055
+      tags:
+        - ingress
+        - httproute
+
+
+    - name: Create HTTPRoute jellyfin
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: jellyfin
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
+            # annotations:
+            #   external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "stream.{{ public_dns }}"
-                secretName: example-com-tls
-              - hosts:
-                  - "stream.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure
+
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure-pvt
+
+            hostnames:
+              - "stream.{{ public_dns }}"
+              - "stream.{{ local_dns }}"
+
             rules:
-              - host: "stream.{{ public_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: jellyfin
-                          port:
-                            number: 8096
-              - host: "stream.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: jellyfin
-                          port:
-                            number: 8096
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: jellyfin
+                    port: 8096
       tags:
         - ingress
+        - httproute
 
-    # Ingress exposing Jellyseer to the public internet via Traefik
-    - name: Create Jellyseer Ingress
+    - name: Create HTTPRoute sonarr
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: jellyseer
-            namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "catalog.{{ public_dns }}"
-                secretName: example-com-tls
-              - hosts:
-                  - "catalog.{{ local_dns }}"
-                secretName: local-example-com-tls
-            rules:
-              - host: "catalog.{{ public_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: jellyseerr
-                          port:
-                            number: 5055
-              - host: "catalog.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: jellyseerr
-                          port:
-                            number: 5055
-      tags:
-        - ingress
-
-    - name: Create sonarr Ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: sonarr
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "sonarr.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "sonarr.{{ local_dns }}"
             rules:
-              - host: "sonarr.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: sonarr
-                          port:
-                            number: 8989
+              - backendRefs:
+                  - name: sonarr
+                    port: 8989
       tags:
         - ingress
 
-    - name: Create radarr Ingress
+    - name: Create HTTPRoute radarr
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: radarr
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "radarr.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "radarr.{{ local_dns }}"
             rules:
-              - host: "radarr.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: radarr
-                          port:
-                            number: 7878
-      tags:
-        - ingress
-
-    - name: Create jackett Ingress
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: jackett
-            namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "jackett.{{ local_dns }}"
-                secretName: local-example-com-tls
-            rules:
-              - host: "jackett.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: jackett
-                          port:
-                            number: 9117
+              - backendRefs:
+                  - name: radarr
+                    port: 7878
       tags:
         - ingress
