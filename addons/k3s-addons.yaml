@@ -1,0 +1,51 @@
+---
+- name: K3s Kubelab Cloud Addons
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  tasks:
+
+    - name: Create Service
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            labels:
+              app.kubernetes.io/app: traefik
+            name: traefik-svc
+            namespace: kube-system
+          spec:
+            ports:
+            - name: dashboard
+              port: 8080
+              protocol: TCP
+              targetPort: 8080
+            selector:
+              app.kubernetes.io/instance: traefik-kube-system
+              app.kubernetes.io/name: traefik
+      tags:
+        - traefik
+
+    - name: Create HTTPRoute for argocd-server
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: traefic-svc
+            namespace: kube-system
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+            hostnames:
+              - "traefik.{{ public_dns }}"
+            rules:
+              - backendRefs:
+                  - name: traefik-svc
+                    port: 8080
+      tags:
+        - traefik

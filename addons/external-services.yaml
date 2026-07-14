@@ -17,7 +17,7 @@
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
@@ -43,17 +43,33 @@
             name: webhook-site
             namespace: '{{ target_namespace }}'
           spec:
-            type: ExternalName
-            externalName: 192.168.0.31
+            type: ClusterIP
             ports:
             - name: http
               port: 8086
               protocol: TCP
               targetPort: 8086
 
-    - name: Create webhook-site IngressRoute
+    - name: Create webhook-site endpoints
       kubernetes.core.k8s:
         state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: webhook-site
+            namespace: '{{ target_namespace }}'
+          subsets:
+          - addresses:
+            - ip: 192.168.0.31
+            ports:
+            - name: http
+              port: 8086
+              protocol: TCP
+
+    - name: Create webhook-site IngressRoute
+      kubernetes.core.k8s:
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -76,6 +92,26 @@
             tls:
               secretName: local-example-com-tls
 
+    - name: Create HTTPRoute for webhook-site
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: webhook-site
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "webhook.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: webhook-site
+                    port: 8086
+
   # Dockge external service and ingressroute
     - name: Create dockge service
       kubernetes.core.k8s:
@@ -87,17 +123,33 @@
             name: dockge
             namespace: '{{ target_namespace }}'
           spec:
-            type: ExternalName
-            externalName: 192.168.0.31
+            type: ClusterIP
             ports:
             - name: http
               port: 5001
               protocol: TCP
               targetPort: 5001
 
-    - name: Create dockge IngressRoute
+    - name: Create dockge endpoints
       kubernetes.core.k8s:
         state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: dockge
+            namespace: '{{ target_namespace }}'
+          subsets:
+          - addresses:
+            - ip: 192.168.0.31
+            ports:
+            - name: http
+              port: 5001
+              protocol: TCP
+
+    - name: Create dockge IngressRoute
+      kubernetes.core.k8s:
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -120,6 +172,26 @@
             tls:
               secretName: local-example-com-tls
 
+    - name: Create HTTPRoute for dockge
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: dockge
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "dockge.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: dockge
+                    port: 5001
+
   # Proxmox external service and ingressroute
     - name: Create proxmox service
       kubernetes.core.k8s:
@@ -131,17 +203,33 @@
             name: proxmox
             namespace: '{{ target_namespace }}'
           spec:
-            type: ExternalName
-            externalName: 192.168.0.11
+            type: ClusterIP
             ports:
             - name: https
               port: 8006
               protocol: TCP
               targetPort: 8006
 
-    - name: Create proxmox IngressRoute
+    - name: Create proxmox endpoints
       kubernetes.core.k8s:
         state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: proxmox
+            namespace: '{{ target_namespace }}'
+          subsets:
+          - addresses:
+            - ip: 192.168.0.11
+            ports:
+            - name: https
+              port: 8006
+              protocol: TCP
+
+    - name: Create proxmox IngressRoute
+      kubernetes.core.k8s:
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -163,6 +251,26 @@
                     port: 8006
             tls:
               secretName: local-example-com-tls
+
+    - name: Create HTTPRoute for proxmox
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: proxmox
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "pve.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: proxmox
+                    port: 8006
 
 # HomeAssistant
 
@@ -238,17 +346,33 @@
             name: pihole
             namespace: '{{ target_namespace }}'
           spec:
-            type: ExternalName
-            externalName: 192.168.0.31
+            type: ClusterIP
             ports:
             - name: http
               port: 80
               protocol: TCP
               targetPort: 80
 
-    - name: Create pihole IngressRoute
+    - name: Create pihole endpoints
       kubernetes.core.k8s:
         state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: pihole
+            namespace: '{{ target_namespace }}'
+          subsets:
+          - addresses:
+            - ip: 192.168.0.31
+            ports:
+            - name: http
+              port: 80
+              protocol: TCP
+
+    - name: Create pihole IngressRoute
+      kubernetes.core.k8s:
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -270,6 +394,26 @@
                     port: 80
             tls:
               secretName: local-example-com-tls
+
+    - name: Create HTTPRoute for pihole
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: pihole
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "pihole.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: pihole
+                    port: 80
 
   # CloudBeaver external service and ingressroute
     - name: Create cloudbeaver service
@@ -448,19 +592,35 @@
             name: nas
             namespace: '{{ target_namespace }}'
           spec:
-            type: ExternalName
-            externalName: 192.168.0.16
+            type: ClusterIP
             ports:
             - name: http
               port: 80
               protocol: TCP
               targetPort: 80
+
+    - name: Create TrueNAS endpoints
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: nas
+            namespace: '{{ target_namespace }}'
+          subsets:
+          - addresses:
+            - ip: 192.168.0.16
+            ports:
+            - name: http
+              port: 80
+              protocol: TCP
       tags: 
       - truenas
 
     - name: Create TrueNAS ingress
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: networking.k8s.io/v1
           kind: Ingress
@@ -489,3 +649,26 @@
                         number: 80
       tags: 
       - truenas
+
+    - name: Create HTTPRoute for TrueNAS
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: nas
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "nas.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: nas
+                    port: 80
+      tags:
+        - truenas
+        - ingress

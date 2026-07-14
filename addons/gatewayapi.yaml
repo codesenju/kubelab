@@ -15,7 +15,7 @@
           metadata:
             name: "{{ target_namespace }}"
 
-    - name: Create public wildcar certificate | IY Synergy
+    - name: Create public wildcard certificate
       kubernetes.core.k8s:
         state: present
         definition:
@@ -36,7 +36,7 @@
         - ingress
         - certificate
 
-    - name: Create local wildcar certificate | IY Synergy
+    - name: Create local wildcard certificate
       kubernetes.core.k8s:
         state: present
         definition:
@@ -57,38 +57,17 @@
         - ingress
         - certificate
 
-    - name: Create public wildcar certificate
+    - name: Create secondary public wildcard certificate
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
-            name: "{{ certificate_ref }}" # example-com-tls
+            name: "{{ certificate_ref_2 }}" # iysynergy-com-tls
             namespace: "{{ target_namespace }}"
           spec:
-            secretName: "{{ certificate_ref }}" # example-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ public_dns_wildcard }}"
-            dnsNames:
-              - "{{ public_dns_wildcard }}"
-      tags:
-        - ingress
-        - certificate
-
-    - name: Create public2 wildcar certificate
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: "{{ certificate_ref_2 }}" # example-com-tls
-            namespace: "{{ target_namespace }}"
-          spec:
-            secretName: "{{ certificate_ref_2 }}" # example-com-tls
+            secretName: "{{ certificate_ref_2 }}" # iysynergy-com-tls
             issuerRef:
               name: letsencrypt-production
               kind: ClusterIssuer

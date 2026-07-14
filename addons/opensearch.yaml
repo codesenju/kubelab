@@ -287,6 +287,28 @@
       tags: 
         - ingress
 
+    - name: Create HTTPRoute for legacy OpenSearch dashboard host
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: opensearch-dashboard-legacy
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+            hostnames:
+              - "opensearch.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: observability-stack-opensearch-dashboards
+                    port: 5601
+      tags:
+        - ingress
+
     - name: Create BackendTLSPolicy
       kubernetes.core.k8s:
         state: absent

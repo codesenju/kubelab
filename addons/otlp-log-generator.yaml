@@ -1,0 +1,65 @@
+apiVersion: v1
+kind: Pod
+metadata:
+  name: otlp-log-generator
+  namespace: opensearch
+  labels:
+    app: otlp-log-generator
+spec:
+  restartPolicy: Always
+  containers:
+    - name: sender
+      image: python:3.12-alpine
+      command:
+        - python
+        - -c
+        - |
+          import json
+          import time
+          import urllib.request
+
+          url = "http://observability-stack-opentelemetry-collector:4318/v1/logs"
+
+          while True:
+              payload = {
+                  "resourceLogs": [
+                      {
+                          "resource": {
+                              "attributes": [
+                                  {"key": "service.name", "value": {"stringValue": "otlp-log-generator"}},
+                                  {"key": "service.namespace", "value": {"stringValue": "opensearch"}},
+                                  {"key": "k8s.namespace.name", "value": {"stringValue": "opensearch"}},
+                              ]
+                          },
+                          "scopeLogs": [
+                              {
+                                  "scope": {"name": "otlp-log-generator", "version": "1.0.0"},
+                                  "logRecords": [
+                                      {
+                                          "timeUnixNano": str(time.time_ns()),
+                                          "severityNumber": 9,
+                                          "severityText": "INFO",
+                                          "body": {"stringValue": "periodic otlp test log from kubelab"},
+                                          "attributes": [
+                                              {"key": "event.domain", "value": {"stringValue": "test"}},
+                                              {"key": "event.name", "value": {"stringValue": "otlp-log-generator"}},
+                                              {"key": "environment", "value": {"stringValue": "kubelab"}},
+                                          ],
+                                      }
+                                  ],
+                              }
+                          ],
+                      }
+                  ]
+              }
+
+              data = json.dumps(payload).encode("utf-8")
+              req = urllib.request.Request(url, data=data, headers={"Content-Type": "application/json"}, method="POST")
+
+              try:
+                  with urllib.request.urlopen(req, timeout=10) as response:
+                      print(f"sent log status={response.status}", flush=True)
+              except Exception as exc:
+                  print(f"failed to send log: {exc}", flush=True)
+
+              time.sleep(300)
