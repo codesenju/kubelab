@@ -1,0 +1,758 @@
+# Default values for liqo.
+# This is a YAML-formatted file.
+# Declare variables to be passed into your templates.
+
+# -- Images' tag to select a development version of liqo instead of a release
+tag: ""
+
+# -- Override the standard name used by Helm and associated to Kubernetes/Liqo resources.
+nameOverride: ""
+# -- Override the standard full name used by Helm and associated to Kubernetes/Liqo resources.
+fullnameOverride: ""
+
+# -- Image pull policy for all Liqo containers
+pullPolicy: IfNotPresent
+
+# -- Image pull secrets for all Liqo containers
+imagePullSecrets: []
+# - name: regcred
+
+# -- Liqo CRD subchart configuration
+# Since Liqo contains a lot of CRDs, we decided to separate them from the main chart
+# These values override the ones in the liqo-crds subchart
+liqo-crds:
+  crdUpgrade:
+    # -- Enable/Disable the CRD upgrade job. When enabled, a pre-upgrade hook will automatically update CRDs during helm upgrade.
+    enabled: false
+    # -- Keep the CRD upgrade resources (Job, ConfigMap, ServiceAccount, ClusterRole, ClusterRoleBinding) after completion. If false, they are deleted on success.
+    keepResources: false
+    image:
+      # -- Image repository for the CRD upgrade job.
+      # NOTE: This image only supports linux/amd64 and linux/arm64 platforms (arm/v7 is not supported).
+      name: "ghcr.io/liqotech/liqo-crd-upgrade"
+      # -- Image version for the CRD upgrade job. Required when crdUpgrade.enabled is true.
+      version: ""
+      # -- Image pull policy for the CRD upgrade job.
+      pullPolicy: IfNotPresent
+
+metrics:
+  # -- Enable/Disable the metrics server in every liqo component.
+  enabled: false
+  prometheusOperator:
+    # -- Enable/Disable the creation of a Prometheus servicemonitor/podmonitor for the metrics servers.
+    # Turn on this flag when the Prometheus Operator runs in your cluster.
+    enabled: false
+
+apiServer:
+  # -- The address that must be used to contact your API server, it needs to be reachable from the clusters that you will peer with (defaults to your master IP).
+  address: ""
+  # -- The CA certificate used to issue x509 user certificates for the API server (base64). Leave it empty to use the default CA.
+  ca: ""
+  # -- Indicates that the API Server is exposing a certificate issued by a trusted Certification Authority.
+  trustedCA: false
+
+networking:
+  # -- Use the default Liqo networking module.
+  enabled: true
+  # -- Reflect pod IPs and EnpointSlices to the remote clusters.
+  reflectIPs: true
+  # -- The port used by the geneve tunnels.
+  genevePort: 6091
+  # -- Set the list of resources that implement the GatewayServer
+  serverResources:
+    - apiVersion: networking.liqo.io/v1beta1
+      resource: wggatewayservers
+  # -- Set the list of resources that implement the GatewayClient
+  clientResources:
+    - apiVersion: networking.liqo.io/v1beta1
+      resource: wggatewayclients
+  gateway:
+    # -- Enable the TCP MSS clamping on tunnel interfaces.
+    # Tunneling technologies introduce extra overhead that reduces the MTU, causing standard-sized Internet
+    # packets to exceed the tunnel's capacity and be dropped. TCP MSS Clamping resolves this by intercepting
+    # the initial TCP connection handshake and dynamically rewriting the Maximum Segment Size (MSS)
+    # value to match the smaller available space of the tunnel interface. This dynamic adjustment, per
+    # TCP-session, forces the remote server to generate smaller data packets that fit inside the tunnel,
+    # effectively preventing fragmentation issues and the common "black hole" phenomenon where connections
+    # establish but data transfer hangs indefinitely.
+    mssclamp:
+      enabled: true
+      # -- Set the value for the mssclamp rule.
+      # Set to 0 to use automatic value discovery based on the MTU of the tunnel interface.
+      value: 0
+  # -- Set the options for the default gateway (server/client) templates.
+  # The default templates use a WireGuard implementation to connect the gateway of the clusters.
+  # These options are used to configure only the default templates and should not be considered
+  # if a custom template is used.
+  gatewayTemplates:
+    wireguard:
+      # -- Set the implementation used for the WireGuard connection. Possible values are "kernel" and "userspace".
+      implementation: "kernel"
+    # -- Set the number of replicas for the gateway deployments
+    replicas: 1
+    # -- Set the options to configure the gateway ping used to check connection
+    ping:
+      # -- Set the number of consecutive pings that must fail to consider the connection as lost
+      lossThreshold: 5
+      # -- Set the interval between two consecutive pings
+      interval: 2s
+      # -- Set the interval at which the connection resource status is updated
+      updateStatusInterval: 10s
+    # -- Set the options to configure the gateway server
+    server:
+      # -- Set the options to configure the server service
+      service:
+        # -- Set to "false" if you expose the gateway service as LoadBalancer and you do not want to create also a NodePort associated to it (Note: this setting is useful only on cloud providers that support this feature).
+        allocateLoadBalancerNodePorts: ""
+        # -- Annotations for the server service.
+        annotations: {}
+    pod:
+      # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the gateway pods.
+      priorityClassName: ""
+      # -- Additional tolerations for gateway pods
+      tolerations: []
+    container:
+      gateway:
+        image:
+          # -- Image repository for the gateway container.
+          name: "ghcr.io/liqotech/gateway"
+          # -- Custom version for the gateway image. If not specified, the global tag is used.
+          version: ""
+      wireguard:
+        image:
+          # -- Image repository for the wireguard container.
+          name: "ghcr.io/liqotech/gateway/wireguard"
+          # -- Custom version for the wireguard image. If not specified, the global tag is used.
+          version: ""
+      geneve:
+        image:
+          # -- Image repository for the geneve container.
+          name: "ghcr.io/liqotech/gateway/geneve"
+          # -- Custom version for the geneve image. If not specified, the global tag is used.
+          version: ""
+    # -- Enable/Disable the nftables monitor for the gateway pods.
+    # It means that the gateway pods will monitor the nftables rules and will restore them in case of changes.
+    nftablesMonitor: true
+    # -- Enable/Disable the route monitor for the gateway pods.
+    # It means that the gateway pods will monitor the routing rules and will restore them in case of changes.
+    routeMonitor: true
+  fabric:
+    pod:
+      # -- Annotations for the fabric pod.
+      annotations: {}
+      # -- Labels for the fabric pod.
+      labels: {}
+      # -- Extra arguments for the fabric pod.
+      extraArgs: []
+      # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the fabric pod.
+      resources:
+        limits: {}
+        requests: {}
+      # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the fabric pod.
+      priorityClassName: ""
+    image:
+      # -- Image repository for the fabric pod.
+      name: "ghcr.io/liqotech/fabric"
+      # -- Custom version for the fabric image. If not specified, the global tag is used.
+      version: ""
+    # -- NodeSelector for the fabric pod.
+    nodeSelector: {}
+    # -- Affinity for the fabric pod.
+    affinity:
+      nodeAffinity:
+        requiredDuringSchedulingIgnoredDuringExecution:
+          nodeSelectorTerms:
+            - matchExpressions:
+                - key: liqo.io/type
+                  operator: NotIn
+                  values:
+                    - virtual-node
+    # -- Extra tolerations for the fabric pod.
+    tolerations: []
+    config:
+      # -- Enabe/Disable the full masquerade mode for the fabric pod.
+      # It means that all traffic will be masquerade using the first external cidr IP, instead of using the pod IP.
+      # Full masquerade is useful when the cluster nodeports uses a PodCIDR IP to masqerade the incoming traffic.
+      # IMPORTANT: Please consider that enabling this feature will masquerade the source IP of traffic towards a remote cluster,
+      # making impossible for a pod that receives the traffic to know the original source IP.
+      fullMasquerade: false
+      # -- Enable/Disable the masquerade bypass for the gateway pods.
+      # It means that the packets from gateway pods will not be masqueraded from the host where the pod is scheduled.
+      # This is useful in scenarios where CNIs masquerade the traffic from pod to nodes.
+      # For example this is required when using the Azure CNI or Kindnet.
+      gatewayMasqueradeBypass: false
+      # -- Enable/Disable the nftables monitor for the fabric pod.
+      # It means that the fabric pod will monitor the nftables rules and will restore them in case of changes.
+      # In some cases (like K3S), this monitor can cause a huge amount of CPU usage.
+      # If you are experiencing high CPU usage, you can disable this feature.
+      nftablesMonitor: false
+      # -- Enable/Disable the route monitor for the fabric pod.
+      # It means that the fabric pod will monitor the routing rules and will restore them in case of changes.
+      routeMonitor: true
+      # -- Set the port where the fabric pod will expose the health probe.
+      # To disable the health probe, set the port to 0.
+      healthProbeBindAddressPort: "8081"
+      # -- Set the port where the fabric pod will expose the metrics.
+      # To disable the metrics, set the port to 0.
+      metricsAddressPort: "8082"
+
+authentication:
+  # -- Enable/Disable the authentication module.
+  enabled: true
+  # -- Enable TLS compatibility mode for client certificates and keys.
+  # If set to true, Liqo will use widely supported algorithm (RSA)
+  # instead of Ed25519 (default) for generating private keys and CSRs.
+  # Enable this option to ensure compatibility with systems that do not yet
+  # support Ed25519 as signature algorithm.
+  tlsCompatibilityMode: false
+  # AWS-specific configuration for the local cluster and the Liqo user.
+  # This user should be able (1) to create new IAM users, (2) to create new programmatic access
+  # credentials, and (3) to describe EKS clusters.
+  # NOTE: set it only if running on EKS, otherwise let this fields with the default value
+  awsConfig:
+    # -- Use an existing secret to configure the AWS credentials.
+    useExistingSecret: false
+    # -- AccessKeyID for the Liqo user.
+    accessKeyId: ""
+    # -- SecretAccessKey for the Liqo user.
+    secretAccessKey: ""
+    # -- AWS region where the clsuter is runnnig.
+    region: ""
+    # -- Name of the EKS cluster.
+    clusterName: ""
+  # To use an existing secret instead of setting the secrets in values file:
+  # awsConfig:
+  #   useExistingSecret: true
+  #   accessKeyId:
+  #     secretKeyRef:
+  #       name: "your-secret-name"
+  #       key: "your-secret-key"
+  #   secretAccessKey:
+  #     secretKeyRef:
+  #       name: "your-secret-name"
+  #       key: "your-secret-key"
+  #   region: "your-region"
+  #   clusterName: "your-cluster-name"
+
+offloading:
+  # -- Enable/Disable the offloading module
+  enabled: true
+  defaultNodeResources:
+    # -- The amount of CPU to reserve for a virtual node targeting this cluster.
+    cpu: "4"
+    # -- The amount of memory to reserve for a virtual node targeting this cluster.
+    memory: "8Gi"
+    # -- The amount of pods that can be scheduled on a virtual node targeting this cluster.
+    pods: "110"
+    # -- The amount of ephemeral storage to reserve for a virtual node targeting this cluster.
+    ephemeral-storage: "20Gi"
+  # -- Enable/Disable the creation of a k8s node for each VirtualNode.
+  # This flag is cluster-wide, but you can configure the preferred behaviour for each VirtualNode
+  # by setting the "createNode" field in the resource Spec.
+  createNode: true
+  # -- Enable/Disable the check of the liqo networking for virtual nodes.
+  # If check is disabled, the network status will not be added to node conditions.
+  # This flag is cluster-wide, but you can configure the preferred behaviour for each VirtualNode
+  # by setting the "disableNetworkCheck" field in the resource Spec.
+  disableNetworkCheck: false
+  runtimeClass:
+    # -- Name of the runtime class to use for offloading.
+    name: liqo
+    # -- Annotations for the runtime class.
+    annotations: {}
+    # -- Labels for the runtime class.
+    labels: {}
+    # -- Handler for the runtime class.
+    handler: liqo
+    # -- Node selector for the runtime class.
+    nodeSelector:
+      enabled: true
+      # -- Labels for the node selector.
+      labels:
+        liqo.io/type: virtual-node
+    # -- Tolerations for the runtime class.
+    tolerations:
+      enabled: true
+      # -- Tolerations for the tolerations.
+      tolerations:
+        - key: virtual-node.liqo.io/not-allowed
+          operator: Exists
+          effect: NoExecute
+  reflection:
+    skip:
+      # -- List of labels that must not be reflected on remote clusters.
+      labels: []
+      # -- List of annotations that must not be reflected on remote clusters.
+      annotations:
+        [
+          cloud.google.com/neg,
+          cloud.google.com/neg-status,
+          kubernetes.digitalocean.com/load-balancer-id,
+          ingress.kubernetes.io/backends,
+          ingress.kubernetes.io/forwarding-rule,
+          ingress.kubernetes.io/target-proxy,
+          ingress.kubernetes.io/url-map,
+          metallb.universe.tf/address-pool,
+          metallb.universe.tf/ip-allocated-from-pool,
+          metallb.universe.tf/loadBalancerIPs,
+          loadbalancer.openstack.org/load-balancer-id,
+        ]
+    pod:
+      # -- The number of workers used for the pods reflector. Set 0 to disable the reflection of pods.
+      workers: 10
+    service:
+      # -- The number of workers used for the services reflector. Set 0 to disable the reflection of services.
+      workers: 3
+      # -- The type of reflection used for the services reflector. Ammitted values: "DenyList", "AllowList".
+      type: DenyList
+      # -- List of load balancer classes that will be shown to remote clusters. If empty, load balancer classes will be reflected as-is.
+      # Example:
+      # loadBalancerClasses:
+      # - name: public
+      #   default: true
+      # - name: internal
+      loadBalancerClasses: []
+    endpointslice:
+      # -- The number of workers used for the endpointslices reflector. Set 0 to disable the reflection of endpointslices.
+      workers: 10
+    ingress:
+      # -- The number of workers used for the ingresses reflector. Set 0 to disable the reflection of ingresses.
+      workers: 3
+      # -- The type of reflection used for the ingresses reflector. Ammitted values: "DenyList", "AllowList".
+      type: DenyList
+      # -- List of ingress classes that will be shown to remote clusters. If empty, ingress class will be reflected as-is.
+      # Example:
+      # ingressClasses:
+      # - name: nginx
+      #   default: true
+      # - name: traefik
+      ingressClasses: []
+    configmap:
+      # -- The number of workers used for the configmaps reflector. Set 0 to disable the reflection of configmaps.
+      workers: 3
+      # -- The type of reflection used for the configmaps reflector. Ammitted values: "DenyList", "AllowList".
+      type: DenyList
+    secret:
+      # -- The number of workers used for the secrets reflector. Set 0 to disable the reflection of secrets.
+      workers: 3
+      # -- The type of reflection used for the secrets reflector. Ammitted values: "DenyList", "AllowList".
+      type: DenyList
+    serviceaccount:
+      # -- The number of workers used for the serviceaccounts reflector. Set 0 to disable the reflection of serviceaccounts.
+      workers: 3
+    persistentvolumeclaim:
+      # -- The number of workers used for the persistentvolumeclaims reflector. Set 0 to disable the reflection of persistentvolumeclaims.
+      workers: 3
+    event:
+      # -- The number of workers used for the events reflector. Set 0 to disable the reflection of events.
+      workers: 3
+      # -- The type of reflection used for the events reflector. Ammitted values: "DenyList", "AllowList".
+      type: DenyList
+
+storage:
+  # -- Enable/Disable the liqo virtual storage class on the local cluster. You will be able to
+  # offload your persistent volumes, while other clusters will be able to schedule their
+  # persistent workloads on the current cluster.
+  enabled: true
+  # -- Name to assign to the liqo virtual storage class.
+  virtualStorageClassName: liqo
+  # -- Name of the real storage class to use in the local cluster.
+  realStorageClassName: ""
+  # -- Namespace where liqo will deploy specific PVCs. Internal parameter, do not change.
+  storageNamespace: liqo-storage
+
+common:
+  # -- NodeSelector for all liqo pods, excluding virtual kubelet, gateway and fabric pods.
+  nodeSelector: {}
+  # -- Tolerations for all liqo pods, excluding virtual kubelet, gateway and fabric pods.
+  tolerations: []
+  # -- Affinity for all liqo pods, excluding virtual kubelet, gateway and fabric pods.
+  affinity: {}
+  # -- Extra arguments for all liqo pods, excluding virtual kubelet and gateway pods.
+  extraArgs: []
+  # -- Global labels to be added to all resources created by Liqo controllers
+  globalLabels:
+    liqo.io/managed: "true"
+  # -- Global annotations to be added to all resources created by Liqo controllers
+  globalAnnotations: {}
+
+controllerManager:
+  # -- The number of controller-manager instances to run, which can be increased for active/passive high availability.
+  replicas: 1
+  pod:
+    # -- Annotations for the controller-manager pod.
+    annotations: {}
+    # -- Labels for the controller-manager pod.
+    labels: {}
+    # -- Extra arguments for the controller-manager pod.
+    extraArgs: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the controller-manager pod.
+    resources:
+      limits: {}
+      requests: {}
+    # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the controller-manager pod.
+    priorityClassName: ""
+  image:
+    # -- Image repository for the controller-manager pod.
+    name: "ghcr.io/liqotech/liqo-controller-manager"
+    # -- Custom version for the controller-manager image. If not specified, the global tag is used.
+    version: ""
+  config:
+    # -- It enforces offerer-side that offloaded pods do not exceed offered resources (based on container limits).
+    # This feature is suggested to be enabled when consumer-side enforcement is not sufficient.
+    # It makes sure that the sum of the requests of the offloaded pods never exceeds the quota offered by the remote cluster.
+    # The quota can be still exceeded if no limits and requests are defined in the offloaded pods or if the limits are larger than the
+    # requests. For a stricter enforcement, the defaultLimitsEnforcement can be set to Hard.
+    enableResourceEnforcement: true
+    # -- Defines how strict is the enforcement of the quota offered by the remote cluster.
+    # enableResourceEnforcement must be enabled to use this feature.
+    # Possible values are: None, Soft, Hard.
+    # None: the offloaded pods might not have the resource `requests` or `limits`.
+    # Soft: it forces the offloaded pods to have `requests` set. If the pods go over the requests, the total used resources might go over the quota.
+    # Hard: it forces the offloaded pods to have `limits` and `requests` set, with `requests` == `limits`. This is the safest mode as the consumer cluster cannot go over the quota.
+    defaultLimitsEnforcement: None
+    # -- Ensure offloaded pods running on a failed node are evicted and rescheduled on a healthy node, preventing them to remain in a terminating state indefinitely.
+    # This feature can be useful in case of remote node failure to guarantee better service continuity and to have the expected pods workload on the remote cluster.
+    # However, enabling this feature could produce zombies in the worker node, in case the node returns Ready again without a restart.
+    enableNodeFailureController: false
+  metrics:
+    # -- Service used to expose metrics.
+    service:
+      # -- Labels for the metrics service.
+      labels: {}
+      # -- Annotations for the metrics service.
+      annotations: {}
+    serviceMonitor:
+      # -- Enable/Disable a Prometheus servicemonitor. Turn on this flag when the Prometheus Operator
+      # runs in your cluster
+      enabled: false
+      # -- Customize service monitor requests interval. If empty, Prometheus uses the global scrape interval
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      interval: ""
+      # -- Customize service monitor scrape timeout. If empty, Prometheus uses the global scrape timeout
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      scrapeTimeout: ""
+      # -- Labels for the gateway servicemonitor.
+      labels: {}
+
+webhook:
+  # -- The number of webhook instances to run, which can be increased for active/passive high availability.
+  replicas: 1
+  pod:
+    # -- Annotations for the webhook pod.
+    annotations: {}
+    # -- Labels for the webhook pod.
+    labels: {}
+    # -- Extra arguments for the webhook pod.
+    extraArgs: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the webhook pod.
+    resources:
+      limits: {}
+      requests: {}
+    # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the webhook pod.
+    priorityClassName: ""
+  image:
+    # -- Image repository for the webhook pod.
+    name: "ghcr.io/liqotech/webhook"
+    # -- Custom version for the webhook image. If not specified, the global tag is used.
+    version: ""
+  metrics:
+    # -- Service used to expose metrics.
+    service:
+      # -- Labels for the metrics service.
+      labels: {}
+      # -- Annotations for the metrics service.
+      annotations: {}
+    serviceMonitor:
+      # -- Enable/Disable a Prometheus servicemonitor. Turn on this flag when the Prometheus Operator
+      # runs in your cluster
+      enabled: false
+      # -- Customize service monitor requests interval. If empty, Prometheus uses the global scrape interval
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      interval: ""
+      # -- Customize service monitor scrape timeout. If empty, Prometheus uses the global scrape timeout
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      scrapeTimeout: ""
+      # -- Labels for the gateway servicemonitor.
+      labels: {}
+  # -- TCP port the webhook server binds to.
+  port: 9443
+  # -- Webhook failure policy, either Ignore or Fail.
+  failurePolicy: Fail
+  patch:
+    # -- Image used for the patch jobs to manage certificates.
+    image: k8s.gcr.io/ingress-nginx/kube-webhook-certgen:v1.1.1
+
+ipam:
+  external:
+    # -- Use an external IPAM to allocate the IP addresses for the pods. Enabling it will disable the internal IPAM.
+    enabled: false
+    # -- The URL of the external IPAM.
+    url: ""
+  internal:
+    image:
+      # -- Image repository for the IPAM pod.
+      name: "ghcr.io/liqotech/ipam"
+      # -- Custom version for the IPAM image. If not specified, the global tag is used.
+      version: ""
+    # -- The number of IPAM instances to run, which can be increased for active/passive high availability.
+    replicas: 1
+    pod:
+      # -- Annotations for the IPAM pod.
+      annotations: {}
+      # -- Labels for the IPAM pod.
+      labels: {}
+      # -- Extra arguments for the IPAM pod.
+      extraArgs: []
+      # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the IPAM pod.
+      resources:
+        limits: {}
+        requests: {}
+      # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the IPAM pod.
+      priorityClassName: ""
+    # -- Enable/Disable the generation of graphviz files inside the ipam.
+    # This feature is useful to visualize the status of the ipam.
+    # The graphviz files are stored in the /graphviz directory of the ipam pod (a file for each network pool).
+    # You can access them using "kubectl cp".
+    graphviz: false
+    # -- Set the interval at which the IPAM pod will synchronize it's in-memory status with the local cluster.
+    # If you want to disable the synchronization, set the interval to 0.
+    syncInterval: 2m
+    ## -- Set the grace period the sync routine will wait before deleting an ip or a network.
+    syncGracePeriod: 30s
+  # -- The subnet used by the pods in your cluster, in CIDR notation (e.g., 10.0.0.0/16).
+  podCIDR: ""
+  # -- The subnet used by the services in you cluster, in CIDR notation (e.g., 172.16.0.0/16).
+  serviceCIDR: ""
+  # -- The subnet used for the external CIDR.
+  externalCIDR: "10.70.0.0/16"
+  # -- The subnet used for the internal CIDR.
+  # These IPs are assigned to the Liqo internal-network interfaces.
+  internalCIDR: "10.80.0.0/16"
+  # -- List of IP subnets that do not have to be used by Liqo.
+  # Liqo can perform automatic IP address remapping when a remote cluster is peering with you, e.g., in case IP address spaces (e.g., PodCIDR) overlaps.
+  # In order to prevent IP conflicting between locally used private subnets in your infrastructure and private subnets belonging to remote clusters
+  # you need tell liqo the subnets used in your cluster. E.g if your cluster nodes belong to the 192.168.2.0/24 subnet, then
+  # you should add that subnet to the reservedSubnets. PodCIDR and serviceCIDR used in the local cluster are automatically added to the reserved list.
+  reservedSubnets: []
+  # -- Set of network pools to perform the automatic address mapping in Liqo.
+  # Network pools are used to map a cluster network into another one in order to prevent conflicts.
+  # If left empty, it is defaulted to the private addresses ranges: [10.0.0.0/8, 192.168.0.0/16, 172.16.0.0/12]
+  pools:
+    - "10.0.0.0/8"
+    - "192.168.0.0/16"
+    - "172.16.0.0/12"
+
+crdReplicator:
+  pod:
+    # -- Annotations for the crdReplicator pod.
+    annotations: {}
+    # -- Labels for the crdReplicator pod.
+    labels: {}
+    # -- Extra arguments for the crdReplicator pod.
+    extraArgs: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the crdReplicator pod.
+    resources:
+      limits: {}
+      requests: {}
+    # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the crdReplicator pod.
+    priorityClassName: ""
+  metrics:
+    podMonitor:
+      # -- Enable/Disable the creation of a Prometheus podmonitor. Turn on this flag when the Prometheus Operator
+      # runs in your cluster
+      enabled: false
+      # -- Setup pod monitor requests interval. If empty, Prometheus uses the global scrape interval
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      interval: ""
+      # -- Setup pod monitor scrape timeout. If empty, Prometheus uses the global scrape timeout
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      scrapeTimeout: ""
+      # -- Labels for the crdReplicator podmonitor.
+      labels: {}
+  image:
+    # -- Image repository for the crdReplicator pod.
+    name: "ghcr.io/liqotech/crd-replicator"
+    # -- Custom version for the crdReplicator image. If not specified, the global tag is used.
+    version: ""
+
+discovery:
+  config:
+    # -- Specify an unique ID for your cluster. This ID is used to identify your cluster in the peering process.
+    clusterID: ""
+    # -- A set of labels that characterizes the local cluster when exposed remotely as a virtual node.
+    # It is suggested to specify the distinguishing characteristics that may be used to decide whether to offload pods on this cluster.
+    clusterLabels: {}
+      # topology.kubernetes.io/zone: us-east-1
+      # liqo.io/provider: your-provider
+
+metricAgent:
+  # -- Enable/Disable the virtual kubelet metric agent. This component aggregates all the kubelet-related metrics
+  # (e.g., CPU, RAM, etc) collected on the nodes that are used by a remote cluster peered with you, then exporting
+  # the resulting values as a property of the virtual kubelet running on the remote cluster.
+  enabled: true
+  config:
+    # -- Set the timeout for the metrics server.
+    timeout:
+      read: 30s
+      write: 30s
+  pod:
+    # -- Annotations for the metricAgent pod.
+    annotations: {}
+    # -- Labels for the metricAgent pod.
+    labels: {}
+    # -- Extra arguments for the metricAgent pod.
+    extraArgs: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the metricAgent pod.
+    resources:
+      limits: {}
+      requests: {}
+    # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the metricAgent pod.
+    priorityClassName: ""
+  image:
+    # -- Image repository for the metricAgent pod.
+    name: "ghcr.io/liqotech/metric-agent"
+    # -- Custom version for the metricAgent image. If not specified, the global tag is used.
+    version: ""
+  initContainer:
+    image:
+      # --Image repository for the init container of the metricAgent pod.
+      name: "ghcr.io/liqotech/cert-creator"
+      # -- Custom version for the init container image of the metricAgent pod. If not specified, the global tag is used.
+      version: ""
+
+telemetry:
+  # -- Enable/Disable the telemetry collector.
+  enabled: true
+  pod:
+    # -- Annotations for the telemetry pod.
+    annotations: {}
+    # -- Labels for the telemetry pod.
+    labels: {}
+    # -- Extra arguments for the telemetry pod.
+    extraArgs: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the telemetry pod.
+    resources:
+      limits: {}
+      requests: {}
+  image:
+    # -- Image repository for the telemetry pod.
+    name: "ghcr.io/liqotech/telemetry"
+    # -- Custom version for the telemetry image. If not specified, the global tag is used.
+    version: ""
+  config:
+    # -- Set the schedule of the telemetry collector CronJob. Consider setting this value on ArgoCD deployments to avoid randomization.
+    schedule: ""
+    # schedule: "0 */12 * * *"
+
+virtualKubelet:
+  # -- The number of virtual kubelet instances to run, which can be increased for active/passive high availability.
+  replicas: 1
+  image:
+    # -- Image repository for the virtual kubelet pod.
+    name: "ghcr.io/liqotech/virtual-kubelet"
+    # -- Custom version for the virtual kubelet image. If not specified, the global tag is used.
+    version: ""
+  # Additional values that are added to virtual kubelet deployments and pods.
+  extra:
+    # -- Annotations for the virtual kubelet pod.
+    annotations: {}
+    # -- Labels for the virtual kubelet pod.
+    labels: {}
+    # -- Extra arguments virtual kubelet pod.
+    args: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the virtual kubelet pod.
+    resources:
+      limits: {}
+      requests: {}
+    # -- Tolerations for the virtual kubelet pod.
+    tolerations: []
+  virtualNode:
+    extra:
+      # -- Extra annotations for the virtual node.
+      annotations: {}
+      # -- Extra labels for the virtual node.
+      labels: {}
+  metrics:
+    # -- Port used to expose metrics.
+    port: 5872
+    podMonitor:
+      # -- Setup pod monitor requests interval. If empty, Prometheus uses the global scrape interval
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      interval: ""
+      # -- Setup pod monitor scrape timeout. If empty, Prometheus uses the global scrape timeout
+      # (https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/api.md#endpoint).
+      scrapeTimeout: ""
+      # -- Labels for the virtualkubelet podmonitor.
+      labels: {}
+
+uninstaller:
+  pod:
+    # -- Annotations for the uninstaller pod.
+    annotations: {}
+    # -- Labels for the uninstaller pod.
+    labels: {}
+    # -- Extra arguments for the uninstaller pod.
+    extraArgs: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the uninstaller pod.
+    resources:
+      limits: {}
+      requests: {}
+  image:
+    # -- Image repository for the uninstaller pod.
+    name: "ghcr.io/liqotech/uninstaller"
+    # -- Custom version for the uninstaller image. If not specified, the global tag is used.
+    version: ""
+
+proxy:
+  # -- Enable/Disable the proxy pod.
+  # This pod is mandatory to allow in-band peering
+  # and to connect to the consumer k8s api server from a remotly offloaded pod.
+  enabled: true
+  # -- Set the number of replicas for the proxy deployments
+  replicas: 1
+  pod:
+    # -- Annotations for the proxy pod.
+    annotations: {}
+    # -- Labels for the proxy pod.
+    labels: {}
+    # -- Extra arguments for the proxy pod.
+    extraArgs: []
+    # -- Resource requests and limits (https://kubernetes.io/docs/user-guide/compute-resources/) for the proxy pod.
+    resources:
+      limits: {}
+      requests: {}
+    # -- PriorityClassName (https://kubernetes.io/docs/concepts/scheduling-eviction/pod-priority-preemption/#pod-priority) for the proxy pod.
+    priorityClassName: ""
+  image:
+    # -- Image repository for the proxy pod.
+    name: "ghcr.io/liqotech/proxy"
+    # -- Custom version for the proxy image. If not specified, the global tag is used.
+    version: ""
+  service:
+    type: "ClusterIP"
+    annotations: {}
+  config:
+    # -- Port used by the proxy pod.
+    listeningPort: 8118
+
+requirements:
+  kernel:
+    # -- Enable/Disable the kernel requirements check.
+    enabled: true
+
+# OpenShift-specific configurations.
+openshiftConfig:
+  # -- Enable/Disable the OpenShift support, enabling Openshift-specific resources,
+  # and setting the pod security contexts in a way that is compatible with Openshift.
+  enabled: false
+  # -- Security context configurations granted to the virtual kubelet in the local cluster.
+  # The configuration of one or more SCCs for the virtual kubelet is not strictly required, and privileges can be reduced in production environments.
+  # Still, the default configuration (i.e., anyuid) is suggested to prevent problems (i.e., the virtual kubelet fails to add the appropriate labels) when
+  # attempting to offload pods not managed by higher-level abstractions (e.g., Deployments), and not associated with a properly privileged service account.
+  # Indeed, "anyuid" is the SCC automatically associated with pods created by cluster administrators.
+  # Any pod granted a more privileged SCC and not linked to an adequately privileged service account will fail to be offloaded.
+  virtualKubeletSCCs:
+    - anyuid
+    - privileged
+

@@ -240,7 +240,27 @@
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
-                sectionName: websecure-public
+                sectionName: websecure
+            rules:
+              - backendRefs:
+                  - name: immich-server
+                    port: 2283
+
+    - name: Create local HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: immich-local
+            namespace: "{{ target_namespace }}"
+          spec:
+            hostnames:
+              - "photos.{{ local_dns }}"
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
             rules:
               - backendRefs:
                   - name: immich-server

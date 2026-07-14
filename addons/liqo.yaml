@@ -1,0 +1,46 @@
+---
+- name: Liqo Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: liqo
+  tasks:
+    - name: Deploy liqo
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: liqo
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default # Place here your project name
+            source:
+              chart: liqo
+              repoURL: https://helm.liqo.io/
+              targetRevision: v1.1.2
+              helm:
+                releaseName: liqo
+                values: |
+                  apiServer:
+                    address: "{{ liqo_api_server_address }}"
+                  ipam:
+                    podCIDR: "{{ podCIDR }}"
+                    serviceCIDR: "{{ serviceCIDR }}"
+                  discovery:
+                    config:
+                      clusterID: "{{ liqo_cluster_id }}"
+            destination:
+              server: "https://kubernetes.default.svc"
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true

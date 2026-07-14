@@ -1,0 +1,88 @@
+---
+- name: Netdata Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: netdata
+  tasks:
+    - name: Create namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ target_namespace }}"
+
+    - name: Deploy Argocd App
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: netdata
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+            ignoreDifferences:
+              - group: networking.k8s.io
+                kind: Ingress
+                name: netdata
+                jqPathExpressions:
+                  - .status.loadBalancer
+            source:
+              repoURL: https://netdata.github.io/helmchart
+              chart: netdata
+              targetRevision: "3.7.164"
+              helm:
+                releaseName: netdata
+                values: |
+                  ingress:
+                    enabled: false
+                  image:
+                    tag: stable
+                  parent:
+                    claiming:
+                      enabled: true
+                      token: "{{ netdata_token }}"
+                      rooms: "{{ netdata_rooms }}"
+                    resources:
+                      limits:
+                       cpu: "256m"
+                       memory: "512Mi"
+                      requests:
+                       cpu: "60m"
+                       memory: "256Mi"
+                  child:
+                    claiming:
+                      enabled: true
+                      token: "{{ netdata_token }}"
+                      rooms: "{{ netdata_rooms }}"
+                    resources:
+                      limits:
+                       cpu: "256m"
+                       memory: "1Gi"
+                      requests:
+                       cpu: "60m"
+                       memory: "512Mi"
+                  k8sState:
+                    resources:
+                      limits:
+                       cpu: "256m"
+                       memory: "512Mi"
+                      requests:
+                       cpu: "60m"
+                       memory: "256Mi"

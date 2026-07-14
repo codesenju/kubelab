@@ -1,0 +1,181 @@
+---
+- name: Headscale Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: headscale
+  tasks:
+    - name: Deploy Headscale
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: headscale
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: headscale
+              repoURL: ghcr.io/kapernikov/charts
+              targetRevision: 0.3.2
+              helm:
+                releaseName: headscale
+                values: |
+                  podSecurityContext:
+                    fsGroup: 1001
+                    fsGroupChangePolicy: OnRootMismatch
+                  securityContext:
+                    runAsUser: 1001
+                    runAsGroup: 1001
+                    runAsNonRoot: true
+                  resources:
+                    requests:
+                      cpu: 25m
+                      memory: 32Mi
+                    limits:
+                      cpu: 100m
+                      memory: 128Mi
+                  config:
+                    server_url: "https://headscale.{{ public_dns }}"
+                    database:
+                      type: sqlite
+                      sqlite:
+                        path: /var/lib/headscale/db.sqlite
+                    policy:
+                      mode: database
+                  persistence:
+                    enabled: true
+                    existingClaim: "headscale-data"
+                  policy:
+                    enabled: true
+                    content:
+                      acls: []
+                  ui:
+                    enabled: false
+                    headscaleUrl: "https://headscale.{{ public_dns }}"
+                  client:
+                    enabled: false
+                    acceptDns: false
+                    acceptRoutes: true
+                    advertiseRoutes:
+                      - 0.0.0.0/0
+                      - ::/0
+                    exitNode: true
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: headscale
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+      tags:
+        - argocd
+
+    - name: Create PV
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolume
+          metadata:
+            name: headscale-data
+            labels:
+              service: headscale-data
+          spec:
+            capacity:
+              storage: 1Gi
+            accessModes:
+              - ReadWriteOnce
+            persistentVolumeReclaimPolicy: Retain
+            storageClassName: ""
+            hostPath:
+              path: /opt/k8s-storage/headscale
+              type: DirectoryOrCreate
+                    
+    - name: Create PVC
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: PersistentVolumeClaim
+          metadata:
+            name: headscale-data
+            namespace: "{{ target_namespace }}"
+            labels:
+              app: headscale
+          spec:
+            accessModes:
+              - ReadWriteOnce
+            resources:
+              requests:
+                storage: 1Gi
+            selector:
+              matchLabels:
+                service: headscale-data
+            storageClassName: ""
+
+    - name: Create Headplane ConfigMap
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: headplane-config
+            namespace: "{{ target_namespace }}"
+          data:
+            config.yaml: "{{ lookup('ansible.builtin.template', playbook_dir + '/headplane-config.yaml.j2') }}"
+      tags:
+        - headplane
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: headscale
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "headscale.{{ public_dns }}"
+            rules:
+              - backendRefs:
+                  - name: headscale
+                    port: 8080
+      tags:
+        - ingress
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: absent
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: headscale-ui
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "headscale-ui.{{ public_dns }}"
+            rules:
+              - backendRefs:
+                  - name: headscale-ui
+                    port: 8080
+      tags:
+        - ingress
+      when: false

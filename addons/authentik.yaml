@@ -7,6 +7,19 @@
     target_namespace: zero-trust
   tasks:
 
+    - name: Create namespace
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Namespace
+          metadata:
+            name: "{{ target_namespace }}"
+      tags:
+        - postgres
+        - argocd
+        - ingress
+
     - name: Create authentik postgres secrets
       kubernetes.core.k8s:
         state: present
@@ -68,7 +81,8 @@
             name: authentik
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            image: registry.local.example.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            image: registry.example.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            # image: ghcr.io/cloudnative-pg/postgresql:18-standard-trixie
             imagePullSecretName1: registry-secret
             db:
               name: authentik
@@ -79,17 +93,17 @@
             bootstrap:
               mode: recovery
             recovery:
-              backupID: "20260412T163044" # backup will be at s3Path/serverName/base/<backupID>
+              backupID: "20260423T020005" # backup will be at s3Path/serverName/base/<backupID>
               serverName: "authentik-postgres" # backup files will be at s3Path/serverName/base
             restoreSource:
-              s3Path: "s3://cnpg/backup2"
+              s3Path: "s3://cnpg/backup"
               endpointURL: "https://{{ rustfs_endpoint_source }}"
               s3:
                 credentialsSecretName: s3-creds-source
                 accessKeyId: ACCESS_KEY_ID
                 secretAccessKey: SECRET_ACCESS_KEY
             archiveDestination:
-              s3Path: "s3://cnpg/backup"
+              s3Path: "s3://cnpg/backup2"
               endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:
@@ -118,7 +132,7 @@
             source:
               chart: authentik
               repoURL: https://charts.goauthentik.io/
-              targetRevision: 2026.2.1
+              targetRevision: 2026.2.2
               helm:
                 releaseName: authentik
                 values: |
@@ -132,7 +146,7 @@
                       host: "{{ authentik_db_host }}"
                       name: "authentik" # DB name
                       user: "authentik"
-                      password: "d0e0300e981c6aaadb45f3d4c08f3896"
+                      password: "{{ authentik_db_password }}"
                       port: 5432
                   server:
                     ingress:
@@ -272,14 +286,14 @@
         - postgres
       when: false
 
-    - name: Create HTTPRoute for authentik 
+    - name: Create HTTPRoute for authentik
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: gateway.networking.k8s.io/v1
           kind: HTTPRoute
           metadata:
-            name: authentik 
+            name: authentik
             namespace: "{{ target_namespace }}"
           spec:
             parentRefs:

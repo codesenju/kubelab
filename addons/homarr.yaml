@@ -1,9 +1,10 @@
 ---
-- hosts: k8s-control-plane-1
+- name: Homar Playbook
+  hosts: k8s-control-plane-1
   gather_facts: false
   become: false
   vars:
-    namespace: homarr
+    target_namespace: homarr
   tasks:
     - name: Create Homarr namespace
       kubernetes.core.k8s:
@@ -28,7 +29,7 @@
               storage: 50Mi
             nfs:
               server: 192.168.0.16 # change me
-              path: /mnt/pool1/AppData/homarr/db
+              path: /mnt/pool2/AppData/homarr/db
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -43,7 +44,7 @@
           kind: PersistentVolumeClaim
           metadata:
             name: homarr-db
-            namespace: homarr
+            namespace: "{{ target_namespace }}"
           spec:
             accessModes:
               - ReadWriteOnce
@@ -64,7 +65,7 @@
           kind: PersistentVolume
           metadata:
             name: homarr-images
-            namespace: homarr
+            namespace: "{{ target_namespace }}"
             labels:
               service: homarr # This matches the PVC selector
           spec:
@@ -72,7 +73,7 @@
               storage: 50Mi
             nfs:
               server: 192.168.0.16 # change me
-              path: /mnt/pool1/AppData/homarr/images
+              path: /mnt/pool2/AppData/homarr/images
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -89,7 +90,7 @@
           kind: PersistentVolumeClaim
           metadata:
             name: homarr-images
-            namespace: homarr
+            namespace: "{{ target_namespace }}"
           spec:
             accessModes:
               - ReadWriteOnce
@@ -125,9 +126,7 @@
                   rbac:
                     enabled: true
                   service:
-                    # type: LoadBalancer
                     type: ClusterIP
-                    # loadBalancerIP: {{ homarr_static_ip }}
                   persistence:
                     homarrDatabase:
                       enabled: true
@@ -150,7 +149,7 @@
                     AUTH_SESSION_EXPIRY_TIME: "24h"
             destination:
               name: "in-cluster"
-              namespace: homarr
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true
@@ -160,13 +159,13 @@
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: cert-manager.io/v1
           kind: Certificate
           metadata:
             name: local-example-com
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: local-example-com-tls
             issuerRef:
@@ -180,13 +179,13 @@
 
     - name: Create homarr IngressRoute
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
           metadata:
             name: homarr
-            namespace: "{{ namespace }}"
+            namespace: "{{ target_namespace }}"
             annotations:
               kubernetes.io/ingress.class: traefik
               external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
@@ -203,3 +202,25 @@
             tls:
               secretName: local-example-com-tls
       tags: homarr-tls
+
+    - name: Create HTTPRoute for homarr
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: homarr
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "homarr.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: homarr
+                    port: 7575
+      tags:
+        - ingress
