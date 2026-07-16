@@ -161,13 +161,14 @@
               - name: local-gateway
                 namespace: "{{ gatewayapi_namespace }}" # gateway-infra
             hostnames:
-              - "argocd.{{ public_dns }}"
+              - "argocd.{{ local_dns }}"
             rules:
               - backendRefs:
                   - name: argocd-server
                     port: 80
       tags:
         - ingress
+        - httproute
 
     - name: Get Argo CD admin password
       ansible.builtin.shell: set -o pipefail; kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
