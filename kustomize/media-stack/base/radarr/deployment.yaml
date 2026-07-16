@@ -15,6 +15,10 @@ spec:
         app: radarr
         app.kubernetes.io/component: movie-management
     spec:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
       containers:
       - name: radarr
         image: lscr.io/linuxserver/radarr:latest
@@ -40,10 +44,6 @@ spec:
           limits:
             cpu: "256m"
             memory: "512Gi"
-        securityContext:
-          runAsGroup: 1001
-          runAsNonRoot: true
-          runAsUser: 1001
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
