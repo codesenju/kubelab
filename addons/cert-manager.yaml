@@ -72,6 +72,8 @@
           type: Opaque
           stringData:
             apiToken: "{{ cloudflare_api_token }}"
+      tags:
+      - secrets
 
     - name: Create letsencrypt-staging ClusterIssuer
       kubernetes.core.k8s:
