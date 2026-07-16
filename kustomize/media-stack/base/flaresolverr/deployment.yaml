@@ -15,8 +15,6 @@ spec:
         app: flaresolverr
         app.kubernetes.io/component: proxy-server
     spec:
-      securityContext:
-        runAsNonRoot: true
       containers:
       - name: flaresolverr
         image: ghcr.io/flaresolverr/flaresolverr:v3.3.25
