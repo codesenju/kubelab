@@ -15,8 +15,6 @@ spec:
         app: radarr
         app.kubernetes.io/component: movie-management
     spec:
-      securityContext:
-        allowPrivilegeEscalation: false
       containers:
       - name: radarr
         image: lscr.io/linuxserver/radarr:latest
