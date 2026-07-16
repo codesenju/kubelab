@@ -16,8 +16,6 @@ spec:
         app.kubernetes.io/component: proxy-server
     spec:
       securityContext:
-        runAsUser: 1001
-        runAsGroup: 1001
         runAsNonRoot: true
       containers:
       - name: flaresolverr
