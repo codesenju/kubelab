@@ -32,6 +32,10 @@ spec:
           volumeMounts:
             - name: cloudbeaver-data
               mountPath: /opt/cloudbeaver/workspace
+          securityContext:
+            readOnlyRootFilesystem: true
+            capabilities:
+              drop: ["ALL"]
       volumes:
         - name: cloudbeaver-data
           persistentVolumeClaim:
