@@ -15,10 +15,6 @@ spec:
         app: flaresolverr
         app.kubernetes.io/component: proxy-server
     spec:
-      securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
-        runAsNonRoot: true
       containers:
       - name: flaresolverr
         image: ghcr.io/flaresolverr/flaresolverr:v3.3.25
@@ -45,5 +41,13 @@ spec:
           limits:
             cpu: 1024m
             memory: 2Gi
-        # No volumes needed (stateless service)
+        securityContext:
+          capabilities:
+            drop:
+              - ALL
+          runAsGroup: 1000
+          runAsNonRoot: true
+          runAsUser: 1000
+          seccompProfile:
+            type: RuntimeDefault
       restartPolicy: Always  # Kubernetes equivalent of `unless-stopped`
