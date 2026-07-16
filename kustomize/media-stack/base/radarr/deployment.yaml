@@ -40,6 +40,10 @@ spec:
           limits:
             cpu: "256m"
             memory: "512Gi"
+        securityContext:
+          readOnlyRootFilesystem: true
+          capabilities:
+            drop: ["ALL"]
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
