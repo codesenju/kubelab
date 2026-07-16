@@ -15,10 +15,6 @@ spec:
         app: prowlarr
         app.kubernetes.io/component: indexer-management
     spec:
-      securityContext:
-        runAsUser: 1001
-        runAsGroup: 1001
-        runAsNonRoot: true
       containers:
       - name: prowlarr
         image: lscr.io/linuxserver/prowlarr:latest
