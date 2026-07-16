@@ -15,10 +15,6 @@ spec:
         app: jellyfin
         app.kubernetes.io/component: media-server
     spec:
-      securityContext:
-        runAsUser: 1001
-        runAsGroup: 1001
-        runAsNonRoot: true
       containers:
       - name: jellyfin
         image: lscr.io/linuxserver/jellyfin
