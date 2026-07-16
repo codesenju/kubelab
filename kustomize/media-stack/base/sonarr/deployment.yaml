@@ -15,8 +15,10 @@ spec:
         app: sonarr
         app.kubernetes.io/component: tv-management
     spec:
-      # securityContext:
-      #   fsGroup: 1000  # Matches shared PGID
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
       containers:
       - name: sonarr
         image: lscr.io/linuxserver/sonarr:latest
