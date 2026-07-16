@@ -15,6 +15,10 @@ spec:
         app: jellyseerr
         app.kubernetes.io/component: request-management
     spec:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
       containers:
       - name: jellyseerr
         image: docker.io/fallenbagel/jellyseerr:2.5.1
