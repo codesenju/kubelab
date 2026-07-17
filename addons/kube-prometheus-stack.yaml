@@ -1,11 +1,12 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+---
+- name: Kube-prometheus-stack Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: kube-prometheus-stack
 
   tasks:
-
     - name: Deploy Kube Prometheus Stack
       kubernetes.core.k8s:
         state: present
@@ -20,16 +21,16 @@
           spec:
             project: default
             sources:
-            - repoURL: https://prometheus-community.github.io/helm-charts
-              chart: kube-prometheus-stack
-              targetRevision: "84.1.0"
-              helm:
-                releaseName: kube-prometheus-stack
-                valueFiles:
-                - $values/helm/kube_prometheus_stack_values.yaml
-            - repoURL: 'https://github.com/codesenju/kubelab.git'
-              targetRevision: main
-              ref: values
+              - repoURL: https://prometheus-community.github.io/helm-charts
+                chart: kube-prometheus-stack
+                targetRevision: "84.1.0"
+                helm:
+                  releaseName: kube-prometheus-stack
+                  valueFiles:
+                    - $values/helm/kube_prometheus_stack_values.yaml
+              - repoURL: "https://github.com/codesenju/kubelab.git"
+                targetRevision: main
+                ref: values
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -38,36 +39,14 @@
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
-
-            # ignoreDifferences:
-            # - group: ""
-            #   kind: PersistentVolumeClaim
-            #   jsonPointers:
-            #   - /status  # Ignore PVC status changes
-      tags: kube-prometheus-stack
-
-    - name: Create Thanos S3 Secret (inline YAML, using stringData)
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: v1
-          kind: Secret
-          metadata:
-            name: thanos-s3
-            namespace: "{{ target_namespace }}"
-          type: Opaque
-          stringData:
-            objstore.yaml: |
-              type: s3
-              config:
-                bucket: thanos-store
-                endpoint: {{ rustfs_server_domains }}
-                access_key: {{ rustfs_access_key }}
-                secret_key: {{ rustfs_secret_key }}
-                insecure: false
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      # ignoreDifferences:
+      # - group: ""
+      #   kind: PersistentVolumeClaim
+      #   jsonPointers:
+      #   - /status  # Ignore PVC status changes
       tags: kube-prometheus-stack
 
     - name: Wait for Grafana pod to be ready
@@ -107,7 +86,7 @@
           kind: Certificate
           metadata:
             name: local-example-com-tls
-            namespace: '{{ target_namespace }}'
+            namespace: "{{ target_namespace }}"
           spec:
             secretName: local-example-com-tls
             issuerRef:
@@ -115,40 +94,7 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
-
-    - name: Create kube-prometheus-stack grafana ingress
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: kube-prometheus-stack-grafana
-            namespace: '{{ target_namespace }}'
-            annotations:
-              nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              # cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "kps-grafana.{{ local_dns }}"
-                secretName: local-example-com-tls
-            rules:
-              - host: "kps-grafana.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: kube-prometheus-stack-grafana
-                          port:
-                            number: 80
-      tags:
-        - ingress
+              - "{{ local_dns_wildcard }}"
 
     - name: Create HTTPRoute for kube-prometheus-stack grafana
       kubernetes.core.k8s:
@@ -169,39 +115,6 @@
               - backendRefs:
                   - name: kube-prometheus-stack-grafana
                     port: 80
-      tags:
-        - ingress
-
-    - name: Create kube-prometheus-stack prometheus ingress
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: kube-prometheus-stack-prometheus
-            namespace: '{{ target_namespace }}'
-            annotations:
-              # nginx.ingress.kubernetes.io/backend-protocol: "HTTPS"
-              external-dns.alpha.kubernetes.io/target: '{{ traefik_service_ip }}'
-              # cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "prometheus.{{ local_dns }}"
-                secretName: local-example-com-tls
-            rules:
-              - host: "prometheus.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: kube-prometheus-stack-prometheus
-                          port:
-                            number: 9090
       tags:
         - ingress
 

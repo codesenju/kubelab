@@ -1325,8 +1325,8 @@ grafana:
         allowUiUpdates: false
     datasources:
       enabled: true
-      defaultDatasourceEnabled: true
-      isDefaultDatasource: true
+      defaultDatasourceEnabled: false
+      isDefaultDatasource: false
 
       name: Prometheus
       uid: prometheus
