@@ -5,6 +5,8 @@
 additionalArguments:
   - "--serversTransport.insecureSkipVerify=true"
   - "--log.level=INFO"
+  - "--entryPoints.web.transport.respondingTimeouts.readTimeout=0s"
+  - "--entryPoints.websecure.transport.respondingTimeouts.readTimeout=0s"
 
 deployment:
   enabled: true
