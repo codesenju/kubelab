@@ -8,6 +8,9 @@ image:
 versionOverride: v3.6.12
 
 additionalArguments:
+  - "--accessLog=true"
+  - "--accessLog.filePath=/dev/stdout"
+  - "--accessLog.format=json"
   - "--serversTransport.insecureSkipVerify=true"
   - "--log.level=INFO"
   - "--entryPoints.web.transport.respondingTimeouts.readTimeout=0s"
@@ -30,6 +33,12 @@ deployment:
   podAnnotations: {}
   additionalContainers: []
   initContainers: []
+
+volumes:
+  - name: crowdsec-bouncer-key
+    mountPath: /etc/traefik/crowdsec
+    type: secret
+    secretName: crowdsec-bouncer-key
 
 ports:
   postgres:
