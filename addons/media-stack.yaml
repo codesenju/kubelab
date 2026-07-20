@@ -290,6 +290,12 @@
                   - path:
                       type: PathPrefix
                       value: /
+                filters:
+                  - type: ExtensionRef
+                    extensionRef:
+                      group: traefik.io
+                      kind: Middleware
+                      name: crowdsec-bouncer
                 backendRefs:
                   - name: jellyseerr
                     port: 5055
@@ -328,6 +334,12 @@
                   - path:
                       type: PathPrefix
                       value: /
+                filters:
+                  - type: ExtensionRef
+                    extensionRef:
+                      group: traefik.io
+                      kind: Middleware
+                      name: crowdsec-bouncer
                 backendRefs:
                   - name: jellyfin
                     port: 8096
