@@ -11,6 +11,10 @@ additionalArguments:
   - "--entryPoints.web.transport.respondingTimeouts.readTimeout=0s"
   - "--entryPoints.websecure.transport.respondingTimeouts.readTimeout=0s"
 
+experimental:
+  kubernetesGateway:
+    enabled: true
+
 deployment:
   enabled: true
   replicas: 1
@@ -26,6 +30,7 @@ ports:
       default: true
     exposedPort: 5432
     protocol: TCP
+    observability: {}
 
 ingressRoute:
   dashboard:
