@@ -104,6 +104,11 @@
                 helm:
                   releaseName: traefik
                   skipCrds: true
+                  parameters:
+                    - name: versionOverride
+                      value: v3.6.12
+                    - name: deployment.imagePullSecrets[0].name
+                      value: dockerhub-secret
                   valueFiles:
                     - $values/helm/traefik_values.yaml
               - repoURL: 'https://github.com/codesenju/kubelab.git'
@@ -142,7 +147,7 @@
 
     - name: Create Traefik dashboard IngressRoute
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: traefik.io/v1alpha1
           kind: IngressRoute
@@ -166,62 +171,3 @@
                     kind: TraefikService
             tls:
               secretName: local-example-com-tls
-
-    - name: Create Traefik dashboard service
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: v1
-          kind: Service
-          metadata:
-            name: traefik-dashboard
-            namespace: "{{ target_namespace }}"
-          spec:
-            selector:
-              app.kubernetes.io/instance: traefik-traefik
-              app.kubernetes.io/name: traefik
-            ports:
-              - name: dashboard
-                port: 8080
-                protocol: TCP
-                targetPort: traefik
-
-    - name: Create HTTPRoute for Traefik dashboard
-      kubernetes.core.k8s:
-        state: present
-        definition:
-          apiVersion: gateway.networking.k8s.io/v1
-          kind: HTTPRoute
-          metadata:
-            name: traefik-dashboard
-            namespace: "{{ target_namespace }}"
-          spec:
-            parentRefs:
-              - name: local-gateway
-                namespace: "{{ gatewayapi_namespace }}"
-            hostnames:
-              - "{{ traefik_domain }}"
-            rules:
-              - backendRefs:
-                  - name: traefik-dashboard
-                    port: 8080
-
-    - name: Create HTTPRoute for OpenSearch dashboard proxy
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: gateway.networking.k8s.io/v1
-          kind: HTTPRoute
-          metadata:
-            name: opensearch-dashboard-proxy
-            namespace: "{{ target_namespace }}"
-          spec:
-            parentRefs:
-              - name: local-gateway
-                namespace: "{{ gatewayapi_namespace }}"
-            hostnames:
-              - "opensearch.{{ local_dns }}"
-            rules:
-              - backendRefs:
-                  - name: opensearch-dashboards-proxy
-                    port: 5601
