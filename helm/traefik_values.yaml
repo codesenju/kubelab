@@ -18,6 +18,8 @@ experimental:
 deployment:
   enabled: true
   replicas: 1
+  imagePullSecrets:
+    - name: dhi-secret
   annotations: {}
   podAnnotations: {}
   additionalContainers: []
