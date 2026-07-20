@@ -94,6 +94,7 @@
                 targetRevision: "39.0.7"
                 helm:
                   releaseName: traefik
+                  skipCrds: true
                   valueFiles:
                     - $values/helm/traefik_values.yaml
               - repoURL: 'https://github.com/codesenju/kubelab.git'
