@@ -1,0 +1,257 @@
+- name: Crowdsec Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  vars:
+    target_namespace: crowdsec
+  tasks:
+
+    - name: Create crowdsec postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: crowdsec-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ crowdsec_db_username }}"
+            password: "{{ crowdsec_db_password }}"
+      tags:
+        - postgres
+
+    - name: Create s3 secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
+    - name: Create CrowdSec keys secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: crowdsec-keys
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ENROLL_KEY: "{{ crowdsec_enroll_key }}"
+            BOUNCER_KEY_traefik: "{{ crowdsec_lapi_key }}"
+      tags:
+        - lapi
+
+    - name: Create Traefik bouncer key secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: crowdsec-bouncer-key
+            namespace: traefik
+          type: Opaque
+          stringData:
+            BOUNCER_KEY_traefik: "{{ crowdsec_lapi_key }}"
+      tags:
+        - lapi
+
+    - name: Create Registry pull secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: registry-secret
+            namespace: "{{ target_namespace }}"
+          type: kubernetes.io/dockerconfigjson
+          data:
+            .dockerconfigjson: "{{ {'auths': {'https://' + registry_domain:
+             {'username': registry_username, 'password': registry_password,
+             'auth': (registry_username + ':' + registry_password) | b64encode}}} | to_json | b64encode }}"
+      tags:
+        - postgres
+
+    - name: Deploy crowdsec postgres cluster
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
+          metadata:
+            name: crowdsec
+            namespace: "{{ target_namespace }}"
+          spec:
+            name: crowdsec
+            # db version must be compatiable with the backup db version
+            # using tensorchord image that comes with vchord
+            image: "{{ container_registry }}/ghcrio/cloudnative-pg/postgresql:18-standard-trixie"
+            imagePullSecretName1: nexus-registry-creds
+            db:
+              name: crowdsec
+              username: "{{ crowdsec_db_username }}"
+              secretName: crowdsec-postgres-secrets
+              # size: 1Gi
+              storageClassName: nfs-csi-postgres
+            bootstrap:
+              mode: initdb
+            archiveDestination:
+              s3Path: "s3://cnpg/backup3"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
+      tags:
+        - postgres
+
+    - name: Create ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: crowdsec
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://crowdsecurity.github.io/helm-charts
+              chart: crowdsec
+              targetRevision: "0.24.0"
+              helm:
+                releaseName: crowdsec
+                values: |
+                  # for raw logs format: json or cri (docker|containerd)
+                  container_runtime: containerd
+                  agent:
+                    # Specify each pod whose logs you want to process
+                    acquisition:
+                      # The namespace where the pod is located
+                      - namespace: traefik
+                        # The pod name
+                        podName: traefik-*
+                        # as in crowdsec configuration, we need to specify the program name to find a matching parser
+                        program: traefik
+                    env:
+                      - name: COLLECTIONS
+                        value: "crowdsecurity/traefik"
+                  config:
+                    parsers:
+                      s02-enrich:
+                        whitelists.yaml: |
+                          name: crowdsecurity/whitelists
+                          description: "Whitelist events from localhost only (private IP removal disabled for homelab)"
+                          whitelist:
+                            reason: "localhost only"
+                            ip:
+                              - "::1"
+                            cidr:
+                              - "127.0.0.0/8"
+                  lapi:
+                    env:
+                      # To enroll the Security Engine to the console
+                      - name: ENROLL_KEY
+                        valueFrom:
+                          secretKeyRef:
+                            name: crowdsec-keys
+                            key: ENROLL_KEY
+                      - name: BOUNCER_KEY_traefik
+                        valueFrom:
+                          secretKeyRef:
+                            name: crowdsec-keys
+                            key: BOUNCER_KEY_traefik
+                      - name: ENROLL_INSTANCE_NAME
+                        value: "kubelab"
+                      - name: ENROLL_TAGS
+                        value: "k8s linux kubelab"
+                  ## config.yaml.local is the configuration file used by the Security Engine itself
+                  config:
+                    config.yaml.local: |
+                      api:
+                        client:
+                          # the log processor will remove delete itself from LAPI when stopping.
+                          unregister_on_exit: true
+                        server:
+                          # This is needed for agent autoregistration
+                          auto_registration: # Activate if not using TLS for authentication
+                            enabled: true
+                            token: "${REGISTRATION_TOKEN}" # /!\ Do not modify this variable (auto-generated and handled by the chart)
+                            allowed_ranges: # /!\ Make sure to adapt to the pod IP ranges used by your cluster
+                              - "127.0.0.1/32"
+                              - "192.168.0.0/16"
+                              - "10.0.0.0/8"
+                              - "172.16.0.0/12"
+                              - "10.244.0.0/16"
+                      # Using a database is strongly encouraged.
+                      db_config:
+                        type: postgresql
+                        user: "{{ crowdsec_db_username }}"
+                        password: "{{ crowdsec_db_password }}"
+                        db_name: "{{ crowdsec_db_name }}"
+                        host: "{{ crowdsec_db_host }}"
+                        port: 5432
+                        flush:
+                          bouncers_autodelete:
+                            api_key: 1h
+                          agents_autodelete:
+                            login_password: 6h
+                            cert: 6h
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+            ignoreDifferences: []
+      tags:
+        - argocd
+
+    - name: Create CrowdSec bouncer middleware
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: traefik.io/v1alpha1
+          kind: Middleware
+          metadata:
+            name: crowdsec-bouncer
+            namespace: "{{ item }}"
+          spec:
+            plugin:
+              bouncer:
+                enabled: true
+                logLevel: INFO
+                crowdsecMode: stream
+                crowdsecLapiScheme: http
+                crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
+                crowdsecLapiKeyFile: /etc/traefik/crowdsec/BOUNCER_KEY_traefik
+      loop:
+        - traefik
+        - media-stack
+      tags:
+        - lapi
