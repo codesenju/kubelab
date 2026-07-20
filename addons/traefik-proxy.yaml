@@ -108,7 +108,15 @@
                     - name: versionOverride
                       value: v3.6.12
                     - name: deployment.imagePullSecrets[0].name
-                      value: dockerhub-secret
+                      value: dhi-secret
+                    - name: volumes[0].name
+                      value: crowdsec-bouncer-key
+                    - name: volumes[0].mountPath
+                      value: /etc/traefik/crowdsec
+                    - name: volumes[0].type
+                      value: secret
+                    - name: volumes[0].secretName
+                      value: crowdsec-bouncer-key
                   valueFiles:
                     - $values/helm/traefik_values.yaml
               - repoURL: 'https://github.com/codesenju/kubelab.git'
