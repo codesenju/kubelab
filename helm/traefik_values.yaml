@@ -5,6 +5,8 @@ image:
   # digest:  # @schema type:[string, null]; pattern:^sha256:[a-f0-9]{64}$
   pullPolicy: IfNotPresent
 
+versionOverride: v3.6.12
+
 additionalArguments:
   - "--serversTransport.insecureSkipVerify=true"
   - "--log.level=INFO"
