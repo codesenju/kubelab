@@ -6,5 +6,8 @@ images:
     newName: "sonatype/nexus3"
     newTag: "3.90.2-alpine"
 
+patches:
+  - path: httproute-patch.yaml
+
 resources:
 - ../../base
