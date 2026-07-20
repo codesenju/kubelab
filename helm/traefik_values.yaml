@@ -10,7 +10,6 @@ versionOverride: v3.6.12
 additionalArguments:
   - "--accessLog=true"
   - "--accessLog.filePath=/dev/stdout"
-  - "--accessLog.format=json"
   - "--serversTransport.insecureSkipVerify=true"
   - "--log.level=INFO"
   - "--entryPoints.web.transport.respondingTimeouts.readTimeout=0s"
