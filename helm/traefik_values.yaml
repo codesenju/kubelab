@@ -1,6 +1,6 @@
 image:
-  registry: "dhi.io"
-  repository: "traefik"
+  registry: dhi.io
+  repository: traefik
   tag: "3"
   # digest:  # @schema type:[string, null]; pattern:^sha256:[a-f0-9]{64}$
   pullPolicy: IfNotPresent
