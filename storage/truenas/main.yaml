@@ -25,13 +25,13 @@
               targetRevision: HEAD
               kustomize:
                 images:
-                  - ghcr.io/truenas/truenas-csi=registry.local.example.com/ghcrio/truenas/truenas-csi
-                  - registry.k8s.io/sig-storage/csi-provisioner=registry.local.example.com/registry-k8s-io/sig-storage/csi-provisioner
-                  - registry.k8s.io/sig-storage/csi-attacher=registry.local.example.com/registry-k8s-io/sig-storage/csi-attacher
-                  - registry.k8s.io/sig-storage/csi-snapshotter=registry.local.example.com/registry-k8s-io/sig-storage/csi-snapshotter
-                  - registry.k8s.io/sig-storage/csi-resizer=registry.local.example.com/registry-k8s-io/sig-storage/csi-resizer
-                  - registry.k8s.io/sig-storage/livenessprobe=registry.local.example.com/registry-k8s-io/sig-storage/livenessprobe
-                  - registry.k8s.io/sig-storage/csi-node-driver-registrar=registry.local.example.com/registry-k8s-io/sig-storage/csi-node-driver-registrar
+                  - ghcr.io/truenas/truenas-csi=registry.local.homelab.com/ghcrio/truenas/truenas-csi
+                  - registry.k8s.io/sig-storage/csi-provisioner=registry.local.homelab.com/registry-k8s-io/sig-storage/csi-provisioner
+                  - registry.k8s.io/sig-storage/csi-attacher=registry.local.homelab.com/registry-k8s-io/sig-storage/csi-attacher
+                  - registry.k8s.io/sig-storage/csi-snapshotter=registry.local.homelab.com/registry-k8s-io/sig-storage/csi-snapshotter
+                  - registry.k8s.io/sig-storage/csi-resizer=registry.local.homelab.com/registry-k8s-io/sig-storage/csi-resizer
+                  - registry.k8s.io/sig-storage/livenessprobe=registry.local.homelab.com/registry-k8s-io/sig-storage/livenessprobe
+                  - registry.k8s.io/sig-storage/csi-node-driver-registrar=registry.local.homelab.com/registry-k8s-io/sig-storage/csi-node-driver-registrar
                 patches:
                   - target:
                       kind: Deployment

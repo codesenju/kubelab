@@ -118,7 +118,7 @@
                           region: joburg-north-1
                           bucket: harbor
                           existingSecret: harbor-s3-creds
-                          regionendpoint: https://s3.local.example.com
+                          regionendpoint: https://s3.local.homelab.com
                           secure: true
                           v4auth: true
                           chunksize: "5242880"

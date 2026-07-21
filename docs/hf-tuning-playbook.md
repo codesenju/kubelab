@@ -15,7 +15,7 @@ The playbook preserves existing Nexus settings (blob store, cleanup policy, rout
 
 ## Prerequisites
 
-- Nexus is reachable at `https://registry.local.example.com`
+- Nexus is reachable at `https://registry.local.homelab.com`
 - Repository `hf` exists in Nexus
 - Ansible is installed locally
 - You can run playbooks against `k8s-control-plane-1`
@@ -60,7 +60,7 @@ ansible-playbook -i ansible/inventories/oci/hosts.ini addons/hf-tuning.yaml \
 
 ```bash
 curl -sk -u 'admin:<password>' \
-  'https://registry.local.example.com/service/rest/v1/repositories/huggingface/proxy/hf'
+  'https://registry.local.homelab.com/service/rest/v1/repositories/huggingface/proxy/hf'
 ```
 
 Check these fields in the response:

@@ -67,7 +67,7 @@
             name: coder
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            image: registry.local.example.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            image: registry.local.homelab.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
             imagePullSecretName1: registry-secret
             db:
               name: coder

@@ -3,7 +3,7 @@
   hosts: k8s-control-plane-1
   gather_facts: false
   vars:
-    nexus_base_url: "https://registry.local.example.com"
+    nexus_base_url: "https://registry.local.homelab.com"
     hf_repo_name: "hf"
 
     # Tuning defaults for large GGUF downloads

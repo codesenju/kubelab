@@ -4,7 +4,7 @@ Use this flow to pull Hugging Face models through the Nexus `hf` proxy repositor
 
 ## Prerequisites
 
-- Nexus HF proxy repository is reachable at `https://registry.local.example.com/repository/hf`
+- Nexus HF proxy repository is reachable at `https://registry.local.homelab.com/repository/hf`
 - You have valid Nexus credentials
 - `huggingface_hub` CLI (`hf`) is installed
 
@@ -13,7 +13,7 @@ Use this flow to pull Hugging Face models through the Nexus `hf` proxy repositor
 ```bash
 export NEXUS_USER='<nexus-username>'
 export NEXUS_PASS_ENC='<url-encoded-password>'
-export HF_ENDPOINT="https://${NEXUS_USER}:${NEXUS_PASS_ENC}@registry.local.example.com/repository/hf"
+export HF_ENDPOINT="https://${NEXUS_USER}:${NEXUS_PASS_ENC}@registry.local.homelab.com/repository/hf"
 export HF_HUB_DOWNLOAD_TIMEOUT=1800
 export HF_HUB_ETAG_TIMEOUT=60
 hf download unsloth/Qwen3.5-9B-GGUF --include "Qwen3.5-9B-Q4_K_M.gguf"
@@ -43,7 +43,7 @@ You can verify current settings with:
 
 ```bash
 curl -sk -u '<admin-user>:<admin-password>' \
-  'https://registry.local.example.com/service/rest/v1/repositories/huggingface/proxy/hf'
+  'https://registry.local.homelab.com/service/rest/v1/repositories/huggingface/proxy/hf'
 ```
 
 For reliability on big files, also set:

@@ -74,23 +74,34 @@ The Traefik Application's Helm parameters mount the `crowdsec-bouncer-key` secre
 
 ## How the Middleware Works
 
-The middleware is defined in `addons/crowdsec.yaml:223-244`:
+The middleware is defined in `addons/crowdsec.yaml:245-275`:
 
 ```yaml
 spec:
   plugin:
-    bouncer:
+    crowdsec-bouncer-traefik-plugin:
       enabled: true
-      logLevel: INFO
       crowdsecMode: stream
       crowdsecLapiScheme: http
       crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
       crowdsecLapiKeyFile: /etc/traefik/crowdsec/BOUNCER_KEY_traefik
+      htttTimeoutSeconds: 60
+      forwardedheaderstrustedips:
+        - 10.0.0.0/8
+        - 192.168.0.0/16
+        - 10.244.0.0/16
+      crowdsecAppsecEnabled: true
+      crowdsecAppsecHost: crowdsec-appsec-service.crowdsec.svc.cluster.local:7422
+      crowdsecAppsecFailureBlock: true
+      crowdsecAppsecUnreachableBlock: true
 ```
 
-It uses `crowdsecLapiKeyFile` (not `crowdsecLapiKey`) — Traefik reads the key from a mounted file at startup. The key is never in the middleware YAML or Helm values.
-
-The middleware must exist **in the same namespace** as the HTTPRoute/IngressRoute that references it.
+Key points:
+- Uses `crowdsecLapiKeyFile` (not `crowdsecLapiKey`) — Traefik reads the key from a mounted file at startup
+- The plugin key `crowdsec-bouncer-traefik-plugin` must match the key in `helm/traefik_values.yaml` under `experimental.plugins`
+- `crowdsecAppsecEnabled: true` activates the WAF (AppSec) component
+- `crowdsecAppsecHost` points to `crowdsec-appsec-service` (NOT `crowdsec-service`) — AppSec runs on a separate service on port 7422
+- The middleware must exist **in the same namespace** as the HTTPRoute/IngressRoute that references it
 
 ## Wiring the Middleware
 
@@ -132,7 +143,7 @@ spec:
   entryPoints:
     - websecure
   routes:
-    - match: Host(`myapp.local.example.com`)
+    - match: Host(`myapp.local.homelab.com`)
       kind: Rule
       middlewares:
         - name: crowdsec-bouncer
@@ -159,7 +170,7 @@ metadata:
 spec:
   ingressClassName: traefik
   rules:
-    - host: myapp.local.example.com
+    - host: myapp.local.homelab.com
       http:
         paths:
           - path: /
@@ -189,13 +200,16 @@ metadata:
   namespace: <your-namespace>
 spec:
   plugin:
-    bouncer:
+    crowdsec-bouncer-traefik-plugin:
       enabled: true
-      logLevel: INFO
       crowdsecMode: stream
       crowdsecLapiScheme: http
       crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
       crowdsecLapiKeyFile: /etc/traefik/crowdsec/BOUNCER_KEY_traefik
+      crowdsecAppsecEnabled: true
+      crowdsecAppsecHost: crowdsec-appsec-service.crowdsec.svc.cluster.local:7422
+      crowdsecAppsecFailureBlock: true
+      crowdsecAppsecUnreachableBlock: true
 EOF
 ```
 
@@ -261,15 +275,27 @@ additionalArguments:
 
 JSON format is required — the default CLF (Common Log Format) does not get parsed correctly by the `crowdsecurity/traefik-logs` parser from the hub.
 
+### 4. AppSec Service Mismatch
+AppSec runs on a **separate service** (`crowdsec-appsec-service`) on port `7422`, not on `crowdsec-service`. The middleware must use:
+```yaml
+crowdsecAppsecHost: crowdsec-appsec-service.crowdsec.svc.cluster.local:7422
+```
+
+### 5. Plugin Key Mismatch
+The middleware plugin key (`spec.plugin.<key>`) must match the key registered in `helm/traefik_values.yaml` under `experimental.plugins`. Both must use `crowdsec-bouncer-traefik-plugin`.
+
+### 6. Auto-Registration CIDR
+The `allowed_ranges` in `config.yaml.local` must include the actual pod CIDR (`10.0.0.0/8` for this cluster), not just `10.244.0.0/16`. New pods (like AppSec) will fail to register if their IP isn't in the allowed range.
+
 ## End-to-End Test
 
 ```bash
 # 1. Generate attack traffic (path traversal, admin probing, etc.)
 for i in $(seq 1 40); do
-  curl -k -s -o /dev/null "https://stream.local.example.com/.env?x=$i"
-  curl -k -s -o /dev/null "https://stream.local.example.com/../../../etc/passwd?x=$i"
-  curl -k -s -o /dev/null "https://stream.local.example.com/shell.php?cmd=id&x=$i"
-  curl -k -s -o /dev/null "https://stream.local.example.com/wp-admin/setup-config.php?x=$i"
+  curl -k -s -o /dev/null "https://stream.local.homelab.com/.env?x=$i"
+  curl -k -s -o /dev/null "https://stream.local.homelab.com/../../../etc/passwd?x=$i"
+  curl -k -s -o /dev/null "https://stream.local.homelab.com/shell.php?cmd=id&x=$i"
+  curl -k -s -o /dev/null "https://stream.local.homelab.com/wp-admin/setup-config.php?x=$i"
 done
 
 # 2. Wait 60-90s for scenarios to trigger
@@ -282,7 +308,7 @@ kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli alerts list
 kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli decisions list
 
 # 5. Test bouncer blocks from a banned IP:
-curl -k -s -o /dev/null -w "%{http_code}\n" "https://stream.local.example.com/"
+curl -k -s -o /dev/null -w "%{http_code}\n" "https://stream.local.homelab.com/"
 
 # 6. Unban if needed
 kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli decisions delete --ip <banned-ip>
@@ -299,4 +325,177 @@ Check bouncer is pulling decisions from LAPI:
 ```bash
 kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli metrics
 # Look for "Local API Bouncers Metrics" — each Traefik pod should show GET /v1/decisions/stream hits
+```
+
+---
+
+## AppSec (WAF) Component
+
+CrowdSec has a separate **AppSec (Web Application Firewall)** component that inspects HTTP requests in real-time — before they reach your applications. While agents parse logs after the fact, AppSec blocks malicious requests immediately.
+
+### Architecture
+
+```
+Internet → Traefik (bouncer plugin)
+              ├── Step 1: LAPI check (IP ban? stream mode from cache)
+              └── Step 2: AppSec check (if crowdsecAppsecEnabled: true)
+                    POST http://crowdsec-appsec-service.crowdsec.svc.cluster.local:7422/
+                    Headers: x-crowdsec-appsec-ip, x-crowdsec-appsec-uri, etc.
+                    Returns: 200 (pass) or 403 (block)
+              → Backend Service
+```
+
+### AppSec Collections Installed
+
+| Collection | Purpose |
+|---|---|
+| `crowdsecurity/appsec-virtual-patching` | 150+ CVE-specific rules (Log4Shell, Spring4Shell, etc.) |
+| `crowdsecurity/appsec-generic-rules` | Generic attack patterns (SSTI, PHP uploads, no User-Agent) |
+
+### AppSec Service
+
+AppSec runs on a **separate service** (`crowdsec-appsec-service`) on port `7422`:
+```bash
+kubectl get svc -n crowdsec | grep appsec
+# crowdsec-appsec-service   ClusterIP   ...   6060/TCP,7422/TCP
+```
+
+### Verifying AppSec Rules Are Loaded
+
+```bash
+# List installed AppSec rules
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli appsec-rules list
+
+# List installed AppSec configs
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli appsec-configs list
+
+# Check AppSec metrics (processed vs blocked)
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli metrics show appsec
+```
+
+### Testing AppSec with curl
+
+```bash
+TARGET="https://stream.local.homelab.com"
+
+# Test 1: .env file access (triggers vpatch-env-access) — expect 403
+curl -k -s -o /dev/null -w "%{http_code}\n" "$TARGET/.env"
+
+# Test 2: .git config exposure (triggers vpatch-git-config) — expect 403
+curl -k -s -o /dev/null -w "%{http_code}\n" "$TARGET/.git/config"
+
+# Test 3: Generic test rule (guaranteed trigger) — expect 403
+curl -k -s -o /dev/null -w "%{http_code}\n" "$TARGET/this-is-a-appsec-rule-test"
+
+# Test 4: Laravel debug mode (triggers vpatch-laravel-debug-mode) — expect 403
+curl -k -s -o /dev/null -w "%{http_code}\n" "$TARGET/_ignition/health-check"
+
+# Test 5: Symfony profiler (triggers vpatch-symfony-profiler) — expect 403
+curl -k -s -o /dev/null -w "%{http_code}\n" "$TARGET/profiler/phpinfo"
+
+# Test 6: Safe request (should pass) — expect 200
+curl -k -s -o /dev/null -w "%{http_code}\n" "$TARGET/"
+```
+
+### Testing AppSec with Pentest Tools
+
+#### ffuf (Fuzz Faster U Fool)
+```bash
+# Install: go install github.com/ffuf/ffuf/v2@latest
+
+# Fuzz common sensitive paths:
+ffuf -u "$TARGET/FUZZ" \
+  -w /usr/share/wordlists/seclists/Discovery/Web-Content/common.txt \
+  -mc 403,200 \
+  -o /tmp/ffuf-results.json -of json \
+  -H "Host: stream.local.homelab.com" \
+  -k \
+  -rate 10
+# 403 responses = blocked by AppSec
+```
+
+#### nikto (broad web scanner)
+```bash
+# Install: brew install nikto
+
+nikto -h "$TARGET" \
+  -ssl \
+  -Tuning 1234567890abc \
+  -output /tmp/nikto-results.txt
+# Will trigger many vpatch rules — expect 403s for sensitive paths
+```
+
+#### Burst testing (trigger scenario-based bans)
+```bash
+# Send 40+ requests to trigger http-probing scenarios:
+for i in $(seq 1 40); do
+  curl -k -s -o /dev/null "$TARGET/.env?x=$i" &
+  curl -k -s -o /dev/null "$TARGET/../../../etc/passwd?x=$i" &
+  curl -k -s -o /dev/null "$TARGET/shell.php?cmd=id&x=$i" &
+done
+wait
+# Wait 60-90s for scenarios to overflow into bans
+sleep 90
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli decisions list
+```
+
+### What Blocked Requests Look Like
+
+**In AppSec metrics:**
+```bash
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli metrics show appsec
+# Appsec Metrics:
+# ┌─────────────────┬───────────┬─────────┐
+# │  Appsec Engine  │ Processed │ Blocked │
+# ├─────────────────┼───────────┼─────────┤
+# │ 0.0.0.0:7422/   │ 25        │ 8       │
+# └─────────────────┴───────────┴─────────┘
+```
+
+**In CrowdSec alerts:**
+```bash
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli alerts list | grep vpatch
+# Will show alerts for vpatch-env-access, vpatch-git-config, etc.
+```
+
+**From the client's perspective:**
+```bash
+curl -k -v "https://stream.local.homelab.com/.env"
+# < HTTP/2 403
+# {"action":"ban"}
+```
+
+### Key Difference: Agent vs AppSec
+
+| | Agent | AppSec |
+|---|-------|--------|
+| **How** | Parses logs after the fact | Inspects requests in real-time |
+| **When** | Post-detection (retroactive ban) | Pre-detection (blocks immediately) |
+| **Scope** | Any log source (SSH, Traefik, etc.) | HTTP requests only |
+| **Speed** | Ban after scenario overflows (60-90s) | Block on first malicious request |
+
+### Troubleshooting AppSec
+
+**AppSec pod not registering:**
+```bash
+# Check if IP is in allowed_ranges (must include 10.0.0.0/8 for pod IPs)
+kubectl -n crowdsec get cm crowdsec-config-local -o yaml | grep -A5 allowed_ranges
+```
+
+**Middleware not reaching AppSec:**
+```bash
+# Verify middleware has correct AppSec host
+kubectl get middleware crowdsec-bouncer -n media-stack -o yaml | grep appsec
+
+# Check AppSec pod logs
+kubectl -n crowdsec logs deploy/crowdsec-appsec --tail=50
+```
+
+**No 403s on test requests:**
+```bash
+# Verify AppSec rules are loaded
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli appsec-rules list
+
+# Check AppSec metrics
+kubectl exec -n crowdsec deploy/crowdsec-lapi -- cscli metrics show appsec
 ```

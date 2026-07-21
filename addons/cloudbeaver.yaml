@@ -58,7 +58,7 @@
             namespace: "{{ target_namespace }}"
           spec:
             name: cloudbeaver
-            image: registry.local.example.com/ghcrio/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
+            image: registry.local.homelab.com/ghcrio/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
             imagePullSecretName1: nexus-registry-creds
             db:
               name: cloudbeaver
@@ -145,11 +145,11 @@
                 values: |
                   cloudbeaver:
                     replicaCount: 1
-                    image: registry.local.example.com/dockerio/dbeaver/cloudbeaver
+                    image: registry.local.homelab.com/dockerio/dbeaver/cloudbeaver
                     imageTag: "26.0.0"
                     pullPolicy: IfNotPresent
                     pullCredsName: nexus-registry-creds
-                  cloudbeaverBaseDomain: "cloudbeaver.local.example.com"
+                  cloudbeaverBaseDomain: "cloudbeaver.local.homelab.com"
                   httpScheme: http
                   cloudProvider: None
                   storage:

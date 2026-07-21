@@ -18,7 +18,7 @@ global:
   hostAliases: []
   # - ip: 192.168.137.2
     hostnames:
-    - git.example.com
+    - git.homelab.com
 
 ## @param namespace An explicit namespace to deploy gitea into. Defaults to the release namespace if not specified
 namespace: ""
@@ -169,7 +169,7 @@ ingress:
   pathType: Prefix
   annotations: {}
   hosts:
-    - host: git.example.com
+    - host: git.homelab.com
       paths:
         - path: /
   tls: []

@@ -142,6 +142,19 @@
               helm:
                 releaseName: crowdsec
                 values: |
+                  appsec:
+                    enabled: true
+                    acquisitions:
+                      - appsec_configs:
+                          - crowdsecurity/appsec-default
+                        labels:
+                          type: appsec
+                        listen_addr: 0.0.0.0:7422
+                        path: /
+                        source: appsec
+                    env:
+                      - name: COLLECTIONS
+                        value: "crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules"
                   # for raw logs format: json or cri (docker|containerd)
                   container_runtime: containerd
                   agent:
@@ -198,6 +211,7 @@
                             enabled: true
                             token: "${REGISTRATION_TOKEN}" # /!\ Do not modify this variable (auto-generated and handled by the chart)
                             allowed_ranges: # /!\ Make sure to adapt to the pod IP ranges used by your cluster
+                              - "10.0.0.0/8"
                               - "10.244.0.0/16"
                       # Using a database is strongly encouraged.
                       db_config:
@@ -239,15 +253,24 @@
             namespace: "{{ item }}"
           spec:
             plugin:
-              bouncer:
+              crowdsec-bouncer-traefik-plugin:
                 enabled: true
-                logLevel: INFO
                 crowdsecMode: stream
                 crowdsecLapiScheme: http
                 crowdsecLapiHost: crowdsec-service.crowdsec.svc.cluster.local:8080
                 crowdsecLapiKeyFile: /etc/traefik/crowdsec/BOUNCER_KEY_traefik
+                htttTimeoutSeconds: 60
+                forwardedheaderstrustedips:
+                  - 10.0.0.0/8
+                  - 192.168.0.0/16
+                  - 10.244.0.0/16
+                crowdsecAppsecEnabled: true
+                crowdsecAppsecHost: crowdsec-appsec-service.crowdsec.svc.cluster.local:7422
+                crowdsecAppsecFailureBlock: true
+                crowdsecAppsecUnreachableBlock: true
       loop:
         - traefik
         - media-stack
+        - nexus
       tags:
         - lapi

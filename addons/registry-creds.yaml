@@ -43,7 +43,7 @@
                       - op: add
                         path: /spec/template/spec/containers/0/image
                         value: ghcr.io/alexellis/registry-creds:0.3.2
-                        # value: registry.local.example.com/ghcrio/alexellis/registry-creds:0.3.2
+                        # value: registry.local.homelab.com/ghcrio/alexellis/registry-creds:0.3.2
                       - op: add
                         path: /spec/template/spec/imagePullSecrets
                         value:

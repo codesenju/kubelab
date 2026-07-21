@@ -20,8 +20,8 @@ export IMAGE="nginx:1.27-alpine"
 trivy image \
   --scanners vuln \
   --vex repo \
-  --db-repository "registry.local.example.com/ghcrio/aquasecurity/trivy-db:2" \
-  --java-db-repository "registry.local.example.com/ghcrio/aquasecurity/trivy-java-db:1" \
+  --db-repository "registry.local.homelab.com/ghcrio/aquasecurity/trivy-db:2" \
+  --java-db-repository "registry.local.homelab.com/ghcrio/aquasecurity/trivy-java-db:1" \
   "$IMAGE"
 ```
 
@@ -31,13 +31,13 @@ trivy image \
 TMP_CACHE="$(mktemp -d)"
 trivy image --download-db-only \
   --cache-dir "$TMP_CACHE" \
-  --db-repository "registry.local.example.com/ghcrio/aquasecurity/trivy-db:2"
+  --db-repository "registry.local.homelab.com/ghcrio/aquasecurity/trivy-db:2"
 rm -rf "$TMP_CACHE"
 
 TMP_CACHE="$(mktemp -d)"
 trivy image --download-java-db-only \
   --cache-dir "$TMP_CACHE" \
-  --java-db-repository "registry.local.example.com/ghcrio/aquasecurity/trivy-java-db:1"
+  --java-db-repository "registry.local.homelab.com/ghcrio/aquasecurity/trivy-java-db:1"
 rm -rf "$TMP_CACHE"
 ```
 
@@ -56,15 +56,15 @@ OTLP_LOGS_URL="http://localhost:4318/v1/logs" \
 SigNoz collector example:
 
 ```bash
-IMAGE="nginx:1.27-alpine" OTLP_LOGS_URL="https://signoz-otel-collector.local.example.com/v1/logs" ./publish-trivy-otlp.sh
+IMAGE="nginx:1.27-alpine" OTLP_LOGS_URL="https://signoz-otel-collector.local.homelab.com/v1/logs" ./publish-trivy-otlp.sh
 ```
 
 Note: if you pipe output to `pbcopy`, the final success line (`Published Trivy logs to ...`) goes to clipboard (stdout), while Trivy `INFO/WARN` logs still appear in terminal (stderr).
 
 Optional overrides:
 
-- `TRIVY_DB_REPOSITORY` (default: `registry.local.example.com/ghcrio/aquasecurity/trivy-db:2`)
-- `TRIVY_JAVA_DB_REPOSITORY` (default: `registry.local.example.com/ghcrio/aquasecurity/trivy-java-db:1`)
+- `TRIVY_DB_REPOSITORY` (default: `registry.local.homelab.com/ghcrio/aquasecurity/trivy-db:2`)
+- `TRIVY_JAVA_DB_REPOSITORY` (default: `registry.local.homelab.com/ghcrio/aquasecurity/trivy-java-db:1`)
 - `OTLP_AUTH_HEADER`
 - `SKIP_VEX_REPO_UPDATE=true|false`
 - `PUBLISH_RETRIES` and `PUBLISH_BACKOFF_SECONDS`
@@ -74,8 +74,8 @@ Flag form is also supported:
 ```bash
 ./publish-trivy-otlp.sh \
   --image "nginx:1.27-alpine" \
-  --db-repository "registry.local.example.com/ghcrio/aquasecurity/trivy-db:2" \
-  --java-db-repository "registry.local.example.com/ghcrio/aquasecurity/trivy-java-db:1" \
+  --db-repository "registry.local.homelab.com/ghcrio/aquasecurity/trivy-db:2" \
+  --java-db-repository "registry.local.homelab.com/ghcrio/aquasecurity/trivy-java-db:1" \
   --otlp-logs-url "http://localhost:4318/v1/logs"
 ```
 
