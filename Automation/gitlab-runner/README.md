@@ -1,6 +1,6 @@
 ```bash
 export GITLAB_RUNNER_IMAGE_TAG=alpine-v17.9.1
-export GITLAB_RUNNER_IMAGE_REPO=harness.example.com/kubelab/cr/gitlab-runner
+export GITLAB_RUNNER_IMAGE_REPO=harness.homelab.com/kubelab/cr/gitlab-runner
 ```
 
 ```bash

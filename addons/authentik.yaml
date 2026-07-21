@@ -81,7 +81,7 @@
             name: authentik
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            image: registry.example.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            image: registry.homelab.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
             # image: ghcr.io/cloudnative-pg/postgresql:18-standard-trixie
             imagePullSecretName1: registry-secret
             db:
