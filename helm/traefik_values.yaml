@@ -77,5 +77,6 @@ service:
   labels: {}
   spec:
     loadBalancerIP: 192.168.0.65 # this should be an IP in the MetalLB range
+    externalTrafficPolicy: Local
   loadBalancerSourceRanges: []
   externalIPs: []

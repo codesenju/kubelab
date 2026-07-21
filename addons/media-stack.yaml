@@ -233,6 +233,12 @@
               - backendRefs:
                   - name: prowlarr
                     port: 9696
+                filters:
+                  - type: ExtensionRef
+                    extensionRef:
+                      group: traefik.io
+                      kind: Middleware
+                      name: crowdsec-bouncer
       tags:
         - ingress
         - httproute
@@ -256,6 +262,12 @@
               - backendRefs:
                   - name: tdarr
                     port: 8265
+                filters:
+                  - type: ExtensionRef
+                    extensionRef:
+                      group: traefik.io
+                      kind: Middleware
+                      name: crowdsec-bouncer
       tags:
         - ingress
         - httproute
@@ -366,6 +378,12 @@
               - backendRefs:
                   - name: sonarr
                     port: 8989
+                filters:
+                  - type: ExtensionRef
+                    extensionRef:
+                      group: traefik.io
+                      kind: Middleware
+                      name: crowdsec-bouncer
       tags:
         - ingress
 
@@ -388,5 +406,11 @@
               - backendRefs:
                   - name: radarr
                     port: 7878
+                filters:
+                  - type: ExtensionRef
+                    extensionRef:
+                      group: traefik.io
+                      kind: Middleware
+                      name: crowdsec-bouncer
       tags:
         - ingress

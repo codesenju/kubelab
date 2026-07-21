@@ -6,7 +6,7 @@ namespace: external-snapshotter
 
 # images:
 #   - name: registry.k8s.io/sig-storage/snapshot-controller
-#     newName: harbor.example.com/registry-k8s-io/sig-storage/snapshot-controller # change me
+#     newName: harbor.homelab.com/registry-k8s-io/sig-storage/snapshot-controller # change me
 
 resources:
   - ../../base

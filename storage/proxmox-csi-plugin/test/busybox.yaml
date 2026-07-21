@@ -20,7 +20,7 @@ metadata:
 spec:
   containers:
     - name: busybox
-      image: harbor.example.com/dhi/bash:5-alpine3.23
+      image: harbor.homelab.com/dhi/bash:5-alpine3.23
       command:
         - /bin/sh
         - -c
