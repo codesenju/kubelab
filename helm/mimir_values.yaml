@@ -48,6 +48,7 @@ mimir:
           region: "${MINIO_REGION}"
           secret_access_key: "${MINIO_SECRET_ACCESS_KEY}"
           access_key_id: "${MINIO_ACCESS_KEY_ID}"
+          insecure: true
           http:
             insecure_skip_verify: false
 
