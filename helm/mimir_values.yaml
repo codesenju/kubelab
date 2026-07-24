@@ -45,10 +45,11 @@ mimir:
         s3:
           bucket_name: ${MINIO_BUCKET_NAME} # This can be overridden via an environment variable
           endpoint: "${MINIO_ENDPOINT}" # This is a secret injected via an environment variable
-          region: "${MINIO_REGION}"
+          region: ""
           secret_access_key: "${MINIO_SECRET_ACCESS_KEY}"
           access_key_id: "${MINIO_ACCESS_KEY_ID}"
           insecure: true
+          path_style_access: true
           http:
             insecure_skip_verify: false
 
