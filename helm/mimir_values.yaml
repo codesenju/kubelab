@@ -56,12 +56,27 @@ mimir:
     blocks_storage:
       s3:
         bucket_name: mimir-blocks
+        endpoint: "${MINIO_ENDPOINT}"
+        access_key_id: "${MINIO_ACCESS_KEY_ID}"
+        secret_access_key: "${MINIO_SECRET_ACCESS_KEY}"
+        insecure: true
+        path_style_access: true
     alertmanager_storage:
       s3:
         bucket_name: mimir-alertmanager
+        endpoint: "${MINIO_ENDPOINT}"
+        access_key_id: "${MINIO_ACCESS_KEY_ID}"
+        secret_access_key: "${MINIO_SECRET_ACCESS_KEY}"
+        insecure: true
+        path_style_access: true
     ruler_storage:
       s3:
         bucket_name: mimir-ruler
+        endpoint: "${MINIO_ENDPOINT}"
+        access_key_id: "${MINIO_ACCESS_KEY_ID}"
+        secret_access_key: "${MINIO_SECRET_ACCESS_KEY}"
+        insecure: true
+        path_style_access: true
 
     # The following admin_client configuration only applies to Grafana Enterprise Metrics deployments:
     #admin_client:
