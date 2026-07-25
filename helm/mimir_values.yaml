@@ -270,7 +270,7 @@ gateway:
 
 runtimeConfig:
   ingester_limits: # limits that each ingester replica enforces
-    max_ingestion_rate: 20000
+      max_ingestion_rate: 100000
     max_series: 1500000
     max_tenants: 1000
     max_inflight_push_requests: 30000
