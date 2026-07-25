@@ -33,6 +33,9 @@ global:
 # object storage service such as S3 or GCS.
 mimir:
   structuredConfig:
+    ingester:
+      instance_limits:
+        max_ingestion_rate: 100000
     ruler:
       enable_api: true
     limits:
