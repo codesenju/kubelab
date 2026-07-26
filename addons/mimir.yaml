@@ -54,7 +54,7 @@
           type: Opaque
           stringData:
             MINIO_BUCKET_NAME: "mimir"
-            MINIO_ENDPOINT: "{{ rustfs_endpoint }}"
+            MINIO_ENDPOINT: "rustfs.rustfs.svc.cluster.local:9000"
             MINIO_REGION: "joburg-north-1"
             MINIO_ACCESS_KEY_ID: "{{ rustfs_access_key }}"
             MINIO_SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
