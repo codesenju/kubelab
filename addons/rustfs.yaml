@@ -82,6 +82,17 @@
               - backendRefs:
                   - name: rustfs
                     port: 9001
+                matches:
+                  - path:
+                      type: PathPrefix
+                      value: /rustfs
+              - backendRefs:
+                  - name: rustfs
+                    port: 9000
+                matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
       tags:
         - ingress
 
@@ -135,5 +146,12 @@
                           name: rustfs
                           port:
                             number: 9001
+                    - path: /rustfs
+                      pathType: Prefix
+                      backend:
+                        service:
+                          name: rustfs
+                          port:
+                            number: 9000
       tags: ingress
       when: false
