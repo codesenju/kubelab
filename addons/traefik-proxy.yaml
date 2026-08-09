@@ -117,6 +117,8 @@
                       value: secret
                     - name: volumes[0].secretName
                       value: crowdsec-bouncer-key
+                    - name: deployment.nodeSelector.kubernetes\\.io/ingress-ready
+                      value: "true"
                   valueFiles:
                     - $values/helm/traefik_values.yaml
               - repoURL: 'https://github.com/codesenju/kubelab.git'

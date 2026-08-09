@@ -653,3 +653,127 @@
       tags:
         - truenas
         - ingress
+
+# Omniroute
+    - name: Create omniroute endpoints
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: omniroute
+            namespace: '{{ target_namespace }}'
+          subsets:
+            - addresses:
+                - ip: 192.168.0.31
+              ports:
+                - name: http
+                  port: 20128
+                  protocol: TCP
+      tags:
+        - omniroute
+
+    - name: Create omniroute service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: omniroute
+            namespace: '{{ target_namespace }}'
+          spec:
+            type: ClusterIP
+            ports:
+              - name: http
+                port: 20128
+                protocol: TCP
+                targetPort: 20128
+      tags:
+        - omniroute
+
+    - name: Create HTTPRoute for omniroute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: omniroute
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
+              - "omniroute.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: omniroute
+                    port: 20128
+      tags:
+        - omniroute
+
+# Wazuh
+    - name: Create wazuh endpoints
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Endpoints
+          metadata:
+            name: wazuh
+            namespace: '{{ target_namespace }}'
+          subsets:
+            - addresses:
+                - ip: 192.168.0.18
+              ports:
+                - name: https
+                  port: 443
+                  protocol: TCP
+      tags:
+        - wazuh
+
+    - name: Create wazuh service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: wazuh
+            namespace: '{{ target_namespace }}'
+          spec:
+            type: ClusterIP
+            ports:
+              - name: https
+                port: 443
+                protocol: TCP
+                targetPort: 443
+      tags:
+        - wazuh
+
+    - name: Create HTTPRoute for wazuh
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: wazuh
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure
+            hostnames:
+              - "wazuh.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: wazuh
+                    port: 443
+      tags:
+        - wazuh
