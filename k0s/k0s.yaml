@@ -1,0 +1,13 @@
+apiVersion: k0s.k0sproject.io/v1beta1
+kind: ClusterConfig
+
+metadata:
+  name: k0s
+
+spec:
+  api:
+    address: 37.60.251.52
+    port: 6443
+
+    sans:
+      - k0s.<domain>.com

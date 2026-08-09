@@ -1,10 +1,10 @@
+---
 - name: Crowdsec Playbook
   hosts: k8s-control-plane-1
   gather_facts: false
   vars:
     target_namespace: crowdsec
   tasks:
-
     - name: Create crowdsec postgres secrets
       kubernetes.core.k8s:
         state: present
@@ -52,6 +52,7 @@
             BOUNCER_KEY_traefik: "{{ crowdsec_lapi_key }}"
       tags:
         - lapi
+        - secrets
 
     - name: Create Traefik bouncer key secret
       kubernetes.core.k8s:
@@ -67,6 +68,7 @@
             BOUNCER_KEY_traefik: "{{ crowdsec_lapi_key }}"
       tags:
         - lapi
+        - secrets
 
     - name: Create Registry pull secret
       kubernetes.core.k8s:
@@ -79,9 +81,8 @@
             namespace: "{{ target_namespace }}"
           type: kubernetes.io/dockerconfigjson
           data:
-            .dockerconfigjson: "{{ {'auths': {'https://' + registry_domain:
-             {'username': registry_username, 'password': registry_password,
-             'auth': (registry_username + ':' + registry_password) | b64encode}}} | to_json | b64encode }}"
+            .dockerconfigjson: "{{ {'auths': {'https://' + registry_domain: {'username': registry_username, 'password': registry_password, 'auth': (registry_username
+              + ':' + registry_password) | b64encode}}} | to_json | b64encode }}"
       tags:
         - postgres
 
@@ -105,7 +106,7 @@
               username: "{{ crowdsec_db_username }}"
               secretName: crowdsec-postgres-secrets
               # size: 1Gi
-              storageClassName: nfs-csi-postgres
+              storageClassName: "{{ postgres_storage_class_name }}"
             bootstrap:
               mode: initdb
             archiveDestination:
@@ -121,6 +122,19 @@
               # cron: "0 0 2 * * *"
       tags:
         - postgres
+
+    - name: Label node for Traefik ingress
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Node
+          metadata:
+            name: k8s-worker-2
+            labels:
+              kubernetes.io/ingress-ready: "true"
+      tags:
+        - labels
 
     - name: Create ArgoCD Application
       kubernetes.core.k8s:
@@ -155,65 +169,78 @@
                     env:
                       - name: COLLECTIONS
                         value: "crowdsecurity/appsec-virtual-patching crowdsecurity/appsec-generic-rules"
+
                   # for raw logs format: json or cri (docker|containerd)
                   container_runtime: containerd
+
                   agent:
-                    # Specify each pod whose logs you want to process
+                    # Only deploy agents on nodes running Traefik so log acquisition works
+                    nodeSelector:
+                      kubernetes.io/ingress-ready: "true"
+
                     acquisition:
-                      # The namespace where the pod is located
                       - namespace: traefik
-                        # The pod name
                         podName: traefik-*
-                        # as in crowdsec configuration, we need to specify the program name to find a matching parser
                         program: traefik
+                        poll_without_inotify: true
+
                     env:
                       - name: COLLECTIONS
-                        value: "crowdsecurity/traefik"
+                        value: "crowdsecurity/traefik crowdsecurity/base-http-scenarios crowdsecurity/http-cve crowdsecurity/linux crowdsecurity/sshd crowdsecurity/whitelist-good-actors"
+
+                  lapi:
+                    env:
+                      - name: ENROLL_KEY
+                        valueFrom:
+                          secretKeyRef:
+                            name: crowdsec-keys
+                            key: ENROLL_KEY
+
+                      - name: BOUNCER_KEY_traefik
+                        valueFrom:
+                          secretKeyRef:
+                            name: crowdsec-keys
+                            key: BOUNCER_KEY_traefik
+
+                      - name: ENROLL_INSTANCE_NAME
+                        value: "{{ crowdsec_enroll_instance_name }}"
+
+                      - name: ENROLL_TAGS
+                        value: "{{ crowdsec_enroll_tags }}"
+
                   config:
+
+                    #
+                    # Custom parser configuration
+                    #
                     parsers:
                       s02-enrich:
                         whitelists.yaml: |
                           name: crowdsecurity/whitelists
-                          description: "Whitelist events from localhost only (private IP removal disabled for homelab)"
+                          description: "Whitelist localhost only (private IPs are NOT ignored)"
                           whitelist:
                             reason: "localhost only"
                             ip:
                               - "::1"
                             cidr:
                               - "127.0.0.0/8"
-                  lapi:
-                    env:
-                      # To enroll the Security Engine to the console
-                      - name: ENROLL_KEY
-                        valueFrom:
-                          secretKeyRef:
-                            name: crowdsec-keys
-                            key: ENROLL_KEY
-                      - name: BOUNCER_KEY_traefik
-                        valueFrom:
-                          secretKeyRef:
-                            name: crowdsec-keys
-                            key: BOUNCER_KEY_traefik
-                      - name: ENROLL_INSTANCE_NAME
-                        value: "kubelab"
-                      - name: ENROLL_TAGS
-                        value: "k8s linux kubelab"
-                  ## config.yaml.local is the configuration file used by the Security Engine itself
-                  config:
+
+                    #
+                    # CrowdSec engine configuration
+                    #
                     config.yaml.local: |
                       api:
                         client:
-                          # the log processor will remove delete itself from LAPI when stopping.
                           unregister_on_exit: true
+
                         server:
-                          # This is needed for agent autoregistration
-                          auto_registration: # Activate if not using TLS for authentication
+                          auto_registration:
                             enabled: true
-                            token: "${REGISTRATION_TOKEN}" # /!\ Do not modify this variable (auto-generated and handled by the chart)
-                            allowed_ranges: # /!\ Make sure to adapt to the pod IP ranges used by your cluster
+                            token: "${REGISTRATION_TOKEN}"
+                            allowed_ranges:
                               - "10.0.0.0/8"
                               - "10.244.0.0/16"
-                      # Using a database is strongly encouraged.
+
                       db_config:
                         type: postgresql
                         user: "{{ crowdsec_db_username }}"
@@ -221,12 +248,48 @@
                         db_name: "{{ crowdsec_db_name }}"
                         host: "{{ crowdsec_db_host }}"
                         port: 5432
+
                         flush:
                           bouncers_autodelete:
                             api_key: 1h
                           agents_autodelete:
                             login_password: 6h
                             cert: 6h
+
+                    #
+                    # Override the default remediation profile
+                    #
+                    profiles.yaml: |
+                      name: default_ip_remediation
+                      #debug: true
+                      filters:
+                       - Alert.Remediation == true && Alert.GetScope() == "Ip"
+                      decisions:
+                       - type: ban
+                         duration: 72h
+                      #duration_expr: Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) + 1) * 4)
+                      # notifications:
+                      #   - slack_default
+                      #   - splunk_default
+                      #   - http_default
+                      #   - email_default
+                      on_success: break
+
+                      ---
+                      name: default_range_remediation
+                      #debug: true
+                      filters:
+                       - Alert.Remediation == true && Alert.GetScope() == "Range"
+                      decisions:
+                       - type: ban
+                         duration: 72h
+                      #duration_expr: Sprintf('%dh', (GetDecisionsCount(Alert.GetValue()) + 1) * 4)
+                      # notifications:
+                      #   - slack_default
+                      #   - splunk_default
+                      #   - http_default
+                      #   - email_default
+                      on_success: break
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -267,10 +330,7 @@
                 crowdsecAppsecEnabled: true
                 crowdsecAppsecHost: crowdsec-appsec-service.crowdsec.svc.cluster.local:7422
                 crowdsecAppsecFailureBlock: true
-                crowdsecAppsecUnreachableBlock: true
-      loop:
-        - traefik
-        - media-stack
-        - nexus
+                crowdsecAppsecUnreachableBlock: false
+      loop: "{{ crowdsec_bouncer_namespaces }}"
       tags:
         - lapi
