@@ -70,6 +70,7 @@
                         [runners.kubernetes]
                         image = "ubuntu:24.04"
                         privileged = true
+                        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v18.7.2"
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ target_namespace }}'
