@@ -1,0 +1,72 @@
+image:
+  registry: dhi.io
+  repository: traefik
+  tag: "3"
+  # digest:  # @schema type:[string, null]; pattern:^sha256:[a-f0-9]{64}$
+  pullPolicy: IfNotPresent
+
+versionOverride: v3.6.12
+
+additionalArguments:
+  - "--accessLog=true"
+  - "--accessLog.filePath=/dev/stdout"
+  - "--accessLog.format=json"
+  - "--serversTransport.insecureSkipVerify=true"
+  - "--log.level=INFO"
+  - "--entryPoints.web.transport.respondingTimeouts.readTimeout=0s"
+  - "--entryPoints.websecure.transport.respondingTimeouts.readTimeout=0s"
+
+experimental:
+  kubernetesGateway:
+    enabled: true
+
+deployment:
+  enabled: true
+  replicas: 1
+  imagePullSecrets:
+    - name: dhi-secret
+  annotations: {}
+  podAnnotations: {}
+  additionalContainers: []
+  initContainers: []
+
+ports:
+  postgres:
+    port: 5432
+    expose:
+      default: true
+    exposedPort: 5432
+    protocol: TCP
+    observability: {}
+
+ingressRoute:
+  dashboard:
+    enabled: false
+
+providers:
+  kubernetesCRD:
+    enabled: true
+    ingressClass: traefik
+    allowExternalNameServices: true
+  kubernetesIngress:
+    enabled: true
+    allowExternalNameServices: true
+    publishedService:
+      enabled: false
+  kubernetesGateway:
+    enabled: true
+    experimentalChannel: true
+
+rbac:
+  enabled: true
+
+service:
+  enabled: false
+  type: LoadBalancer
+  annotations: {}
+  labels: {}
+  spec:
+    loadBalancerIP: 192.168.0.65 # this should be an IP in the MetalLB range
+    externalTrafficPolicy: Local
+  loadBalancerSourceRanges: []
+  externalIPs: []
