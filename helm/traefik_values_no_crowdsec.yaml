@@ -17,7 +17,7 @@ additionalArguments:
 
 experimental:
   kubernetesGateway:
-    enabled: true
+    enabled: false
 
 deployment:
   enabled: true
