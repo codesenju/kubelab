@@ -31,7 +31,8 @@ deployment:
 
 service:
   enabled: true
-  type: ClusterIP
+  spec:
+      type: ClusterIP
 
 ports:
   web:
