@@ -47,6 +47,8 @@
           data:
             .dockerconfigjson: "{{ {'auths': {'dhi.io': {'username': docker_username, 'password': docker_password, 'auth': (docker_username +
               ':' + docker_password) | b64encode}}} | to_json | b64encode }}"
+      tags:
+        - secrets
 
     - name: Create ArgoCD Application to deploy traefik-crds
       kubernetes.core.k8s:
@@ -64,7 +66,7 @@
             source:
               repoURL: https://traefik.github.io/charts
               chart: traefik-crds
-              targetRevision: "1.16.0"
+              targetRevision: "1.18.0" # "1.16.0"
               helm:
                 releaseName: traefik-crds
                 values: |
@@ -83,6 +85,7 @@
             ignoreDifferences: []
       tags:
         - traefik-crds
+        - argocd
 
     - name: Deploy Traefik
       kubernetes.core.k8s:
@@ -100,7 +103,7 @@
             sources:
               - repoURL: https://traefik.github.io/charts
                 chart: traefik
-                targetRevision: "39.0.7"
+                targetRevision: "41.2.0" # "39.0.7"
                 helm:
                   releaseName: traefik
                   skipCrds: true
@@ -109,18 +112,19 @@
                       value: v3.6.12
                     - name: deployment.imagePullSecrets[0].name
                       value: dhi-secret
-                    - name: volumes[0].name
-                      value: crowdsec-bouncer-key
-                    - name: volumes[0].mountPath
-                      value: /etc/traefik/crowdsec
-                    - name: volumes[0].type
-                      value: secret
-                    - name: volumes[0].secretName
-                      value: crowdsec-bouncer-key
+                    # - name: volumes[0].name
+                    #   value: crowdsec-bouncer-key
+                    # - name: volumes[0].mountPath
+                    #   value: /etc/traefik/crowdsec
+                    # - name: volumes[0].type
+                    #   value: secret
+                    # - name: volumes[0].secretName
+                    #   value: crowdsec-bouncer-key
                     - name: deployment.nodeSelector.kubernetes\\.io/ingress-ready
                       value: "true"
                   valueFiles:
-                    - $values/helm/traefik_values.yaml
+                    - $values/helm/traefik_values_no_crowdsec.yaml
+                  # values: |
               - repoURL: 'https://github.com/codesenju/kubelab.git'
                 targetRevision: main
                 ref: values
@@ -135,6 +139,8 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+      tags:
+        - argocd
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
@@ -154,6 +160,8 @@
             dnsNames:
               - "{{ local_dns }}"
               - "{{ local_dns_wildcard }}"
+      tags:
+        - certs
 
     - name: Create Traefik dashboard IngressRoute
       kubernetes.core.k8s:
@@ -181,3 +189,5 @@
                     kind: TraefikService
             tls:
               secretName: local-example-com-tls
+      tags:
+        - ingressroute

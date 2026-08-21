@@ -79,6 +79,8 @@
         - certificate
 
     - name: Deploy GatewayApi local
+      tags:
+        - gateway
       kubernetes.core.k8s:
         state: present
         definition:
@@ -146,3 +148,24 @@
                   mode: Terminate
                   certificateRefs:
                     - name: "{{ certificate_ref_2 }}"
+              # Client routes
+              - allowedRoutes:
+                  namespaces:
+                    from: All
+                hostname: "*.{{ client1_domain }}"
+                name: web-{{ client1_name }}
+                port: 8000
+                protocol: HTTP
+              - allowedRoutes:
+                  namespaces:
+                    from: All
+                hostname: "*.{{ client1_domain }}"
+                name: websecure-{{ client1_name }}
+                port: 8443
+                protocol: HTTPS
+                tls:
+                  certificateRefs:
+                    - group: ""
+                      kind: Secret
+                      name: epcsa-org-tls
+                  mode: Terminate

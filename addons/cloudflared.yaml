@@ -43,7 +43,7 @@
                     - name: net.ipv4.ping_group_range
                       value: "65532 65532"
                 containers:
-                  - image: cloudflare/cloudflared:2026.3.0
+                  - image: cloudflare/cloudflared:2026.8.2
                     name: cloudflared
                     resources:
                       requests:
@@ -100,7 +100,7 @@
               spec:
                 containers:
                   - name: cloudflared
-                    image: cloudflare/cloudflared:2025.4.0
+                    image: cloudflare/cloudflared:2026.8.2
                     args:
                       - tunnel
                       # Points cloudflared to the config file, which configures what

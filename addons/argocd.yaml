@@ -161,7 +161,8 @@
               - name: local-gateway
                 namespace: "{{ gatewayapi_namespace }}" # gateway-infra
             hostnames:
-              - "argocd.{{ local_dns }}"
+              - "gitops.{{ local_dns }}"
+              - "gitops.{{ public_dns }}"
             rules:
               - backendRefs:
                   - name: argocd-server
