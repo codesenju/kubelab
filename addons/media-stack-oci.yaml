@@ -1,0 +1,86 @@
+---
+- name: Media Stack Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: public
+  tasks:
+
+    - name: Create endpoints
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: discovery.k8s.io/v1
+          kind: EndpointSlice
+          metadata:
+            name: jellyfin
+            labels:
+              kubernetes.io/service-name: jellyfin
+            namespace: '{{ target_namespace }}'
+          addressType: IPv4
+          ports:
+            - name: http
+              protocol: TCP
+              port: 8096
+          endpoints:
+            - addresses:
+                - "192.168.0.55"
+              conditions:
+                ready: true
+      tags:
+        - jellyfin
+
+    - name: Create service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: jellyfin
+            namespace: '{{ target_namespace }}'
+          spec:
+            type: ClusterIP
+            ports:
+              - name: http
+                port: 8096
+                protocol: TCP
+                targetPort: 8096
+      tags:
+        - jellyfin
+
+    - name: Create HTTPRoute jellyfin
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: jellyfin
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure-2 #
+
+            hostnames:
+              - "stream.{{ public_dns_2 }}"
+
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                # filters:
+                #   - type: ExtensionRef
+                #     extensionRef:
+                #       group: traefik.io
+                backendRefs:
+                  - name: jellyfin
+                    port: 8096
+      tags:
+        - ingress
+        - httproute
+        - jellyfin
