@@ -1,0 +1,50 @@
+---
+- name: Openebs Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: openebs
+  tasks:
+    - name: Deploy openebs
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: openebs
+            namespace: argocd
+          spec:
+            project: default
+            source:
+              repoURL: https://openebs.github.io/openebs
+              chart: openebs
+              targetRevision: 4.5.1
+              helm:
+                releaseName: openebs
+                values: |
+                  engines:
+                    replicated:
+                      mayastor:
+                        enabled: false
+
+                  loki:
+                    enabled: false
+
+                  alloy:
+                    enabled: false
+
+                  localpv-provisioner:
+                    hostpathClass:
+                      isDefaultClass: true
+
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
