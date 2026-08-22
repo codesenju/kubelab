@@ -1,0 +1,13 @@
+- name: Install Istio with Ambient Profile and Bookinfo App
+  hosts: k8s-control-plane-1
+  become: true
+  gather_facts: false
+  vars:
+    local_path_provisioner_version: 0.0.37
+  tasks:
+    - name: Install Rancher Local Path Provisioner
+      ansible.builtin.command:
+        cmd:
+          kubectl apply -f https://raw.githubusercontent.com/rancher/local-path-provisioner/v{{ local_path_provisioner_version }}/deploy/local-path-storage.yaml
+      register: local_path_result
+      changed_when: "'created' in local_path_result.stdout or 'configured' in local_path_result.stdout"
