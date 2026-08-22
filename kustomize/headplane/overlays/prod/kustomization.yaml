@@ -6,7 +6,7 @@ namespace: headscale
 images:
 - name: IMAGE_TEMPLATE
   newName: ghcr.io/tale/headplane
-  newTag: latest
+  newTag: 0.7.0
 
 resources:
 - ../../base
