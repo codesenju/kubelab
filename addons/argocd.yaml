@@ -13,7 +13,7 @@
         state: present
         chart_repo_url: https://argoproj.github.io/argo-helm
         chart_ref: argo-cd
-        chart_version: 9.4.14
+        chart_version: 10.4.0 # 9.4.14
         release_namespace: "{{ target_namespace }}"
         create_namespace: true
         release_values:

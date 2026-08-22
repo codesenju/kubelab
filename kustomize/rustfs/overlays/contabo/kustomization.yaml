@@ -6,7 +6,7 @@ namespace: rustfs
 images:
 - name: IMAGE_PLACEHOLDER
   newName: rustfs/rustfs
-  newTag: 1.0.0-alpha.91
+  newTag: 1.0.0-rc.3
 
 patches:
   - path: pv.patch.yaml
