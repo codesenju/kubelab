@@ -37,6 +37,8 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      when:
+        - true
 
     - name: Deploy Gitlab Runner
       kubernetes.core.k8s:
@@ -63,14 +65,14 @@
                   runnerToken: '{{ gitlab_runner_token }}'
                   gitlabUrl: 'https://gitlab.com/'
                   runners:
-                    config: | 
+                    config: |
                       [[runners]]
                         shell = "bash"
                         name = "kubelab-runner"
                         [runners.kubernetes]
                         image = "ubuntu:24.04"
                         privileged = true
-                        helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v18.7.2"
+                        # helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v18.7.2"
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ target_namespace }}'
