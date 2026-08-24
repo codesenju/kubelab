@@ -1,5 +1,5 @@
 ---
-- name: Media Stack Playbook
+- name: Public VPS Playbook
   hosts: k8s-control-plane-1
   gather_facts: false
   become: false
@@ -63,8 +63,6 @@
             parentRefs:
               - name: local-gateway
                 namespace: "{{ gatewayapi_namespace }}"
-                sectionName: websecure-2 #
-
             hostnames:
               - "stream.{{ public_dns_2 }}"
 
@@ -84,3 +82,79 @@
         - ingress
         - httproute
         - jellyfin
+
+# Nexus
+    - name: Create endpoints
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: discovery.k8s.io/v1
+          kind: EndpointSlice
+          metadata:
+            name: nexus-repo
+            labels:
+              kubernetes.io/service-name: nexus-repo
+            namespace: '{{ target_namespace }}'
+          addressType: IPv4
+          ports:
+            - name: http
+              protocol: TCP
+              port: 80
+          endpoints:
+            - addresses:
+                - "192.168.0.60"
+              conditions:
+                ready: true
+      tags:
+        - nexus
+
+    - name: Create service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: nexus-repo
+            namespace: '{{ target_namespace }}'
+          spec:
+            type: ClusterIP
+            ports:
+              - name: http
+                port: 80
+                protocol: TCP
+                targetPort: http
+      tags:
+        - nexus
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: nexus-repo
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "registry.{{ public_dns_2 }}"
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                # filters:
+                #   - type: ExtensionRef
+                #     extensionRef:
+                #       group: traefik.io
+                backendRefs:
+                  - name: nexus-repo
+                    port: 80
+      tags:
+        - ingress
+        - httproute
+        - nexus
