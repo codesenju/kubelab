@@ -1,0 +1,57 @@
+- name: Playbook for reflector
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: reflector
+  tasks:
+    - name: Deploy Refletor
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: reflector
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://emberstack.github.io/helm-charts
+              chart: reflector
+              targetRevision: "10.0.65"
+              helm:
+                releaseName: reflector
+                values: |
+                  # image
+                  #   repository:
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+
+    - name: Create Container Registry pull secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: registry-secret
+            namespace: "{{ target_namespace }}"
+            annotations:
+              reflector.v1.k8s.emberstack.com/reflection-allowed: "true"
+              reflector.v1.k8s.emberstack.com/reflection-auto-enabled: "true"
+          type: kubernetes.io/dockerconfigjson
+          data:
+            .dockerconfigjson: "{{ {'auths': {'https://' + registry_domain: {'username': registry_username, 'password': registry_password,
+                               'auth': (registry_username + ':' + registry_password) | b64encode}}} | to_json | b64encode }}"
+      tags:
+        - secrets

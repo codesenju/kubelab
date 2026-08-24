@@ -77,7 +77,7 @@
               - name: local-gateway
                 namespace: "{{ gatewayapi_namespace }}"
             hostnames:
-              - "s3.{{ local_dns }}"
+              - "s3.{{ public_dns }}"
             rules:
               - backendRefs:
                   - name: rustfs
@@ -94,7 +94,7 @@
                       type: PathPrefix
                       value: /
       tags:
-        - ingress
+        - httproute
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
@@ -133,10 +133,10 @@
             ingressClassName: traefik
             tls:
               - hosts:
-                  - "s3.{{ local_dns }}"
+                  - "s3.{{ public_dns }}"
                 secretName: local-example-com-tls
             rules:
-              - host: "s3.{{ local_dns }}"
+              - host: "s3.{{ public_dns }}"
                 http:
                   paths:
                     - path: /
