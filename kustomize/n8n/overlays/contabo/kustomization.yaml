@@ -5,11 +5,6 @@ resources:
 
 namespace: n8n
 
-images:
-- name: n8n_image
-  newName: docker.io/codesenju/n8n
-  newTag: 2.1.0-test
-
 generatorOptions:
   disableNameSuffixHash: true
 
