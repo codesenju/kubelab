@@ -1,0 +1,32 @@
+# Keep n8n version configurable while removing build-only npm afterward.
+ARG N8N_VERSION=2.36.7
+FROM alpine:3.24
+
+RUN adduser -D -h /home/node node
+WORKDIR /home/node/.n8n-files
+
+RUN apk add --no-cache nodejs npm ffmpeg bash curl python3 py3-pip wget \
+    && pip3 install --no-cache-dir --break-system-packages yt-dlp \
+    && npm install --global --omit=dev "n8n@${N8N_VERSION}" \
+    && npm uninstall --global npm \
+    && rm -rf /root/.npm /tmp/* \
+    && case "$(uname -m)" in \
+         x86_64) mc_url=https://dl.min.io/client/mc/release/linux-amd64/mc ;; \
+         aarch64) mc_url=https://dl.min.io/client/mc/release/linux-arm64/mc ;; \
+         *) exit 1 ;; \
+       esac \
+    && wget -q "$mc_url" -O /usr/local/bin/mc \
+    && chmod +x /usr/local/bin/mc
+
+COPY --chown=node:node escape925.png ./
+COPY --chown=node:node getvid.sh /usr/local/bin/
+COPY --chown=node:node video_editor.sh /usr/local/bin/
+
+RUN chmod +x /usr/local/bin/video_editor.sh /usr/local/bin/getvid.sh \
+    && mkdir -p /home/node/input /home/node/output \
+    && chown -R node:node /home/node/.n8n-files /home/node/input /home/node/output
+
+USER node
+EXPOSE 5678
+ENTRYPOINT ["n8n"]
+CMD ["start"]
