@@ -15,6 +15,8 @@ spec:
       labels:
         app: instagram-reels-downloader
     spec:
+      securityContext:
+        fsGroup: 65533
       imagePullSecrets:
         - name: registry-secret
       containers:
@@ -42,4 +44,4 @@ spec:
         - name: instagram-cookies
           secret:
             secretName: instagram-cookies
-            defaultMode: 0400
+            defaultMode: 0440
