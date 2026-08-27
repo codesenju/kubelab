@@ -26,12 +26,14 @@ spec:
             - containerPort: 5678
           resources:
             requests:
-              memory: "256Mi"
+              memory: "512Mi"
               cpu: "60m"
             limits:
-              memory: "512Mi"
+              memory: "1Gi"
               cpu: "250m"
           env:
+            - name: NODE_OPTIONS
+              value: "--max-old-space-size=1024"
             - name: GENERIC_TIMEZONE
               value: "UTC"
             - name: TZ

@@ -2,9 +2,88 @@
 - name: N8n Playbook
   hosts: k8s-control-plane-1
   gather_facts: false
+  become: false
   vars:
     target_namespace: n8n
   tasks:
+
+    - name: Deploy postgres
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
+          metadata:
+            name: n8n
+            namespace: "{{ target_namespace }}"
+          spec:
+            name: n8n
+            image: "{{ registry_domain }}ghcrio/cloudnative-pg/postgresql:16-minimal-trixie" # db version must be compatiable with the backup db version
+            imagePullSecretName1: nexus-registry-creds
+            db:
+              name: n8n
+              username: "{{ n8n_db_username }}"
+              secretName: n8n-postgres-secrets
+              # size: 1Gi
+              storageClassName: nfs-csi-postgres
+            bootstrap:
+              mode: initdb
+            # recovery:
+            #   backupID: "20260504T020002" # backup will be at s3Path/serverName/base/<backupID>
+            #   serverName: "n8n-postgres" # backup files will be at s3Path/<serverName>/base/<backupID>
+            # restoreSource:
+            #   s3Path: "s3://cnpg/backup2"
+            #   endpointURL: "https://{{ rustfs_endpoint }}"
+            #   s3:
+            #     credentialsSecretName: s3-creds
+            #     accessKeyId: ACCESS_KEY_ID
+            #     secretAccessKey: SECRET_ACCESS_KEY
+            archiveDestination:
+              s3Path: "s3://cnpg/backup4/"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
+      tags:
+        - postgres
+
+    - name: Create n8n postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: n8n-postgres-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            username: "{{ n8n_db_username }}"
+            password: "{{ n8n_db_password }}"
+      tags:
+        - postgres
+
+    - name: Create postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: s3-creds
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            ACCESS_KEY_ID: "{{ rustfs_access_key }}"
+            SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+      tags:
+        - postgres
+
     - name: Deploy n8n ArgoCD Application
       kubernetes.core.k8s:
         state: present
@@ -23,8 +102,21 @@
               path: "kustomize/n8n/overlays/{{ target_environment }}"
               targetRevision: main
               kustomize:
+                images:
+                  - n8n_image=docker.io/codesenju/n8n:2.36.7
                 labels:
                   app.kubernetes.io/instance: n8n
+                patches:
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: n8n
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/imagePullSecrets
+                        value:
+                          - name: registry-secret
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
@@ -36,6 +128,8 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+      tags:
+        - argocd
 
     - name: Create n8n configmap for env vars
       kubernetes.core.k8s:
@@ -50,7 +144,11 @@
             N8N_HOST: "{{ n8n_domain }}"
             N8N_PORT: "5678"
             N8N_PROTOCOL: "http"
-            WEBHOOK_URL: "https://{{ n8n_domain }}/"
+            N8n_WEBHOOK_URL: "https://{{ n8n_domain }}/"
+      tags:
+        - secrets
+        - configmaps
+        - argocd
 
     - name: Create n8n ingress
       kubernetes.core.k8s:
@@ -106,3 +204,4 @@
                     port: 5678
       tags:
         - ingress
+      when: false

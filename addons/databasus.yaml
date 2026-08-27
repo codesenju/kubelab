@@ -25,7 +25,7 @@
               targetRevision: main
               kustomize:
                 images:
-                  - databasus/databasus=registry.homelab.com/dockerio/databasus/databasus:v3.32.0
+                  - databasus/databasus={{ registry_domain }}/dockerio/databasus/databasus:v3.32.0
                 patches:
                   - target:
                       kind: Deployment
@@ -74,7 +74,6 @@
                   - .spec.volumeClaimTemplates[].spec.volumeMode
                   - .spec.volumeClaimTemplates[].status
       tags: databasus
-      # when: false
 
     - name: Deploy Databasus
       kubernetes.core.k8s:
@@ -176,7 +175,7 @@
             parentRefs:
               - name: local-gateway
                 namespace: "{{ gatewayapi_namespace }}"
-                sectionName: websecure
+                sectionName: websecure-pvt
             hostnames:
               - "databasus.{{ local_dns }}"
             rules:

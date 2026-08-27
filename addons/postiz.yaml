@@ -66,7 +66,7 @@
             namespace: "{{ target_namespace }}"
           spec:
             name: temporal
-            image: registry.local.homelab.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            image: "{{ registry_domain }}/ghcrio/cloudnative-pg/postgresql:18-standard-trixie"
             imagePullSecretName1: registry-secret
             db:
               name: temporal
@@ -76,7 +76,7 @@
             bootstrap:
               mode: initdb
             archiveDestination:
-              s3Path: "s3://cnpg/backup"
+              s3Path: "s3://cnpg/backup4"
               endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:

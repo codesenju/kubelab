@@ -17,6 +17,8 @@
             namespace: "{{ target_namespace }}"
           stringData:
             token: "{{ cf_tunnel_token }}"
+      tags:
+        - secrets
 
     - name: Deploy Cloudflared
       kubernetes.core.k8s:
@@ -63,6 +65,8 @@
                       # Configures tunnel run parameters
                       - cloudflared
                       - tunnel
+                      - --protocol
+                      - http2
                       - --no-autoupdate
                       - --loglevel
                       - info
@@ -78,6 +82,8 @@
                       failureThreshold: 1
                       initialDelaySeconds: 10
                       periodSeconds: 10
+      tags:
+        - argocd
 
     - name: Deploy Cloudflared deployment
       kubernetes.core.k8s:

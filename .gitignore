@@ -102,3 +102,4 @@ ansible/k3s-config.yaml
 Automation/aws/out.tfplan
 ansible/example-local-tls.yaml
 zero-trust/NetworkPolicies/
+*.ignore.y*ml
