@@ -81,6 +81,13 @@
                 g, authentik Admins, role:admin
                 g, ArgoCD Viewers, role:readonly
                 g, kubelab17:kubelab, role:admin
+                g, devops, role:devsecops
+                p, role:devsecops, applications, get, default/epcsa*, allow
+                p, role:devsecops, applications, get, default/iysynergy*, allow
+                p, role:devsecops, applications, get, default/drives3, allow
+                p, role:devsecops, applications, sync, default/epcsa*, allow
+                p, role:devsecops, applications, sync, default/iysynergy*, allow
+                p, role:devsecops, applications, sync, default/drives3, allow
             cm:
               accounts.devops: apiKey, login
               accounts.devops.enabled: "true"

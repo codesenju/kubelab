@@ -45,7 +45,10 @@ spec:
             - name: DB_POSTGRESDB_PORT
               value: "5432"
             - name: DB_POSTGRESDB_USER
-              value: "n8n"
+              valueFrom:
+                secretKeyRef:
+                  name: n8n-postgres-secrets
+                  key: username
             - name: DB_POSTGRESDB_SCHEMA
               value: "public"
             - name: DB_POSTGRESDB_PASSWORD
@@ -68,11 +71,11 @@ spec:
                 configMapKeyRef:
                   name: n8n-env
                   key: N8N_PROTOCOL
-            - name: WEBHOOK_URL
+            - name: N8N_WEBHOOK_URL
               valueFrom:
                 configMapKeyRef:
                   name: n8n-env
-                  key: WEBHOOK_URL
+                  key: N8N_WEBHOOK_URL
           volumeMounts:
             - name: n8n-data
               mountPath: /home/node/.n8n
