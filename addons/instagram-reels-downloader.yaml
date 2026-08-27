@@ -4,7 +4,7 @@
   gather_facts: false
   become: false
   vars:
-    target_namespace: instagram-reels-downloader
+    target_namespace: n8n
   tasks:
     - name: Deploy instagram-reels-downloader
       kubernetes.core.k8s:
@@ -28,7 +28,7 @@
                   app.kubernetes.io/instance: instagram-reels-downloader
             destination:
               server: https://kubernetes.default.svc
-              namespace: instagram-reels-downloader
+              namespace: "{{ target_namespace }}"
             syncPolicy:
               automated:
                 prune: true

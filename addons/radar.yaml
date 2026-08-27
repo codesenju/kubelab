@@ -1,0 +1,80 @@
+---
+- name: Observability Stack Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: radar
+  tasks:
+
+    - name: Create secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: radar-cloud-config
+            namespace: radar
+          stringData:
+            token: "{{ radar_token }}"
+
+    - name: Deploy Observability Stack ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: radar
+            namespace: argocd  # adjust if your Argo CD runs elsewhere
+          spec:
+            project: default
+            source:
+              repoURL: https://skyhook-io.github.io/helm-charts
+              chart: radar
+              targetRevision: '1.11.0'
+              helm:
+                values: |
+                  cloud:
+                    enabled: true
+                    url: wss://api.radarhq.io/agent
+                    clusterName: "{{ cluster_name }}"
+                    existingSecret: radar-cloud-config
+                  auth:
+                    mode: proxy
+                  rbac:
+                    helm: true
+                    secrets: true
+                    podExec: true
+                    portForward: true
+                    metrics: true
+                    selfUpgrade: true
+                  resources:
+                    limits:
+                      cpu: 500m
+                      memory: 512Mi
+                    requests:
+                      cpu: 100m
+                      memory: 128Mi
+            destination:
+              server: https://kubernetes.default.svc  # in-cluster; use the target cluster's API server for hub-and-spoke Argo CD
+              namespace: radar
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - RespectIgnoreDifferences=true
+            # Radar Cloud rolls the agent forward by patching the Deployment image
+            # out-of-band (rbac.selfUpgrade, on above). Without this, Argo's selfHeal
+            # sees the patched image as drift and reverts every self-upgrade within a
+            # reconcile. Ignoring the image field lets the self-upgrade stick.
+            ignoreDifferences:
+              - group: apps
+                kind: Deployment
+                jqPathExpressions:
+                  - .spec.template.spec.containers[].image
+      tags:
+        - argocd
