@@ -18,6 +18,7 @@ spec:
       containers:
       - name: instagram-reels-downloader
         image: IMAGE_TEMPLATE
+        imagePullPolicy: Always
         ports:
         - containerPort: 3000
           name: http
