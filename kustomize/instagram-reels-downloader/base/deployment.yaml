@@ -28,13 +28,13 @@ spec:
           limits:
             memory: "128Mi"
             cpu: "120m"
-          env:
-            - name: YTDLP_COOKIES
-              value: /run/secrets/instagram/cookies.txt
-          volumeMounts:
-            - name: instagram-cookies
-              mountPath: /run/secrets/instagram
-              readOnly: true
+        env:
+          - name: YTDLP_COOKIES
+            value: /run/secrets/instagram/cookies.txt
+        volumeMounts:
+          - name: instagram-cookies
+            mountPath: /run/secrets/instagram
+            readOnly: true
       volumes:
         - name: instagram-cookies
           secret:
