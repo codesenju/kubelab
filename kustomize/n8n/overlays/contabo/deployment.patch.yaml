@@ -15,9 +15,9 @@ spec:
     spec:
       $patch: replace
       securityContext:
-        runAsUser: 1001
-        runAsGroup: 1001
-        fsGroup: 1001
+        runAsUser: 1000
+        runAsGroup: 1000
+        fsGroup: 1000
       containers:
         - name: n8n
           image: n8n_image
