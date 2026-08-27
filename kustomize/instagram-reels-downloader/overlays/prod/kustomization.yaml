@@ -8,5 +8,3 @@ images:
 - name: IMAGE_TEMPLATE
   newName: codesenju/instagram-reels-downloader
   newTag: stable
-
-namespace: instagram-reels-downloader
