@@ -49,25 +49,25 @@ spec:
             - name: NODES_EXCLUDE
               value: "[]"
             - name: DB_TYPE
-              value: "postgresdb"
-            - name: DB_POSTGRESDB_DATABASE
-              value: "n8n"
-            - name: DB_POSTGRESDB_HOST
-              value: "n8n-postgres-rw"
-            - name: DB_POSTGRESDB_PORT
-              value: "5432"
-            - name: DB_POSTGRESDB_USER
-              valueFrom:
-                secretKeyRef:
-                  name: n8n-postgres-secrets
-                  key: username
-            - name: DB_POSTGRESDB_SCHEMA
-              value: "public"
-            - name: DB_POSTGRESDB_PASSWORD
-              valueFrom:
-                secretKeyRef:
-                  name: n8n-postgres-secrets
-                  key: password
+              value: "sqlite" # value: "postgresdb"
+            # - name: DB_POSTGRESDB_DATABASE
+            #   value: "n8n"
+            # - name: DB_POSTGRESDB_HOST
+            #   value: "n8n-postgres-rw"
+            # - name: DB_POSTGRESDB_PORT
+            #   value: "5432"
+            # - name: DB_POSTGRESDB_USER
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: n8n-postgres-secrets
+            #       key: username
+            # - name: DB_POSTGRESDB_SCHEMA
+            #   value: "public"
+            # - name: DB_POSTGRESDB_PASSWORD
+            #   valueFrom:
+            #     secretKeyRef:
+            #       name: n8n-postgres-secrets
+            #       key: password
             - name: N8N_HOST
               valueFrom:
                 configMapKeyRef:
