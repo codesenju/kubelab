@@ -26,11 +26,11 @@ spec:
             - containerPort: 5678
           resources:
             requests:
-              memory: "512Mi"
-              cpu: "60m"
-            limits:
               memory: "1Gi"
-              cpu: "250m"
+              cpu: "128m"
+            limits:
+              memory: "2Gi"
+              cpu: "256m"
           env:
             - name: NODE_OPTIONS
               value: "--max-old-space-size=1024"
