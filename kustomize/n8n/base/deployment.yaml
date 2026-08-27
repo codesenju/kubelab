@@ -13,6 +13,8 @@ spec:
       labels:
         app: n8n
     spec:
+      securityContext:
+        fsGroup: 1000
       containers:
         - name: n8n
           image: n8n_image
