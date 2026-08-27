@@ -27,10 +27,10 @@ spec:
           resources:
             requests:
               memory: "1Gi"
-              cpu: "512m"
+              cpu: "1024m"
             limits:
               memory: "2Gi"
-              cpu: "1024m"
+              cpu: "1256m"
           env:
             - name: NODE_OPTIONS
               value: "--max-old-space-size=1024"
