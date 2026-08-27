@@ -61,7 +61,6 @@ spec:
                 secretKeyRef:
                   name: n8n-postgres-secrets
                   key: username
-              value: "n8n"
             - name: DB_POSTGRESDB_SCHEMA
               value: "public"
             - name: DB_POSTGRESDB_PASSWORD
