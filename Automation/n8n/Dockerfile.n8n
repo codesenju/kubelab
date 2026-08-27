@@ -1,13 +1,10 @@
 # Stage 1 — base with all tools
-FROM alpine:latest
+FROM alpine:3.24
 # Create working user
 RUN adduser -D -h /home/node node
 WORKDIR /home/node/.n8n-files/
-# Enable community repo for ffmpeg
-RUN echo "https://dl-cdn.alpinelinux.org/alpine/edge/community" >> /etc/apk/repositories
-
 # Install dependencies
-RUN apk update && apk add --no-cache \
+RUN apk add --no-cache \
     nodejs npm \
     ffmpeg \
     bash \
@@ -34,7 +31,7 @@ RUN ARCH=$(uname -m) && \
     chown -R node:node /home/node/
 
 # Install n8n
-RUN npm install -g n8n@2.8.3
+RUN npm install -g  n8n@2.36.7 # n8n@2.8.3
 
 EXPOSE 5678
 USER node

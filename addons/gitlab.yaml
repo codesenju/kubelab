@@ -1,6 +1,7 @@
-- hosts: k8s-control-plane-1
-  become: no
-  gather_facts: no
+- name: Gitlab Runners
+  hosts: k8s-control-plane-1
+  become: false
+  gather_facts: false
   vars:
     target_namespace: gitlab
   tasks:
@@ -37,8 +38,7 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
-      when:
-        - true
+      when: false
 
     - name: Deploy Gitlab Runner
       kubernetes.core.k8s:
@@ -72,7 +72,21 @@
                         [runners.kubernetes]
                         image = "ubuntu:24.04"
                         privileged = true
+                        pull_policy = ["always", "if-not-present"]
                         # helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v18.7.2"
+
+                        [runners.cache]
+                          Type = "s3"
+                          Shared = true
+
+                          [runners.cache.s3]
+                            ServerAddress = "{{ rustfs_endpoint }}"
+                            AccessKey = "{{ rustfs_access_key }}"
+                            SecretKey = "{{ rustfs_secret_key }}"
+                            BucketName = "gitlab-runner-cache"
+                            BucketLocation = "us-east-1"
+                            Insecure = false
+                            AuthenticationType = "access-key"
             destination:
               server: https://kubernetes.default.svc
               namespace: '{{ target_namespace }}'
@@ -82,3 +96,5 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      tags:
+        - gitlab
