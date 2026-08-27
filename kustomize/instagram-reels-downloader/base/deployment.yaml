@@ -15,6 +15,8 @@ spec:
       labels:
         app: instagram-reels-downloader
     spec:
+      imagePullSecrets:
+        - name: registry-secret
       containers:
       - name: instagram-reels-downloader
         image: IMAGE_TEMPLATE
