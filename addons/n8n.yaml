@@ -18,14 +18,14 @@
             namespace: "{{ target_namespace }}"
           spec:
             name: n8n
-            image: "{{ registry_domain }}ghcrio/cloudnative-pg/postgresql:16-minimal-trixie" # db version must be compatiable with the backup db version
-            imagePullSecretName1: nexus-registry-creds
+            image: "{{ registry_domain }}/ghcrio/cloudnative-pg/postgresql:17-minimal-trixie" # db version must be compatiable with the backup db version
+            imagePullSecretName1: registry-secret
             db:
               name: n8n
               username: "{{ n8n_db_username }}"
               secretName: n8n-postgres-secrets
               # size: 1Gi
-              storageClassName: nfs-csi-postgres
+              storageClassName: local-path
             bootstrap:
               mode: initdb
             # recovery:
