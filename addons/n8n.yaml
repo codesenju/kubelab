@@ -144,7 +144,7 @@
             N8N_HOST: "{{ n8n_domain }}"
             N8N_PORT: "5678"
             N8N_PROTOCOL: "http"
-            N8n_WEBHOOK_URL: "https://{{ n8n_domain }}/"
+            N8N_WEBHOOK_URL: "https://{{ n8n_domain }}/"
       tags:
         - secrets
         - configmaps
