@@ -184,7 +184,7 @@
                     resources:
                       requests:
                         cpu: 100m
-                        memory: 1Gi
+                        memory: 768Mi
                       limits:
                         cpu: 500m
                         memory: 1500Mi
@@ -314,7 +314,7 @@
             name: postiz
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            image: registry.local.homelab.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            image: "{{ registry_domain  }}/ghcrio/cloudnative-pg/postgresql:18-standard-trixie"
             imagePullSecretName1: registry-secret
             db:
               name: postiz
@@ -325,7 +325,7 @@
             bootstrap:
               mode: initdb
             archiveDestination:
-              s3Path: "s3://cnpg/backup"
+              s3Path: "s3://cnpg/backup4"
               endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:
@@ -378,7 +378,7 @@
                   resources:
                     requests:
                       cpu: 250m
-                      memory: 2500Mi
+                      memory: 2Gi
                     limits:
                       cpu: 1000m
                       memory: 3Gi
@@ -408,7 +408,7 @@
                     NEXT_PUBLIC_BACKEND_URL: "https://postiz.{{ public_dns_2 }}/api"
                     JWT_SECRET: "7a6fbca5add1ee79eb11cf4fe41b8f14ff43b9eb8c53a912863f73fc74d64c70"
                     DATABASE_URL: "postgresql://{{ postiz_db_username }}:{{ postiz_db_password }}@{{ postiz_db_host }}:5432/{{ postiz_db_name }}"
-                    REDIS_URL: "redis://default:{{ postiz_redis_password }}@postiz-redis:{{ postiz_redis_port }}"
+                    REDIS_URL: "redis://default:{{ postiz_redis_password }}@postiz-redis:6379"
                     BACKEND_INTERNAL_URL: "http://postiz-postiz-app.postiz.svc.cluster.local/api"
                     TEMPORAL_ADDRESS: "temporal:7233"
                     IS_GENERAL: "true"
