@@ -211,34 +211,24 @@ graph TB
 ## 📊 Data Flow Architecture
 
 ```mermaid
-graph LR
-    subgraph "Metrics Flow"
-        Apps[Applications] --> Prometheus
-        Prometheus --> Mimir
-        Mimir --> MinIO_Metrics[MinIO Buckets]
-        Prometheus --> Grafana
-        Mimir --> Grafana
-    end
+flowchart LR
+    Apps[Kubernetes workloads] -->|/metrics scrape| Prometheus[Prometheus Agent]
+    Prometheus -->|remote_write + tenant header| MimirGW[Mimir Gateway]
+    MimirGW --> Mimir[Mimir distributors, Kafka, ingesters, queriers]
+    Mimir -->|blocks_storage| S3[(RustFS S3<br/>mimir-blocks)]
+    MimirGW -->|PromQL query| Grafana[Grafana dashboards]
 
-    subgraph "Tracing Flow"
-        Apps_Traces[Applications] --> OBI_Collector[OBI Collector]
-        OBI_Collector --> Tempo
-        Tempo --> MinIO_Traces[MinIO Buckets]
-        Tempo --> Grafana_Traces[Grafana Explore]
-    end
-
-    subgraph "Logs Flow"
-        Apps_Logs[Applications] --> Alloy[Alloy Collector]
-        Alloy --> Loki[Loki]
-        Loki --> Grafana_Logs[Grafana Logs]
-    end
-
-    subgraph "GitOps Flow"
-        Git_Repo[Git Repository] --> ArgoCD
-        ArgoCD --> K8s_API[Kubernetes API]
-        K8s_API --> Workloads[Application Workloads]
-    end
+    OBI[OBI eBPF auto-instrumentation<br/>obi-system] -->|OTLP traces :4317| Fanout[OTel Fanout Collector<br/>otel-system]
+    Fanout -->|OTLP traces| Alloy[Grafana Alloy<br/>grafana-system]
+    Alloy -->|OTLP| Tempo[Tempo distributed]
+    Tempo -->|trace blocks| S3T[(RustFS S3<br/>tempo-traces)]
+    Tempo --> Grafana
+    Alloy -->|spanmetrics connector| Derived[Trace-derived metrics]
+    Derived -->|remote_write + tenant header| MimirGW
+    Grafana -->|Tempo service map| MimirGW
 ```
+
+Detailed observability flow, dependencies, tenant configuration, and verification steps are documented in [observability-data-flow.md](observability-data-flow.md).
 
 ## 🔧 Addon Dependencies
 
