@@ -20,7 +20,7 @@
             source:
               repoURL: https://odigos-io.github.io/odigos
               chart: odigos
-              targetRevision: 1.22.3
+              targetRevision: 1.35.1
               helm:
                 releaseName: odigos
                 # values: |
@@ -50,7 +50,7 @@
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
-                sectionName: websecure
+                sectionName: websecure-pvt
             hostnames:
               - "odigos.{{ local_dns }}"
             rules:
@@ -73,7 +73,7 @@
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
-                sectionName: web
+                sectionName: web-pvt
             hostnames:
               - "odigos.{{ local_dns }}"
             rules:
