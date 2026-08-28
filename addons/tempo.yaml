@@ -39,8 +39,8 @@
                         access_key: "{{ rustfs_access_key }}"
                         secret_key: "{{ rustfs_secret_key }}"
                         bucket: 'tempo-traces'
-                        endpoint: "{{ rustfs_endpoint }}"
-                        insecure: false
+                        endpoint: "{{ rustfs_local_endpoint }}"
+                        insecure: true
                   traces:
                     otlp:
                       http:

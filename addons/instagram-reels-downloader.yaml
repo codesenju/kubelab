@@ -24,6 +24,8 @@
               path: kustomize/instagram-reels-downloader/overlays/prod
               targetRevision: main
               kustomize:
+                images:
+                  - IMAGE_TEMPLATE={{ registry_domain }}/kubelab/instagram-reels-downloader:v2
                 commonLabels:
                   app.kubernetes.io/instance: instagram-reels-downloader
             destination:
