@@ -26,6 +26,11 @@ spec:
         timeout: 1s
         send_batch_size: 512
         send_batch_max_size: 1024
+      resource/environment:
+        attributes:
+          - key: deployment.environment
+            value: prod
+            action: upsert
     
     exporters:
       debug:
@@ -77,7 +82,7 @@ spec:
       pipelines:
         traces:
           receivers: [otlp]
-          processors: [batch]
+          processors: [resource/environment, batch]
           exporters: [otlp/alloy, otlp/data-prepper, otlp/signoz, debug]
         metrics:
           receivers: [otlp]
