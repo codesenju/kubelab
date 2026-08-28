@@ -255,7 +255,7 @@
                     deploymentEnvironment: prod
                     imagePullSecrets:
                       - "dockerhub-secret"
-                  otelCollectorEndpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
+                  otelCollectorEndpoint: http://signoz-otel-collector.signoz.svc.cluster.local:4318
                   otelInsecure: true
                   insecureSkipVerify: true
                   otelAgent:
