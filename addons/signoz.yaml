@@ -8,64 +8,42 @@
   tasks:
     - name: Deploy signoz postgres
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
-          apiVersion: postgresql.cnpg.io/v1
-          kind: Cluster
+          apiVersion: kubelab.io/v1beta1
+          kind: PGCluster
           metadata:
-            name: signoz-postgres
+            name: signoz
             namespace: "{{ target_namespace }}"
           spec:
-            # At the time of writing, is only compatible with pgvecto.rs <0.4. Latest postgres image with that version is 16.5.
-            imageName: ghcr.io/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba # UID 26, GID 999
-            instances: 1
-            postgresql:
-              shared_preload_libraries:
-                - "vectors.so"
+            name: signoz
+            image: "{{ registry_domain }}/ghcrio/cloudnative-pg/postgresql:18-minimal-trixie" # db version must be compatiable with the backup db version
+            imagePullSecretName1: nexus-registry-creds
+            db:
+              name: signoz
+              username: "{{ signoz_db_username }}"
+              secretName: signoz-postgres-secrets
+              # size: 1Gi
+              storageClassName: nfs-csi-postgres
             bootstrap:
-              initdb:
-                database: signoz
-                owner: signoz
-                secret:
-                  name: signoz-postgres-secrets
-                postInitSQL:
-                  - CREATE EXTENSION IF NOT EXISTS "vectors";
-                  - CREATE EXTENSION IF NOT EXISTS "cube" CASCADE;
-                  - CREATE EXTENSION IF NOT EXISTS "earthdistance" CASCADE;
-            storage:
-              size: 1Gi
-              pvcTemplate:
-                accessModes:
-                  - ReadWriteOnce
-                resources:
-                  requests:
-                    storage: 1Gi
-                storageClassName: "nfs-csi"
-            backup:
-              # 3-day retention for both base backups and WALsgit
-              retentionPolicy: "3d"
-              barmanObjectStore:
-                destinationPath: s3://cnpg/backups
-                # Only needed if NOT using AWS (e.g., MinIO or DigitalOcean)
-                endpointURL: "https://{{ rustfs_endpoint }}"
-                s3Credentials:
-                  accessKeyId:
-                    name: s3-creds
-                    key: ACCESS_KEY_ID
-                  secretAccessKey:
-                    name: s3-creds
-                    key: SECRET_ACCESS_KEY
-                wal:
-                  compression: gzip
-                data:
-                  compression: gzip
-                  jobs: 2
+              mode: initdb
+            archiveDestination:
+              s3Path: "s3://cnpg/backup3"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              # retentionPolicy: "5d"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            scheduledBackup:
+              enabled: true
+              # cron: "0 0 2 * * *"
       tags:
         - postgres
 
     - name: Create coder postgres secrets
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -81,7 +59,7 @@
 
     - name: Create signoz postgres secrets
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -95,31 +73,9 @@
       tags:
         - postgres
 
-    - name: Deploy ScheduledBackup
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: postgresql.cnpg.io/v1
-          kind: ScheduledBackup
-          metadata:
-            name: daily-s3-backup
-            namespace: "{{ target_namespace }}"
-          spec:
-            # Standard Cron: s m h dom mon dow
-            # This runs every day at 2:00 AM
-            schedule: "0 0 2 * * *"
-            cluster:
-              name: signoz-postgres
-            # Setting this to true takes a backup immediately upon creation
-            immediate: true
-            # 'self' means this ScheduledBackup object owns the resulting Backup records
-            backupOwnerReference: self
-      tags:
-        - postgres
-
     - name: Deploy Signoz
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -133,7 +89,7 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.116.2
+              targetRevision: 0.139.0
               helm:
                 releaseName: signoz
                 values: |
@@ -162,7 +118,7 @@
                       # Set free space size on default disk in bytes
                       defaultKeepFreeSpaceBytes: "10485760" # 10MiB
                       type: s3
-                      endpoint: "https://{{ rustfs_endpoint }}/signoz/"
+                      endpoint: "https://{{ rustfs_endpoint }}/signoz-data/"
                       accessKey: "{{ rustfs_access_key }}"
                       secretAccess: "{{ rustfs_secret_key }}"
                     storageClass: nfs-csi
@@ -172,19 +128,19 @@
                       size: 20Gi
                     resources:
                       requests:
+                        cpu: 1
+                        memory: 2Gi
+                      limits:
                         cpu: 2
                         memory: 4Gi
-                      limits:
-                        cpu: 4
-                        memory: 8Gi
                     # HA Config
                     layout:
                       shardsCount: 1 # Perfomance
-                      replicasCount: 2 # HA
+                      replicasCount: 1 # HA
                     zookeeper:
-                      replicaCount: 2
+                      replicaCount: 1
                     schemaMigrator:
-                      enableReplication: true
+                      enableReplication: false
                     # podDistribution:
                     #   # All instances in unique nodes:
                     #   - type: ClickHouseAntiAffinity
@@ -227,8 +183,8 @@
                           timeout: 30s
                           sending_queue:
                             enabled: true
-                            num_consumers: 20
-                            queue_size: 5000
+                            num_consumers: 10
+                            queue_size: 2000
                           retry_on_failure:
                             enabled: true
                             initial_interval: 5s
@@ -238,13 +194,13 @@
                           timeout: 30s
                           sending_queue:
                             enabled: true
-                            num_consumers: 40
-                            queue_size: 15000
+                            num_consumers: 20
+                            queue_size: 5000
                       processors:
                         batch:
-                          timeout: 10s
-                          send_batch_size: 50000
-                          send_batch_max_size: 100000
+                          timeout: 5s
+                          send_batch_size: 5000
+                          send_batch_max_size: 10000
             destination:
               server: https://kubernetes.default.svc
               namespace: signoz
@@ -259,7 +215,7 @@
 
     - name: Create Docker pull secret
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: v1
           kind: Secret
@@ -268,12 +224,13 @@
             namespace: "{{ target_namespace }}"
           type: kubernetes.io/dockerconfigjson
           data:
-            .dockerconfigjson: "{{ {'auths': {'https://index.docker.io/v1/': {'username': docker_username, 'password': docker_password, 'auth': (docker_username +
+            .dockerconfigjson:
+              "{{ {'auths': {'https://index.docker.io/v1/': {'username': docker_username, 'password': docker_password, 'auth': (docker_username +
               ':' + docker_password) | b64encode}}} | to_json | b64encode }}"
 
     - name: Deploy Signoz k8s-infra
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
@@ -287,7 +244,7 @@
             source:
               chart: k8s-infra
               repoURL: https://charts.signoz.io
-              targetRevision: 0.15.0
+              targetRevision: 0.17.0
               helm:
                 releaseName: signoz-k8s-infra
                 values: |
@@ -355,113 +312,46 @@
       tags:
         - argocd
 
-    - name: Create local wildcar certificate
+    - name: Create HTTPRoute
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: local-example-com
-            namespace: "{{ target_namespace }}"
-          spec:
-            secretName: local-example-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-              - "{{ local_dns }}"
-              - "{{ local_dns_wildcard }}"
-
-    - name: Create signoz IngressRoute
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: traefik.io/v1alpha1
-          kind: IngressRoute
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: signoz
             namespace: "{{ target_namespace }}"
-            annotations:
-              kubernetes.io/ingress.class: traefik
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
           spec:
-            entryPoints:
-              - websecure
-            routes:
-              - match: Host(`signoz.{{ local_dns }}`)
-                kind: Rule
-                services:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+            hostnames:
+              - "signoz.{{ local_dns }}"
+            rules:
+              - backendRefs:
                   - name: signoz
-                    kind: Service
                     port: 8080
-            tls:
-              secretName: local-example-com-tls
       tags:
-        - ingress
-      when: false
+        - httproute
 
-    - name: Create signoz-otel-collector Ingress
+    - name: Create HTTPRoute
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
           metadata:
             name: signoz-otel-collector
             namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
           spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "signoz-otel-collector.{{ local_dns }}"
-                secretName: local-example-com-tls
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+            hostnames:
+              - "signoz-otel-collector.{{ local_dns }}"
             rules:
-              - host: "signoz-otel-collector.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: signoz-otel-collector
-                          port:
-                            number: 4318
+              - backendRefs:
+                  - name: signoz-otel-collector
+                    port: 4318
       tags:
-        - ingress
-
-    - name: Create signoz frontend Ingress
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: networking.k8s.io/v1
-          kind: Ingress
-          metadata:
-            name: signoz
-            namespace: "{{ target_namespace }}"
-            annotations:
-              external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
-              # cert-manager.io/cluster-issuer: letsencrypt-production
-          spec:
-            ingressClassName: traefik
-            tls:
-              - hosts:
-                  - "signoz.{{ local_dns }}"
-                secretName: local-example-com-tls
-            rules:
-              - host: "signoz.{{ local_dns }}"
-                http:
-                  paths:
-                    - path: /
-                      pathType: Prefix
-                      backend:
-                        service:
-                          name: signoz
-                          port:
-                            number: 8080
-      tags:
-        - ingress
+        - httproute

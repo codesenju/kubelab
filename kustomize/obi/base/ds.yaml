@@ -31,7 +31,7 @@ spec:
             value: "/config/obi-config.yml"
           - name: OTEL_EBPF_KUBE_CLUSTER_NAME
             value: "kubelab"
-          - name: OTEL_RESOIRCE_ATTRIBUTES
+          - name: OTEL_RESOURCE_ATTRIBUTES
             value: "deployment.environment=prod,environment=prod"
         securityContext:
           privileged: true
