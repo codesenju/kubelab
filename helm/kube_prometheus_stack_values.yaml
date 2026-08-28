@@ -4255,15 +4255,15 @@ prometheus:
     ## Enable/Disable Grafana dashboards provisioning for prometheus remote write feature
     remoteWriteDashboards: false
 
-      ## Resource limits & requests
-      ##
-      resources: 
-        requests:
-          memory: 1Gi
-          cpu: 200m
-        limits:
-          memory: 2Gi
-          cpu: 400m
+    ## Resource limits & requests
+    ##
+    resources:
+      requests:
+        memory: 1Gi
+        cpu: 200m
+      limits:
+        memory: 2Gi
+        cpu: 400m
 
     ## Prometheus StorageSpec for persistent data
     ## ref: https://github.com/prometheus-operator/prometheus-operator/blob/main/Documentation/platform/storage.md
