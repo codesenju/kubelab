@@ -102,7 +102,7 @@ alloy:
         endpoint {
           url = "http://mimir-gateway.mimir.svc.cluster.local/api/v1/push"
           headers = {
-            "X-Scope-OrgID" = "kube-prometheus-stack"
+            "X-Scope-OrgID" = "kube-prometheus-stack",
           }
         }
       }
