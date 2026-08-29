@@ -33,10 +33,7 @@ spec:
       resources:
         requests:
           storage: 2Gi
-      selector:
-        matchLabels:
-          service: harness-postgres-data
-      storageClassName: ""
+      storageClassName: nfs-csi-postgres
 ---
 apiVersion: v1
 kind: PersistentVolume
