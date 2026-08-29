@@ -12,6 +12,7 @@ spec:
       labels:
         app: nexus-repo
     spec:
+      priorityClassName: high-priority
       initContainers:
         - name: wait-for-postgres
           image: busybox:1.36
