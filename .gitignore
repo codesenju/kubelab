@@ -103,3 +103,4 @@ Automation/aws/out.tfplan
 ansible/example-local-tls.yaml
 zero-trust/NetworkPolicies/
 *.ignore.y*ml
+ansible/inventories/contabo/hosts.ini

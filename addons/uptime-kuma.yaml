@@ -1,5 +1,5 @@
 ---
-- name: uptime-kuma Playbook
+- name: Uptime-kuma Playbook
   hosts: k8s-control-plane-1
   gather_facts: false
   become: false
@@ -24,6 +24,8 @@
               path: kustomize/uptime-kuma/overlays/prod
               targetRevision: main
               kustomize:
+                images:
+                  - IMAGE_TEMPLATE=louislam/uptime-kuma:2.5.3
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 commonLabels:
@@ -40,7 +42,7 @@
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
       tags:
-        - uptime-kuma
+        - argocd
 
     - name: Create uptime-kuma HTTPRoute
       kubernetes.core.k8s:
@@ -57,13 +59,13 @@
                 namespace: "{{ gatewayapi_namespace }}"
                 sectionName: websecure
             hostnames:
-              - "uptime-kuma.{{ public_dns }}"
+              - "uptime.{{ public_dns }}"
             rules:
               - backendRefs:
                   - name: uptime-kuma
                     port: 3000
       tags:
-        - ingress
+        - httproute
       when: false
 
     - name: Create uptime-kuma HTTP to HTTPS redirect
@@ -81,7 +83,7 @@
                 namespace: "{{ gatewayapi_namespace }}"
                 sectionName: web
             hostnames:
-              - "uptime-kuma.{{ public_dns }}"
+              - "uptime.{{ public_dns }}"
             rules:
               - filters:
                   - type: RequestRedirect
@@ -90,5 +92,5 @@
                       statusCode: 301
                       port: 443
       tags:
-        - ingress
+        - httproute
       when: false
