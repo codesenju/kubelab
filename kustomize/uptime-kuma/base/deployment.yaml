@@ -30,7 +30,7 @@ spec:
               name: http
           volumeMounts:
             - name: uptime-kuma-data
-              mountPath: /app/data
+              mountPath: /app/db
       volumes:
         - name: uptime-kuma-data
           persistentVolumeClaim:
