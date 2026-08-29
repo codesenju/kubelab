@@ -49,7 +49,7 @@ spec:
     storage: 2Gi
   nfs:
     server: 192.168.0.16
-    path: /mnt/pool1/AppData/cnpg/harness
+    path: /mnt/pool2/AppData/cnpg/harness
   accessModes:
     - ReadWriteOnce
   mountOptions:
