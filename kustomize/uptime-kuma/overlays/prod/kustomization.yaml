@@ -6,7 +6,7 @@ namespace: uptime-kuma
 images:
 - name: IMAGE_TEMPLATE
   newName: louislam/uptime-kuma
-  newTag: 2
+  newTag: "2"
 
 resources:
 - ../../base
