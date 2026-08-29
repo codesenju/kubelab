@@ -1,6 +1,7 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
-  become: no
+- name: Harness Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
   vars:
     target_namespace: harness
   tasks:
@@ -35,9 +36,9 @@
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
             ignoreDifferences:
               - group: "postgresql.cnpg.io"
                 kind: Cluster
@@ -101,10 +102,11 @@
               kind: ClusterIssuer
             commonName: "{{ public_dns_wildcard }}"
             dnsNames:
-            - "{{ public_dns_wildcard }}"
+              - "{{ public_dns_wildcard }}"
       tags:
         - ingress
         - certificate
+      when: false
 
     - name: Create local wildcar certificate
       kubernetes.core.k8s:
@@ -122,10 +124,11 @@
               kind: ClusterIssuer
             commonName: "{{ local_dns_wildcard }}"
             dnsNames:
-            - "{{ local_dns_wildcard }}"
+              - "{{ local_dns_wildcard }}"
       tags:
         - ingress
         - certificate
+      when: false
 
     - name: Create harness ingress
       kubernetes.core.k8s:
@@ -161,7 +164,7 @@
                           name: harness
                           port:
                             number: 80
-    
+
                     # UI + API
                     - path: /
                       pathType: Prefix
@@ -170,6 +173,7 @@
                           name: harness
                           port:
                             number: 80
+      when: false
 
 
     - name: Create traefik Middleware
@@ -186,6 +190,7 @@
               maxRequestBodyBytes: 0
               memRequestBodyBytes: 0
       tags: harness
+      when: false
 
     - name: Create traefik ServerTransport
       kubernetes.core.k8s:
@@ -202,3 +207,26 @@
               responseHeaderTimeout: 300s
               idleConnTimeout: 300s
       tags: harness
+      when: false
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: harness
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+            hostnames:
+              - "harness.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: harness
+                    port: 80
+      tags:
+        - httproute
