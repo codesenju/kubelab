@@ -442,6 +442,26 @@
       tags:
         - redis
 
+    - name: Create Redis Service
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Service
+          metadata:
+            name: postiz-redis
+            namespace: "{{ target_namespace }}"
+          spec:
+            selector:
+              app: postiz-redis
+            ports:
+              - name: postiz-redis
+                port: 6379
+                targetPort: 6379
+            type: ClusterIP
+      tags:
+        - redis
+
     - name: Deploy Postiz
       kubernetes.core.k8s:
         state: present
