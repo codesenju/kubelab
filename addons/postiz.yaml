@@ -72,11 +72,11 @@
               name: temporal
               username: temporal
               secretName: temporal-postgres-secrets
-              storageClassName: local-path
+              storageClassName: "{{ postgres_storage_class }}"
             bootstrap:
               mode: initdb
             archiveDestination:
-              s3Path: "s3://cnpg/backup4"
+              s3Path: "s3://cnpg/backup3"
               endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:
@@ -321,11 +321,11 @@
               username: "{{ postiz_db_username }}"
               secretName: postiz-postgres-secrets
               # size: 1Gi
-              storageClassName: "local-path"
+              storageClassName: "{{ postgres_storage_class }}"
             bootstrap:
               mode: initdb
             archiveDestination:
-              s3Path: "s3://cnpg/backup4"
+              s3Path: "s3://cnpg/backup3"
               endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:
@@ -353,6 +353,95 @@
             postiz_access_url: "https://postiz.{{ public_dns }}"
       when: false
 
+    - name: Deploy Redis
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: apps/v1
+          kind: Deployment
+          metadata:
+            name: postiz-redis
+            namespace: "{{ target_namespace }}"
+          spec:
+            replicas: 1
+            selector:
+              matchLabels:
+                app: postiz-redis
+            template:
+              metadata:
+                labels:
+                  app: postiz-redis
+              spec:
+                imagePullSecrets:
+                  - name: registry-secret
+                containers:
+                  - name: postiz-redis
+                    image: "{{ registry_domain }}/dockerio/library/redis:8-alpine"
+                    imagePullPolicy: IfNotPresent
+                    ports:
+                      - containerPort: 6379
+                        name: redis
+                    env:
+                      - name: REDIS_PASSWORD
+                        valueFrom:
+                          secretKeyRef:
+                            name: postiz-redis-secret
+                            key: redis-password
+                    command:
+                      - sh
+                      - -c
+                      - |
+                        exec redis-server \
+                          --requirepass "$REDIS_PASSWORD" \
+                          --appendonly yes
+                    resources:
+                      requests:
+                        memory: "64Mi"
+                        cpu: "32m"
+                      limits:
+                        memory: "128Mi"
+                        cpu: "64m"
+                    volumeMounts:
+                      - name: redis-data
+                        mountPath: /data
+                    readinessProbe:
+                      exec:
+                        command:
+                          - sh
+                          - -c
+                          - redis-cli -a "$REDIS_PASSWORD" ping
+                      initialDelaySeconds: 5
+                      periodSeconds: 10
+                    livenessProbe:
+                      exec:
+                        command:
+                          - sh
+                          - -c
+                          - redis-cli -a "$REDIS_PASSWORD" ping
+                      initialDelaySeconds: 15
+                      periodSeconds: 20
+          
+                volumes:
+                  - name: redis-data
+                    emptyDir: {}
+      tags:
+        - redis
+
+    - name: Create Redis password
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: postiz-redis-secret
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            redis-password: "{{ postiz_redis_password }}"
+      tags:
+        - redis
+
     - name: Deploy Postiz
       kubernetes.core.k8s:
         state: present
@@ -377,8 +466,8 @@
                     tag: v2.21.6
                   resources:
                     requests:
-                      cpu: 250m
-                      memory: 2Gi
+                      cpu: 128m
+                      memory: 1Gi
                     limits:
                       cpu: 1000m
                       memory: 3Gi
@@ -403,9 +492,9 @@
                   # Sensitive environment variables (to be stored in Secrets)
                   secrets:
                     # === Required Settings
-                    MAIN_URL: "https://postiz.{{ public_dns_2 }}"
-                    FRONTEND_URL: https://postiz.{{ public_dns_2 }}
-                    NEXT_PUBLIC_BACKEND_URL: "https://postiz.{{ public_dns_2 }}/api"
+                    MAIN_URL: "https://postiz.{{ public_dns }}"
+                    FRONTEND_URL: https://postiz.{{ public_dns }}
+                    NEXT_PUBLIC_BACKEND_URL: "https://postiz.{{ public_dns }}/api"
                     JWT_SECRET: "7a6fbca5add1ee79eb11cf4fe41b8f14ff43b9eb8c53a912863f73fc74d64c70"
                     DATABASE_URL: "postgresql://{{ postiz_db_username }}:{{ postiz_db_password }}@{{ postiz_db_host }}:5432/{{ postiz_db_name }}"
                     REDIS_URL: "redis://default:{{ postiz_redis_password }}@postiz-redis:6379"
@@ -512,7 +601,7 @@
 
     - name: Create postiz HTTPRoute
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: gateway.networking.k8s.io/v1
           kind: HTTPRoute
@@ -521,14 +610,13 @@
             namespace: "{{ target_namespace }}"
           spec:
             hostnames:
-              - "postiz.{{ public_dns }}"
+              - "postiz.{{ local_dns }}"
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
-                sectionName: websecure-public
             rules:
               - backendRefs:
                   - name: postiz-postiz-app
                     port: 80
       tags:
-        - ingress
+        - httproute

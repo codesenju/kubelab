@@ -60,8 +60,8 @@ spec:
           mountPath: /temp
         resources:
           requests:
-            cpu: "512m"
-            memory: "1Gi"
+            cpu: "128m"
+            memory: "512Mi"
             # nvidia.com/gpu: 1  # Request GPU if available
           limits:
             cpu: "1"
