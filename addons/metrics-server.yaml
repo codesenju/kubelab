@@ -1,11 +1,12 @@
 ---
-- hosts: k8s-control-plane-1
+- name: Metrics Server Playook
+  hosts: k8s-control-plane-1
   gather_facts: false
   become: false
   tasks:
     - name: Deploy Metrics Server
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: argoproj.io/v1alpha1
           kind: Application
