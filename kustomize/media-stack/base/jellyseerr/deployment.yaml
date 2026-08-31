@@ -35,8 +35,8 @@ spec:
           subPath: jellyseerr/config
         resources:
           requests:
-            cpu: "200m"
-            memory: "256Mi"
+            cpu: "64m"
+            memory: "128Mi"
           limits:
             cpu: "400m"
             memory: "512Mi"

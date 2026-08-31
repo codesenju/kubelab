@@ -41,8 +41,8 @@ spec:
           readOnly: true  # Jellyfin only needs read access
         resources:
           requests:
-            cpu: "512m"
-            memory: "1Gi"
+            cpu: "128m"
+            memory: "512Mi"
           limits:
             cpu: "1"
             memory: "2Gi"
