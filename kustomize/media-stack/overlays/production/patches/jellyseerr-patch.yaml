@@ -21,8 +21,8 @@ spec:
           subPath: music
         resources:
           requests:
-            cpu: "400m"
-            memory: "256Mi"
+            cpu: "64m"
+            memory: "128Mi"
           limits:
             cpu: "800m"
             memory: "512Mi"
