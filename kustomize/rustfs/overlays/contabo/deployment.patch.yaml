@@ -26,10 +26,10 @@ spec:
           resources:
             requests:
               memory: "256Mi"
-              cpu: "60m"
+              cpu: "128m"
             limits:
               memory: "1Gi"
-              cpu: "128m"
+              cpu: "256m"
           env:
             - name: RUST_BACKTRACE
               value: "1"
