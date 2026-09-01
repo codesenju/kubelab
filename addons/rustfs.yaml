@@ -39,12 +39,6 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
-            ignoreDifferences:
-              - group: apps
-                kind: Deployment
-                name: rustfs
-                jqPathExpressions:
-                  - .spec.template.spec.containers[].resources
       tags: argocd
 
     - name: Create rustfs secret
