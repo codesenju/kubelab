@@ -28,7 +28,7 @@ spec:
               cpu: "60m"
             limits:
               memory: "1Gi"
-              cpu: "1228m"
+              cpu: "128m"
           env:
             - name: RUST_BACKTRACE
               value: "1"
