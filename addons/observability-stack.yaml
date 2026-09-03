@@ -134,7 +134,7 @@
                 releaseName: data-prepper
                 values: |
                   # imagePullSecrets:
-                  #   - name: nexus-registry-creds
+                  #   - name: registry-secret
                   image:
                     repository: sgguruda62324/opensearch-data-prepper
                     pullPolicy: IfNotPresent
