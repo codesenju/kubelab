@@ -100,7 +100,7 @@
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
             image: "{{ container_registry }}/ghcrio/cloudnative-pg/postgresql:18-standard-trixie"
-            imagePullSecretName1: nexus-registry-creds
+            imagePullSecretName1: registry-secret
             db:
               name: crowdsec
               username: "{{ crowdsec_db_username }}"

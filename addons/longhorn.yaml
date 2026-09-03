@@ -72,7 +72,7 @@
             containers:
               - name: volume-test
                 image: nginx:stable-alpine
-                imagePullPolicy: IfNotpresent
+                imagePullPolicy: IfNotPresent
                 volumeMounts:
                   - name: volv
                     mountPath: /data

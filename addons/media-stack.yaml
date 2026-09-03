@@ -72,7 +72,7 @@
                       - op: add
                         path: /spec/template/spec/imagePullSecrets
                         value:
-                          - name: nexus-registry-creds
+                          - name: registry-secret
                   - target:
                       group: apps
                       version: v1

@@ -27,7 +27,7 @@
                 releaseName: vertical-pod-autoscaler
                 values: |
                   imagePullSecrets:
-                    - name: "nexus-registry-creds"
+                    - name: "registry-secret"
                   admissionController:
                     image:
                       repository:  "registry.local.homelab.com/registry-k8s-io/autoscaling/vpa-admission-controller"
