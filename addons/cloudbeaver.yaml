@@ -59,7 +59,7 @@
           spec:
             name: cloudbeaver
             image: registry.internal.invalid/ghcrio/cloudnative-pg/postgresql:16-minimal-trixie # db version must be compatiable with the backup db version
-            imagePullSecretName1: nexus-registry-creds
+            imagePullSecretName1: registry-secret
             db:
               name: cloudbeaver
               username: "{{ cloudbeaver_db_username }}"
@@ -148,7 +148,7 @@
                     image: registry.internal.invalid/dockerio/dbeaver/cloudbeaver
                     imageTag: "26.0.0"
                     pullPolicy: IfNotPresent
-                    pullCredsName: nexus-registry-creds
+                    pullCredsName: registry-secret
                   cloudbeaverBaseDomain: "cloudbeaver.internal.invalid"
                   httpScheme: http
                   cloudProvider: None

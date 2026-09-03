@@ -179,7 +179,7 @@
         - httproute
 
     - name: Get Argo CD admin password
-      ansible.builtin.shell: set -o pipefail; kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d
+      ansible.builtin.shell: bash -o pipefail -c 'kubectl -n argocd get secret argocd-initial-admin-secret -o jsonpath="{.data.password}" | base64 -d'
       register: argocd_password
       changed_when: false
       tags:

@@ -1,8 +1,11 @@
 ---
-- hosts: k8s-control-plane-1
+- name: Vaultwarden Playbook
+  hosts: k8s-control-plane-1
   gather_facts: false
   become: false
   tasks:
+
+
     - name: Deploy vaultwarden
       kubernetes.core.k8s:
         state: present
@@ -37,4 +40,19 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+      tags: vaultwarden
+
+    - name: Create vaultwarden secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: vaultwarden-secrets
+            namespace: zero-trust
+          type: Opaque
+          stringData:
+            ADMIN_TOKEN: "{{ vaultwarden_admin_token }}"
+            DOMAIN: "{{ vaultwarden_domain }}"
       tags: vaultwarden

@@ -40,7 +40,7 @@
                       - op: add
                         path: /spec/template/spec/imagePullSecrets
                         value:
-                          - name: nexus-registry-creds
+                          - name: registry-secret
                   - target:
                       kind: DaemonSet
                       name: truenas-csi-node
@@ -48,7 +48,7 @@
                       - op: add
                         path: /spec/template/spec/imagePullSecrets
                         value:
-                          - name: nexus-registry-creds
+                          - name: registry-secret
                   - target:
                       kind: Secret
                       name: truenas-api-credentials
