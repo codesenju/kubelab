@@ -27,7 +27,7 @@
                 memory: 768Mi
               limits:
                 cpu: 500m
-                memory: 1Gi
+                memory: 2Gi
             metrics:
               enabled: true
               serviceMonitor:

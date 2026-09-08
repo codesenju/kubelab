@@ -25,13 +25,13 @@
               targetRevision: HEAD
               kustomize:
                 images:
-                  - ghcr.io/truenas/truenas-csi=registry.internal.invalid/ghcrio/truenas/truenas-csi
-                  - registry.k8s.io/sig-storage/csi-provisioner=registry.internal.invalid/registry-k8s-io/sig-storage/csi-provisioner
-                  - registry.k8s.io/sig-storage/csi-attacher=registry.internal.invalid/registry-k8s-io/sig-storage/csi-attacher
-                  - registry.k8s.io/sig-storage/csi-snapshotter=registry.internal.invalid/registry-k8s-io/sig-storage/csi-snapshotter
-                  - registry.k8s.io/sig-storage/csi-resizer=registry.internal.invalid/registry-k8s-io/sig-storage/csi-resizer
-                  - registry.k8s.io/sig-storage/livenessprobe=registry.internal.invalid/registry-k8s-io/sig-storage/livenessprobe
-                  - registry.k8s.io/sig-storage/csi-node-driver-registrar=registry.internal.invalid/registry-k8s-io/sig-storage/csi-node-driver-registrar
+                  - ghcr.io/truenas/truenas-csi={{ registry_domain }}/ghcrio/truenas/truenas-csi
+                  - registry.k8s.io/sig-storage/csi-provisioner={{ registry_domain }}/registry-k8s-io/sig-storage/csi-provisioner
+                  - registry.k8s.io/sig-storage/csi-attacher={{ registry_domain }}/registry-k8s-io/sig-storage/csi-attacher
+                  - registry.k8s.io/sig-storage/csi-snapshotter={{ registry_domain }}/registry-k8s-io/sig-storage/csi-snapshotter
+                  - registry.k8s.io/sig-storage/csi-resizer={{ registry_domain }}/registry-k8s-io/sig-storage/csi-resizer
+                  - registry.k8s.io/sig-storage/livenessprobe={{ registry_domain }}/registry-k8s-io/sig-storage/livenessprobe
+                  - registry.k8s.io/sig-storage/csi-node-driver-registrar={{ registry_domain }}/registry-k8s-io/sig-storage/csi-node-driver-registrar
                 patches:
                   - target:
                       kind: Deployment
