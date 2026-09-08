@@ -81,7 +81,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ prowlarr_image }}/dockerio/linuxserver/prowlarr:2.5.1-nightly
+                        value: {{ registry_domain }}/dockerio/linuxserver/prowlarr:2.5.1-nightly
                   - target:
                       group: apps
                       version: v1
@@ -117,7 +117,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ tdarr_node_image }}/ghcrio/haveagitgat/tdarr_node:2.70.01
+                        value: {{ registry_domain }}/ghcrio/haveagitgat/tdarr_node:2.70.01
                   - target:
                       group: apps
                       version: v1
