@@ -15,10 +15,6 @@ spec:
         app: radarr
         app.kubernetes.io/component: movie-management
     spec:
-      securityContext:
-        runAsUser: 1001
-        runAsGroup: 1001
-        runAsNonRoot: true
       containers:
       - name: radarr
         image: lscr.io/linuxserver/radarr:latest
