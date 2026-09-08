@@ -5,7 +5,7 @@
 ```mermaid
 graph TB
     subgraph "External Storage"
-        TrueNAS[TrueNAS NFS<br/>192.168.0.16<br/>/mnt/pool1/AppData]
+        TrueNAS[TrueNAS NFS<br/>192.168.0.16<br/>/mnt/pool2/AppData]
     end
 
     subgraph "Kubernetes Cluster"
@@ -147,7 +147,7 @@ graph TB
         end
         
         subgraph "External Storage"
-            NFS_Server[TrueNAS NFS<br/>192.168.0.16<br/>/mnt/pool1/AppData]
+            NFS_Server[TrueNAS NFS<br/>192.168.0.16<br/>/mnt/pool2/AppData]
         end
         
         subgraph "Object Storage"
