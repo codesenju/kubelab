@@ -51,6 +51,7 @@ spec:
           runAsUser: 1000
           seccompProfile:
             type: RuntimeDefault
+          allowPrivilegeEscalation: false
         startupProbe:
           httpGet:
             path: /
