@@ -18,6 +18,11 @@ spec:
       containers:
       - name: tdarr
         image: ghcr.io/haveagitgat/tdarr:latest
+        securityContext:
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
+          readOnlyRootFilesystem: true
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
