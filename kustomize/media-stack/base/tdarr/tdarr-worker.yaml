@@ -43,7 +43,6 @@ spec:
           allowPrivilegeEscalation: false
           seccompProfile:
             type: RuntimeDefault
-          readOnlyRootFilesystem: true
         envFrom:
         - configMapRef:
             name: shared-permissions
