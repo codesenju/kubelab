@@ -75,7 +75,7 @@ images:
   newTag: "2.58.01"
 - name: ghcr.io/haveagitgat/tdarr_node
   newTag: "2.58.01"
-- name: docker.io/fallenbagel/jellyseerr
+- name: docker.io/fallenbagel/seerr
   newName: ghcr.io/seerr-team/seerr
   newTag: "v3.2.0"
 - name: lscr.io/linuxserver/readarr
@@ -102,7 +102,7 @@ patches:
 - path: patches/prowlarr-patch.yaml
 - path: patches/tdarr-patch.yaml
 # - path: patches/qbittorrent-patch.yaml
-- path: patches/jellyseerr-patch.yaml
+- path: patches/seerr-patch.yaml
 - path: patches/flaresolverr-patch.yaml
 # # Customize HPA for prod
 # components:
