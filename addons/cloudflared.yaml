@@ -184,7 +184,7 @@
               ingress:
               # The first rule proxies traffic to the httpbin sample Service defined in app.yaml
               - hostname: {{ cloudflared_hostname_1 }}
-                service: http://jellyseerr.media-stack.svc.cluster.local:5055
+                service: http://seerr.media-stack.svc.cluster.local:5055
               # - hostname: {{ cloudflared_hostname_2 }}
               #   service: http://authentik-server.zero-trust.svc.cluster.local
               - hostname: {{ cloudflared_hostname_3 }}

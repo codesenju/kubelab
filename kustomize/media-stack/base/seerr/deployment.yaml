@@ -1,27 +1,31 @@
 apiVersion: apps/v1
 kind: Deployment
 metadata:
-  name: jellyseerr
+  name: seerr
   labels:
     app.kubernetes.io/component: request-management
 spec:
   replicas: 1
   selector:
     matchLabels:
-      app: jellyseerr
+      app: seerr
   template:
     metadata:
       labels:
-        app: jellyseerr
+        app: seerr
         app.kubernetes.io/component: request-management
     spec:
       securityContext:
-        runAsUser: 1000
-        runAsGroup: 1000
+        runAsUser: 1001
+        runAsGroup: 1001
         runAsNonRoot: true
       containers:
-      - name: jellyseerr
-        image: docker.io/fallenbagel/jellyseerr:2.5.1
+      - name: seerr
+        image: docker.io/fallenbagel/seerr:2.5.1
+        securityContext:
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -32,7 +36,7 @@ spec:
         volumeMounts:
         - name: media-stack-config
           mountPath: /app/config
-          subPath: jellyseerr/config
+          subPath: seerr/config
         resources:
           requests:
             cpu: "64m"
