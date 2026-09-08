@@ -57,13 +57,14 @@ spec:
           httpGet:
             path: /
             port: 8265
-          initialDelaySeconds: 10
+          initialDelaySeconds: 30
         readinessProbe:
           httpGet:
             path: /
             port: 8265
           initialDelaySeconds: 0
           periodSeconds: 5
+          timeoutSeconds: 5
           failureThreshold: 3
           successThreshold: 1
         livenessProbe:
@@ -72,6 +73,7 @@ spec:
             port: 8265
           initialDelaySeconds: 0
           periodSeconds: 30
+          timeoutSeconds: 5
           failureThreshold: 3
           successThreshold: 1
       volumes:
