@@ -51,6 +51,22 @@ spec:
               - -c
               - "wget --spider http://localhost:5055"
           initialDelaySeconds: 5
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 5055
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 5055
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          failureThreshold: 3
+          successThreshold: 1
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
