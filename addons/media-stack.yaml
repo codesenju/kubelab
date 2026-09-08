@@ -81,7 +81,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ prowlarr_image }}
+                        value: {{ prowlarr_image }}/dockerio/linuxserver/prowlarr:2.5.1-nightly
                   - target:
                       group: apps
                       version: v1
@@ -90,7 +90,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ radarr_image }}
+                        value: {{ registry_domain }}/dockerio/linuxserver/radarr:6.4.1-nightly
                   - target:
                       group: apps
                       version: v1
@@ -99,7 +99,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ sonarr_image }}
+                        value: {{ registry_domain }}/dockerio/linuxserver/sonarr:4.0.19
                   - target:
                       group: apps
                       version: v1
@@ -108,7 +108,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ tdarr_image }}
+                        value: {{ registry_domain }}/ghcrio/haveagitgat/tdarr:2.70.01
                   - target:
                       group: apps
                       version: v1
@@ -117,7 +117,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ tdarr_node_image }}
+                        value: {{ tdarr_node_image }}/ghcrio/haveagitgat/tdarr_node:2.70.01
                   - target:
                       group: apps
                       version: v1
@@ -126,7 +126,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ flaresolverr_image }}
+                        value: {{ registry_domain }}/ghcrio/flaresolverr/flaresolverr:v3.4.6
                   - target:
                       group: apps
                       version: v1
@@ -135,7 +135,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ jellyseerr_image }}
+                        value: {{ registry_domain }}/ghcrio/seerr-team/seerr:v3.4.1
                   - target:
                       group: apps
                       version: v1
@@ -144,7 +144,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ jellyfin_image }}
+                        value: {{ registry_domain }}/ghcrio/jellyfin/jellyfin:12
             destination:
               server: https://kubernetes.default.svc
               namespace: media-stack
