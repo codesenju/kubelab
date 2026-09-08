@@ -29,7 +29,7 @@
               mode: initdb
             archiveDestination:
               s3Path: "s3://cnpg/backup3"
-              endpointURL: "https://{{ rustfs_endpoint }}"
+              endpointURL: "http://rustfs.rustfs.svc.cluster.local:9000"
               # retentionPolicy: "5d"
               s3:
                 credentialsSecretName: s3-creds
@@ -89,7 +89,7 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.139.0
+              targetRevision: 0.140.0
               helm:
                 releaseName: signoz
                 values: |
@@ -114,7 +114,7 @@
                       udf:
                         enabled: false
                     coldStorage:
-                      enabled: true
+                      enabled: false
                       # Set free space size on default disk in bytes
                       defaultKeepFreeSpaceBytes: "10485760" # 10MiB
                       type: s3
@@ -126,13 +126,13 @@
                       - dockerhub-secret
                     persistence:
                       size: 20Gi
-                    resources:
-                      requests:
-                        cpu: 1
-                        memory: 4Gi
-                      limits:
-                        cpu: 2
-                        memory: 8Gi
+                      resources:
+                        requests:
+                          cpu: 500m
+                          memory: 2Gi
+                        limits:
+                          cpu: 2
+                          memory: 4Gi
                     # HA Config
                     layout:
                       shardsCount: 1 # Perfomance
@@ -151,29 +151,6 @@
                     #   # Distribute replicas of shards across nodes:
                     #   - type: ShardAntiAffinity
                     #     topologyKey: kubernetes.io/hostname
-                    # Increase write buffer and merge settings
-                    configOverride: |
-                      <clickhouse>
-                        <!-- Keep ClickHouse below its 4Gi container limit during startup. -->
-                        <max_server_memory_usage>2147483648</max_server_memory_usage>
-                        <max_memory_usage>1073741824</max_memory_usage>
-                        <uncompressed_cache_size>268435456</uncompressed_cache_size>
-                        <mark_cache_size>268435456</mark_cache_size>
-                        <primary_index_cache_size>134217728</primary_index_cache_size>
-                        <index_mark_cache_size>134217728</index_mark_cache_size>
-                        <vector_similarity_index_cache_size>67108864</vector_similarity_index_cache_size>
-                        <background_pool_size>8</background_pool_size>
-                        <background_schedule_pool_size>8</background_schedule_pool_size>
-                        <max_concurrent_queries>200</max_concurrent_queries>
-                        <max_table_size_to_drop>0</max_table_size_to_drop>
-                        <max_partition_size_to_drop>0</max_partition_size_to_drop>
-                        <merge_tree>
-                          <max_bytes_to_merge_at_max_space_in_pool>161061273600</max_bytes_to_merge_at_max_space_in_pool>
-                          <parts_to_throw_insert>3000</parts_to_throw_insert>
-                          <parts_to_delay_insert>1000</parts_to_delay_insert>
-                        </merge_tree>
-                      </clickhouse>
-
                   # OTel Collector optimization
                   otelCollector:
                     imagePullSecrets:
@@ -254,7 +231,7 @@
             source:
               chart: k8s-infra
               repoURL: https://charts.signoz.io
-              targetRevision: 0.17.0
+              targetRevision: 0.17.1
               helm:
                 releaseName: signoz-k8s-infra
                 values: |

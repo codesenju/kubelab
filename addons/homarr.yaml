@@ -156,6 +156,8 @@
                 selfHeal: true
               syncOptions:
                 - CreateNamespace=true
+      tags:
+        - argocd
 
     - name: Create HTTPRoute for homarr
       kubernetes.core.k8s:

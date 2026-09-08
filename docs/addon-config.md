@@ -58,7 +58,7 @@ default_storage_class: "longhorn"
 
 # NFS configuration
 nfs_server: "192.168.0.16"
-nfs_path: "/mnt/pool1/AppData"
+nfs_path: "/mnt/pool2/AppData"
 
 # MinIO configuration
 minio_storage_size: "100Gi"
