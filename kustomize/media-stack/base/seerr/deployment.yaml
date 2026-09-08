@@ -26,6 +26,7 @@ spec:
           allowPrivilegeEscalation: false
           seccompProfile:
             type: RuntimeDefault
+          readOnlyRootFilesystem: true
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
