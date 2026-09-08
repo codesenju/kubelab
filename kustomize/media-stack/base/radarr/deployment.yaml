@@ -44,6 +44,14 @@ spec:
           limits:
             cpu: "256m"
             memory: "512Mi"
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 7878
+          initialDelaySeconds: 5
+          periodSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
