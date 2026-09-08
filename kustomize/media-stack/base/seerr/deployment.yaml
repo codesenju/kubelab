@@ -44,6 +44,13 @@ spec:
           limits:
             cpu: "400m"
             memory: "512Mi"
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - "wget --spider http://localhost:5055"
+          initialDelaySeconds: 5
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
