@@ -18,6 +18,15 @@ spec:
       containers:
       - name: sonarr
         image: lscr.io/linuxserver/sonarr:latest
+        securityContext:
+          runAsUser: 1001
+          runAsGroup: 1001
+          runAsNonRoot: true
+          capabilities:
+            drop:
+              - ALL
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
@@ -40,6 +49,27 @@ spec:
           limits:
             cpu: "500m"
             memory: "1Gi"
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8989
+          initialDelaySeconds: 10
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8989
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 8989
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          failureThreshold: 3
+          successThreshold: 1
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:
