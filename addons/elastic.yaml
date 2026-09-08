@@ -50,7 +50,7 @@
               storage: 50Gi
             nfs:
               server: 192.168.0.16
-              path: /mnt/pool1/AppData/elastic/elasticsearch-hot
+              path: /mnt/pool2/AppData/elastic/elasticsearch-hot
             accessModes:
               - ReadWriteOnce
             mountOptions:
@@ -77,7 +77,7 @@
               storage: 200Gi
             nfs:
               server: 192.168.0.16
-              path: /mnt/pool1/AppData/elastic/elasticsearch-cold
+              path: /mnt/pool2/AppData/elastic/elasticsearch-cold
             accessModes:
               - ReadWriteOnce
             mountOptions:

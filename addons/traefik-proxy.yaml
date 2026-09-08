@@ -123,7 +123,8 @@
                     - name: deployment.nodeSelector.kubernetes\\.io/ingress-ready
                       value: "true"
                   valueFiles:
-                    - $values/helm/traefik_values_no_crowdsec.yaml
+                    # - $values/helm/traefik_values_no_crowdsec.yaml
+                    - $values/helm/traefik_values.yaml
                   # values: |
               - repoURL: 'https://github.com/codesenju/kubelab.git'
                 targetRevision: main
@@ -141,27 +142,6 @@
                 - RespectIgnoreDifferences=true
       tags:
         - argocd
-
-    - name: Create local wildcar certificate
-      kubernetes.core.k8s:
-        state: absent
-        definition:
-          apiVersion: cert-manager.io/v1
-          kind: Certificate
-          metadata:
-            name: local-example-com
-            namespace: "{{ target_namespace }}"
-          spec:
-            secretName: local-example-com-tls
-            issuerRef:
-              name: letsencrypt-production
-              kind: ClusterIssuer
-            commonName: "{{ local_dns_wildcard }}"
-            dnsNames:
-              - "{{ local_dns }}"
-              - "{{ local_dns_wildcard }}"
-      tags:
-        - certs
 
     - name: Create Traefik dashboard IngressRoute
       kubernetes.core.k8s:
@@ -191,3 +171,4 @@
               secretName: local-example-com-tls
       tags:
         - ingressroute
+      when: false

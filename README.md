@@ -549,6 +549,7 @@ docker build \
 - [Addon Configuration](docs/addon-config.md) - Customizing applications
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [CrowdSec Setup](crowdsec.md) - WAF, AppSec, bouncer key management, pentest guide
+- [SigNoz Host Alerts](docs/signoz-host-alerts.md) - CPU, memory, and filesystem alert setup
 
 ---
 
