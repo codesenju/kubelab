@@ -44,12 +44,25 @@ spec:
           limits:
             cpu: "256m"
             memory: "512Mi"
+        startupProbe:
+          httpGet:
+            path: /
+            port: 7878
+          initialDelaySeconds: 10
         readinessProbe:
           httpGet:
             path: /
             port: 7878
-          initialDelaySeconds: 5
+          initialDelaySeconds: 0
           periodSeconds: 5
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /
+            port: 7878
+          initialDelaySeconds: 0
+          periodSeconds: 30
           failureThreshold: 3
           successThreshold: 1
       volumes:
