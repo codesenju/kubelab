@@ -51,4 +51,31 @@ spec:
           runAsUser: 1000
           seccompProfile:
             type: RuntimeDefault
+        startupProbe:
+          httpGet:
+            path: /
+            port: 8191
+          initialDelaySeconds: 3
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        readinessProbe:
+          httpGet:
+            path: /
+            port: 8191
+          initialDelaySeconds: 0
+          periodSeconds: 5
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
+        livenessProbe:
+          httpGet:
+            path: /health
+            port: 8191
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
+          successThreshold: 1
       restartPolicy: Always  # Kubernetes equivalent of `unless-stopped`
