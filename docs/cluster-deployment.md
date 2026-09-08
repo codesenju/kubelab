@@ -86,7 +86,7 @@ lb_vip: "192.168.0.40"
 
 # Storage (if using TrueNAS)
 nfs_server: "192.168.0.16"
-nfs_path: "/mnt/pool1/AppData"
+nfs_path: "/mnt/pool2/AppData"
 ```
 
 ### 5. Deploy Kubernetes
@@ -220,7 +220,7 @@ kubectl delete pods -n kube-system -l k8s-app=cilium
 showmount -e 192.168.0.16
 
 # Test mount manually
-sudo mount -t nfs 192.168.0.16:/mnt/pool1/AppData /mnt/test
+sudo mount -t nfs 192.168.0.16:/mnt/pool2/AppData /mnt/test
 ```
 
 ## 📊 Cluster Specifications
