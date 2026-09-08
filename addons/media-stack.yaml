@@ -131,7 +131,7 @@
                       group: apps
                       version: v1
                       kind: Deployment
-                      name: jellyseerr
+                      name: seerr
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
@@ -272,14 +272,14 @@
         - ingress
         - httproute
 
-    - name: Create HTTPRoute jellyseerr
+    - name: Create HTTPRoute seerr
       kubernetes.core.k8s:
         state: present
         definition:
           apiVersion: gateway.networking.k8s.io/v1
           kind: HTTPRoute
           metadata:
-            name: jellyseerr
+            name: seerr
             namespace: "{{ target_namespace }}"
             # annotations:
             #   external-dns.alpha.kubernetes.io/target: "{{ traefik_service_ip }}"
@@ -309,7 +309,7 @@
                       kind: Middleware
                       name: crowdsec-bouncer
                 backendRefs:
-                  - name: jellyseerr
+                  - name: seerr
                     port: 5055
       tags:
         - ingress

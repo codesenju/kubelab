@@ -36,7 +36,7 @@ resources:
 - tdarr/deployment.yaml
 - tdarr/service.yaml
 - tdarr/tdarr-worker.yaml
-- jellyseerr/deployment.yaml
-- jellyseerr/service.yaml
+- seerr/deployment.yaml
+- seerr/service.yaml
 - flaresolverr/deployment.yaml
 - flaresolverr/service.yaml
