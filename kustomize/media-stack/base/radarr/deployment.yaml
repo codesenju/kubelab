@@ -22,6 +22,12 @@ spec:
       containers:
       - name: radarr
         image: lscr.io/linuxserver/radarr:latest
+        securityContext:
+          capabilities:
+            drop:
+             - ALL
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
