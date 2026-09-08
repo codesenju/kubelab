@@ -18,6 +18,14 @@ spec:
       containers:
       - name: jellyfin
         image: lscr.io/linuxserver/jellyfin
+        securityContext:
+          capabilities:
+            drop: ["ALL"]
+          runAsUser: 1001
+          runAsGroup: 1001
+          runAsNonRoot: true
+          allowPrivilegeEscalation: false
+          readOnlyRootFilesystem: true
         imagePullPolicy: IfNotPresent
         envFrom:
         - configMapRef:
