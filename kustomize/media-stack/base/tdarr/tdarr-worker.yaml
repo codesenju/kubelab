@@ -71,6 +71,33 @@ spec:
             cpu: "1"
             memory: "2Gi"
             # nvidia.com/gpu: 1
+        startupProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - pgrep -f Tdarr_Node
+          initialDelaySeconds: 10
+        readinessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - pgrep -f Tdarr_Node
+          initialDelaySeconds: 30
+          periodSeconds: 30
+          timeoutSeconds: 5
+          failureThreshold: 3
+        livenessProbe:
+          exec:
+            command:
+              - sh
+              - -c
+              - pgrep -f Tdarr_Node
+          initialDelaySeconds: 0
+          periodSeconds: 30
+          timeoutSeconds: 3
+          failureThreshold: 3
       priorityClassName: high-priority
       volumes:
       - name: data
