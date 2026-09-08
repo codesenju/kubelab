@@ -57,7 +57,7 @@ spec:
           httpGet:
             path: /
             port: 8265
-          initialDelaySeconds: 120
+          initialDelaySeconds: 300
           periodSeconds: 10
           timeoutSeconds: 5
           failureThreshold: 30
