@@ -330,5 +330,5 @@ kubectl label node k8s-worker-3 node-role.kubernetes.io/worker=""
 
 ```bash
 nohup rsync -ahvP --numeric-ids \
-  /mnt/pool1/AppData/rustfs /mnt/pool2/AppData/ > rsync.log 2>&1 &
+  /mnt/pool2/AppData/rustfs /mnt/pool2/AppData/ > rsync.log 2>&1 &
 ```
