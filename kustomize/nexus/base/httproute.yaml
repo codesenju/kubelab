@@ -10,6 +10,16 @@ spec:
   hostnames:
     - "nexus.local"
   rules:
-    - backendRefs:
+    - matches:
+        - path:
+            type: PathPrefix
+            value: /v2
+      filters:
+        - type: URLRewrite
+          urlRewrite:
+            path:
+              type: ReplacePrefixMatch
+              replacePrefixMatch: /repository/kubelab/v2
+      backendRefs:
         - name: nexus-repo
           port: 80
