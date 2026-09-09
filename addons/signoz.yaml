@@ -98,7 +98,17 @@
                       - dockerhub-secret
                     env:
                       signoz_telemetrystore_provider: clickhouse
-                      signoz_emailing_enabled: false
+                      signoz_emailing_enabled: true
+                      signoz_emailing_smtp_address: {{ signoz_emailing_smtp_address }}
+                      signoz_emailing_smtp_from: {{ signoz_emailing_smtp_from }}
+                      signoz_emailing_smtp_auth_username: {{ signoz_emailing_smtp_auth_username }}
+                      signoz_emailing_smtp_auth_password: {{ signoz_emailing_smtp_auth_password }}
+                      signoz_emailing_smtp_tls_enabled: false
+                      signoz_emailing_smtp_tls_insecure_skip_verify: false
+                      SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_SMTP__FROM: {{ signoz_emailing_smtp_from }}
+                      SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_SMTP__SMARTHOST: {{ signoz_emailing_smtp_address }}
+                      SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_SMTP__AUTH__USERNAME: {{ signoz_emailing_smtp_auth_username }}
+                      SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_SMTP__AUTH__PASSWORD: {{ signoz_emailing_smtp_auth_password }}
                       signoz_alertmanager_provider: signoz
                       signoz_alertmanager_signoz_external__url: "{{ signoz_host }}"
                       signoz_sqlstore_proviser: postgres

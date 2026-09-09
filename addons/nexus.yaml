@@ -145,3 +145,38 @@
                 jqPathExpressions:
                   - .spec.parentRefs[]
                   - .spec.rules[]
+
+    - name: Deploy nexus
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: nexus-repo
+            namespace: "{{ target_namespace }}"
+          spec:
+            hostnames:
+              - nexus.{{ local_dns }}
+              - registry.{{ local_dns }}
+              - nexus.{{ public_dns }}
+              - registry.{{ public_dns }}
+            parentRefs:
+              - group: gateway.networking.k8s.io
+                kind: Gateway
+                name: local-gateway
+                namespace: gateway-infra
+            rules:
+              - backendRefs:
+                  - group: ""
+                    kind: Service
+                    name: nexus-repo
+                    port: 80
+                    weight: 1
+                matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+        tags:
+          - httproute
+        when: false
