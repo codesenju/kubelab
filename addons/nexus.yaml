@@ -145,6 +145,8 @@
                 jqPathExpressions:
                   - .spec.parentRefs[]
                   - .spec.rules[]
+      tags:
+        - argocd
 
     - name: Deploy nexus
       kubernetes.core.k8s:
@@ -177,6 +179,5 @@
                   - path:
                       type: PathPrefix
                       value: /
-        tags:
-          - httproute
-        when: false
+      tags:
+        - httproute
