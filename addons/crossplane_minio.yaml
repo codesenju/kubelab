@@ -1,6 +1,7 @@
 # https://vshn.github.io/provider-minio/provider-minio/tutorials/getting-started.html
-- hosts: k8s-control-plane-1
-  become: no
+- name: Minio Provider Playbook
+  hosts: k8s-control-plane-1
+  become: false
   tasks:
 
     - name: Deploy minio provider
@@ -41,7 +42,7 @@
           apiVersion: v1
           kind: Secret
           metadata:
-            name: minio-secret
+            name: s3-secret
             namespace: crossplane-system
           stringData:
             AWS_ACCESS_KEY_ID: "{{ s3_access_key }}"
@@ -58,7 +59,7 @@
           spec:
             credentials:
               apiSecretRef:
-                name: minio-secret
+                name: s3-secret
                 namespace: crossplane-system
               source: InjectedIdentity
             minioURL: "https://{{ s3_endpoint }}"
