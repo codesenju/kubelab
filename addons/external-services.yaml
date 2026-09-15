@@ -592,18 +592,23 @@
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: v1
-          kind: Endpoints
+          apiVersion: discovery.k8s.io/v1
+          kind: EndpointSlice
           metadata:
             name: omniroute
             namespace: "{{ target_namespace }}"
-          subsets:
+            labels:
+              kubernetes.io/service-name: omniroute
+          addressType: IPv4
+          ports:
+            - name: http
+              protocol: TCP
+              port: 20128
+          endpoints:
             - addresses:
-                - ip: 192.168.0.31
-              ports:
-                - name: http
-                  port: 20128
-                  protocol: TCP
+                - "192.168.0.31"
+              conditions:
+                ready: true
       tags:
         - omniroute
 
@@ -639,7 +644,6 @@
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
-                sectionName: websecure
             hostnames:
               - "omniroute.{{ local_dns }}"
             rules:

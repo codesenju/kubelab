@@ -13,6 +13,19 @@
         kind: Namespace
         name: homarr
 
+    - name: Create Homarr encryption secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: homarr-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            SECRET_ENCRYPTION_KEY: "{{ db_encryption_key }}"
+
     - name: Deploy Homarr db pv
       kubernetes.core.k8s:
         state: present
@@ -143,6 +156,10 @@
                       size: "50Mi"
                       mountPath: "/images"
                       volumeClaimName: "homarr-images"
+                  envSecrets:
+                    dbCredentials:
+                      existingSecret: "homarr-secrets"
+                      dbEncryptionKey: "SECRET_ENCRYPTION_KEY"
                   env:
                     NODE_TLS_REJECT_UNAUTHORIZED: 0
                     TZ: Etc/GMT-2
