@@ -22,7 +22,7 @@
             source:
               chart: headscale
               repoURL: ghcr.io/kapernikov/charts
-              targetRevision: 0.3.2
+              targetRevision: 0.5.2
               helm:
                 releaseName: headscale
                 values: |
@@ -98,7 +98,7 @@
             hostPath:
               path: /opt/k8s-storage/headscale
               type: DirectoryOrCreate
-                    
+
     - name: Create PVC
       kubernetes.core.k8s:
         state: present

@@ -543,9 +543,16 @@
                     NEXT_PUBLIC_UPLOAD_DIRECTORY: /uploads
                     NX_ADD_PLUGINS: "false"
                     IS_GENERAL: "true"
-
+                    # === MAIL
+                    EMAIL_PROVIDER: "nodemailer"
+                    EMAIL_HOST: "{{ mail_host }}"
+                    EMAIL_PORT: "465"
+                    EMAIL_SECURE: "true"
+                    EMAIL_USER: "{{ mail_username }}"
                   # Sensitive environment variables (to be stored in Secrets)
-                   secrets:
+                  secrets:
+                    # === MAIL
+                    EMAIL_PASS: "{{ mail_password }}"
                     # === Required Settings
                     MAIN_URL: "https://postiz.{{ public_dns }}"
                     FRONTEND_URL: https://postiz.{{ public_dns }}
@@ -553,27 +560,11 @@
                     JWT_SECRET: "7a6fbca5add1ee79eb11cf4fe41b8f14ff43b9eb8c53a912863f73fc74d64c70"
                     DATABASE_URL: "postgresql://{{ postiz_db_username }}:{{ postiz_db_password }}@{{ postiz_db_host }}:5432/{{ postiz_db_name }}"
                     REDIS_URL: "redis://default:{{ postiz_redis_password }}@postiz-redis:6379"
-                     BACKEND_INTERNAL_URL: "http://127.0.0.1:3001"
-                     TEMPORAL_ADDRESS: "temporal:7233"
+                    BACKEND_INTERNAL_URL: "http://127.0.0.1:3001"
+                    TEMPORAL_ADDRESS: "temporal:7233"
                     IS_GENERAL: "true"
                     DISABLE_REGISTRATION: "true"
-                     RUN_CRON: "true"
-                   extraContainers:
-                     - name: backend
-                       image: "ghcr.io/gitroomhq/postiz-app:v2.21.6"
-                       command:
-                         - sh
-                         - -c
-                       args:
-                         - cd /app/apps/backend && exec pnpm start
-                       env:
-                         - name: PORT
-                           value: "3001"
-                       envFrom:
-                         - configMapRef:
-                             name: postiz-postiz-app-config
-                         - secretRef:
-                             name: postiz-postiz-app-secrets
+                    RUN_CRON: "true"
                     # === Cloudflare (R2) Settings
                     # STORAGE_PROVIDER: 'cloudflare'
                     # CLOUDFLARE_ACCOUNT_ID: 'your-account-id'
@@ -655,8 +646,24 @@
                     # KUTT_API_ENDPOINT: "https://kutt.it/api/v2"
                     # KUTT_SHORT_LINK_DOMAIN: "kutt.it"
                     # LINK_DRIP_API_KEY: ""
-                    # LINK_DRIP_API_ENDPOINT: "https://api.linkdrip.com/v1/"
-                    # LINK_DRIP_SHORT_LINK_DOMAIN: "dripl.ink"
+                     # LINK_DRIP_API_ENDPOINT: "https://api.linkdrip.com/v1/"
+                     # LINK_DRIP_SHORT_LINK_DOMAIN: "dripl.ink"
+                  extraContainers:
+                    - name: backend
+                      image: "ghcr.io/gitroomhq/postiz-app:v2.21.6"
+                      command:
+                        - sh
+                        - -c
+                      args:
+                        - cd /app/apps/backend && exec pnpm start
+                      env:
+                        - name: PORT
+                          value: "3001"
+                      envFrom:
+                        - configMapRef:
+                            name: postiz-postiz-app-config
+                        - secretRef:
+                            name: postiz-postiz-app-secrets
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
