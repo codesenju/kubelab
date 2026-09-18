@@ -5,31 +5,31 @@ provider "proxmox" {
   # username = ""
   # TODO: use terraform variable or remove the line, and use PROXMOX_VE_PASSWORD environment variable
   # password = ""
-  insecure  = true
+  insecure = false
 }
 
-# K8s lb
 resource "proxmox_virtual_environment_vm" "ubuntu" {
   name        = "ubuntu"
-  node_name   = "kubelab-1"
+  node_name   = var.node_name
   description = "Ubuntu Server"
-  vm_id       = 2001 # Unique VM ID for the load balancer
+  hotplug     = "network,disk,usb,memory"
 
   cpu {
-    cores = 4
+    cores = 2
+    numa  = true
   }
 
   memory {
-    dedicated = 8192
+    dedicated = 4096
   }
 
   disk {
     datastore_id = "local-lvm"
-    file_id      = "local:iso/jammy-server-cloudimg-amd64.img"
-    interface    = "virtio0"
-    iothread     = true
-    discard      = "on"
-    size         = 80
+    import_from = proxmox_download_file.ubuntu_cloud_image.id
+    interface   = "virtio0"
+    iothread    = true
+    discard     = "on"
+    size        = var.vm_disk_size
   }
 
   network_device {
@@ -45,21 +45,26 @@ resource "proxmox_virtual_environment_vm" "ubuntu" {
   initialization {
     ip_config {
       ipv4 {
-        address = "192.168.0.31/24" # Static IP for the load balancer
-        gateway = "192.168.0.1"
+        address = var.vm_ip
+        gateway = var.vm_gateway
       }
     }
 
     dns {
-      servers = ["192.168.0.15","1.1.1.1"] # DNS servers
+      servers = ["1.1.1.1"] # DNS servers
     }
+
+   
 
     user_account {
       username = "ubuntu"
       password = "ubuntu"
-      keys     = [file("../../kubelab.pub")]
+      keys     = [file("~/codesenju/kubelab.pub")]
     }
   }
+
+   serial_device { device = "socket" }
+
   # create lifecycle to ignore changes to keys
   lifecycle {
     ignore_changes = [initialization[0].user_account[0].keys]
@@ -67,10 +72,12 @@ resource "proxmox_virtual_environment_vm" "ubuntu" {
 }
 
 
-# resource "proxmox_virtual_environment_download_file" "kubelab" {
-#   count       = 2
-#   content_type = "iso"
-#   datastore_id = "local"
-#   node_name    = "kubelab-${count.index + 1}"
-#   url = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
-# }
+resource "proxmox_download_file" "ubuntu_cloud_image" {
+  content_type = "import"
+  datastore_id = "local"
+  node_name    = var.node_name
+
+  url = "https://cloud-images.ubuntu.com/jammy/current/jammy-server-cloudimg-amd64.img"
+
+  file_name = "jammy-server-cloudimg-amd64.qcow2"
+}
