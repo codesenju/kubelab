@@ -2,7 +2,7 @@
 
 **Tested lab:** Ubuntu x86-64 VM `192.168.0.31`, kubeadm API `192.168.0.40:6443`, containerd 2.2.2, Go 1.18.1, Virtual Kubelet CRI source from 2019. **Assumption:** TCP **10250 is available** on the VM. Commands under **VM** run as root; commands under **admin** need a cluster-admin kubeconfig. Replace the example IPs, API endpoint, and free Pod CIDR for your environment.
 
-> **Lab only.** The old CRI provider is not a drop-in kubeadm worker. Its CRI imports, Kubernetes dependencies and permissions needed patching. The example grants read access to *all Secrets within the disposable `cri-lab` namespace*. It does not establish cross-node Pod routing, Services/DNS, persistent-volume support, or production-grade kubelet serving TLS. Do not grant the node cluster-admin permissions.
+> **Lab only.** The old CRI provider is not a drop-in kubeadm worker. Its CRI imports, Kubernetes dependencies and permissions needed patching. The example grants read access to *all Secrets within the disposable `cri-lab` namespace*. It does not establish cross-node Pod routing, Services/DNS, persistent-volume support, or production-grade kubelet serving TLS. The hostPort example exposes an HTTP test service on your LAN; do not use it for sensitive workloads. Do not grant the node cluster-admin permissions.
 
 ## 1. Enable containerd's CRI and install prerequisites — VM
 
@@ -174,7 +174,7 @@ wget "https://github.com/containernetworking/plugins/releases/download/$VERSION/
 echo "b98f74a0f8522f0a83867178729c1aa70f2158f90c45a2ca8fa791db1c76b303  cni-plugins-linux-amd64-$VERSION.tgz" | sha256sum -c -
 sudo install -d -m 755 /opt/cni/bin /etc/cni/net.d
 sudo tar -xzf "cni-plugins-linux-amd64-$VERSION.tgz" -C /opt/cni/bin
-ls /opt/cni/bin/{bridge,host-local,loopback}
+ls /opt/cni/bin/{bridge,host-local,portmap,loopback}
 
 sudo tee /etc/cni/net.d/10-cri-lab.conflist >/dev/null <<'EOF'
 {
@@ -188,6 +188,7 @@ sudo tee /etc/cni/net.d/10-cri-lab.conflist >/dev/null <<'EOF'
         "routes": [{"dst": "0.0.0.0/0"}]
       }
     },
+    {"type": "portmap", "capabilities": {"portMappings": true}},
     {"type": "loopback"}
   ]
 }
@@ -263,6 +264,92 @@ CID=$(sudo crictl ps -a --name hello -q | head -n 1)
 
 **Expected log:** `Hello from Virtual Kubelet CRI`. `kubectl logs` working confirms the API-server → virtual-kubelet log path, not merely direct CRI access. Clean up with `kubectl delete pod cri-hello -n cri-lab`.
 
+## 8. Expose an HTTP Pod using `hostPort` (no Service or port-forward)
+
+**VM:** The CNI config in step 5 already includes `portmap` with `portMappings: true`. If you created the bridge config *before* adding `portmap`, add it as shown in step 5 and create a **new** Pod: existing sandboxes do not acquire host-port mappings retroactively. Check `sudo crictl info | jq -r '.status.conditions[] | "\(.type)=\(.status)"'` and make sure `NetworkReady=true`. Choose a free host port (`18080` in this example). `hostPort` is a **Pod** setting, not a Kubernetes Service.
+
+**Admin — deploy nginx on the virtual node:**
+
+```bash
+cat > /tmp/cri-hostport.yaml <<'EOF'
+apiVersion: v1
+kind: Pod
+metadata:
+  name: cri-hostport
+  namespace: cri-lab
+spec:
+  nodeName: cri-lab
+  automountServiceAccountToken: false
+  containers:
+  - name: nginx
+    image: docker.io/library/nginx:1.27-alpine
+    ports:
+    - name: http
+      containerPort: 80
+      hostPort: 18080
+      protocol: TCP
+EOF
+kubectl apply -f /tmp/cri-hostport.yaml
+kubectl get pod cri-hostport -n cri-lab -o wide
+```
+
+Wait for `Running`; then **VM — verify nginx, CRI mapping and local host access:**
+
+```bash
+POD_IP=$(kubectl -n cri-lab get pod cri-hostport -o jsonpath='{.status.podIP}')
+echo "Pod IP: $POD_IP"
+curl --connect-timeout 3 --max-time 8 "http://${POD_IP}:80/"
+curl --connect-timeout 3 --max-time 8 http://192.168.0.31:18080/
+SID=$(sudo crictl pods --name cri-hostport -q | head -n 1)
+sudo crictl inspectp -o json "$SID" | jq '{portMappings: .info.config.port_mappings, network: .status.network}'
+sudo iptables-save -t nat | grep '18080' || true
+```
+
+**Expected:** both `curl` commands return the nginx welcome page; CRI reports `host_port: 18080` → `container_port: 80`; CNI NAT rules DNAT traffic to the Pod IP. `ss` or `netstat` need **not** show a listener on `18080` because `portmap` uses NAT rules.
+
+**VM — allow LAN traffic through Docker's default-DROP forwarding chain:** The tested VM runs Docker, which inserts `DOCKER-USER` ahead of its own forwarding rules. First check `sudo iptables -nvL FORWARD` and `sudo iptables -nvL DOCKER-USER`. If `FORWARD` defaults to `DROP` and LAN access fails while local access works, apply these **temporary, narrow** rules. Run them as one block while the nginx Pod is running:
+
+```bash
+POD_IP=$(kubectl -n cri-lab get pod cri-hostport -o jsonpath='{.status.podIP}')
+: "${POD_IP:?Pod has no IP; stop and check kubectl get pod}"
+sudo iptables -C DOCKER-USER -i eth0 -o cni-cri0 \
+  -s 192.168.0.0/24 -d "$POD_IP" -p tcp --dport 80 \
+  -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT 2>/dev/null || \
+  sudo iptables -I DOCKER-USER 1 -i eth0 -o cni-cri0 \
+    -s 192.168.0.0/24 -d "$POD_IP" -p tcp --dport 80 \
+    -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+sudo iptables -C DOCKER-USER -i cni-cri0 -o eth0 \
+  -s "$POD_IP" -d 192.168.0.0/24 -p tcp --sport 80 \
+  -m conntrack --ctstate ESTABLISHED -j ACCEPT 2>/dev/null || \
+  sudo iptables -I DOCKER-USER 2 -i cni-cri0 -o eth0 \
+    -s "$POD_IP" -d 192.168.0.0/24 -p tcp --sport 80 \
+    -m conntrack --ctstate ESTABLISHED -j ACCEPT
+sudo iptables -nvL DOCKER-USER --line-numbers
+```
+
+**MacBook / other LAN client — validate:**
+
+```bash
+curl -v --connect-timeout 3 --max-time 8 http://192.168.0.31:18080/
+```
+
+**Expected:** `HTTP/1.1 200 OK` and nginx's welcome page. Forward-chain rules match **Pod port 80**, not host port 18080, because DNAT happens first. If this still times out, watch `sudo tcpdump -ni eth0 'tcp port 18080'` and `sudo tcpdump -ni cni-cri0 'tcp port 80'` while retrying. Do **not** set the whole `FORWARD` policy to `ACCEPT` or flush Docker's rules. These firewall rules are not persistent and use the current Pod IP; recreating the Pod may require updating them. The test does **not** prove a Kubernetes NodePort Service or cross-node Pod routing works.
+
+**Clean up this test:** Run while the Pod still exists, so `$POD_IP` resolves to the correct address:
+
+```bash
+POD_IP=$(kubectl -n cri-lab get pod cri-hostport -o jsonpath='{.status.podIP}')
+if [ -n "$POD_IP" ]; then
+  sudo iptables -D DOCKER-USER -i eth0 -o cni-cri0 \
+    -s 192.168.0.0/24 -d "$POD_IP" -p tcp --dport 80 \
+    -m conntrack --ctstate NEW,ESTABLISHED -j ACCEPT
+  sudo iptables -D DOCKER-USER -i cni-cri0 -o eth0 \
+    -s "$POD_IP" -d 192.168.0.0/24 -p tcp --sport 80 \
+    -m conntrack --ctstate ESTABLISHED -j ACCEPT
+fi
+kubectl delete pod cri-hostport -n cri-lab
+```
+
 ## Quick fixes from this build
 
 | Symptom | Cause / fix |
@@ -274,5 +361,6 @@ CID=$(sudo crictl ps -a --name hello -q | head -n 1)
 | Cluster-wide Secret/ConfigMap `forbidden` | Scope shared informers and run with `--namespace cri-lab`; bind the namespace-only Role. |
 | `listen tcp :10250: bind: address already in use` | This guide assumes the port is free. If not, use another host/port and adjust the provider's CLI options/source and node endpoint accordingly. |
 | `NetworkReady=false` | Install CNI binaries and create `/etc/cni/net.d/10-cri-lab.conflist`; then re-check `crictl info`. |
+| `hostPort` works from VM, but MacBook times out | Check `portmap` DNAT and Docker’s default-DROP `FORWARD` chain. Use the narrowly scoped `DOCKER-USER` rules in step 8; verify from another LAN client. |
 
 **Source:** [virtual-kubelet/cri](https://github.com/virtual-kubelet/cri), [node-cli v0.1.2](https://github.com/virtual-kubelet/node-cli/tree/v0.1.2), [CNI plugins](https://github.com/containernetworking/plugins/releases). This runbook documents the successful lab path, not a maintained upstream deployment procedure.
