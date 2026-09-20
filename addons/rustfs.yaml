@@ -24,6 +24,8 @@
               path: kustomize/rustfs/overlays/{{ target_environment }} # prod
               targetRevision: main
               kustomize:
+                images:
+                  - IMAGE_PLACEHOLDER=rustfs/rustfs:1.0.0
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 labels:
