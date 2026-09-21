@@ -265,6 +265,22 @@
                         hostPort: ""
                       health-check:
                         hostPort: ""
+                    config:
+                      processors:
+                        resource/hostname:
+                          attributes:
+                            - key: host.name
+                              from_attribute: k8s.node.name
+                              action: upsert
+                      service:
+                        pipelines:
+                          metrics:
+                            processors:
+                              - resource/deployenv
+                              - resourcedetection
+                              - k8sattributes
+                              - resource/hostname
+                              - batch
                   presets:
                     otlpExporter:
                       enabled: true
