@@ -1,6 +1,6 @@
 # Virtual Kubelet + containerd CRI on kubeadm (lab guide)
 
-**Tested lab:** Ubuntu x86-64 VM `192.168.0.31`, kubeadm API `192.168.0.40:6443`, containerd 2.2.2, Go 1.18.1, Virtual Kubelet CRI source from 2019. **Assumption:** TCP **10250 is available** on the VM. Commands under **VM** run as root; commands under **admin** need a cluster-admin kubeconfig. Replace the example IPs, API endpoint, and free Pod CIDR for your environment.
+**Tested lab:** Ubuntu x86-64 VM `192.168.0.31`, kubeadm API `192.168.0.40:6443`, containerd 2.2.2, Go 1.18.1, Virtual Kubelet CRI source from 2019. **Assumption:** TCP **10250 is available** on the VM. Commands under **VM** run in a root shell (`sudo -i`); **admin** commands require a cluster-admin kubeconfig. For the easiest copy-and-paste path, have that admin kubeconfig available on the VM during initial setup; the provider itself uses a separate, restricted kubeconfig. Replace the example IPs, API endpoint, and free Pod CIDR for your environment.
 
 > **Lab only.** The old CRI provider is not a drop-in kubeadm worker. Its CRI imports, Kubernetes dependencies and permissions needed patching. The example grants read access to *all Secrets within the disposable `cri-lab` namespace*. It does not establish cross-node Pod routing, Services/DNS, persistent-volume support, or production-grade kubelet serving TLS. The hostPort example exposes an HTTP test service on your LAN; do not use it for sensitive workloads. Do not grant the node cluster-admin permissions.
 
@@ -31,7 +31,7 @@ sudo crictl --runtime-endpoint unix:///run/containerd/containerd.sock version
 **Do not** run `go build -o virtual-kubelet .` at the repository root: that builds the library package, not the runnable CLI.
 
 ```bash
-sudo git clone https://github.com/virtual-kubelet/cri.git /opt/cri
+git clone https://github.com/virtual-kubelet/cri.git /opt/cri
 cd /opt/cri
 # Source used v1alpha2; containerd 2.2.2 exposes CRI v1.
 sed -i 's#k8s.io/cri-api/pkg/apis/runtime/v1alpha2#k8s.io/cri-api/pkg/apis/runtime/v1#g' client.go cri.go
@@ -93,7 +93,7 @@ sudo openssl req -new -newkey rsa:2048 -nodes \
 sudo chmod 600 /etc/virtual-kubelet/client.key
 ```
 
-**Admin — submit and approve the request.** These commands assume your admin `kubectl` is available on the VM; otherwise securely copy `client.csr` to the admin machine and adjust its path in the `CSR=` command.
+**Admin — submit and approve the request.** The block assumes your admin `kubectl` is available on the VM. If admin access is only on another machine, copy just `/etc/virtual-kubelet/client.csr` there, submit it from that machine, and copy the signed certificate back. Never copy the private key off the VM.
 
 ```bash
 kubectl delete csr cri-lab-client --ignore-not-found
@@ -113,7 +113,20 @@ kubectl certificate approve cri-lab-client
 kubectl get csr cri-lab-client
 ```
 
-**VM — create the dedicated kubeconfig.** Obtain the signed cert from the admin terminal (`kubectl get csr cri-lab-client -o jsonpath='{.status.certificate}' | base64 -d`) and securely place it at `/etc/virtual-kubelet/client.crt`; likewise securely copy the kubeadm CA certificate from a control-plane host to `/etc/virtual-kubelet/ca.crt`. Then:
+**VM, with admin `kubectl` still active — retrieve the issued certificate and cluster CA.** The CA extraction works when the admin kubeconfig embeds the CA data; if the CA is referenced by a file path, copy your kubeadm control plane's `/etc/kubernetes/pki/ca.crt` securely to `/etc/virtual-kubelet/ca.crt` instead. Do not use `--insecure-skip-tls-verify`.
+
+```bash
+kubectl get csr cri-lab-client -o jsonpath='{.status.certificate}' \
+  | base64 -d > /etc/virtual-kubelet/client.crt
+kubectl config view --raw --minify \
+  -o jsonpath='{.clusters[0].cluster.certificate-authority-data}' \
+  | base64 -d > /etc/virtual-kubelet/ca.crt
+openssl x509 -in /etc/virtual-kubelet/client.crt -noout -subject
+openssl x509 -in /etc/virtual-kubelet/ca.crt -noout -subject
+chmod 600 /etc/virtual-kubelet/client.key /etc/virtual-kubelet/client.crt
+```
+
+If `openssl` cannot read `ca.crt`, obtain the kubeadm CA from the control-plane host and rerun the CA check. **Now create the provider's dedicated kubeconfig:**
 
 ```bash
 KCFG=/etc/virtual-kubelet/kubeconfig
@@ -264,11 +277,11 @@ CID=$(sudo crictl ps -a --name hello -q | head -n 1)
 
 **Expected log:** `Hello from Virtual Kubelet CRI`. `kubectl logs` working confirms the API-server → virtual-kubelet log path, not merely direct CRI access. Clean up with `kubectl delete pod cri-hello -n cri-lab`.
 
-## 8. Expose an HTTP Pod using `hostPort` (no Service or port-forward)
+## 8. Expose nginx on `192.168.0.31:18080` using `hostPort` (no Service or port-forward)
 
 **VM:** The CNI config in step 5 already includes `portmap` with `portMappings: true`. If you created the bridge config *before* adding `portmap`, add it as shown in step 5 and create a **new** Pod: existing sandboxes do not acquire host-port mappings retroactively. Check `sudo crictl info | jq -r '.status.conditions[] | "\(.type)=\(.status)"'` and make sure `NetworkReady=true`. Choose a free host port (`18080` in this example). `hostPort` is a **Pod** setting, not a Kubernetes Service.
 
-**Admin — deploy nginx on the virtual node:**
+**Admin — deploy nginx on the virtual node:** Before applying, check that nothing else uses TCP port 18080 (`sudo ss -lntp | grep ":18080 " || true`). The CNI portmap creates NAT rules, so a successful mapping will **not** necessarily show up in `ss`.
 
 ```bash
 cat > /tmp/cri-hostport.yaml <<'EOF'

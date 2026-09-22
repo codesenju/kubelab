@@ -231,48 +231,60 @@ CPU and memory should normally use warning severity. Use critical only when
 operational policy requires paging. Filesystem thresholds should exclude
 ephemeral mounts when those mounts create noise.
 
-## Troubleshooting
+## Host Utilization Dashboard
 
-### Blank plot
+Exported dashboard JSON:
 
-Run the exact query in Explorer. Check for:
-
-- `host.name` warning or empty host labels.
-- Incorrect `state` filter.
-- Wrong metric unit.
-- Missing `mountpoint` grouping for filesystem data.
-- Query time range before Collector started.
-
-### Filesystem host label missing
-
-Collector must detect and preserve host identity. Example Collector processors:
-
-```yaml
-processors:
-  resource_detection:
-    detectors: [env, system]
-    override: true
-    system:
-      hostname_sources: [os]
-  resource/host:
-    attributes:
-      - key: host.name
-        value: <HOST_NAME>
-        action: upsert
+```text
+Signoz/host-utilization-alerts.json
 ```
 
-Pipeline order:
+Dashboard ID:
 
-```yaml
-processors: [resource_detection, resource/host, resource/env]
+```text
+01a0c604-52ef-70d6-ab89-37beab9db267
 ```
 
-Validate and restart the Collector:
+The dashboard contains CPU, memory, and root filesystem percentage panels. All
+panels use the `host_name` variable and group results by `host.name`.
+
+### Create From Export
+
+Use the exported file as a SigNoz dashboard import payload. The file contains
+the dashboard object itself, not the API response envelope:
 
 ```bash
-otelcol-contrib validate --config=/etc/otelcol-contrib/config.yaml
-systemctl restart otelcol-contrib
-systemctl is-active otelcol-contrib
+curl -X POST "$SIGNOZ_URL/api/v2/dashboards" \
+  -H "Authorization: Bearer $SIGNOZ_API_TOKEN" \
+  -H "Content-Type: application/json" \
+  --data-binary @Signoz/host-utilization-alerts.json
 ```
 
-Wait for fresh samples, then verify `host.name` on the exact filesystem query.
+Alternatively, open SigNoz **Dashboards**, choose **Import**, and select
+`Signoz/host-utilization-alerts.json`.
+
+After import, verify the `Host Name` variable values and set the dashboard time
+range to the desired window.
+
+## Dashboard Agent Prompt
+
+Use this prompt when an agent must recreate the dashboard:
+
+```text
+Create the SigNoz Host Utilization dashboard from
+Signoz/host-utilization-alerts.json.
+
+Import the JSON as a dashboard object, preserving its panels, variables,
+layouts, units, thresholds, and Query Builder formulas. Do not recreate panels
+with PromQL or replace Query Builder formulas with aggregate queries.
+
+After import, verify:
+- Host Name variable exists and uses dynamic metric resource field host.name.
+- CPU Utilization shows one series per host.
+- Memory Utilization shows one percentage series per host.
+- Root Filesystem Utilization shows one `/` percentage series per host.
+- Formula input queries are hidden and only formula F1 is displayed.
+
+Open the dashboard in a browser and confirm all three panels render data before
+reporting success. Report imported dashboard ID and URL.
+```
