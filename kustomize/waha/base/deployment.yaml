@@ -1,0 +1,66 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: waha
+  labels:
+    app: waha
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: waha
+  template:
+    metadata:
+      labels:
+        app: waha
+    spec:
+      securityContext:
+        runAsUser: 1001
+        runAsGroup: 1001
+        runAsNonRoot: true
+      containers:
+        - name: waha
+          image: devlikeapro/waha
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          ports:
+            - name: http
+              containerPort: 3000
+          env:
+            - name: WAHA_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: waha-secrets
+                  key: WAHA_API_KEY
+            - name: WAHA_DASHBOARD_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: waha-secrets
+                  key: WAHA_DASHBOARD_USERNAME
+            - name: WAHA_DASHBOARD_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: waha-secrets
+                  key: WAHA_DASHBOARD_PASSWORD
+            - name: WHATSAPP_SWAGGER_USERNAME
+              valueFrom:
+                secretKeyRef:
+                  name: waha-secrets
+                  key: WHATSAPP_SWAGGER_USERNAME
+            - name: WHATSAPP_SWAGGER_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: waha-secrets
+                  key: WHATSAPP_SWAGGER_PASSWORD
+          volumeMounts:
+            - name: waha-sessions
+              mountPath: /app/.sessions
+      volumes:
+        - name: waha-sessions
+          persistentVolumeClaim:
+            claimName: waha-sessions
