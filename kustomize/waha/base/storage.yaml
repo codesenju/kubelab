@@ -1,0 +1,32 @@
+apiVersion: v1
+kind: PersistentVolume
+metadata:
+  name: waha-sessions
+  labels:
+    service: waha-sessions
+spec:
+  capacity:
+    storage: 5Gi
+  nfs:
+    server: 192.168.0.16
+    path: /mnt/pool2/AppData/waha
+  accessModes:
+    - ReadWriteOnce
+  mountOptions:
+    - noatime
+    - nfsvers=4.2
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: waha-sessions
+spec:
+  accessModes:
+    - ReadWriteOnce
+  resources:
+    requests:
+      storage: 5Gi
+  selector:
+    matchLabels:
+      service: waha-sessions
+  storageClassName: ""
