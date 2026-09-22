@@ -30,6 +30,19 @@
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 commonLabels:
                   app.kubernetes.io/instance: uptime-kuma-prod
+                patches:
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: uptime-kuma
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/hostAliases
+                        value:
+                          - ip: "192.168.0.32"
+                            hostnames:
+                              - mail.jazziro.com
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"

@@ -106,3 +106,4 @@ zero-trust/NetworkPolicies/
 ansible/inventories/contabo/hosts.ini
 ansible/inventories/prod/hosts.ini
 ubuntu/tofu/out.tfplan
+Automation/waha/*.pdf

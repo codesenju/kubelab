@@ -225,6 +225,58 @@
               "{{ {'auths': {'https://index.docker.io/v1/': {'username': docker_username, 'password': docker_password, 'auth': (docker_username +
               ':' + docker_password) | b64encode}}} | to_json | b64encode }}"
 
+    - name: Create Signoz MCP secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: signoz-mcp-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            SIGNOZ_URL: "{{ signoz_host }}"
+            SIGNOZ_API_KEY: "{{ signoz_mcp_api_key }}"
+      tags:
+        - mcp
+
+    - name: Deploy Signoz MCP
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: signoz-mcp
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/signoz-mcp/overlays/prod
+              targetRevision: main
+              kustomize:
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                labels:
+                  app.kubernetes.io/instance: signoz-mcp-prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags:
+        - mcp
+
     - name: Deploy Signoz k8s-infra
       kubernetes.core.k8s:
         state: present
@@ -348,6 +400,28 @@
                     port: 8080
       tags:
         - httproute
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: signoz-mcp
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+            hostnames:
+              - "signoz-mcp.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: signoz-mcp
+                    port: 8000
+      tags:
+        - mcp
 
     - name: Create HTTPRoute
       kubernetes.core.k8s:
