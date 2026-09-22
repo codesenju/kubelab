@@ -1,0 +1,60 @@
+---
+- name: WAHA Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: waha
+  tasks:
+    - name: Deploy WAHA ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: waha
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/waha/overlays/prod
+              targetRevision: main
+              kustomize:
+                labels:
+                  app.kubernetes.io/instance: waha
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags:
+        - waha
+
+    - name: Create WAHA secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: waha-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            WAHA_API_KEY: "{{ waha_api_key }}"
+            WAHA_DASHBOARD_USERNAME: "{{ waha_dashboard_username }}"
+            WAHA_DASHBOARD_PASSWORD: "{{ waha_dashboard_password }}"
+            WHATSAPP_SWAGGER_USERNAME: "{{ whatsapp_swagger_username }}"
+            WHATSAPP_SWAGGER_PASSWORD: "{{ whatsapp_swagger_password }}"
+      tags:
+        - waha

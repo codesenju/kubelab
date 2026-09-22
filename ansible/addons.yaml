@@ -43,3 +43,6 @@
 
 - name: Minio
   import_playbook: ../addons/minio.yaml
+
+- name: Waha
+  import_playbook: ../addons/waha.yaml
