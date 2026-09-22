@@ -24,6 +24,8 @@
               path: kustomize/waha/overlays/prod
               targetRevision: main
               kustomize:
+                images:
+                  - "devlikeapro/waha=devlikeapro/waha:chrome-2026.9.1"
                 labels:
                   app.kubernetes.io/instance: waha
             destination:
@@ -39,6 +41,7 @@
                 - RespectIgnoreDifferences=true
       tags:
         - waha
+        - argocd
 
     - name: Create WAHA secrets
       kubernetes.core.k8s:

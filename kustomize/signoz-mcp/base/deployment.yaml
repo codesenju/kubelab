@@ -1,0 +1,44 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: signoz-mcp
+  labels:
+    app: signoz-mcp
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: signoz-mcp
+  template:
+    metadata:
+      labels:
+        app: signoz-mcp
+    spec:
+      containers:
+        - name: signoz-mcp
+          image: signoz/signoz-mcp-server:latest
+          env:
+            - name: TRANSPORT_MODE
+              value: http
+            - name: MCP_SERVER_PORT
+              value: "8000"
+            - name: SIGNOZ_URL
+              valueFrom:
+                secretKeyRef:
+                  name: signoz-mcp-secrets
+                  key: SIGNOZ_URL
+            - name: SIGNOZ_API_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: signoz-mcp-secrets
+                  key: SIGNOZ_API_KEY
+          ports:
+            - name: http
+              containerPort: 8000
+          resources:
+            requests:
+              cpu: 100m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
