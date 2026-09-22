@@ -256,6 +256,8 @@
                   otelInsecure: true
                   insecureSkipVerify: true
                   otelAgent:
+                    nodeSelector:
+                      kubernetes.io/os: linux
                     ports:
                       otlp:
                         hostPort: ""

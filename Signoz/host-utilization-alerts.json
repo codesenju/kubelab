@@ -1,0 +1,662 @@
+{
+  "id": "01a0c604-52ef-70d6-ab89-37beab9db267",
+  "createdAt": "2026-09-21T22:09:27.279032Z",
+  "updatedAt": "2026-09-21T23:47:55.011788Z",
+  "createdBy": "agentic@signozserviceaccount.com",
+  "updatedBy": "agentic@signozserviceaccount.com",
+  "orgId": "01a06dd6-ba65-767a-b366-25acca7af21d",
+  "locked": false,
+  "source": "user",
+  "schemaVersion": "v6",
+  "image": "",
+  "name": "host-utilization-alerts-na3lcr3j",
+  "tags": [
+    {
+      "key": "domain",
+      "value": "host-utilization"
+    },
+    {
+      "key": "signal",
+      "value": "metrics"
+    },
+    {
+      "key": "filter",
+      "value": "host.name"
+    }
+  ],
+  "spec": {
+    "display": {
+      "name": "Host Utilization Alerts",
+      "description": "CPU, memory, and root filesystem utilization matching host utilization alerts, filterable by host.name."
+    },
+    "variables": [
+      {
+        "kind": "ListVariable",
+        "spec": {
+          "display": {
+            "name": "Host Name",
+            "description": "Filter all utilization panels by host.name"
+          },
+          "defaultValue": [
+            "k8s-control-plane-1",
+            "k8s-control-plane-2",
+            "k8s-control-plane-3",
+            "k8s-worker-1",
+            "k8s-worker-2",
+            "k8s-worker-3",
+            "vmi3399877"
+          ],
+          "allowAllValue": true,
+          "allowMultiple": true,
+          "customAllValue": "",
+          "capturingRegexp": "",
+          "sort": "alphabetical-asc",
+          "plugin": {
+            "kind": "signoz/DynamicVariable",
+            "spec": {
+              "name": "host.name",
+              "signal": "metrics"
+            }
+          },
+          "name": "host_name"
+        }
+      }
+    ],
+    "panels": {
+      "cpu-utilization": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "CPU Utilization",
+            "description": "Busy CPU states divided by total CPU time, matching CPUUtilizationHigh."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": [
+                {
+                  "value": 80,
+                  "unit": "percent",
+                  "color": "red",
+                  "label": "Warning"
+                }
+              ]
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "F1",
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "system.cpu.time",
+                              "temporality": "cumulative",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum",
+                              "reduceTo": ""
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "host.name IN $host_name AND state IN ('user','system','iowait','irq','softirq','steal','nice')"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "host.name",
+                              "signal": "metrics",
+                              "fieldContext": "resource",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "selectFields": null,
+                          "limit": 10000,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{host.name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 0,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "system.cpu.time",
+                              "temporality": "cumulative",
+                              "timeAggregation": "rate",
+                              "spaceAggregation": "sum",
+                              "reduceTo": ""
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "host.name IN $host_name"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "host.name",
+                              "signal": "metrics",
+                              "fieldContext": "resource",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "selectFields": null,
+                          "limit": 10000,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{host.name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "(A / B) * 100",
+                          "disabled": false,
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "limit": 100,
+                          "functions": null,
+                          "legend": "{{host.name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": null
+        }
+      },
+      "filesystem-utilization": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Root Filesystem Utilization",
+            "description": "Root filesystem fraction used, shown as percentage."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": [
+                {
+                  "value": 80,
+                  "unit": "percent",
+                  "color": "red",
+                  "label": "Critical"
+                }
+              ]
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "F1",
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "system.filesystem.usage",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "host.name IN $host_name AND state = 'used' AND mountpoint = '/'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "host.name",
+                              "signal": "metrics",
+                              "fieldContext": "resource",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "mountpoint",
+                              "signal": "metrics",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "selectFields": null,
+                          "limit": 10000,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{mountpoint}} - {{host.name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "system.filesystem.usage",
+                              "temporality": "",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "host.name IN $host_name AND mountpoint = '/'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "host.name",
+                              "signal": "metrics",
+                              "fieldContext": "resource",
+                              "fieldDataType": "string"
+                            },
+                            {
+                              "name": "mountpoint",
+                              "signal": "metrics",
+                              "fieldContext": "attribute",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "selectFields": null,
+                          "limit": 10000,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{mountpoint}} - {{host.name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "(A / B) * 100",
+                          "disabled": false,
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "limit": 100,
+                          "functions": null,
+                          "legend": "{{mountpoint}} - {{host.name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": null
+        }
+      },
+      "memory-utilization": {
+        "kind": "Panel",
+        "spec": {
+          "display": {
+            "name": "Memory Utilization",
+            "description": "Used memory divided by total reported memory, shown as percentage."
+          },
+          "plugin": {
+            "kind": "signoz/TimeSeriesPanel",
+            "spec": {
+              "visualization": {
+                "timePreference": "global_time",
+                "fillSpans": false
+              },
+              "formatting": {
+                "unit": "percent",
+                "decimalPrecision": "2"
+              },
+              "chartAppearance": {
+                "lineInterpolation": "spline",
+                "showPoints": false,
+                "lineStyle": "solid",
+                "fillMode": "none",
+                "spanGaps": {
+                  "fillOnlyBelow": false,
+                  "fillLessThan": ""
+                }
+              },
+              "axes": {
+                "softMin": null,
+                "softMax": null,
+                "isLogScale": false
+              },
+              "legend": {
+                "position": "bottom",
+                "mode": "list",
+                "customColors": null
+              },
+              "thresholds": [
+                {
+                  "value": 80,
+                  "unit": "percent",
+                  "color": "red",
+                  "label": "Critical"
+                }
+              ]
+            }
+          },
+          "queries": [
+            {
+              "kind": "time_series",
+              "spec": {
+                "name": "F1",
+                "plugin": {
+                  "kind": "signoz/CompositeQuery",
+                  "spec": {
+                    "queries": [
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "A",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "system.memory.usage",
+                              "temporality": "cumulative",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "host.name IN $host_name AND state = 'used'"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "host.name",
+                              "signal": "metrics",
+                              "fieldContext": "resource",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "selectFields": null,
+                          "limit": 10000,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{host.name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_query",
+                        "spec": {
+                          "name": "B",
+                          "stepInterval": 60,
+                          "signal": "metrics",
+                          "source": "",
+                          "aggregations": [
+                            {
+                              "metricName": "system.memory.usage",
+                              "temporality": "cumulative",
+                              "timeAggregation": "avg",
+                              "spaceAggregation": "sum",
+                              "reduceTo": "avg"
+                            }
+                          ],
+                          "disabled": true,
+                          "filter": {
+                            "expression": "host.name IN $host_name"
+                          },
+                          "groupBy": [
+                            {
+                              "name": "host.name",
+                              "signal": "metrics",
+                              "fieldContext": "resource",
+                              "fieldDataType": "string"
+                            }
+                          ],
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "selectFields": null,
+                          "limit": 10000,
+                          "secondaryAggregations": null,
+                          "functions": null,
+                          "legend": "{{host.name}}"
+                        }
+                      },
+                      {
+                        "type": "builder_formula",
+                        "spec": {
+                          "name": "F1",
+                          "expression": "(A / B) * 100",
+                          "disabled": false,
+                          "order": [
+                            {
+                              "key": {
+                                "name": "__result",
+                                "signal": "",
+                                "fieldContext": "",
+                                "fieldDataType": ""
+                              },
+                              "direction": "desc"
+                            }
+                          ],
+                          "limit": 100,
+                          "functions": null,
+                          "legend": "{{host.name}}"
+                        }
+                      }
+                    ]
+                  }
+                }
+              }
+            }
+          ],
+          "links": null
+        }
+      }
+    },
+    "layouts": [
+      {
+        "kind": "Grid",
+        "spec": {
+          "display": {
+            "title": "Host Utilization"
+          },
+          "items": [
+            {
+              "x": 0,
+              "y": 0,
+              "width": 12,
+              "height": 7,
+              "content": {
+                "$ref": "#/spec/panels/cpu-utilization"
+              }
+            },
+            {
+              "x": 0,
+              "y": 7,
+              "width": 12,
+              "height": 7,
+              "content": {
+                "$ref": "#/spec/panels/memory-utilization"
+              }
+            },
+            {
+              "x": 0,
+              "y": 14,
+              "width": 12,
+              "height": 7,
+              "content": {
+                "$ref": "#/spec/panels/filesystem-utilization"
+              }
+            }
+          ]
+        }
+      }
+    ],
+    "duration": "6h",
+    "refreshInterval": "",
+    "links": null
+  }
+}

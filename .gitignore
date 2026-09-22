@@ -105,3 +105,4 @@ zero-trust/NetworkPolicies/
 *.ignore.y*ml
 ansible/inventories/contabo/hosts.ini
 ansible/inventories/prod/hosts.ini
+ubuntu/tofu/out.tfplan
