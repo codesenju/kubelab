@@ -18,20 +18,17 @@ spec:
         runAsUser: 1001
         runAsGroup: 1001
         runAsNonRoot: true
+        fsGroup: 1001
       containers:
         - name: waha
           image: devlikeapro/waha
-          resources:
-            requests:
-              cpu: "100m"
-              memory: "256Mi"
-            limits:
-              cpu: "500m"
-              memory: "512Mi"
-          ports:
-            - name: http
-              containerPort: 3000
           env:
+            - name: HOME
+              value: /tmp/waha-home
+            - name: XDG_CONFIG_HOME
+              value: /tmp/waha-home/.config
+            - name: XDG_CACHE_HOME
+              value: /tmp/waha-home/.cache
             - name: WAHA_API_KEY
               valueFrom:
                 secretKeyRef:
@@ -57,10 +54,29 @@ spec:
                 secretKeyRef:
                   name: waha-secrets
                   key: WHATSAPP_SWAGGER_PASSWORD
+          resources:
+            requests:
+              cpu: "100m"
+              memory: "256Mi"
+            limits:
+              cpu: "500m"
+              memory: "512Mi"
+          ports:
+            - name: http
+              containerPort: 3000
           volumeMounts:
             - name: waha-sessions
               mountPath: /app/.sessions
+            - name: waha-tmp
+              mountPath: /tmp
+            - name: dshm
+              mountPath: /dev/shm
       volumes:
         - name: waha-sessions
           persistentVolumeClaim:
             claimName: waha-sessions
+        - name: waha-tmp
+          emptyDir: {}
+        - name: dshm
+          emptyDir:
+            medium: Memory
