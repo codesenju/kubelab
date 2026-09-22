@@ -227,7 +227,7 @@
 
     - name: Create HTTPRoute
       kubernetes.core.k8s:
-        state: present
+        state: absent
         definition:
           apiVersion: gateway.networking.k8s.io/v1
           kind: HTTPRoute
@@ -245,6 +245,8 @@
               - backendRefs:
                   - name: immich-server
                     port: 2283
+      tags:
+        - httproute
 
     - name: Create local HTTPRoute
       kubernetes.core.k8s:
@@ -265,3 +267,5 @@
               - backendRefs:
                   - name: immich-server
                     port: 2283
+      tags:
+        - httproute
