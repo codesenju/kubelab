@@ -56,7 +56,7 @@
 
     - name: Deploy coder postgres cluster
       kubernetes.core.k8s:
-        state: absent
+        state: present
         definition:
           apiVersion: kubelab.io/v1beta1
           kind: PGCluster
@@ -67,7 +67,7 @@
             name: coder
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            image: registry.local.homelab.com/ghcrio/cloudnative-pg/postgresql:18-standard-trixie
+            image: "{{ container_registry }}/ghcrio/cloudnative-pg/postgresql:18-standard-trixie"
             imagePullSecretName1: registry-secret
             db:
               name: coder
@@ -78,8 +78,8 @@
             bootstrap:
               mode: initdb
             archiveDestination:
-              s3Path: "s3://cnpg/backup2"
-              endpointURL: "https://{{ rustfs_endpoint }}"
+              s3Path: "s3://cnpg/backup3"
+              endpointURL: "http://rustfs.rustfs.svc.cluster.local:9000"
               # retentionPolicy: "5d"
               s3:
                 credentialsSecretName: s3-creds
@@ -121,7 +121,7 @@
             source:
               chart: coder
               repoURL: https://helm.coder.com/v2
-              targetRevision: 2.31.5
+              targetRevision: 2.37.3
               helm:
                 releaseName: coder
                 values: |
@@ -139,6 +139,21 @@
                             key: coder_access_url
                       - name: CODER_OAUTH2_GITHUB_DEFAULT_PROVIDER_ENABLE
                         value: "false"
+
+                   # ============================================
+                   # OpenBao token volume
+                   # ============================================
+                  volumes:
+                    - name: openbao-token
+                      secret:
+                        secretName: coder-openbao-token
+
+                  volumeMounts:
+                    - name: openbao-token
+                      mountPath: /etc/coder/secrets/openbao-token
+                      subPath: openbao-token
+                      readOnly: true
+
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"

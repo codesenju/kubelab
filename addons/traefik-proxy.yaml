@@ -172,3 +172,79 @@
       tags:
         - ingressroute
       when: false
+
+    - name: Create Redirect rule | contabo
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: global-https-redirect
+            namespace: "{{ gatewayapi_namespace }}"
+          spec:
+            parentRefs:
+
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web-pvt
+
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web
+
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web-2
+
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web-epcsa
+
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      scheme: https
+                      port: 443
+                      statusCode: 301
+
+      when: deployment_env | default('') == 'contabo'
+      tags:
+        - redirect-rule
+
+    - name: Create Redirect rule | prod
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: global-https-redirect
+            namespace: "{{ gatewayapi_namespace }}"
+          spec:
+            parentRefs:
+
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web-pvt
+
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web
+
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: web-2
+
+            rules:
+              - filters:
+                  - type: RequestRedirect
+                    requestRedirect:
+                      scheme: https
+                      port: 443
+                      statusCode: 301
+
+      when: deployment_env | default('') == 'prod'
+      tags:
+        - redirect-rule
