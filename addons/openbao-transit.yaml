@@ -1,0 +1,93 @@
+---
+- name: OpenBao Transit Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: zero-trust
+  tasks:
+    - name: Create OpenBao transit configuration
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: ConfigMap
+          metadata:
+            name: openbao-transit-config
+            namespace: "{{ target_namespace }}"
+          data:
+            openbao.hcl: |
+              ui = true
+
+              listener "tcp" {
+                address         = "0.0.0.0:8200"
+                cluster_address = "0.0.0.0:8201"
+                tls_disable     = true
+              }
+
+              storage "raft" {
+                path = "/openbao/data"
+                node_id = "openbao-transit"
+              }
+
+              api_addr = "http://openbao-transit.{{ local_dns }}"
+              cluster_addr = "http://openbao-transit:8201"
+      tags: openbao-transit
+
+    - name: Deploy openbao-transit ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: openbao-transit
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/openbao-transit/overlays/prod
+              targetRevision: main
+              kustomize:
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                commonLabels:
+                  app.kubernetes.io/instance: openbao-transit-prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags: openbao-transit
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: openbao-transit
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure-pvt
+            hostnames:
+              - "openbao-transit.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: openbao-transit
+                    port: 8200
+      tags:
+        - httproute
