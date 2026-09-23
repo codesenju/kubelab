@@ -17,8 +17,6 @@ spec:
       containers:
         - name: openbao-transit
           image: IMAGE_PLACEHOLDER
-          command:
-            - openbao
           args:
             - server
             - -config=/openbao/config/openbao.hcl
