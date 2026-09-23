@@ -236,7 +236,7 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            SIGNOZ_URL: "{{ signoz_host }}"
+            SIGNOZ_URL: "http://signoz.signoz.svc.cluster.local:8080"
             SIGNOZ_API_KEY: "{{ signoz_mcp_api_key }}"
       tags:
         - mcp
@@ -308,6 +308,11 @@
                   otelInsecure: true
                   insecureSkipVerify: true
                   otelAgent:
+                    additionalEnvs:
+                      K8S_NODE_NAME:
+                        valueFrom:
+                          fieldRef:
+                            fieldPath: spec.nodeName
                     nodeSelector:
                       kubernetes.io/os: linux
                     ports:
@@ -321,6 +326,12 @@
                         hostPort: ""
                     config:
                       processors:
+                        k8sattributes:
+                          filter:
+                            node_from_env_var: K8S_NODE_NAME
+                          extract:
+                            metadata:
+                              - k8s.node.name
                         resource/hostname:
                           attributes:
                             - key: host.name
@@ -414,6 +425,7 @@
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
+                sectionName: websecure-pvt
             hostnames:
               - "signoz-mcp.{{ local_dns }}"
             rules:
