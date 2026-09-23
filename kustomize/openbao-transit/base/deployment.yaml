@@ -6,6 +6,8 @@ metadata:
     app: openbao-transit
 spec:
   replicas: 1
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: openbao-transit
