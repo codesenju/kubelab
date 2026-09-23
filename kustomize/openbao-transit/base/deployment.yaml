@@ -1,0 +1,54 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: openbao-transit
+  labels:
+    app: openbao-transit
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: openbao-transit
+  template:
+    metadata:
+      labels:
+        app: openbao-transit
+    spec:
+      containers:
+        - name: openbao-transit
+          image: IMAGE_PLACEHOLDER
+          command:
+            - openbao
+          args:
+            - server
+            - -config=/openbao/config/openbao.hcl
+          securityContext:
+            capabilities:
+              add:
+                - IPC_LOCK
+          ports:
+            - name: http
+              containerPort: 8200
+          readinessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 10
+          livenessProbe:
+            tcpSocket:
+              port: http
+            initialDelaySeconds: 15
+            periodSeconds: 20
+          volumeMounts:
+            - name: config
+              mountPath: /openbao/config
+              readOnly: true
+            - name: data
+              mountPath: /openbao/data
+      volumes:
+        - name: config
+          configMap:
+            name: openbao-transit-config
+        - name: data
+          persistentVolumeClaim:
+            claimName: openbao-transit-data
