@@ -79,7 +79,7 @@ resource "proxmox_virtual_environment_vm" "k8s_lb" {
 
     user_account {
       username = "ubuntu"
-      password = "ubuntu"
+      password = local.vm_password
       keys     = [file("${local.public_key_file_path}")]
     }
   }
@@ -147,7 +147,7 @@ resource "proxmox_virtual_environment_vm" "k8s_control-plane" {
 
     user_account {
       username = "ubuntu"
-      password = "ubuntu"
+      password = local.vm_password
       keys     = [file("${local.public_key_file_path}")]
     }
   }

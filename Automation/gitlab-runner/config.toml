@@ -4,7 +4,8 @@ check_interval = 0
 [[runners]]
   name = "docker-runner"
   url = "https://gitlab.com/"
-  token = "REDACTED-RUNNER-TOKEN"
+  # Supply token when registering runner; never commit it here.
+  token = ""
   executor = "docker"
   [runners.docker]
     tls_verify = true

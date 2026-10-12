@@ -1,0 +1,188 @@
+---
+- name: OpenBao Transit Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: zero-trust
+  tasks:
+    - name: Create OpenBao transit seal secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: openbao-transit-seal
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            token: "{{ openbao_transit_token }}"
+      tags: openbao
+
+    - name: Deploy OpenBao ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: openbao
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+
+          spec:
+            project: default
+
+            source:
+              repoURL: https://openbao.github.io/openbao-helm
+              chart: openbao
+
+              # Pin this to the chart version you want to run.
+              # Check available versions with:
+              # helm search repo openbao/openbao -l
+              targetRevision: "0.29.6"
+
+              helm:
+                releaseName: openbao
+
+                values: |
+                  global:
+                    enabled: true
+
+                  injector:
+                    enabled: false
+
+                  server:
+                    enabled: true
+
+                    # ===================================================
+                    # Transit auto-unseal token
+                    # ===================================================
+
+                    extraSecretEnvironmentVars:
+                      - envName: VAULT_TOKEN
+                        secretName: openbao-transit-seal
+                        secretKey: token
+
+                    # ===================================================
+                    # Persistent storage
+                    # ===================================================
+
+                    dataStorage:
+                      enabled: true
+                      size: 10Gi
+                      storageClass: nfs-csi
+
+                      accessMode: ReadWriteOnce
+
+                    # ===================================================
+                    # HA + Integrated Raft
+                    # ===================================================
+
+                    ha:
+                      enabled: true
+                      replicas: 3
+
+                      raft:
+                        enabled: true
+                        setNodeId: true
+
+                        config: |
+                          ui = true
+
+                          listener "tcp" {
+                            address         = "[::]:8200"
+                            cluster_address = "[::]:8201"
+
+                            # TLS is terminated upstream by Traefik.
+                            tls_disable = 1
+                          }
+
+                          storage "raft" {
+                            path = "/openbao/data"
+
+                            retry_join {
+                              leader_api_addr = "http://openbao-0.openbao-internal:8200"
+                            }
+
+                            retry_join {
+                              leader_api_addr = "http://openbao-1.openbao-internal:8200"
+                            }
+
+                            retry_join {
+                              leader_api_addr = "http://openbao-2.openbao-internal:8200"
+                            }
+                          }
+
+                          service_registration "kubernetes" {}
+
+                          # =============================================
+                          # Transit Auto-Unseal
+                          # =============================================
+
+                          seal "transit" {
+                            address         = "https://openbao-transit.{{ local_dns }}"
+                            key_name        = "openbao-unseal"
+                            mount_path      = "transit/"
+                            disable_renewal = "false"
+
+                            tls_skip_verify = "false"
+                          }
+
+                    # ===================================================
+                    # Resources
+                    # ===================================================
+
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 256Mi
+                      limits:
+                        cpu: "1"
+                        memory: 1Gi
+
+                  # =====================================================
+                  # OpenBao UI service
+                  # =====================================================
+
+                  ui:
+                    enabled: true
+                    serviceType: ClusterIP
+
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: openbao
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure-pvt
+            hostnames:
+              - "openbao.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: openbao
+                    port: 8200
+      tags:
+        - httproute

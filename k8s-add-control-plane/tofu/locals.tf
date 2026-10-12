@@ -1,6 +1,6 @@
 locals {
   vm_user     = "ubuntu"
-  vm_password = "ubuntu"
+  vm_password = get_env("VM_PASSWORD", null)
 
   control_plane_cores     = 6
   control_plane_memory    = 8192

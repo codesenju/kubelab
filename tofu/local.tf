@@ -1,7 +1,7 @@
 locals {
   public_key_file_path    = "~/codesenju/kubelab.pub" # Change me
   vm_user                 = "ubuntu"
-  vm_password             = "ubuntu"
+  vm_password             = get_env("VM_PASSWORD", null)
   net                     = "192.168.0" # First 3 octets of your home network, Change me if you want
   worker_cores            = 6
   worker_memory           = 4096

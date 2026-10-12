@@ -35,6 +35,7 @@
             password: "{{ authentik_db_password }}"
       tags:
         - postgres
+        - secrets
 
     - name: Create s3 creds
       kubernetes.core.k8s:
@@ -49,8 +50,10 @@
           stringData:
             ACCESS_KEY_ID: "{{ rustfs_access_key }}"
             SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+            REGION: "joburg-north-1"
       tags:
         - postgres
+        - secrets
 
     - name: Create s3 creds for source
       kubernetes.core.k8s:
@@ -67,6 +70,7 @@
             SECRET_ACCESS_KEY: "{{ rustfs_secret_key_source }}"
       tags:
         - postgres
+        - secrets
 
     - name: Deploy postgres
       kubernetes.core.k8s:
@@ -103,7 +107,7 @@
                 accessKeyId: ACCESS_KEY_ID
                 secretAccessKey: SECRET_ACCESS_KEY
             archiveDestination:
-              s3Path: "s3://cnpg/backup3"
+              s3Path: "s3://cnpg/backup4/"
               endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:

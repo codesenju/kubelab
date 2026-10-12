@@ -50,23 +50,32 @@
                 port: 8086
                 protocol: TCP
                 targetPort: 8086
+      tags:
+        - webhook-site
 
     - name: Create webhook-site endpoints
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: v1
-          kind: Endpoints
+          apiVersion: discovery.k8s.io/v1
+          kind: EndpointSlice
           metadata:
             name: webhook-site
             namespace: "{{ target_namespace }}"
-          subsets:
+            labels:
+              kubernetes.io/service-name: webhook-site
+          addressType: IPv4
+          ports:
+            - name: http
+              port: 8086
+              protocol: TCP
+          endpoints:
             - addresses:
-                - ip: 192.168.0.31
-              ports:
-                - name: http
-                  port: 8086
-                  protocol: TCP
+                - "192.168.0.31"
+              conditions:
+                ready: true
+      tags:
+        - webhook-site
 
     - name: Create HTTPRoute for webhook-site
       kubernetes.core.k8s:
@@ -87,6 +96,8 @@
               - backendRefs:
                   - name: webhook-site
                     port: 8086
+      tags:
+        - webhook-site
 
     ## Dockge
     - name: Create dockge service
@@ -229,18 +240,23 @@
       kubernetes.core.k8s:
         state: present
         definition:
-          apiVersion: v1
-          kind: Endpoints
+          apiVersion: discovery.k8s.io/v1
+          kind: EndpointSlice
           metadata:
             name: homeassistant
             namespace: "{{ target_namespace }}"
-          subsets:
+            labels:
+              kubernetes.io/service-name: homeassistant
+          addressType: IPv4
+          ports:
+            - name: http
+              port: 8123
+              protocol: TCP
+          endpoints:
             - addresses:
-                - ip: 192.168.0.31
-              ports:
-                - name: http
-                  port: 8123
-                  protocol: TCP
+                - "192.168.0.31"
+              conditions:
+                ready: true
       tags:
         - smarthome
 
@@ -276,7 +292,7 @@
             parentRefs:
               - name: local-gateway
                 namespace: gateway-infra
-                sectionName: websecure
+                sectionName: websecure-pvt
             hostnames:
               - "smarthome.{{ local_dns }}"
             rules:
@@ -515,7 +531,7 @@
               - "transmission.{{ local_dns }}"
             rules:
               - backendRefs:
-                  - name: transmission-direct
+                  - name: transmission
                     port: 9091
       tags:
         - transmission

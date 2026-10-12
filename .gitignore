@@ -64,6 +64,13 @@ helm/harbor_values.template.yml
 */*/.env
 */.env
 .env
+**/.env
+*.pem
+*.key
+*.p12
+*.pfx
+*.kubeconfig
+*kubeconfig*
 storage/proxmox-csi-plugin/group_vars/all/secrets.yaml
 zero-trust/trivy/main.zip
 zero-trust/trivy/nohup.out
