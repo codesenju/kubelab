@@ -1,0 +1,266 @@
+---
+- name: Configure Coder secrets and policy in OpenBao
+  hosts: localhost
+  gather_facts: false
+
+  vars:
+    # =========================================================
+    # OpenBao
+    # =========================================================
+
+    openbao_addr: "https://openbao.{{ local_dns }}"
+    openbao_namespace: "zero-trust"
+
+    # =========================================================
+    # Coder
+    # =========================================================
+
+    coder_namespace: "coder"
+    coder_service_account: "coder"
+
+    openbao_policy_name: "coder-opencode"
+    openbao_kubernetes_role: "coder"
+
+    # =========================================================
+    # Secret paths
+    # =========================================================
+
+    openbao_github_path: "coder/github"
+    openbao_gitlab_path: "coder/gitlab"
+
+    # Expected variables:
+    #
+    # github_bao_token
+    # gitlab_bao_token
+    #
+    # Prefer Ansible Vault:
+    #
+    # ansible-playbook openbao-coder.yaml \
+    #   -e @vars/openbao-coder-secrets.yml \
+    #   --ask-vault-pass
+
+  environment:
+    BAO_ADDR: "{{ openbao_addr }}"
+
+  tasks:
+
+    # =========================================================
+    # OpenBao Kubernetes TokenReview RBAC
+    # =========================================================
+
+    - name: Create OpenBao TokenReview ClusterRoleBinding
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: rbac.authorization.k8s.io/v1
+          kind: ClusterRoleBinding
+          metadata:
+            name: openbao-tokenreview
+
+          roleRef:
+            apiGroup: rbac.authorization.k8s.io
+            kind: ClusterRole
+            name: system:auth-delegator
+
+          subjects:
+            - kind: ServiceAccount
+              name: openbao
+              namespace: "{{ openbao_namespace }}"
+      tags:
+        - openbao
+        - openbao-auth
+
+    # =========================================================
+    # Validate required variables
+    # =========================================================
+
+    - name: Validate GitHub token is supplied
+      ansible.builtin.assert:
+        that:
+          - github_bao_token is defined
+          - github_bao_token | length > 0
+        fail_msg: "github_bao_token must be supplied."
+      no_log: true
+
+    - name: Validate GitLab token is supplied
+      ansible.builtin.assert:
+        that:
+          - gitlab_bao_token is defined
+          - gitlab_bao_token | length > 0
+        fail_msg: "gitlab_bao_token must be supplied."
+      no_log: true
+
+    # =========================================================
+    # Verify OpenBao authentication
+    # =========================================================
+
+    - name: Verify OpenBao authentication
+      ansible.builtin.command:
+        cmd: bao token lookup
+      register: openbao_token_lookup
+      changed_when: false
+      no_log: true
+
+    # =========================================================
+    # Ensure KV v2 exists
+    # =========================================================
+
+    - name: Check enabled OpenBao secret engines
+      ansible.builtin.command:
+        cmd: bao secrets list -format=json
+      register: openbao_secret_engines
+      changed_when: false
+
+    - name: Enable secret KV v2 engine
+      ansible.builtin.command:
+        cmd: bao secrets enable -path=secret kv-v2
+      when: "'secret/' not in (openbao_secret_engines.stdout | from_json)"
+      register: enable_secret_engine
+      changed_when: enable_secret_engine.rc == 0
+
+    # =========================================================
+    # GitHub token
+    # =========================================================
+
+    - name: Store GitHub token in OpenBao
+      ansible.builtin.command:
+        argv:
+          - bao
+          - kv
+          - put
+          - -mount=secret
+          - "{{ openbao_github_path }}"
+          - "token={{ github_bao_token }}"
+      no_log: true
+      changed_when: true
+
+    # =========================================================
+    # GitLab token
+    # =========================================================
+
+    - name: Store GitLab token in OpenBao
+      ansible.builtin.command:
+        argv:
+          - bao
+          - kv
+          - put
+          - -mount=secret
+          - "{{ openbao_gitlab_path }}"
+          - "token={{ gitlab_bao_token }}"
+      no_log: true
+      changed_when: true
+
+    # =========================================================
+    # Coder policy
+    # =========================================================
+
+    - name: Create temporary Coder OpenBao policy
+      ansible.builtin.copy:
+        dest: /tmp/coder-opencode.hcl
+        mode: "0600"
+
+        content: |
+          path "secret/data/coder/opencode" {
+            capabilities = ["read"]
+          }
+
+          path "secret/data/coder/github" {
+            capabilities = ["read"]
+          }
+
+          path "secret/data/coder/gitlab" {
+            capabilities = ["read"]
+          }
+
+    - name: Apply Coder OpenBao policy
+      ansible.builtin.command:
+        cmd: >
+          bao policy write
+          {{ openbao_policy_name }}
+          /tmp/coder-opencode.hcl
+      register: policy_write
+      changed_when: policy_write.rc == 0
+
+    - name: Remove temporary policy file
+      ansible.builtin.file:
+        path: /tmp/coder-opencode.hcl
+        state: absent
+
+    # =========================================================
+    # Coder Kubernetes auth role
+    #
+    # Equivalent to:
+    #
+    # bao write auth/kubernetes/role/coder \
+    #   bound_service_account_names="coder" \
+    #   bound_service_account_namespaces="coder" \
+    #   policies="coder-opencode" \
+    #   ttl="1h"
+    # =========================================================
+
+    - name: Configure Coder Kubernetes auth role
+      ansible.builtin.command:
+        argv:
+          - bao
+          - write
+          - "auth/kubernetes/role/{{ openbao_kubernetes_role }}"
+          - "bound_service_account_names={{ coder_service_account }}"
+          - "bound_service_account_namespaces={{ coder_namespace }}"
+          - "policies={{ openbao_policy_name }}"
+          - "ttl=1h"
+      register: coder_kubernetes_role
+      changed_when: coder_kubernetes_role.rc == 0
+      tags:
+        - openbao
+        - openbao-auth
+        - coder
+
+    # =========================================================
+    # Verification
+    # =========================================================
+
+    - name: Verify GitHub secret metadata
+      ansible.builtin.command:
+        cmd: >
+          bao kv metadata get
+          -mount=secret
+          {{ openbao_github_path }}
+      register: github_metadata
+      changed_when: false
+
+    - name: Verify GitLab secret metadata
+      ansible.builtin.command:
+        cmd: >
+          bao kv metadata get
+          -mount=secret
+          {{ openbao_gitlab_path }}
+      register: gitlab_metadata
+      changed_when: false
+
+    - name: Read final Coder policy
+      ansible.builtin.command:
+        cmd: bao policy read {{ openbao_policy_name }}
+      register: coder_policy
+      changed_when: false
+
+    - name: Read Coder Kubernetes auth role
+      ansible.builtin.command:
+        cmd: >
+          bao read
+          auth/kubernetes/role/{{ openbao_kubernetes_role }}
+      register: coder_role
+      changed_when: false
+
+    - name: Show Coder Kubernetes auth role
+      ansible.builtin.debug:
+        var: coder_role.stdout_lines
+
+    - name: Show configuration summary
+      ansible.builtin.debug:
+        msg:
+          - "GitHub token stored at secret/{{ openbao_github_path }}"
+          - "GitLab token stored at secret/{{ openbao_gitlab_path }}"
+          - "Coder policy updated: {{ openbao_policy_name }}"
+          - "Coder Kubernetes role: {{ openbao_kubernetes_role }}"
+          - "Coder ServiceAccount: {{ coder_namespace }}/{{ coder_service_account }}"
+          - "Coder can read OpenCode, GitHub, and GitLab secrets."

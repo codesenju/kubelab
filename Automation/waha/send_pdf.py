@@ -53,7 +53,7 @@ def generate_pdf(path: Path):
         "This PDF was generated automatically.",
         "It is being delivered through WAHA and WhatsApp.",
         "",
-        "WAHA Server: waha.local.jazziro.com",
+        "WAHA Server: waha.domain.com",
         "Session: " + required_env("WAHA_SESSION"),
     ]
 

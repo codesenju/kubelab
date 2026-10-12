@@ -47,7 +47,7 @@ resource "proxmox_virtual_environment_vm" "mng1" {
 
     user_account {
       username = "cloud"
-      password = "cloud"
+      password = get_env("VM_PASSWORD", null)
       keys     = [file("../../kubelab.pub")]
     }
   }

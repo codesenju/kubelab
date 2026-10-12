@@ -42,7 +42,7 @@
                         value:
                           - ip: "192.168.0.32"
                             hostnames:
-                              - mail.jazziro.com
+                              - mail.domain.com
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
