@@ -183,3 +183,136 @@ Coder workspace ServiceAccount JWT
 
 OpenBao stores secret values; Transit OpenBao protects the primary cluster's
 unseal process. Transit does not automatically expose KV secrets to Coder.
+
+## Recovery: Transit-Sealed Primary
+
+### What happened
+
+The primary `openbao` StatefulSet uses Transit OpenBao for auto-unseal. Transit
+OpenBao became sealed, so the primary replicas could not decrypt their stored
+unseal keys and entered `CrashLoopBackOff`. After Transit was unsealed, the
+primary still failed because the Kubernetes Secret `openbao-transit-seal`
+contained a token without permission for both Transit operations:
+
+```text
+transit/encrypt/openbao-unseal
+transit/decrypt/openbao-unseal
+```
+
+Recovery was:
+
+1. Unseal Transit OpenBao with three of its five Shamir keys.
+2. Create/update policy `openbao-seal` with encrypt and decrypt permissions.
+3. Create a new token using a Transit admin token.
+4. Replace the Kubernetes Secret token.
+5. Delete primary pods one at a time. The StatefulSet uses `OnDelete`, so
+   `rollout restart` alone does not replace existing pods.
+
+### Recovery commands
+
+Use the production kubeconfig explicitly:
+
+```bash
+export KUBECONFIG="$HOME/.kube/config"
+export NS=zero-trust
+```
+
+Check Transit status:
+
+```bash
+kubectl -n "$NS" exec deploy/openbao-transit -- \
+  sh -c 'wget -qO- http://127.0.0.1:8200/v1/sys/seal-status' | jq
+```
+
+If Transit reports `"sealed":true`, unseal it three times with three distinct
+Shamir keys. Transit listens on HTTP inside the pod:
+
+```bash
+kubectl -n "$NS" exec -it deploy/openbao-transit -- \
+  sh -c 'VAULT_ADDR=http://127.0.0.1:8200 bao operator unseal'
+```
+
+Confirm:
+
+```bash
+kubectl -n "$NS" exec deploy/openbao-transit -- \
+  sh -c 'wget -qO- http://127.0.0.1:8200/v1/sys/seal-status' | jq '.sealed'
+```
+
+Create the seal policy. `TRANSIT_ADMIN_TOKEN` must be a Transit admin/root
+token. Never commit it or print it:
+
+```bash
+export TRANSIT_ADMIN_TOKEN='replace-with-transit-admin-token'
+
+kubectl -n "$NS" exec -i deploy/openbao-transit -- sh -c '
+  read -r VAULT_TOKEN
+  cat >/tmp/openbao-seal.hcl <<EOF
+path "transit/encrypt/openbao-unseal" {
+  capabilities = ["update"]
+}
+path "transit/decrypt/openbao-unseal" {
+  capabilities = ["update"]
+}
+EOF
+  VAULT_ADDR=http://127.0.0.1:8200 VAULT_TOKEN="$VAULT_TOKEN" \
+    bao policy write openbao-seal /tmp/openbao-seal.hcl
+' <<< "$TRANSIT_ADMIN_TOKEN"
+```
+
+Create a replacement token and update the Kubernetes Secret. The generated
+token is stored only in the shell variable and Secret:
+
+```bash
+NEW_TOKEN=$(
+  kubectl -n "$NS" exec -i deploy/openbao-transit -- \
+    sh -c 'read -r VAULT_TOKEN; VAULT_ADDR=http://127.0.0.1:8200 \
+      VAULT_TOKEN="$VAULT_TOKEN" bao token create \
+      -policy=openbao-seal -format=json' <<< "$TRANSIT_ADMIN_TOKEN" |
+  jq -r '.auth.client_token'
+)
+
+test -n "$NEW_TOKEN" && test "$NEW_TOKEN" != null || exit 1
+
+kubectl -n "$NS" create secret generic openbao-transit-seal \
+  --from-literal=token="$NEW_TOKEN" \
+  --dry-run=client -o yaml |
+kubectl apply --server-side --force-conflicts -f -
+```
+
+Restart primary replicas individually. Wait for each pod to become ready before
+continuing. This preserves Raft quorum and avoids deleting persistent volumes:
+
+```bash
+kubectl -n "$NS" delete pod openbao-0
+kubectl -n "$NS" wait --for=condition=Ready pod/openbao-0 --timeout=180s
+
+kubectl -n "$NS" delete pod openbao-1
+kubectl -n "$NS" wait --for=condition=Ready pod/openbao-1 --timeout=180s
+
+kubectl -n "$NS" delete pod openbao-2
+kubectl -n "$NS" wait --for=condition=Ready pod/openbao-2 --timeout=180s
+```
+
+Verify all replicas:
+
+```bash
+kubectl -n "$NS" get pods -l app.kubernetes.io/name=openbao
+kubectl -n "$NS" exec openbao-0 -- bao status
+```
+
+Clean up local credentials:
+
+```bash
+unset TRANSIT_ADMIN_TOKEN NEW_TOKEN
+```
+
+### Important safety rules
+
+- Do not delete `data-openbao-*` or `openbao-transit-data` PVCs.
+- Do not run `bao operator init`; the clusters are already initialized.
+- Do not reuse an invalid token from `openbao-transit-seal`.
+- A token lookup may return `403` for the seal token; it only needs encrypt and
+  decrypt access on key `openbao-unseal`.
+- If no Transit admin token or Shamir keys are available, stop and restore them
+  from the OpenBao initialization backup.
