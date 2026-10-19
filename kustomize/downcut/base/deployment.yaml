@@ -1,0 +1,49 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: downcut
+  labels:
+    app: downcut
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: downcut
+  template:
+    metadata:
+      labels:
+        app: downcut
+    spec:
+      securityContext:
+        fsGroup: 65533
+      imagePullSecrets:
+        - name: registry-secret
+      containers:
+      - name: downcut
+        image: IMAGE_TEMPLATE
+        imagePullPolicy: Always
+        ports:
+        - containerPort: 8787
+          name: http
+        resources:
+          requests:
+            memory: "64Mi"
+            cpu: "60m"
+          limits:
+            memory: "256Mi"
+            cpu: "120m"
+        env:
+          - name: PORT
+            value: "8787"
+          - name: YTDLP_COOKIES
+            value: /run/secrets/instagram/cookies.txt
+        volumeMounts:
+          - name: instagram-cookies
+            mountPath: /run/secrets/instagram
+            readOnly: true
+      volumes:
+        - name: instagram-cookies
+          secret:
+            secretName: instagram-cookies
+            defaultMode: 0440
