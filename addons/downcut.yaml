@@ -39,3 +39,26 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+
+    - name: Create HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: downcut
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure-pvt
+            hostnames:
+              - "downcut.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: downcut
+                    port: 80
+      tags:
+        - ingress
