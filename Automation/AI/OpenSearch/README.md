@@ -2,6 +2,15 @@
 
 This tutorial shows how to connect OpenSearch ML Commons to a local LM Studio endpoint, register the remote model, deploy it, and test inference.
 
+## Table of Contents
+
+- [1. Create the connector](#1-create-the-connector)
+- [2. Register the model](#2-register-the-model)
+- [3. Deploy the model](#3-deploy-the-model)
+- [4. Run a prediction](#4-run-a-prediction)
+- [Request flow](#request-flow)
+- [Troubleshooting](#troubleshooting)
+
 ## 1. Create the connector
 
 Use OpenSearch ML Commons to create a connector that targets LM Studio's OpenAI-compatible chat API.

@@ -1,5 +1,16 @@
 # KubeLab Architecture
 
+## Table of Contents
+
+- [🏗️ Cluster Infrastructure](#️-cluster-infrastructure)
+- [📦 Application Layer Architecture](#-application-layer-architecture)
+- [🌐 Network Architecture](#-network-architecture)
+- [💾 Storage Architecture](#-storage-architecture)
+- [🔐 Security Architecture](#-security-architecture)
+- [📊 Data Flow Architecture](#-data-flow-architecture)
+- [🔧 Addon Dependencies](#-addon-dependencies)
+- [📈 Scaling Architecture](#-scaling-architecture)
+
 ## 🏗️ Cluster Infrastructure
 
 ```mermaid

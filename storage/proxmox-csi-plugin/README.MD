@@ -12,14 +12,20 @@
 
 ---
 
-## 📋 Table of Contents
+## Table of Contents
 
-- [Prerequisites](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#-prerequisites)
-- [Configuration](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#%EF%B8%8F-configuration)
-- [Create CSI Role and User](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#-create-csi-role-and-user-in-proxmox)
-- [Deploy CSI Driver](https://github.com/codesenju/kubelab/tree/main/storage/proxmox-csi-plugin#-deploy-proxmox-csi-driver-controller)
-
----
+- [✅ Prerequisites](#-prerequisites)
+- [⚙️ Configuration](#️-configuration)
+  - [Create `.env` file with Proxmox credentials](#create-env-file-with-proxmox-credentials)
+  - [Load environment variables](#load-environment-variables)
+- [🔐 Create CSI Role and User in Proxmox](#-create-csi-role-and-user-in-proxmox)
+  - [1. Apply OpenTofu](#1-apply-opentofu)
+  - [2. Retrieve user token](#2-retrieve-user-token)
+  - [3. Create OpenTofu secrets file](#3-create-opentofu-secrets-file)
+- [🚦 Deploy Proxmox CSI Driver Controller](#-deploy-proxmox-csi-driver-controller)
+- [Set Default StorageClass](#set-default-storageclass)
+- [Remove Default StorageClass](#remove-default-storageclass)
+- [📚 Reference](#-reference)
 
 ## ✅ Prerequisites
 

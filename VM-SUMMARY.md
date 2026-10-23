@@ -1,5 +1,11 @@
 # Kubernetes Cluster VM Summary
 
+## Table of Contents
+
+- [VM Overview](#vm-overview)
+- [Resource Distribution by Node](#resource-distribution-by-node)
+- [Common Configuration](#common-configuration)
+
 ## VM Overview
 
 | VM Name | Node | VM ID | CPUs | RAM (MB) | Disk (GB) | IP Address | Role |

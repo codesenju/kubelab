@@ -98,3 +98,62 @@
                 - CreateNamespace=true
       tags:
         - gitlab
+
+    - name: Deploy Gitlab Runner - e-konnecta
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: e-konnecta-gitlab-runner
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              chart: gitlab-runner
+              repoURL: https://charts.gitlab.io
+              targetRevision: 0.84.2
+              helm:
+                releaseName: e-konnecta-gitlab-runner
+                values: |
+                  rbac:
+                    create: true
+                  runnerToken: '{{ e_konnecta_gitlab_runner_token }}'
+                  gitlabUrl: 'https://gitlab.com/'
+                  runners:
+                    config: |
+                      [[runners]]
+                        shell = "bash"
+                        name = "e-konnecta-gitlab-runner"
+                        [runners.kubernetes]
+                        image = "ubuntu:24.04"
+                        privileged = true
+                        pull_policy = ["always", "if-not-present"]
+                        # helper_image = "registry.gitlab.com/gitlab-org/gitlab-runner/gitlab-runner-helper:arm64-v18.7.2"
+
+                        [runners.cache]
+                          Type = "s3"
+                          Shared = true
+
+                          [runners.cache.s3]
+                            ServerAddress = "{{ rustfs_endpoint }}"
+                            AccessKey = "{{ rustfs_access_key }}"
+                            SecretKey = "{{ rustfs_secret_key }}"
+                            BucketName = "e-konnecta-gitlab-runner-cache"
+                            BucketLocation = "us-east-1"
+                            Insecure = false
+                            AuthenticationType = "access-key"
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+      tags:
+        - gitlab

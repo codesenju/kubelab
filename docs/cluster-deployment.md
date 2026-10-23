@@ -1,5 +1,32 @@
 # Kubernetes Cluster Deployment on Proxmox
 
+## Table of Contents
+
+- [🎯 Overview](#-overview)
+- [📋 Prerequisites](#-prerequisites)
+  - [Proxmox Environment](#proxmox-environment)
+  - [Local Tools](#local-tools)
+- [🚀 Deployment Steps](#-deployment-steps)
+  - [1. Configure Infrastructure](#1-configure-infrastructure)
+  - [2. Deploy VMs](#2-deploy-vms)
+  - [3. Configure Ansible Inventory](#3-configure-ansible-inventory)
+  - [4. Create Secrets](#4-create-secrets)
+  - [5. Deploy Kubernetes](#5-deploy-kubernetes)
+  - [6. Configure kubectl](#6-configure-kubectl)
+- [✅ Verification](#-verification)
+  - [Cluster Health](#cluster-health)
+  - [Load Balancer](#load-balancer)
+  - [Storage (if NFS configured)](#storage-if-nfs-configured)
+- [🔧 Post-Deployment](#-post-deployment)
+  - [Install Core Components](#install-core-components)
+  - [Access ArgoCD](#access-argocd)
+- [🚨 Troubleshooting](#-troubleshooting)
+  - [Common Issues](#common-issues)
+- [📊 Cluster Specifications](#-cluster-specifications)
+  - [Default Configuration](#default-configuration)
+  - [Resource Allocation](#resource-allocation)
+  - [Network Configuration](#network-configuration)
+
 ## 🎯 Overview
 
 Deploy a production-ready Kubernetes cluster on Proxmox using OpenTofu and Ansible.

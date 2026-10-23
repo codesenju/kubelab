@@ -3,6 +3,18 @@
 This guide configures OpenCode to export traces, metrics, and log events to a
 SigNoz OpenTelemetry Collector.
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Install Plugin](#install-plugin)
+- [Configure OTLP Export](#configure-otlp-export)
+- [Persist Environment Variables](#persist-environment-variables)
+- [Verify Collector Reachability](#verify-collector-reachability)
+- [Verify OpenCode Export](#verify-opencode-export)
+- [Verify in SigNoz](#verify-in-signoz)
+- [Troubleshooting Checklist](#troubleshooting-checklist)
+- [References](#references)
+
 ## Prerequisites
 
 - OpenCode installed and working.

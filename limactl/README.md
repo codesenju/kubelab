@@ -1,4 +1,10 @@
 
+## Table of Contents
+
+- [x86_64](#x86_64)
+- [A multi-node cluster can be created by starting multiple instances of this template](#a-multi-node-cluster-can-be-created-by-starting-multiple-instances-of-this-template)
+- [connected via the `lima:user-v2` network.](#connected-via-the-limauser-v2-network)
+
 ## x86_64
 brew install lima-additional-guestagents
 

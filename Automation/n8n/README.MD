@@ -1,3 +1,8 @@
+## Table of Contents
+
+- [Update existing secret](#update-existing-secret)
+- [Create new secret](#create-new-secret)
+
 ## Update existing secret
 ```bash
 kubectl create secret generic instagram-cookies \

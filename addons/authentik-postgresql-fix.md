@@ -1,5 +1,12 @@
 # Authentik PostgreSQL Configuration Mount Fix
 
+## Table of Contents
+
+- [Problem](#problem)
+- [Root Cause](#root-cause)
+- [Solution](#solution)
+- [Applied Fix](#applied-fix)
+
 ## Problem
 
 PostgreSQL container was crashing with error:

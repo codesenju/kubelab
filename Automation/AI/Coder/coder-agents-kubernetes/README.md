@@ -13,6 +13,11 @@ Kubernetes workspace template designed for Coder Agents. The workspace installs 
 
 <!-- prerequisites:start -->
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Architecture](#architecture)
+
 ## Prerequisites
 
 This template only provisions a Coder agent. You must provide your own compute platform (e.g. Docker, a VM, Kubernetes) for the agent to run on.

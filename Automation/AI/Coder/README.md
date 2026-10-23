@@ -13,6 +13,21 @@ sidecar, Docker CLI installed by an init container, and `DOCKER_HOST` set to
 All templates expose a mutable `app_ports` parameter. Set comma-separated TCP
 ports, and Coder creates one proxied app link per port.
 
+## Table of Contents
+
+- [DIND Security](#dind-security)
+- [Install And Configure Coder CLI](#install-and-configure-coder-cli)
+- [Prerequisites](#prerequisites)
+- [Validate A Local Template Folder](#validate-a-local-template-folder)
+- [Push Existing OpenCode Template](#push-existing-opencode-template)
+- [Push Modern Template](#push-modern-template)
+- [Create Workspace From Published Template](#create-workspace-from-published-template)
+- [Publish DIND Changes](#publish-dind-changes)
+- [Create Test Workspace](#create-test-workspace)
+- [Validate Test Workspace](#validate-test-workspace)
+- [Rollback](#rollback)
+- [Important Differences](#important-differences)
+
 ## DIND Security
 
 DIND requires one privileged container per workspace. This allows Docker builds

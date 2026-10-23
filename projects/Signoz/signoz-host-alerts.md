@@ -3,6 +3,20 @@
 Guide creates CPU, memory, and filesystem alerts for Linux hosts. Replace
 `<HOST_NAME>` and `<NOTIFICATION_CHANNEL>` with environment-specific values.
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [User Workflow](#user-workflow)
+  - [CPU utilization](#cpu-utilization)
+  - [Memory utilization](#memory-utilization)
+  - [Filesystem utilization](#filesystem-utilization)
+- [Agent Workflow](#agent-workflow)
+- [Copy-Paste Agent Prompt](#copy-paste-agent-prompt)
+- [Canonical Alert Properties](#canonical-alert-properties)
+- [Host Utilization Dashboard](#host-utilization-dashboard)
+  - [Create From Export](#create-from-export)
+- [Dashboard Agent Prompt](#dashboard-agent-prompt)
+
 ## Prerequisites
 
 - SigNoz MCP server connected, or access to SigNoz UI.

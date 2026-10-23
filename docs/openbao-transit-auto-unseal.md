@@ -9,6 +9,30 @@ This guide documents current Kubelab OpenBao setup:
 - Transit workload: Kustomize overlay at `kustomize/openbao-transit/overlays/prod`.
 - Main workload: OpenBao Helm chart configured in `addons/openbao.yaml`.
 
+## Table of Contents
+
+- [Concept](#concept)
+- [What Happens If Transit Is Sealed](#what-happens-if-transit-is-sealed)
+- [Architecture](#architecture)
+- [Prerequisites](#prerequisites)
+- [Files](#files)
+  - [Transit](#transit)
+  - [Main OpenBao](#main-openbao)
+- [Deployment](#deployment)
+- [Initialize Transit](#initialize-transit)
+- [Configure Transit Key](#configure-transit-key)
+- [Initialize Main OpenBao](#initialize-main-openbao)
+- [Verify Raft](#verify-raft)
+- [Verify Transit Reachability](#verify-transit-reachability)
+- [Test Auto-Unseal](#test-auto-unseal)
+- [Troubleshooting](#troubleshooting)
+  - [Main OpenBao says `is the server initialized?`](#main-openbao-says-is-the-server-initialized)
+  - [Main OpenBao says `Vault is sealed`](#main-openbao-says-vault-is-sealed)
+  - [Main OpenBao cannot resolve `openbao-1.openbao-internal`](#main-openbao-cannot-resolve-openbao-1openbao-internal)
+  - [Transit route returns EndpointSlice errors](#transit-route-returns-endpointslice-errors)
+  - [TLS errors reach transit](#tls-errors-reach-transit)
+- [Security and Operations](#security-and-operations)
+
 ## Concept
 
 OpenBao encrypts its stored data with a barrier key. On startup, main OpenBao is sealed until it can recover that key.

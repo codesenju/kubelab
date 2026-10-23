@@ -1,5 +1,21 @@
 # Kubernetes Control Plane Node Addition
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Step 1: Initialize OpenTofu](#step-1-initialize-opentofu)
+- [Step 2: Create Control Plane VMs](#step-2-create-control-plane-vms)
+    - [Create default (1 control plane)](#create-default-1-control-plane)
+  - [Create multiple control plane nodes (example: 3 control planes)](#create-multiple-control-plane-nodes-example-3-control-planes)
+- [Step 3: Configure Ansible Inventory](#step-3-configure-ansible-inventory)
+  - [Add your new control plane nodes (example):](#add-your-new-control-plane-nodes-example)
+- [Step 4: Install Dependencies](#step-4-install-dependencies)
+- [Step 5: Join Control Plane to Cluster](#step-5-join-control-plane-to-cluster)
+  - [Using a different existing control plane node](#using-a-different-existing-control-plane-node)
+- [Verification](#verification)
+- [Customization Options](#customization-options)
+- [Note](#note)
+
 ## Prerequisites
 - OpenTofu installed
 - Ansible installed

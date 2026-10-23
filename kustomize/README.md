@@ -2,6 +2,21 @@
 
 This directory contains Kustomize configurations for applications deployed in the Kubernetes cluster.
 
+## Table of Contents
+
+- [Directory Structure](#directory-structure)
+- [Usage](#usage)
+- [Available Applications](#available-applications)
+  - [Media Stack](#media-stack)
+  - [Beszel Agent](#beszel-agent)
+  - [Cloudflare DDNS](#cloudflare-ddns)
+  - [NGINX Proxy Manager](#nginx-proxy-manager)
+  - [Vaultwarden](#vaultwarden)
+- [Customization](#customization)
+  - [Adding a New Application](#adding-a-new-application)
+  - [Common Customizations](#common-customizations)
+- [Best Practices](#best-practices)
+
 ## Directory Structure
 
 Each application follows a standard structure:
