@@ -2,6 +2,20 @@
 
 This document describes how metrics and traces move from workloads through Prometheus, OBI, Alloy, Mimir, Tempo, RustFS S3, and Grafana.
 
+## Table of Contents
+
+- [System Overview](#system-overview)
+- [Metrics Flow](#metrics-flow)
+- [OBI Trace Flow](#obi-trace-flow)
+- [Direct OBI Metrics](#direct-obi-metrics)
+- [Trace Queries and Service Map](#trace-queries-and-service-map)
+  - [Confirmed Service Graph](#confirmed-service-graph)
+  - [Enable Service Graph in Grafana](#enable-service-graph-in-grafana)
+- [Object Storage](#object-storage)
+- [Dependency Graph](#dependency-graph)
+- [Verification Commands](#verification-commands)
+- [Known Failure Modes](#known-failure-modes)
+
 ## System Overview
 
 ```mermaid

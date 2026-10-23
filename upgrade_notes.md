@@ -4,6 +4,32 @@ This runbook upgrades a kubeadm cluster one minor version at a time. The etcd
 restore procedure is a separate disaster-recovery procedure and is not part of
 a normal Kubernetes upgrade.
 
+## Table of Contents
+
+- [Kubernetes Upgrade](#kubernetes-upgrade)
+  - [1. Configure the Package Repository](#1-configure-the-package-repository)
+  - [2. Upgrade the First Control Plane](#2-upgrade-the-first-control-plane)
+  - [3. Upgrade the Remaining Control Planes](#3-upgrade-the-remaining-control-planes)
+  - [4. Upgrade the Workers](#4-upgrade-the-workers)
+  - [5. Verify the Upgrade](#5-verify-the-upgrade)
+- [Upgrade Troubleshooting](#upgrade-troubleshooting)
+  - [Missing CRI Socket Annotation](#missing-cri-socket-annotation)
+  - [Stale Cluster Configuration Version](#stale-cluster-configuration-version)
+  - [clusterCIDR Recommendation Warning](#clustercidr-recommendation-warning)
+- [1. Prepare Restore Storage](#1-prepare-restore-storage)
+- [2. Stop the Static Pods](#2-stop-the-static-pods)
+- [3. Define Restore Variables](#3-define-restore-variables)
+- [4. Back Up Existing etcd Data](#4-back-up-existing-etcd-data)
+- [5. Restore the Snapshot](#5-restore-the-snapshot)
+  - [Control Plane 1](#control-plane-1)
+  - [Control Plane 2](#control-plane-2)
+  - [Control Plane 3](#control-plane-3)
+- [6. Restore the Manifests](#6-restore-the-manifests)
+- [7. Verify etcd](#7-verify-etcd)
+- [8. Verify Kubernetes](#8-verify-kubernetes)
+- [Node Role Labels](#node-role-labels)
+- [Rsync](#rsync)
+
 ## Kubernetes Upgrade
 
 Upgrade only one node at a time and verify cluster health before continuing.

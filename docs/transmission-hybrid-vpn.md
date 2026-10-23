@@ -1,5 +1,29 @@
 # Transmission Hybrid VPN Guide
 
+## Table of Contents
+
+- [Summary](#summary)
+- [Beginner Setup](#beginner-setup)
+  - [1. Identify Addresses](#1-identify-addresses)
+  - [2. Configure VPS WireGuard](#2-configure-vps-wireguard)
+  - [3. Configure Headscale ACL](#3-configure-headscale-acl)
+  - [4. Configure Tailscale on Transmission](#4-configure-tailscale-on-transmission)
+  - [5. Configure WireGuard Client](#5-configure-wireguard-client)
+  - [6. Order Services Correctly](#6-order-services-correctly)
+  - [7. Start and Test WireGuard](#7-start-and-test-wireguard)
+  - [8. Enable Boot Persistence](#8-enable-boot-persistence)
+  - [9. Verify Transmission](#9-verify-transmission)
+- [Components](#components)
+- [Headscale ACL](#headscale-acl)
+- [Transmission Client](#transmission-client)
+- [Server Configuration](#server-configuration)
+- [Verification](#verification)
+- [Troubleshooting](#troubleshooting)
+  - [No WG handshake](#no-wg-handshake)
+  - [Internet unavailable](#internet-unavailable)
+  - [SSH access lost](#ssh-access-lost)
+- [Security Notes](#security-notes)
+
 ## Summary
 
 Transmission runs two network layers:

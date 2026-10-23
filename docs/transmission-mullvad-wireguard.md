@@ -1,5 +1,23 @@
 # Transmission LXC with Mullvad WireGuard
 
+## Table of Contents
+
+- [Overview](#overview)
+- [Requirements](#requirements)
+- [Proxmox LXC Network](#proxmox-lxc-network)
+- [Install Packages](#install-packages)
+- [Install Mullvad Profile](#install-mullvad-profile)
+- [Start WireGuard](#start-wireguard)
+- [Remove Conflicting VPN Clients](#remove-conflicting-vpn-clients)
+- [Verify VPN Egress](#verify-vpn-egress)
+- [Speed Tests](#speed-tests)
+- [Troubleshooting](#troubleshooting)
+  - [No handshake](#no-handshake)
+  - [Internet unavailable](#internet-unavailable)
+  - [SSH access lost](#ssh-access-lost)
+  - [DNS failure](#dns-failure)
+- [Security Notes](#security-notes)
+
 ## Overview
 
 Transmission runs inside a Proxmox LXC container. The container uses a Mullvad WireGuard profile as its only VPN layer.

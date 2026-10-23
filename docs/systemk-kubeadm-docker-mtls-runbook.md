@@ -2,6 +2,21 @@
 
 A compact runbook for the tested homelab setup. **Systemk runs Linux processes as systemd units, not OCI containers.** We additionally run the Docker *CLI* inside a Systemk-managed unit to talk to the host Docker Engine over mutual TLS. Kubernetes manages the CLI/unit, **not** the Docker container's lifecycle.
 
+## Table of Contents
+
+- [Environment](#environment)
+- [1. Create Systemk node credentials](#1-create-systemk-node-credentials)
+- [2. Build Systemk on Ubuntu](#2-build-systemk-on-ubuntu)
+- [3. TLS for Systemk's kubelet-compatible log endpoint](#3-tls-for-systemks-kubelet-compatible-log-endpoint)
+- [4. Run Systemk as a systemd service](#4-run-systemk-as-a-systemd-service)
+- [5. Configure Docker API mutual TLS without restarting Docker](#5-configure-docker-api-mutual-tls-without-restarting-docker)
+  - [Verify mTLS (Ubuntu)](#verify-mtls-ubuntu)
+- [6. Test Pod manifests](#6-test-pod-manifests)
+  - [A. Native Bash Pod (`systemk-persistent.yaml`)](#a-native-bash-pod-systemk-persistentyaml)
+  - [B. Docker hello-world over mTLS (`systemk-docker-mtls.yaml`)](#b-docker-hello-world-over-mtls-systemk-docker-mtlsyaml)
+- [7. Quick validation and troubleshooting](#7-quick-validation-and-troubleshooting)
+  - [References](#references)
+
 ## Environment
 
 | Component | Value |

@@ -2,6 +2,11 @@
 
 This repository contains the definitions and usage examples for Crossplane-based Internal Developer Platform resources.
 
+## Table of Contents
+
+- [Contents](#contents)
+- [GitOps with Argo CD](#gitops-with-argo-cd)
+
 ## Contents
 
 - **xrd/**: Composite Resource Definitions (XRDs) and their schemas.

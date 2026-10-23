@@ -4,6 +4,44 @@
 
 For experienced Kubernetes administrators who want to quickly deploy and evaluate modern cloud-native tools.
 
+## Table of Contents
+
+- [🚀 Quick Start](#-quick-start)
+  - [1. Deploy Kubernetes Cluster](#1-deploy-kubernetes-cluster)
+  - [2. Configure Secrets](#2-configure-secrets)
+  - [3. Deploy Core Infrastructure](#3-deploy-core-infrastructure)
+  - [4. Deploy Applications](#4-deploy-applications)
+- [📦 Available Addons](#-available-addons)
+  - [Core Infrastructure](#core-infrastructure)
+  - [Observability Stack](#observability-stack)
+  - [Storage & Data](#storage--data)
+  - [Security & Identity](#security--identity)
+  - [DevOps & CI/CD](#devops--cicd)
+  - [Networking](#networking)
+  - [Utilities](#utilities)
+  - [Home & Media](#home--media)
+  - [Communication](#communication)
+- [🔐 Required Secrets](#-required-secrets)
+- [🏗️ Common Deployment Patterns](#️-common-deployment-patterns)
+  - [Complete Observability Stack](#complete-observability-stack)
+  - [GitOps + Security](#gitops--security)
+  - [Service Mesh + Advanced Networking](#service-mesh--advanced-networking)
+- [🔧 Management Commands](#-management-commands)
+- [✅ Verification & Testing](#-verification--testing)
+  - [1. Infrastructure Health](#1-infrastructure-health)
+  - [2. Core Infrastructure](#2-core-infrastructure)
+  - [3. Application Routing (via Traefik)](#3-application-routing-via-traefik)
+  - [4. CrowdSec — AppSec WAF (Real-Time Blocking)](#4-crowdsec--appsec-waf-real-time-blocking)
+  - [5. CrowdSec — Log-Based Detection](#5-crowdsec--log-based-detection)
+  - [6. CrowdSec — Simulated Attacks](#6-crowdsec--simulated-attacks)
+  - [7. Traefik Middleware Status](#7-traefik-middleware-status)
+  - [8. Storage](#8-storage)
+  - [9. Monitoring](#9-monitoring)
+  - [10. Full Smoke Test Script](#10-full-smoke-test-script)
+  - [Known Issues](#known-issues)
+- [Building container image](#building-container-image)
+- [📚 Documentation](#-documentation)
+
 ## 🚀 Quick Start
 
 ### 1. Deploy Kubernetes Cluster

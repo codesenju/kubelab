@@ -2,6 +2,16 @@
 
 Use this flow to pull Hugging Face models through the Nexus `hf` proxy repository.
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Download Command (Recommended)](#download-command-recommended)
+- [Why these environment variables matter](#why-these-environment-variables-matter)
+- [Important notes](#important-notes)
+- [Nexus proxy tuning for large GGUF downloads](#nexus-proxy-tuning-for-large-gguf-downloads)
+- [Security recommendation](#security-recommendation)
+- [Automation](#automation)
+
 ## Prerequisites
 
 - Nexus HF proxy repository is reachable at `https://registry.internal.invalid/repository/hf`

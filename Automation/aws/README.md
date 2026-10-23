@@ -2,6 +2,19 @@
 
 This guide shows how to run a local AWS-compatible environment with Ministack, configure OpenTofu to use an S3 backend, and create a Kinesis stream.
 
+## Table of Contents
+
+- [1. Start Ministack](#1-start-ministack)
+- [2. Set AWS CLI environment variables](#2-set-aws-cli-environment-variables)
+- [3. Create the S3 state bucket](#3-create-the-s3-state-bucket)
+- [4. Initialize OpenTofu](#4-initialize-opentofu)
+- [5. Create and select a workspace](#5-create-and-select-a-workspace)
+- [6. Review the plan](#6-review-the-plan)
+- [7. Apply the plan](#7-apply-the-plan)
+- [8. Verify the stream](#8-verify-the-stream)
+- [What was created](#what-was-created)
+- [Troubleshooting](#troubleshooting)
+
 ## 1. Start Ministack
 
 Run the local infrastructure defined in `compose.yaml`:

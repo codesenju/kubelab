@@ -9,6 +9,24 @@ This directory contains Ansible playbooks and configurations for deploying and m
 
 ---
 
+## Table of Contents
+
+- [📁 Directory Structure](#-directory-structure)
+- [✅ Prerequisites](#-prerequisites)
+- [🚀 Usage](#-usage)
+  - [Verify Connectivity](#verify-connectivity)
+  - [Deploy Kubernetes Cluster](#deploy-kubernetes-cluster)
+  - [Deploy Specific Components](#deploy-specific-components)
+    - [Available Tags](#available-tags)
+  - [Ad-hoc Commands](#ad-hoc-commands)
+- [⚙️ Configuration](#️-configuration)
+  - [Inventory](#inventory)
+  - [Variables](#variables)
+- [📖 Playbooks](#-playbooks)
+  - [main.yaml](#mainyaml)
+  - [addons.yaml](#addonsyaml)
+- [🛠️ Roles](#️-roles)
+
 ## 📁 Directory Structure
 
 | File/Directory  | Description                              |

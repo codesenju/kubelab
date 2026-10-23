@@ -1,5 +1,10 @@
 # Workflow Patterns
 
+## Table of Contents
+
+- [Sequential Workflows](#sequential-workflows)
+- [Conditional Workflows](#conditional-workflows)
+
 ## Sequential Workflows
 
 For complex tasks, break operations into clear, sequential steps. It is often helpful to give Claude an overview of the process towards the beginning of SKILL.md:

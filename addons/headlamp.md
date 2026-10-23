@@ -1,4 +1,11 @@
 # OIDC
+
+## Table of Contents
+
+- [NB](#nb)
+  - [Create OIDC User for the Cluster.](#create-oidc-user-for-the-cluster)
+  - [Link the User to the Cluster](#link-the-user-to-the-cluster)
+
 ## NB
 
 - use http://localhost:8000 as redirect uri http://localhost:18000

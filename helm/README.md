@@ -2,6 +2,20 @@
 
 This directory contains Helm values files for applications deployed in the Kubernetes cluster.
 
+## Table of Contents
+
+- [Usage](#usage)
+- [Available Values Files](#available-values-files)
+  - [Core Infrastructure](#core-infrastructure)
+  - [Monitoring & Observability](#monitoring--observability)
+  - [Storage](#storage)
+  - [Development Tools](#development-tools)
+- [Customization](#customization)
+  - [Updating Values](#updating-values)
+  - [Adding New Values Files](#adding-new-values-files)
+- [Best Practices](#best-practices)
+- [Example Values File](#example-values-file)
+
 ## Usage
 
 These values files are referenced by ArgoCD applications using the multi-source feature:

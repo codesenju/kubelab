@@ -4,6 +4,18 @@
 
 > **Lab only.** The old CRI provider is not a drop-in kubeadm worker. Its CRI imports, Kubernetes dependencies and permissions needed patching. The example grants read access to *all Secrets within the disposable `cri-lab` namespace*. It does not establish cross-node Pod routing, Services/DNS, persistent-volume support, or production-grade kubelet serving TLS. The hostPort example exposes an HTTP test service on your LAN; do not use it for sensitive workloads. Do not grant the node cluster-admin permissions.
 
+## Table of Contents
+
+- [1. Enable containerd's CRI and install prerequisites — VM](#1-enable-containerds-cri-and-install-prerequisites--vm)
+- [2. Patch and build the legacy provider for CRI v1 — VM](#2-patch-and-build-the-legacy-provider-for-cri-v1--vm)
+- [3. Give the virtual node its own client identity](#3-give-the-virtual-node-its-own-client-identity)
+- [4. Restrict the watch to a disposable namespace — admin](#4-restrict-the-watch-to-a-disposable-namespace--admin)
+- [5. Install CNI and configure a non-overlapping test subnet — VM](#5-install-cni-and-configure-a-non-overlapping-test-subnet--vm)
+- [6. Run Virtual Kubelet — VM](#6-run-virtual-kubelet--vm)
+- [7. Test Pod: create → run → logs → complete — admin / VM](#7-test-pod-create--run--logs--complete--admin--vm)
+- [8. Expose nginx on `192.168.0.31:18080` using `hostPort` (no Service or port-forward)](#8-expose-nginx-on-19216803118080-using-hostport-no-service-or-port-forward)
+- [Quick fixes from this build](#quick-fixes-from-this-build)
+
 ## 1. Enable containerd's CRI and install prerequisites — VM
 
 ```bash

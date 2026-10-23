@@ -2,6 +2,26 @@
 
 This directory contains OpenTofu configurations for provisioning the Kubernetes cluster infrastructure on Proxmox.
 
+## Table of Contents
+
+- [Initial Setup](#initial-setup)
+  - [1. Configure Your Proxmox Node Names](#1-configure-your-proxmox-node-names)
+  - [2. Customize VM Resources (Optional)](#2-customize-vm-resources-optional)
+  - [3. S3 Backend Setup (Optional)](#3-s3-backend-setup-optional)
+  - [Configure Drive3 Credentials](#configure-drive3-credentials)
+- [Network Configuration](#network-configuration)
+  - [IP Address Assignment](#ip-address-assignment)
+- [Virtual Machine Specifications](#virtual-machine-specifications)
+- [Authentication Setup](#authentication-setup)
+  - [Generating SSH Keys](#generating-ssh-keys)
+- [Usage](#usage)
+  - [Pass .env to system environment variables](#pass-env-to-system-environment-variables)
+  - [Initialize OpenTofu](#initialize-opentofu)
+  - [Select workspace](#select-workspace)
+  - [Plan the Deployment](#plan-the-deployment)
+  - [Apply the Configuration](#apply-the-configuration)
+- [🚀 Install Kubernetes Components](#-install-kubernetes-components)
+
 ## Initial Setup
 
 ### 1. Configure Your Proxmox Node Names

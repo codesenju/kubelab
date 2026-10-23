@@ -2,6 +2,26 @@
 
 Transforms Docker commands or Docker Compose files into Kubernetes Kustomize manifests and ArgoCD Application Ansible playbooks.
 
+## Table of Contents
+
+- [When to use](#when-to-use)
+- [Prerequisites](#prerequisites)
+- [Input format](#input-format)
+  - [Docker run command example](#docker-run-command-example)
+  - [Docker Compose example](#docker-compose-example)
+- [Transformation process](#transformation-process)
+  - [1. Parse input](#1-parse-input)
+  - [2. Create Kustomize base](#2-create-kustomize-base)
+  - [3. Generate deployment.yaml](#3-generate-deploymentyaml)
+  - [4. Generate service.yaml](#4-generate-serviceyaml)
+  - [5. Generate pvc.yaml](#5-generate-pvcyaml)
+  - [6. Generate base kustomization.yaml](#6-generate-base-kustomizationyaml)
+  - [7. Generate overlay kustomization.yaml](#7-generate-overlay-kustomizationyaml)
+  - [8. Generate ArgoCD Application Ansible playbook](#8-generate-argocd-application-ansible-playbook)
+- [Output](#output)
+- [Usage example](#usage-example)
+- [Notes](#notes)
+
 ## When to use
 
 - When migrating from Docker containers to Kubernetes

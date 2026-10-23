@@ -1,5 +1,33 @@
 # Addon Configuration Guide
 
+## Table of Contents
+
+- [🎯 Overview](#-overview)
+- [🔧 Configuration Methods](#-configuration-methods)
+  - [1. Helm Values](#1-helm-values)
+  - [2. Kustomize Overlays](#2-kustomize-overlays)
+  - [3. Ansible Variables](#3-ansible-variables)
+- [📦 Common Configurations](#-common-configurations)
+  - [Ingress and DNS](#ingress-and-dns)
+  - [Storage Configuration](#storage-configuration)
+  - [Resource Limits](#resource-limits)
+- [🔍 Application-Specific Configuration](#-application-specific-configuration)
+  - [Observability Stack](#observability-stack)
+  - [Security & Identity](#security--identity)
+  - [Storage Solutions](#storage-solutions)
+  - [DevOps Tools](#devops-tools)
+- [🔐 Secrets Management](#-secrets-management)
+  - [Required Secrets by Category](#required-secrets-by-category)
+  - [Secrets Rotation](#secrets-rotation)
+- [🌐 Network Configuration](#-network-configuration)
+  - [Ingress Configuration](#ingress-configuration)
+  - [Service Mesh (Istio)](#service-mesh-istio)
+- [📊 Monitoring Configuration](#-monitoring-configuration)
+  - [Custom Dashboards](#custom-dashboards)
+  - [Alert Rules](#alert-rules)
+- [🔧 Troubleshooting Configuration](#-troubleshooting-configuration)
+  - [Common Issues](#common-issues)
+
 ## 🎯 Overview
 
 Configuration options and customization for KubeLab addons.

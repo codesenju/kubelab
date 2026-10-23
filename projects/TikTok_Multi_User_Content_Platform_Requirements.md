@@ -1,5 +1,25 @@
 # TikTok Multi-User Content Publishing Platform – Requirements & Build Prompt
 
+## Table of Contents
+
+- [1. Purpose & Goal](#1-purpose--goal)
+- [2. Target Users](#2-target-users)
+  - [Primary Users](#primary-users)
+  - [Explicitly Excluded](#explicitly-excluded)
+- [3. Core Compliance Principles (CRITICAL)](#3-core-compliance-principles-critical)
+- [4. Functional Requirements](#4-functional-requirements)
+  - [4.1 Authentication](#41-authentication)
+  - [4.2 TikTok Connection](#42-tiktok-connection)
+  - [4.3 Content Management](#43-content-management)
+  - [4.4 Scheduling & Publishing](#44-scheduling--publishing)
+  - [4.5 API Usage](#45-api-usage)
+- [5. UI Requirements](#5-ui-requirements)
+- [6. Security & Privacy](#6-security--privacy)
+- [7. Demo Video Requirements (For Review)](#7-demo-video-requirements-for-review)
+- [8. Disallowed Behavior](#8-disallowed-behavior)
+- [9. App Description (Suggested)](#9-app-description-suggested)
+- [10. System / AI Build Prompt](#10-system--ai-build-prompt)
+
 ## 1. Purpose & Goal
 Build a **TikTok-approved, multi-user content publishing platform** that allows **independent creators, businesses, and agencies** to authenticate their own TikTok accounts and schedule, upload, and publish content using TikTok’s official APIs. The platform must comply fully with **TikTok for Developers App Review Guidelines** and explicitly **avoid personal or internal-only usage**.
 

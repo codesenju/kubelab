@@ -2,6 +2,11 @@
 
 Use these patterns when skills need to produce consistent, high-quality output.
 
+## Table of Contents
+
+- [Template Pattern](#template-pattern)
+- [Examples Pattern](#examples-pattern)
+
 ## Template Pattern
 
 Provide templates for output format. Match the level of strictness to your needs.

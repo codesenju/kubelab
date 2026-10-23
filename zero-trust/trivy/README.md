@@ -2,6 +2,16 @@
 
 This directory focuses on scanning container images with Trivy, applying VEX data from upstream, and publishing results as OTLP logs.
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [VEX source (direct internet)](#vex-source-direct-internet)
+- [Scan with Trivy (manual)](#scan-with-trivy-manual)
+- [Verify DB proxy repos](#verify-db-proxy-repos)
+- [Publish Trivy results to OTLP](#publish-trivy-results-to-otlp)
+- [OTLP endpoint examples](#otlp-endpoint-examples)
+- [Dashboard](#dashboard)
+
 ## Prerequisites
 
 - `trivy`

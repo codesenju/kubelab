@@ -1,5 +1,19 @@
 # Kubernetes Worker Node Addition
 
+## Table of Contents
+
+- [Prerequisites](#prerequisites)
+- [Step 1: Initialize OpenTofu](#step-1-initialize-opentofu)
+- [Step 2: Create Worker VMs](#step-2-create-worker-vms)
+    - [Create default (1 worker)](#create-default-1-worker)
+  - [Create multiple workers (example: 3 workers)](#create-multiple-workers-example-3-workers)
+- [Step 3: Configure Ansible Inventory](#step-3-configure-ansible-inventory)
+  - [Add your worker nodes (example):](#add-your-worker-nodes-example)
+- [Step 4: Install Dependencies](#step-4-install-dependencies)
+- [Step 5: Join Workers to Cluster](#step-5-join-workers-to-cluster)
+- [Verification](#verification)
+- [Customization Options](#customization-options)
+
 ## Prerequisites
 - OpenTofu installed
 - Ansible installed

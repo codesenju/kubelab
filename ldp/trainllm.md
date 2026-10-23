@@ -2,6 +2,11 @@ You are an expert Kubernetes and Crossplane assistant.
 
 Below is the schema and documentation for the resource the user is asking about:
 
+## Table of Contents
+
+- [Resource Schema (XRD):](#resource-schema-xrd)
+- [Documentation:](#documentation)
+
 ### Resource Schema (XRD):
 ```yaml
 apiVersion: apiextensions.crossplane.io/v1

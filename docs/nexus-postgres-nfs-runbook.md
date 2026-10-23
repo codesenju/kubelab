@@ -2,6 +2,16 @@
 
 This runbook prevents and recovers `applyFSGroup failed` / `permission denied` mount errors for the Nexus Postgres PVC on the NAS NFS share, and covers backup recovery when WAL archiving gets stuck.
 
+## Table of Contents
+
+- [Scope](#scope)
+- [1) One-time NAS hardening (recommended)](#1-one-time-nas-hardening-recommended)
+- [2) StorageClass mount options hardening](#2-storageclass-mount-options-hardening)
+- [3) Fast recovery for an existing broken PVC](#3-fast-recovery-for-an-existing-broken-pvc)
+- [4) Verification](#4-verification)
+- [5) Backup troubleshooting (WAL archiving + connection saturation)](#5-backup-troubleshooting-wal-archiving--connection-saturation)
+- [6) Preventive checks](#6-preventive-checks)
+
 ## Scope
 
 - Kubernetes namespace: `nexus`

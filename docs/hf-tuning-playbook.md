@@ -2,6 +2,16 @@
 
 This guide explains how to set up and run `addons/hf-tuning.yaml` to tune the Nexus Hugging Face proxy repository for large GGUF downloads.
 
+## Table of Contents
+
+- [What the playbook changes](#what-the-playbook-changes)
+- [Prerequisites](#prerequisites)
+- [Credential setup](#credential-setup)
+- [Run the playbook](#run-the-playbook)
+- [Optional overrides](#optional-overrides)
+- [Verify the applied configuration](#verify-the-applied-configuration)
+- [Troubleshooting](#troubleshooting)
+
 ## What the playbook changes
 
 Target repository: `hf`

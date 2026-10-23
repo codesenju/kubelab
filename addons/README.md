@@ -2,6 +2,22 @@
 
 This directory contains ArgoCD application manifests for deploying applications to the Kubernetes cluster.
 
+## Table of Contents
+
+- [Application Structure](#application-structure)
+- [Deployment Method](#deployment-method)
+- [Available Applications](#available-applications)
+  - [Core Infrastructure](#core-infrastructure)
+  - [Monitoring & Observability](#monitoring--observability)
+  - [Storage](#storage)
+  - [Development Tools](#development-tools)
+  - [Media Applications](#media-applications)
+  - [Security & Authentication](#security--authentication)
+  - [Networking](#networking)
+- [Application Configuration](#application-configuration)
+- [Example Application](#example-application)
+- [Multi-Source Example](#multi-source-example)
+
 ## Application Structure
 
 Each YAML file defines an ArgoCD application that points to either:

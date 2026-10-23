@@ -1,3 +1,9 @@
+## Table of Contents
+
+- [Running llm's locally with docker](#running-llms-locally-with-docker)
+- [Example Config for Continue VSC Plugin](#example-config-for-continue-vsc-plugin)
+- [RUnning on macos](#running-on-macos)
+
 ## Running llm's locally with docker
 ```bash
 pip install -U huggingface-hub

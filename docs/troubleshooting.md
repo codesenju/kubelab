@@ -1,5 +1,25 @@
 # Troubleshooting Guide
 
+## Table of Contents
+
+- [🚨 Common Issues and Solutions](#-common-issues-and-solutions)
+  - [Cluster Issues](#cluster-issues)
+  - [Application Deployment Issues](#application-deployment-issues)
+  - [Storage Issues](#storage-issues)
+  - [Networking Issues](#networking-issues)
+  - [Security Issues](#security-issues)
+  - [Observability Issues](#observability-issues)
+- [🔧 Diagnostic Commands](#-diagnostic-commands)
+  - [Cluster Health Check](#cluster-health-check)
+  - [Application Debug](#application-debug)
+  - [Network Debug](#network-debug)
+- [📊 Performance Monitoring](#-performance-monitoring)
+  - [Resource Monitoring](#resource-monitoring)
+  - [Application Performance](#application-performance)
+- [🆘 Emergency Procedures](#-emergency-procedures)
+  - [Cluster Recovery](#cluster-recovery)
+  - [Application Recovery](#application-recovery)
+
 ## 🚨 Common Issues and Solutions
 
 ### Cluster Issues

@@ -8,6 +8,30 @@ license: Complete terms in LICENSE.txt
 
 This skill provides guidance for creating effective skills.
 
+## Table of Contents
+
+- [About Skills](#about-skills)
+  - [What Skills Provide](#what-skills-provide)
+- [Core Principles](#core-principles)
+  - [Concise is Key](#concise-is-key)
+  - [Set Appropriate Degrees of Freedom](#set-appropriate-degrees-of-freedom)
+  - [Anatomy of a Skill](#anatomy-of-a-skill)
+    - [SKILL.md (required)](#skillmd-required)
+    - [Bundled Resources (optional)](#bundled-resources-optional)
+    - [What to Not Include in a Skill](#what-to-not-include-in-a-skill)
+  - [Progressive Disclosure Design Principle](#progressive-disclosure-design-principle)
+    - [Progressive Disclosure Patterns](#progressive-disclosure-patterns)
+- [Skill Creation Process](#skill-creation-process)
+  - [Step 1: Understanding the Skill with Concrete Examples](#step-1-understanding-the-skill-with-concrete-examples)
+  - [Step 2: Planning the Reusable Skill Contents](#step-2-planning-the-reusable-skill-contents)
+  - [Step 3: Initializing the Skill](#step-3-initializing-the-skill)
+  - [Step 4: Edit the Skill](#step-4-edit-the-skill)
+    - [Learn Proven Design Patterns](#learn-proven-design-patterns)
+    - [Start with Reusable Skill Contents](#start-with-reusable-skill-contents)
+    - [Update SKILL.md](#update-skillmd)
+  - [Step 5: Packaging a Skill](#step-5-packaging-a-skill)
+  - [Step 6: Iterate](#step-6-iterate)
+
 ## About Skills
 
 Skills are modular, self-contained packages that extend Claude's capabilities by providing

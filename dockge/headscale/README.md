@@ -14,6 +14,18 @@ proxy_pass https://192.168.0.99:5443/web/; # headscale-ui
 
 ```
 # Tailscale Exit Node Setup: Full Solution
+
+## Table of Contents
+
+- [1. Ubuntu Exit Node Configuration](#1-ubuntu-exit-node-configuration)
+  - [A) Enable IP Forwarding](#a-enable-ip-forwarding)
+  - [B) Add NAT Masquerade Rule](#b-add-nat-masquerade-rule)
+  - [C) Advertise Exit Node](#c-advertise-exit-node)
+- [2. Tailscale ACL Updates](#2-tailscale-acl-updates)
+- [3. Windows Client Fixes](#3-windows-client-fixes)
+  - [C) Clear DNS Cache](#c-clear-dns-cache)
+- [4. Verification](#4-verification)
+
 ## 1. Ubuntu Exit Node Configuration
 ### A) Enable IP Forwarding
 ```bash
