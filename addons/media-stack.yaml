@@ -81,7 +81,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ registry_domain }}/dockerio/linuxserver/prowlarr:2.5.1-nightly
+                        value: {{ registry_domain }}/dockerio/linuxserver/prowlarr:2.6.5-nightly
                   - target:
                       group: apps
                       version: v1
@@ -90,7 +90,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ registry_domain }}/dockerio/linuxserver/radarr:6.4.1-nightly
+                        value: {{ registry_domain }}/dockerio/linuxserver/radarr:7.0.0-nightly
                   - target:
                       group: apps
                       version: v1
@@ -99,7 +99,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ registry_domain }}/dockerio/linuxserver/sonarr:4.0.19
+                        value: {{ registry_domain }}/dockerio/linuxserver/sonarr:4.0.20
                   - target:
                       group: apps
                       version: v1
@@ -135,7 +135,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ registry_domain }}/ghcrio/seerr-team/seerr:v3.4.1
+                        value: {{ registry_domain }}/ghcrio/seerr-team/seerr:v3.5.1
                   - target:
                       group: apps
                       version: v1
@@ -145,6 +145,15 @@
                       - op: add
                         path: /spec/template/spec/containers/0/image
                         value: {{ registry_domain }}/ghcrio/jellyfin/jellyfin:12
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: bazarr
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ registry_domain }}/ghcrio/hotio/bazarr:nightly-v1.6.3
             destination:
               server: https://kubernetes.default.svc
               namespace: media-stack
