@@ -17,6 +17,8 @@ resources:
 # - qbittorrent/service.yaml
 
 # *Arr applications
+- bazarr/deployment.yaml
+- bazarr/service.yaml
 - sonarr/deployment.yaml
 - sonarr/service.yaml
 - radarr/deployment.yaml

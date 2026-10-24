@@ -89,7 +89,7 @@
             source:
               chart: signoz
               repoURL: https://charts.signoz.io
-              targetRevision: 0.140.0
+              targetRevision: 0.147.0
               helm:
                 releaseName: signoz
                 values: |
@@ -136,13 +136,22 @@
                       - dockerhub-secret
                     persistence:
                       size: 20Gi
-                      resources:
-                        requests:
-                          cpu: 500m
-                          memory: 2Gi
-                        limits:
-                          cpu: 2
-                          memory: 4Gi
+                    resources:
+                      requests:
+                        cpu: 500m
+                        memory: 2Gi
+                      limits:
+                        cpu: 2
+                        memory: 4Gi
+                    settings: {}
+                    files:
+                      config.d/max-concurrency.xml: |-
+                        <clickhouse>
+                          <max_connections>200</max_connections>
+                          <background_pool_size>16</background_pool_size>
+                          <background_schedule_pool_size>16</background_schedule_pool_size>
+                          <background_merges_mutates_concurrency>4</background_merges_mutates_concurrency>
+                        </clickhouse>
                     # HA Config
                     layout:
                       shardsCount: 1 # Perfomance
@@ -193,6 +202,11 @@
                             enabled: true
                             num_consumers: 20
                             queue_size: 5000
+                          retry_on_failure:
+                            enabled: true
+                            initial_interval: 5s
+                            max_interval: 30s
+                            max_elapsed_time: 300s
                       processors:
                         batch:
                           timeout: 5s

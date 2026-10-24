@@ -1,0 +1,59 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: bazarr
+  labels:
+    app.kubernetes.io/component: subtitles
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: bazarr
+  template:
+    metadata:
+      labels:
+        app: bazarr
+        app.kubernetes.io/component: subtitles
+    spec:
+      containers:
+      - name: bazarr
+        image: ghcr.io/hotio/bazarr
+        imagePullPolicy: IfNotPresent
+        securityContext:
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
+        env:
+        - name: PUID
+          value: "1001"
+        - name: PGID
+          value: "1001"
+        - name: UMASK
+          value: "002"
+        - name: TZ
+          value: Etc/GMT-2
+        - name: WEBUI_PORTS
+          value: 6767/tcp
+        ports:
+        - containerPort: 6767
+          name: http
+        volumeMounts:
+        - name: media-stack-config
+          mountPath: /config
+          subPath: bazarr/config
+        - name: data
+          mountPath: /data
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
+      volumes:
+      - name: media-stack-config
+        persistentVolumeClaim:
+          claimName: media-stack-config
+      - name: data
+        persistentVolumeClaim:
+          claimName: media-data
