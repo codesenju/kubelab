@@ -35,6 +35,9 @@
 - name: Ddns
   import_playbook: ../addons/ddns.yaml
 
+- name: Beszel
+  import_playbook: ../addons/beszel.yaml
+
 - name: Beszel-agent
   import_playbook: ../addons/beszel-agent.yaml
 

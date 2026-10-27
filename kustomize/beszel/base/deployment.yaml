@@ -1,0 +1,40 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: beszel
+  labels:
+    app: beszel
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: beszel
+  template:
+    metadata:
+      labels:
+        app: beszel
+    spec:
+      containers:
+        - name: beszel
+          image: IMAGE_TEMPLATE
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: APP_URL
+              value: http://localhost:8090
+          resources:
+            requests:
+              cpu: 25m
+              memory: 128Mi
+            limits:
+              cpu: 100m
+              memory: 512Mi
+          ports:
+            - containerPort: 8090
+              name: http
+          volumeMounts:
+            - name: beszel-data
+              mountPath: /beszel_data
+      volumes:
+        - name: beszel-data
+          persistentVolumeClaim:
+            claimName: beszel-data

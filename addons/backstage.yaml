@@ -1,5 +1,6 @@
-- hosts: k8s-control-plane-1
-  gather_facts: no
+- name: Backstage Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
   vars:
     registry_server: "ghcr.io"
     registry_username: "{{ ghcr_username }}"
@@ -36,9 +37,9 @@
                 prune: true
                 selfHeal: true
               syncOptions:
-              - CreateNamespace=true
-              - ServerSideApply=true
-              - RespectIgnoreDifferences=true
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
             ignoreDifferences:
               - group: "postgresql.cnpg.io"
                 kind: Cluster
@@ -56,4 +57,6 @@
             namespace: backstage
           type: kubernetes.io/dockerconfigjson
           data:
-            .dockerconfigjson: "{{ {'auths': { registry_server: { 'username': registry_username, 'password': registry_password, 'email': registry_email, 'auth': (registry_username + ':' + registry_password)|b64encode } } } | to_nice_json | b64encode }}"
+            .dockerconfigjson: "{{ {'auths': { registry_server: { 'username': registry_username,
+             'password': registry_password, 'email': registry_email, 'auth': (registry_username + ':'
+              + registry_password)|b64encode } } } | to_nice_json | b64encode }}"
