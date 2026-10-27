@@ -28,6 +28,16 @@
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 labels:
                   app.kubernetes.io/instance: beszel-prod
+                patches:
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: beszel
+                    patch: |-
+                      - op: replace
+                        path: /spec/template/spec/containers/0/env/0/value
+                        value: "https://beszel.{{ local_dns }}"
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
