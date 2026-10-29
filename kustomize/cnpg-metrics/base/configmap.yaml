@@ -53,10 +53,12 @@ data:
             action: upsert
 
     exporters:
-      otlp/signoz:
-        endpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
-        tls:
-          insecure: true
+      # SigNoz runs on the homelab cluster; this (Contabo) cluster reaches it
+      # over Tailscale via the OTLP/HTTP endpoint fronted by HTTPS (port 443).
+      # The internal service DNS (…svc.cluster.local:4317) is NOT resolvable
+      # across clusters.
+      otlphttp/signoz:
+        endpoint: https://signoz-otel-collector.local.jazziro.com
         sending_queue:
           enabled: true
           num_consumers: 10
@@ -77,4 +79,4 @@ data:
         metrics:
           receivers: [prometheus]
           processors: [resource/environment, batch]
-          exporters: [otlp/signoz, debug]
+          exporters: [otlphttp/signoz, debug]
