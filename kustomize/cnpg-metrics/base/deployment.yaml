@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: cnpg-metrics-collector
+  labels:
+    app: cnpg-metrics-collector
+spec:
+  replicas: 1
+  selector:
+    matchLabels:
+      app: cnpg-metrics-collector
+  template:
+    metadata:
+      labels:
+        app: cnpg-metrics-collector
+      annotations:
+        # Roll the pod when the scrape config changes.
+        checksum/config: cnpg-metrics-config
+    spec:
+      serviceAccountName: cnpg-metrics-collector
+      containers:
+        - name: otel-collector
+          image: otel/opentelemetry-collector-contrib:0.137.0
+          args:
+            - --config=/conf/config.yaml
+          ports:
+            - name: health
+              containerPort: 13133
+          volumeMounts:
+            - name: config
+              mountPath: /conf
+          resources:
+            requests:
+              cpu: 50m
+              memory: 128Mi
+            limits:
+              cpu: 500m
+              memory: 512Mi
+      volumes:
+        - name: config
+          configMap:
+            name: cnpg-metrics-collector
+            items:
+              - key: config.yaml
+                path: config.yaml

@@ -1,0 +1,80 @@
+apiVersion: v1
+kind: ConfigMap
+metadata:
+  name: cnpg-metrics-collector
+  labels:
+    app: cnpg-metrics-collector
+data:
+  config.yaml: |
+    receivers:
+      # Scrape the CloudNativePG instance metrics endpoint (:9187/metrics) on
+      # every CNPG pod across all namespaces. The operator exposes WAL-archiving
+      # health here, including:
+      #   cnpg_collector_last_archived_wal_start_time
+      #   cnpg_collector_last_failed_wal_start_time
+      #   cnpg_collector_pg_wal_archive_status
+      prometheus:
+        config:
+          scrape_configs:
+            - job_name: cnpg
+              scrape_interval: 30s
+              kubernetes_sd_configs:
+                - role: pod
+              relabel_configs:
+                # Keep only CloudNativePG instance pods.
+                - source_labels: [__meta_kubernetes_pod_label_cnpg_io_podRole]
+                  action: keep
+                  regex: instance
+                # Target the metrics port only.
+                - source_labels: [__meta_kubernetes_pod_container_port_name]
+                  action: keep
+                  regex: metrics
+                # Expose cluster/namespace/pod as labels for alert routing.
+                - source_labels: [__meta_kubernetes_namespace]
+                  target_label: k8s_namespace_name
+                - source_labels: [__meta_kubernetes_pod_label_cnpg_io_cluster]
+                  target_label: cnpg_cluster
+                - source_labels: [__meta_kubernetes_pod_name]
+                  target_label: k8s_pod_name
+                - source_labels: [__meta_kubernetes_pod_label_cnpg_io_instanceRole]
+                  target_label: cnpg_instance_role
+
+    processors:
+      batch:
+        timeout: 5s
+        send_batch_size: 1000
+      resource/environment:
+        attributes:
+          - key: deployment.environment
+            value: prod
+            action: upsert
+          - key: service.name
+            value: cnpg
+            action: upsert
+
+    exporters:
+      otlp/signoz:
+        endpoint: signoz-otel-collector.signoz.svc.cluster.local:4317
+        tls:
+          insecure: true
+        sending_queue:
+          enabled: true
+          num_consumers: 10
+          queue_size: 1000
+        retry_on_failure:
+          enabled: true
+          initial_interval: 5s
+          max_interval: 30s
+          max_elapsed_time: 300s
+      debug:
+        verbosity: basic
+
+    service:
+      telemetry:
+        logs:
+          level: info
+      pipelines:
+        metrics:
+          receivers: [prometheus]
+          processors: [resource/environment, batch]
+          exporters: [otlp/signoz, debug]

@@ -1,0 +1,38 @@
+---
+# Scrapes CloudNativePG instance metrics (:9187/metrics) across all namespaces
+# and ships them to SigNoz over OTLP. Exposes WAL-archiving health so staleness
+# can be alerted on (cnpg_collector_last_archived_wal_start_time, etc.).
+- name: CNPG Metrics Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: signoz
+  tasks:
+    - name: Deploy CNPG metrics collector
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: cnpg-metrics
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/cnpg-metrics/overlays/prod
+              targetRevision: main
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: '{{ target_namespace }}'
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
