@@ -6,12 +6,12 @@ For experienced Kubernetes administrators who want to quickly deploy and evaluat
 
 ## Table of Contents
 
-- [🚀 Quick Start](#-quick-start)
+  - [🚀 Quick Start](#-quick-start)
   - [1. Deploy Kubernetes Cluster](#1-deploy-kubernetes-cluster)
   - [2. Configure Secrets](#2-configure-secrets)
   - [3. Deploy Core Infrastructure](#3-deploy-core-infrastructure)
   - [4. Deploy Applications](#4-deploy-applications)
-- [📦 Available Addons](#-available-addons)
+  - [📦 Available Addons](#-available-addons)
   - [Core Infrastructure](#core-infrastructure)
   - [Observability Stack](#observability-stack)
   - [Storage & Data](#storage--data)
@@ -21,13 +21,13 @@ For experienced Kubernetes administrators who want to quickly deploy and evaluat
   - [Utilities](#utilities)
   - [Home & Media](#home--media)
   - [Communication](#communication)
-- [🔐 Required Secrets](#-required-secrets)
-- [🏗️ Common Deployment Patterns](#️-common-deployment-patterns)
+  - [🔐 Required Secrets](#-required-secrets)
+  - [🏗️ Common Deployment Patterns](#️-common-deployment-patterns)
   - [Complete Observability Stack](#complete-observability-stack)
   - [GitOps + Security](#gitops--security)
   - [Service Mesh + Advanced Networking](#service-mesh--advanced-networking)
-- [🔧 Management Commands](#-management-commands)
-- [✅ Verification & Testing](#-verification--testing)
+  - [🔧 Management Commands](#-management-commands)
+  - [✅ Verification & Testing](#-verification--testing)
   - [1. Infrastructure Health](#1-infrastructure-health)
   - [2. Core Infrastructure](#2-core-infrastructure)
   - [3. Application Routing (via Traefik)](#3-application-routing-via-traefik)
@@ -39,8 +39,8 @@ For experienced Kubernetes administrators who want to quickly deploy and evaluat
   - [9. Monitoring](#9-monitoring)
   - [10. Full Smoke Test Script](#10-full-smoke-test-script)
   - [Known Issues](#known-issues)
-- [Building container image](#building-container-image)
-- [📚 Documentation](#-documentation)
+  - [Building container image](#building-container-image)
+  - [📚 Documentation](#-documentation)
 
 ## 🚀 Quick Start
 
@@ -588,6 +588,7 @@ docker build \
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [CrowdSec Setup](crowdsec.md) - WAF, AppSec, bouncer key management, pentest guide
 - [SigNoz Host Alerts](docs/signoz-host-alerts.md) - CPU, memory, and filesystem alert setup
+- [CNPG WAL Archiving Observability](docs/cnpg-wal-archiving-observability.md) - End-to-end CloudNativePG monitoring: metrics collector (kustomize + ArgoCD), SigNoz dashboard, and WAL-archiving alerts
 
 ---
 
