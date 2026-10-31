@@ -24,14 +24,12 @@
               path: kustomize/csi-truenas/overlays/prod
               targetRevision: HEAD
               kustomize:
-                images:
-                  - ghcr.io/truenas/truenas-csi={{ registry_domain }}/ghcrio/truenas/truenas-csi
-                  - registry.k8s.io/sig-storage/csi-provisioner={{ registry_domain }}/registry-k8s-io/sig-storage/csi-provisioner
-                  - registry.k8s.io/sig-storage/csi-attacher={{ registry_domain }}/registry-k8s-io/sig-storage/csi-attacher
-                  - registry.k8s.io/sig-storage/csi-snapshotter={{ registry_domain }}/registry-k8s-io/sig-storage/csi-snapshotter
-                  - registry.k8s.io/sig-storage/csi-resizer={{ registry_domain }}/registry-k8s-io/sig-storage/csi-resizer
-                  - registry.k8s.io/sig-storage/livenessprobe={{ registry_domain }}/registry-k8s-io/sig-storage/livenessprobe
-                  - registry.k8s.io/sig-storage/csi-node-driver-registrar={{ registry_domain }}/registry-k8s-io/sig-storage/csi-node-driver-registrar
+                # Images pull from their ORIGINAL upstream registries (ghcr.io,
+                # registry.k8s.io) which are public and highly available. The
+                # previous registry.jazziro.com mirror rewrites were removed after
+                # that mirror proved flaky (503s causing ImagePullBackOff on the
+                # CSI controller/sidecars). The base manifests already reference the
+                # upstream images, so no `images:` rewrite block is needed.
                 patches:
                   - target:
                       kind: Deployment
@@ -41,6 +39,20 @@
                         path: /spec/template/spec/imagePullSecrets
                         value:
                           - name: registry-secret
+                  # The controller Deployment must run in CONTROLLER-ONLY mode.
+                  # The driver defaults to --mode=all, which makes the single
+                  # controller pod register only its OWN node in an in-memory map;
+                  # ControllerPublishVolume then rejects every other node with
+                  # "node <name> not found", so NVMe-oF/iSCSI volumes only attach on
+                  # the controller's node. In controller-only mode that map stays
+                  # empty and node validation is skipped, allowing any node to mount.
+                  - target:
+                      kind: Deployment
+                      name: truenas-csi-controller
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/args/-
+                        value: --mode=controller
                   - target:
                       kind: DaemonSet
                       name: truenas-csi-node
@@ -93,6 +105,18 @@
                       group: storage.k8s.io
                       version: v1
                       kind: StorageClass
+                      name: truenas-nvmeof
+                    patch: |-
+                      apiVersion: storage.k8s.io/v1
+                      kind: StorageClass
+                      metadata:
+                        name: truenas-nvmeof
+                      parameters:
+                        datasetPath: "k8s/nvmeof"
+                  - target:
+                      group: storage.k8s.io
+                      version: v1
+                      kind: StorageClass
                       name: truenas-nfs-zstd
                     patch: |-
                       apiVersion: storage.k8s.io/v1
@@ -112,3 +136,62 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+
+# ---------------------------------------------------------------------------
+# NVMe-oF (NVMe/TCP) node prerequisites
+#
+# The TrueNAS CSI driver (v25.10+) supports a `protocol: nvmeof` StorageClass,
+# and the TrueNAS appliance already exposes an NVMe/TCP port (4420). To MOUNT
+# an NVMe-oF volume, each worker node must have the `nvme_tcp` kernel module
+# available and loaded; the driver calls `modprobe nvme_tcp` but cannot supply
+# the module itself.
+#
+# This play installs the module package + nvme-cli on all workers, loads the
+# module now, and makes it persist across reboots.
+#
+# Gated behind the `nvme` tag so it only runs when explicitly requested:
+#   ansible-playbook ../storage/truenas/main.yaml \
+#     -i inventories/prod/hosts.ini --tags nvme
+#
+# (requires the [workers] group to be present in the chosen inventory)
+# ---------------------------------------------------------------------------
+- name: NVMe-oF node prerequisites
+  hosts: workers
+  gather_facts: true
+  become: true
+  tags:
+    - nvme
+  tasks:
+    - name: Install nvme_tcp kernel module package and nvme-cli
+      ansible.builtin.apt:
+        name:
+          - "linux-modules-extra-{{ ansible_kernel }}"
+          - nvme-cli
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Load nvme_tcp module now
+      community.general.modprobe:
+        name: nvme_tcp
+        state: present
+
+    - name: Persist nvme_tcp across reboots
+      ansible.builtin.copy:
+        dest: /etc/modules-load.d/nvme_tcp.conf
+        content: "nvme_tcp\n"
+        owner: root
+        group: root
+        mode: "0644"
+
+    - name: Verify nvme_tcp is loaded
+      ansible.builtin.command: lsmod
+      register: _lsmod
+      changed_when: false
+
+    - name: Assert nvme_tcp present
+      ansible.builtin.assert:
+        that:
+          - "'nvme_tcp' in _lsmod.stdout"
+        success_msg: "nvme_tcp loaded on {{ inventory_hostname }}"
+        fail_msg: "nvme_tcp NOT loaded on {{ inventory_hostname }}"

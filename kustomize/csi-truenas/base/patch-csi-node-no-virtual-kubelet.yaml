@@ -1,0 +1,22 @@
+---
+# The upstream truenas-csi-node DaemonSet tolerates all taints (operator: Exists),
+# so it schedules onto the `systemk` virtual-kubelet node where the CSI node plugin
+# cannot run. That failed pod corrupts the CSI controller's node registry and causes
+# "node <name> not found" errors on NVMe-oF/iSCSI volume attach for real nodes.
+# Exclude virtual-kubelet nodes (instance-type=systemk) from the node DaemonSet.
+apiVersion: apps/v1
+kind: DaemonSet
+metadata:
+  name: truenas-csi-node
+spec:
+  template:
+    spec:
+      affinity:
+        nodeAffinity:
+          requiredDuringSchedulingIgnoredDuringExecution:
+            nodeSelectorTerms:
+              - matchExpressions:
+                  - key: node.kubernetes.io/instance-type
+                    operator: NotIn
+                    values:
+                      - systemk

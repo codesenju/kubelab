@@ -34,6 +34,7 @@ spec:
         size: string | default="1Gi"
         storageClassName: string | default=""
         secretName: string | required=true
+        maxConnections: string | default="100" description="Postgres max_connections. Raise for pooled clients like Nexus that open many connections."
       recovery:
         backupID: string | description="Backup ID under base/, e.g. 20260402T020003"
         serverName: string | default="${schema.spec.name}-postgres" description="Original source cluster serverName in object store"
@@ -127,6 +128,9 @@ spec:
             - name: ${schema.spec.imagePullSecretName3}
           postgresql:
             shared_preload_libraries: ${schema.spec.sharedLibraries}
+            parameters:
+              max_connections: ${schema.spec.db.maxConnections}
+              superuser_reserved_connections: "5"
           managed:
             roles:
               - name: ${schema.spec.db.username}
@@ -183,6 +187,9 @@ spec:
             - name: ${schema.spec.imagePullSecretName3}
           postgresql:
             shared_preload_libraries: ${schema.spec.sharedLibraries}
+            parameters:
+              max_connections: ${schema.spec.db.maxConnections}
+              superuser_reserved_connections: "5"
           managed:
             roles:
               - name: ${schema.spec.db.username}
