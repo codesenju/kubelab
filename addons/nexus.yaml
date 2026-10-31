@@ -65,19 +65,14 @@
               username: "{{ nexus_db_username }}"
               secretName: nexus-postgres-secrets
               # size: 1Gi
-              storageClassName: nfs-csi-postgres
+              storageClassName: truenas-nvmeof
+              maxConnections: "200" # Nexus HikariCP pool saturates the default 100
             bootstrap:
-              mode: recovery
-            recovery:
-              backupID: "20260713T075610" # backup will be at s3Path/serverName/base/<backupID>
-              serverName: "nexus-postgres" # backup files will be at s3Path/serverName/base
-            restoreSource:
-              s3Path: "s3://cnpg/backup2"
-              endpointURL: "https://{{ rustfs_endpoint }}"
-              s3:
-                credentialsSecretName: s3-creds
-                accessKeyId: ACCESS_KEY_ID
-                secretAccessKey: SECRET_ACCESS_KEY
+              mode: initdb
+            # NOTE: one-time recovery onto truenas-nvmeof was performed live from
+            # s3://cnpg/backup3 (serverName nexus-postgres, base 20261031T051008).
+            # Keep mode=initdb here so routine playbook runs do NOT re-trigger a
+            # restore from a stale backup.
             archiveDestination:
               s3Path: "s3://cnpg/backup3"
               endpointURL: "https://{{ rustfs_endpoint }}"

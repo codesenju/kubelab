@@ -67,14 +67,16 @@
             name: coder
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            image: "{{ container_registry }}/ghcrio/cloudnative-pg/postgresql:18-standard-trixie"
+            # Public upstream image (the private mirror proved flaky — 503/auth errors
+            # during recovery; nexus/immich already use upstream ghcr successfully)
+            image: "ghcr.io/cloudnative-pg/postgresql:18-standard-trixie"
             imagePullSecretName1: registry-secret
             db:
               name: coder
               username: "{{ coder_db_username }}"
               secretName: coder-postgres-secrets
               # size: 1Gi
-              storageClassName: nfs-csi-postgres
+              storageClassName: truenas-iscsi
             bootstrap:
               mode: initdb
             archiveDestination:

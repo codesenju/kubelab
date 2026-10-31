@@ -27,19 +27,12 @@
               username: "{{ immich_db_username }}"
               secretName: immich-postgres-secrets
               # size: 1Gi
-              storageClassName: nfs-csi-postgres
+              storageClassName: truenas-iscsi
             bootstrap:
-              mode: recovery
-            recovery:
-              backupID: "20260506T071514" # backup will be at s3Path/serverName/base/<backupID>
-              serverName: "immich-postgres" # backup files will be at s3Path/serverName/base
-            restoreSource:
-              s3Path: "s3://cnpg/backup2/"
-              endpointURL: "https://{{ rustfs_endpoint }}"
-              s3:
-                credentialsSecretName: s3-creds
-                accessKeyId: ACCESS_KEY_ID
-                secretAccessKey: SECRET_ACCESS_KEY
+              mode: initdb
+            # NOTE: one-time recovery onto truenas-nvmeof was performed live from
+            # s3://cnpg/backup3 (serverName immich-postgres). Keep mode=initdb here so
+            # routine playbook runs do NOT re-trigger a restore from a stale backup.
             archiveDestination:
               s3Path: "s3://cnpg/backup3/"
               endpointURL: "https://{{ rustfs_endpoint }}"

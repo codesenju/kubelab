@@ -99,7 +99,8 @@
             name: crowdsec
             # db version must be compatiable with the backup db version
             # using tensorchord image that comes with vchord
-            image: "{{ container_registry }}/ghcrio/cloudnative-pg/postgresql:18-standard-trixie"
+            # Public upstream image (private mirror proved flaky during recovery)
+            image: "ghcr.io/cloudnative-pg/postgresql:18-standard-trixie"
             imagePullSecretName1: registry-secret
             db:
               name: crowdsec
