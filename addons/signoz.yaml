@@ -111,7 +111,7 @@
                       SIGNOZ_ALERTMANAGER_SIGNOZ_GLOBAL_SMTP__AUTH__PASSWORD: {{ signoz_emailing_smtp_auth_password }}
                       signoz_alertmanager_provider: signoz
                       signoz_alertmanager_signoz_external__url: "{{ signoz_host }}"
-                      signoz_sqlstore_proviser: postgres
+                      signoz_sqlstore_provider: postgres
                       signoz_sqlstore_postgres_dsn: "{{ signoz_sqlstore_postgres_dsn }}"
                   global:
                     storageClass: nfs-csi
