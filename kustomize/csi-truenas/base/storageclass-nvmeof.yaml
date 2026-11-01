@@ -1,0 +1,23 @@
+# NVMe-oF/TCP StorageClass — vendored from upstream truenas-csi master example
+# (not present in the v1.0.1 tag used for the other StorageClasses).
+# https://github.com/truenas/truenas-csi/blob/master/examples/storageclass-nvmeof.yaml
+#
+# Creates ReadWriteOnce block volumes backed by ZVOLs on TrueNAS, exported over
+# NVMe over Fabrics (TCP). Requires TrueNAS SCALE 25.10+ with the NVMe-oF target
+# service enabled (System Settings -> Services -> NVMe-oF).
+#
+# Environment-specific parameters (datasetPath, pool, networks) are applied via a
+# kustomize patch in storage/truenas/main.yaml, mirroring the truenas-iscsi and
+# truenas-nfs-zstd patches.
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-nvmeof
+provisioner: csi.truenas.io
+parameters:
+  protocol: "nvmeof"
+  compression: "LZ4"
+  volblocksize: "16K"
+reclaimPolicy: Delete
+volumeBindingMode: Immediate
+allowVolumeExpansion: true
