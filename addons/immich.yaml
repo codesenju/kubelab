@@ -60,6 +60,7 @@
           stringData:
             ACCESS_KEY_ID: "{{ rustfs_access_key }}"
             SECRET_ACCESS_KEY: "{{ rustfs_secret_key }}"
+            REGION: "joburg-north-1"
       tags:
         - postgres
 

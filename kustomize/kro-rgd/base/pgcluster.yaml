@@ -45,6 +45,7 @@ spec:
           credentialsSecretName: string
           accessKeyId: string
           secretAccessKey: string
+          region: string | default="REGION" description="Secret key holding the S3 region. Required by barman-cloud ListObjectsV2 (retention) against S3-compatible gateways; omitting it causes InvalidArgument errors."
       archiveDestination:
         s3Path: string | required=true description="New destination for WAL + future backups, e.g. s3://cnpg/new-backups/serverNaame-postgres"
         endpointURL: string | required=true
@@ -53,6 +54,7 @@ spec:
           credentialsSecretName: string | required=true
           accessKeyId: string | required=true
           secretAccessKey: string | required=true
+          region: string | default="REGION" description="Secret key holding the S3 region. Required by barman-cloud ListObjectsV2 (retention) against S3-compatible gateways; omitting it causes InvalidArgument errors."
       scheduledBackup:
         enabled: boolean | default=false
         cron: string | default="0 0 2 * * *"
@@ -79,6 +81,9 @@ spec:
               secretAccessKey:
                 name: ${schema.spec.restoreSource.s3.credentialsSecretName}
                 key: ${schema.spec.restoreSource.s3.secretAccessKey}
+              region:
+                name: ${schema.spec.restoreSource.s3.credentialsSecretName}
+                key: ${schema.spec.restoreSource.s3.region}
 
     - id: archiveObjectStore
       template:
@@ -97,6 +102,9 @@ spec:
               secretAccessKey:
                 name: ${schema.spec.archiveDestination.s3.credentialsSecretName}
                 key: ${schema.spec.archiveDestination.s3.secretAccessKey}
+              region:
+                name: ${schema.spec.archiveDestination.s3.credentialsSecretName}
+                key: ${schema.spec.archiveDestination.s3.region}
             wal:
               compression: gzip
             data:
