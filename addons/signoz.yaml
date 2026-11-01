@@ -24,12 +24,22 @@
               username: "{{ signoz_db_username }}"
               secretName: signoz-postgres-secrets
               # size: 1Gi
-              storageClassName: nfs-csi-postgres
+              storageClassName: truenas-iscsi
             bootstrap:
-              mode: initdb
-            archiveDestination:
+              mode: recovery
+            recovery:
+              backupID: "20261030T020007" # backup will be at s3Path/<serverName>/base/<backupID>
+              serverName: "signoz-postgres" # backup files will be at s3Path/<serverName>/base/<backupID>
+            restoreSource:
               s3Path: "s3://cnpg/backup3"
-              endpointURL: "http://rustfs.rustfs.svc.cluster.local:9000"
+              endpointURL: "https://{{ rustfs_endpoint }}"
+              s3:
+                credentialsSecretName: s3-creds
+                accessKeyId: ACCESS_KEY_ID
+                secretAccessKey: SECRET_ACCESS_KEY
+            archiveDestination:
+              s3Path: "s3://cnpg/backup4"
+              endpointURL: "https://{{ rustfs_endpoint }}"
               # retentionPolicy: "5d"
               s3:
                 credentialsSecretName: s3-creds
@@ -131,7 +141,7 @@
                       endpoint: "https://{{ rustfs_endpoint }}/signoz-data/"
                       accessKey: "{{ rustfs_access_key }}"
                       secretAccess: "{{ rustfs_secret_key }}"
-                    storageClass: nfs-csi
+                    storageClass: truenas-nvmeof
                     imagePullSecrets:
                       - dockerhub-secret
                     persistence:

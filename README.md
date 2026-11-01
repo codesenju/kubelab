@@ -41,6 +41,7 @@ For experienced Kubernetes administrators who want to quickly deploy and evaluat
   - [Known Issues](#known-issues)
   - [Building container image](#building-container-image)
   - [📚 Documentation](#-documentation)
+  - [Storage Benchmark (NFS vs iSCSI vs NVMe-oF)](storage/storage-benchmark.md)
 
 ## 🚀 Quick Start
 
@@ -587,8 +588,9 @@ docker build \
 - [Addon Configuration](docs/addon-config.md) - Customizing applications
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [CrowdSec Setup](crowdsec.md) - WAF, AppSec, bouncer key management, pentest guide
-- [SigNoz Host Alerts](docs/signoz-host-alerts.md) - CPU, memory, and filesystem alert setup
+- [SigNoz Host Alerts](projects/Signoz/signoz-host-alerts.md) - CPU, memory, and filesystem alert setup
 - [CNPG WAL Archiving Observability](docs/cnpg-wal-archiving-observability.md) - End-to-end CloudNativePG monitoring: metrics collector (kustomize + ArgoCD), SigNoz dashboard, and WAL-archiving alerts
+- [Storage Benchmark](storage/storage-benchmark.md) - TrueNAS backend comparison (NFS vs iSCSI vs NVMe-oF/TCP) and ClickHouse backend recommendation
 
 ---
 
