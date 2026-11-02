@@ -497,12 +497,16 @@ Provider values (client secret is stored only in OpenBao, never in Git):
 
 ```text
 discovery_url : https://auth.jazziro.com/application/o/open-bao/
-client_id     : MneSHz2Ngnh9tzdwFZSpvgL6kQWfFXFZs6HW8TEl
+client_id     : <from Authentik: Provider for OpenBao → Client ID>   # case-sensitive
 client_type   : Confidential
 redirect_uris : https://openbao.local.jazziro.com/ui/vault/auth/oidc/oidc/callback
                 https://openbao.jazziro.com/ui/vault/auth/oidc/oidc/callback
                 http://localhost:8250/oidc/callback   (CLI login)
 ```
+
+The `client_id` and `client_secret` are copied from the Authentik provider and
+are **case-sensitive** (note that `l`/`I` and `O`/`0` look alike). The secret is
+written only to `auth/oidc/config` in OpenBao and is never stored in this repo.
 
 `auth/oidc/config` reports `status: valid`, `default_role: reader`. Both the
 `reader` and `platform-admin` roles exist. The `platform-admin` role is bound
@@ -536,7 +540,7 @@ export BAO_TOKEN="$(cat ~/.config/openbao/platform-admin.token)"
 
 bao write auth/oidc/role/platform-admin - <<'EOF'
 {
-  "bound_audiences": ["MneSHz2Ngnh9tzdwFZSpvgL6kQWfFXFZs6HW8TEl"],
+  "bound_audiences": ["<authentik-client-id>"],
   "allowed_redirect_uris": [
     "http://localhost:8250/oidc/callback",
     "https://openbao.local.jazziro.com/ui/vault/auth/oidc/oidc/callback",
