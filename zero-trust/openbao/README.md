@@ -37,6 +37,7 @@ application access, create named tokens with limited policies. See
   - [How the pipeline reads the secrets](#how-the-pipeline-reads-the-secrets)
 - [OIDC](#oidc)
   - [OIDC admin role](#oidc-admin-role)
+  - [Authentik provider (jazziro)](#authentik-provider-jazziro)
 - [Repository Setup](#repository-setup)
   - [Transit addon](#transit-addon)
   - [Transit kustomize overlay](#transit-kustomize-overlay)
@@ -479,6 +480,74 @@ Because `default_role` is `reader`, select the admin role explicitly at login:
 ```bash
 bao login -method=oidc role=platform-admin
 ```
+
+### Authentik provider (jazziro)
+
+The live cluster uses the Authentik application **Provider for OpenBao**. The
+following was applied against `https://openbao.local.jazziro.com` and is
+reproducible with the `platform-admin` token.
+
+Provider values (client secret is stored only in OpenBao, never in Git):
+
+```text
+discovery_url : https://auth.jazziro.com/application/o/open-bao/
+client_id     : MneSHz2Ngnh9tzdwFZSpvgL6kQWfFXFZs6HW8TEl
+client_type   : Confidential
+redirect_uris : https://openbao.local.jazziro.com/ui/vault/auth/oidc/oidc/callback
+                https://openbao.jazziro.com/ui/vault/auth/oidc/oidc/callback
+                http://localhost:8250/oidc/callback   (CLI login)
+```
+
+`auth/oidc/config` reports `status: valid`, `default_role: reader`. Both the
+`reader` and `platform-admin` roles exist. The `platform-admin` role is bound
+to group `openbao-admins`, requests the `groups` OIDC scope, and issues the
+`platform-admin` policy with `token_ttl=1h`, `token_max_ttl=8h`.
+
+> **Groups-scope prerequisite.** Authentik's OpenBao provider advertises
+> `scopes_supported: [openid, email, profile]` — the `groups` scope is **not**
+> included by default, even though `groups` is in `claims_supported`. Until the
+> provider emits groups, the group-bound `platform-admin` login will fail its
+> `bound_claims` check. Two ways to make admin login work:
+
+**Option A — group-based (recommended, needs one Authentik change).** In
+Authentik, add the built-in scope mapping
+`goauthentik.io/providers/oauth2/scope-groups` to the "Provider for OpenBao",
+and ensure your user is a member of a group named `openbao-admins`. The OpenBao
+role already requests `oidc_scopes=["groups"]`, so no further OpenBao change is
+needed. Then:
+
+```bash
+bao login -method=oidc role=platform-admin
+```
+
+**Option B — subject-based (works with the current Authentik scopes).** Bind the
+role to your specific user `sub` instead of a group. Find your subject from
+Authentik (or from a `reader` login token's `sub`), then:
+
+```bash
+export BAO_ADDR="https://openbao.local.jazziro.com"
+export BAO_TOKEN="$(cat ~/.config/openbao/platform-admin.token)"
+
+bao write auth/oidc/role/platform-admin - <<'EOF'
+{
+  "bound_audiences": ["MneSHz2Ngnh9tzdwFZSpvgL6kQWfFXFZs6HW8TEl"],
+  "allowed_redirect_uris": [
+    "http://localhost:8250/oidc/callback",
+    "https://openbao.local.jazziro.com/ui/vault/auth/oidc/oidc/callback",
+    "https://openbao.jazziro.com/ui/vault/auth/oidc/oidc/callback"
+  ],
+  "user_claim": "sub",
+  "bound_claims": {"sub": ["<your-oidc-subject>"]},
+  "token_policies": ["platform-admin"],
+  "token_ttl": "1h",
+  "token_max_ttl": "8h"
+}
+EOF
+```
+
+Then `bao login -method=oidc role=platform-admin`. Note: inline
+`bound_claims='{...}'` on `bao write` fails to parse as a map; pass a JSON body
+on stdin (as above) for any map-valued field.
 
 ## Repository Setup
 
