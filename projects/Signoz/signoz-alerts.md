@@ -1,21 +1,41 @@
-# SigNoz Host Alerts
+# SigNoz Alerts
 
-Guide creates CPU, memory, and filesystem alerts for Linux hosts. Replace
-`<HOST_NAME>` and `<NOTIFICATION_CHANNEL>` with environment-specific values.
+Reference for the SigNoz alert rules and dashboards maintained for this cluster.
+Covers host utilization alerts (CPU, memory, filesystem) and the CloudNativePG
+(CNPG) backup / WAL-archiving alerts.
+
+> Dashboards are **not** defined as code — they are created and edited directly
+> in SigNoz (via UI or the SigNoz MCP server). This file is the source of record
+> for their intent, thresholds, and the reasoning behind them, so changes survive
+> even though the live objects are not reconciled from Git.
 
 ## Table of Contents
 
-- [Prerequisites](#prerequisites)
-- [User Workflow](#user-workflow)
-  - [CPU utilization](#cpu-utilization)
-  - [Memory utilization](#memory-utilization)
-  - [Filesystem utilization](#filesystem-utilization)
-- [Agent Workflow](#agent-workflow)
-- [Copy-Paste Agent Prompt](#copy-paste-agent-prompt)
-- [Canonical Alert Properties](#canonical-alert-properties)
-- [Host Utilization Dashboard](#host-utilization-dashboard)
-  - [Create From Export](#create-from-export)
-- [Dashboard Agent Prompt](#dashboard-agent-prompt)
+- [Host Utilization Alerts](#host-utilization-alerts)
+  - [Prerequisites](#prerequisites)
+  - [User Workflow](#user-workflow)
+    - [CPU utilization](#cpu-utilization)
+    - [Memory utilization](#memory-utilization)
+    - [Filesystem utilization](#filesystem-utilization)
+  - [Agent Workflow](#agent-workflow)
+  - [Copy-Paste Agent Prompt](#copy-paste-agent-prompt)
+  - [Canonical Alert Properties](#canonical-alert-properties)
+  - [Host Utilization Dashboard](#host-utilization-dashboard)
+    - [Create From Export](#create-from-export)
+  - [Dashboard Agent Prompt](#dashboard-agent-prompt)
+- [CNPG Backups & WAL Archiving](#cnpg-backups--wal-archiving)
+  - [How WAL archiving differs from backups](#how-wal-archiving-differs-from-backups)
+  - [Alert: CNPG WAL archiving stalled](#alert-cnpg-wal-archiving-stalled)
+  - [Alert: CNPG WAL archiving failures](#alert-cnpg-wal-archiving-failures)
+  - [CNPG Backups & Cluster Health dashboard](#cnpg-backups--cluster-health-dashboard)
+  - [S3 region requirement (retention)](#s3-region-requirement-retention)
+
+---
+
+# Host Utilization Alerts
+
+Guide creates CPU, memory, and filesystem alerts for Linux hosts. Replace
+`<HOST_NAME>` and `<NOTIFICATION_CHANNEL>` with environment-specific values.
 
 ## Prerequisites
 
@@ -302,3 +322,125 @@ After import, verify:
 Open the dashboard in a browser and confirm all three panels render data before
 reporting success. Report imported dashboard ID and URL.
 ```
+
+---
+
+# CNPG Backups & WAL Archiving
+
+Alerts and a dashboard that watch the CloudNativePG clusters and their WAL
+archiving / backup health. Clusters archive WAL to an S3-compatible gateway
+(RustFS at `s3.iysynergy.com`, region `joburg-north-1`) via the
+**barman-cloud plugin** (`barman-cloud.cloudnative-pg.io`, `isWALArchiver: true`),
+one `ObjectStore` CR per cluster. The cluster/ObjectStore definitions live in
+Git under `addons/*.yaml` and `kustomize/kro-rgd/base/pgcluster.yaml`; the
+alerts and dashboard below do not.
+
+Clusters covered: `authentik`, `ekonnecta`, `iysynergy`, `iystudios`,
+`drives3`, `n8n`.
+
+## How WAL archiving differs from backups
+
+These are two independent things, and the alerts are designed around the
+difference:
+
+- **Base backup** — a full snapshot, taken once a day via `scheduledBackup`
+  (cron `0 0 2 * * *`).
+- **WAL archiving** — continuous shipping of each write-ahead-log segment to
+  object storage *between* backups. Point-in-time recovery (PITR) =
+  last base backup **+** the WAL stream since then.
+
+Key gotcha observed in this environment: most of these clusters are **low- or
+zero-write** (checkpoints writing 0 buffers). On a truly idle PostgreSQL,
+`archive_timeout` (set to 1800s / 30m) does **not** force a segment, because
+there is no WAL activity to flush. So an idle cluster legitimately archives
+only once per day — when the scheduled base backup forces a WAL switch. A
+"seconds since last archive" value approaching ~24h is therefore **normal** for
+an idle cluster, not a failure. `authentik` is the one high-traffic cluster and
+archives every few minutes.
+
+## Alert: CNPG WAL archiving stalled
+
+- **Rule ID:** `01a19489-4493-725a-b3d1-6cb9b549b07d`
+- **Severity:** critical · **Labels:** `severity=critical`, `team=platform`
+- **Signal / metric:** metrics, `cnpg_pg_stat_archiver_seconds_since_last_archival`
+- **Aggregation:** time `avg`, space `max`; group by `cnpg_cluster`, `k8s_namespace_name`
+- **Threshold:** `above 90000` seconds (**25h**), match `at_least_once`, unit `s`
+- **Evaluation:** rolling, 5m window, 1m frequency
+- **Notification:** channel `n8n`; renotify every 4h while firing; grouped by
+  `cnpg_cluster`, `k8s_namespace_name`
+
+**Why 25h and not 3h (the original value):** because idle clusters legitimately
+sit near 24h between archives (see section above), a 3h threshold false-fired
+continuously on every idle cluster. 25h sits just above the once-daily backup
+cadence, so it stops crying wolf but still catches a genuinely dead archive
+path — i.e. even the daily backup's forced WAL archive did not happen. Do **not**
+lower this to "match the backup interval"; that would re-introduce the false
+alarms. If you want a faster signal, rely on the failures alert below instead,
+which is cadence-independent.
+
+> Changed 2026-11-01: threshold raised 10800 → 90000 s; description/annotation
+> updated from ">3h" to ">25h".
+
+## Alert: CNPG WAL archiving failures
+
+- **Rule ID:** `01a19489-7507-7107-8c36-fbbb8200fae6`
+- **Severity:** warning · **Labels:** `severity=warning`, `team=platform`
+- **Signal / metric:** metrics, `cnpg_pg_stat_archiver_failed_count`
+  (`increase` over the window), group by `cnpg_cluster`
+- **Intent:** fires within minutes when a cluster records an *actively failing*
+  WAL archive attempt, independent of WAL cadence. This is the fast safety net
+  that the "stalled" alert's 25h threshold intentionally trades away. A common
+  cause is a stale S3 (RustFS) secret key producing `SignatureDoesNotMatch`.
+
+Leave this rule alone when tuning the "stalled" threshold — the two are
+complementary: *failures* catches active errors fast, *stalled* catches a
+silently dead archive path on an otherwise error-free cluster.
+
+## CNPG Backups & Cluster Health dashboard
+
+- **Name:** `CNPG Backups & Cluster Health`
+- **Dashboard ID:** `01a19480-1e77-7851-9972-138643289f58`
+- **Variable:** `$cnpg_cluster` (dynamic, metric resource field `cnpg_cluster`,
+  multi-select, all-value)
+
+Panels:
+
+| Panel ID | Title | Metric | Threshold line |
+|---|---|---|---|
+| `wal-staleness` | Seconds since last successful WAL archive | `cnpg_pg_stat_archiver_seconds_since_last_archival` (max) | **90000 s ("25h stall")** |
+| `archive-failures` | WAL archive failures (increase 10m) | `cnpg_pg_stat_archiver_failed_count` (increase) | 1 ("failures") |
+| `cluster-up` | PostgreSQL up (1=up) | `cnpg_collector_up` (min) | 1 ("down") |
+| `wal-backlog` | WAL segments waiting to archive (ready) | `cnpg_collector_pg_wal_archive_status` filtered `value='ready'` | 10 ("backlog") |
+| `replication-lag` | Replication lag behind primary | `cnpg_pg_replication_lag` (max), unit `s` | 30 ("30s") |
+
+> Changed 2026-11-01: `wal-staleness` threshold raised 10800 → 90000 s; label
+> "3h stall" → "25h stall". Kept in sync with the "stalled" alert above.
+
+To edit a single panel threshold without rebuilding the dashboard, use the
+SigNoz MCP `signoz_patch_dashboard` with an RFC-6902 patch, e.g.:
+
+```json
+[
+  {"op":"replace","path":"/spec/panels/wal-staleness/spec/plugin/spec/thresholds/0/value","value":90000},
+  {"op":"replace","path":"/spec/panels/wal-staleness/spec/plugin/spec/thresholds/0/label","value":"25h stall"}
+]
+```
+
+## S3 region requirement (retention)
+
+The barman-cloud **retention** path (`barman-cloud-backup-delete`, which calls
+`ListObjectsV2`) requires an S3 **region** to be configured. Against the RustFS
+gateway, omitting it causes a recurring, non-fatal error every 5 minutes:
+
+```text
+Barman cloud backup delete exception: An error occurred (InvalidArgument)
+when calling the ListObjectsV2 operation: Invalid argument
+```
+
+WAL upload and base backups still succeed without a region — only retention
+(old-backup pruning) fails, so the bucket grows unbounded. Fix: every
+`s3-creds` secret must carry `REGION: "joburg-north-1"`, and each `ObjectStore`
+must reference it under `spec.configuration.s3Credentials.region`
+(`{key: REGION, name: s3-creds}`). This is wired into
+`kustomize/kro-rgd/base/pgcluster.yaml` (so all current and future clusters get
+it) and the `s3-creds` secrets in `addons/*.yaml`.
