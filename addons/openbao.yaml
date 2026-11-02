@@ -155,6 +155,26 @@
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
 
+            # The OpenBao helm chart renders the StatefulSet with the default
+            # podManagementPolicy: OrderedReady. For an HA raft cluster this
+            # causes a first-boot deadlock (pod-0 can't become Ready without a
+            # raft quorum, and OrderedReady won't start pod-1/2 until pod-0 is
+            # Ready). The live StatefulSet is pinned to Parallel so all nodes
+            # start together and raft can form quorum. podManagementPolicy is
+            # immutable, so we ignore the diff rather than let Argo attempt a
+            # disruptive delete/recreate of the secrets store.
+            ignoreDifferences:
+              - group: apps
+                kind: StatefulSet
+                name: openbao
+                namespace: "{{ target_namespace }}"
+                jsonPointers:
+                  # Immutable; pinned to Parallel for HA raft first-boot (see note above).
+                  - /spec/podManagementPolicy
+                  # Server-defaulted field the chart does not render; the STS
+                  # controller always re-adds Retain/Retain, so ignore the diff.
+                  - /spec/persistentVolumeClaimRetentionPolicy
+
             syncPolicy:
               automated:
                 prune: true
@@ -163,6 +183,7 @@
               syncOptions:
                 - CreateNamespace=true
                 - ServerSideApply=true
+                - RespectIgnoreDifferences=true
 
     - name: Create HTTPRoute
       kubernetes.core.k8s:
