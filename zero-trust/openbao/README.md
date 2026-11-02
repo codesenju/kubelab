@@ -31,6 +31,10 @@ application access, create named tokens with limited policies. See
     - [Create OIDC admin login](#create-oidc-admin-login)
     - [Retire the root token](#retire-the-root-token)
   - [Read-only token](#read-only-token)
+- [CI: ekonnecta pipeline](#ci-ekonnecta-pipeline)
+  - [Secret layout](#secret-layout)
+  - [Create or update](#create-or-update)
+  - [How the pipeline reads the secrets](#how-the-pipeline-reads-the-secrets)
 - [OIDC](#oidc)
   - [OIDC admin role](#oidc-admin-role)
 - [Repository Setup](#repository-setup)
@@ -314,6 +318,75 @@ rm -f ~/.config/openbao/secrets-readonly.token
 ```
 
 Then rerun the `bao token create` block above.
+
+## CI: ekonnecta pipeline
+
+The ekonnecta GitLab CI pipeline (`build` → `migrate` → `deploy`) consumes a
+set of project secrets. Those values are stored in OpenBao as the source of
+truth under `secret/ci/ekonnecta/` and read at pipeline time with a
+`secrets-readonly` token.
+
+### Secret layout
+
+| Path                            | Keys                                                                         | Used by |
+| ------------------------------- | ---------------------------------------------------------------------------- | ------- |
+| `secret/ci/ekonnecta/registry`  | `CONTAINER_REGISTRY_URL`, `CONTAINER_REGISTRY_USERNAME`, `CONTAINER_REGISTRY_PASSWORD` | build   |
+| `secret/ci/ekonnecta/database`  | `PROD_DATABASE_URL`                                                          | migrate |
+| `secret/ci/ekonnecta/argocd`    | `ARGOCD_SERVER`, `ARGOCD_PAT`                                                | deploy  |
+| `secret/ci/ekonnecta/gitlab`    | `GITLAB_PAT`                                                                 | deploy  |
+
+The GitLab-predefined registry variables (`CI_REGISTRY`, `CI_REGISTRY_USER`,
+`CI_REGISTRY_PASSWORD`) are provided by GitLab automatically and are not stored
+here.
+
+### Create or update
+
+Values default to `REPLACE_ME` placeholders. Supply real values by exporting
+the matching variables before running, or edit them afterward via the UI or
+`bao kv patch`:
+
+```bash
+export BAO_ADDR="https://openbao.local.jazziro.com"
+export BAO_TOKEN="$(cat ~/.config/openbao/platform-admin.token)"
+
+# optional: provide real values up front
+export CONTAINER_REGISTRY_PASSWORD='...'
+export PROD_DATABASE_URL='postgres://...'
+export ARGOCD_PAT='...'
+export GITLAB_PAT='...'
+
+bash zero-trust/openbao/setup-ci-ekonnecta-secrets.sh
+unset BAO_TOKEN
+```
+
+Patch a single value later without printing it:
+
+```bash
+export BAO_TOKEN="$(cat ~/.config/openbao/platform-admin.token)"
+bao kv patch secret/ci/ekonnecta/gitlab GITLAB_PAT='glpat-...'
+```
+
+### How the pipeline reads the secrets
+
+GitLab CI reads these paths using the broad `secrets-readonly` token (see
+[Read-only token](#read-only-token)). Provide the token and address to the
+pipeline as masked CI/CD variables:
+
+```text
+BAO_ADDR  = https://openbao.local.jazziro.com
+BAO_TOKEN = <contents of ~/.config/openbao/secrets-readonly.token>
+```
+
+A job then exports the values, for example:
+
+```bash
+export CONTAINER_REGISTRY_URL="$(bao kv get -field=CONTAINER_REGISTRY_URL secret/ci/ekonnecta/registry)"
+export CONTAINER_REGISTRY_USERNAME="$(bao kv get -field=CONTAINER_REGISTRY_USERNAME secret/ci/ekonnecta/registry)"
+export CONTAINER_REGISTRY_PASSWORD="$(bao kv get -field=CONTAINER_REGISTRY_PASSWORD secret/ci/ekonnecta/registry)"
+export PROD_DATABASE_URL="$(bao kv get -field=PROD_DATABASE_URL secret/ci/ekonnecta/database)"
+export ARGOCD_PAT="$(bao kv get -field=ARGOCD_PAT secret/ci/ekonnecta/argocd)"
+export GITLAB_PAT="$(bao kv get -field=GITLAB_PAT secret/ci/ekonnecta/gitlab)"
+```
 
 ## OIDC
 
