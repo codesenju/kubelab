@@ -1,21 +1,35 @@
 #!/usr/bin/env bash
 #
-# Create (or update) the OpenBao KV secrets consumed by the ekonnecta GitLab CI
-# pipeline, under the path:
+# Create (or update) the OpenBao KV secret consumed by CI pipelines, stored as
+# a single secret at:
 #
-#   secret/ci/ekonnecta/{registry,database,argocd,gitlab}
+#   secret/ci
+#
+# Shared CI keys are unprefixed; app-specific values carry an app prefix
+# (EKONNECTA_) so multiple apps can share the same secret/ci path:
+#
+#   CONTAINER_REGISTRY_URL
+#   CONTAINER_REGISTRY_USERNAME
+#   CONTAINER_REGISTRY_PASSWORD
+#   ARGOCD_SERVER
+#   ARGOCD_PAT
+#   EKONNECTA_PROD_DATABASE_URL
+#   EKONNECTA_GITLAB_PAT
 #
 # Values default to placeholders (REPLACE_ME). Override any value by exporting
 # the matching environment variable before running, e.g.:
 #
 #   export CONTAINER_REGISTRY_PASSWORD='...'
-#   export PROD_DATABASE_URL='postgres://...'
+#   export EKONNECTA_PROD_DATABASE_URL='postgres://...'
 #   export ARGOCD_PAT='...'
-#   export GITLAB_PAT='...'
+#   export EKONNECTA_GITLAB_PAT='...'
 #
 # Requires an admin token (root or platform-admin) that can write under
 # secret/. The token is read from BAO_TOKEN or prompted for, and is never
 # printed or written to disk.
+#
+# NOTE: `bao kv put secret/ci ...` replaces the whole secret. To change a
+# single field without touching the rest, use `bao kv patch secret/ci KEY=...`.
 #
 # Usage:
 #   export BAO_ADDR="https://openbao.local.jazziro.com"
@@ -35,10 +49,10 @@ export BAO_ADDR
 CONTAINER_REGISTRY_URL="${CONTAINER_REGISTRY_URL:-registry.local.jazziro.com}"
 CONTAINER_REGISTRY_USERNAME="${CONTAINER_REGISTRY_USERNAME:-REPLACE_ME}"
 CONTAINER_REGISTRY_PASSWORD="${CONTAINER_REGISTRY_PASSWORD:-REPLACE_ME}"
-PROD_DATABASE_URL="${PROD_DATABASE_URL:-postgres://REPLACE_ME:REPLACE_ME@REPLACE_ME:5432/ekonnecta}"
 ARGOCD_SERVER="${ARGOCD_SERVER:-argocd.iysynergy.com}"
 ARGOCD_PAT="${ARGOCD_PAT:-REPLACE_ME}"
-GITLAB_PAT="${GITLAB_PAT:-REPLACE_ME}"
+EKONNECTA_PROD_DATABASE_URL="${EKONNECTA_PROD_DATABASE_URL:-postgres://REPLACE_ME:REPLACE_ME@REPLACE_ME:5432/ekonnecta}"
+EKONNECTA_GITLAB_PAT="${EKONNECTA_GITLAB_PAT:-REPLACE_ME}"
 
 if ! command -v bao >/dev/null 2>&1; then
   echo "error: bao CLI not found in PATH" >&2
@@ -54,7 +68,7 @@ fi
 cleanup() {
   unset BAO_TOKEN \
     CONTAINER_REGISTRY_URL CONTAINER_REGISTRY_USERNAME CONTAINER_REGISTRY_PASSWORD \
-    PROD_DATABASE_URL ARGOCD_SERVER ARGOCD_PAT GITLAB_PAT
+    ARGOCD_SERVER ARGOCD_PAT EKONNECTA_PROD_DATABASE_URL EKONNECTA_GITLAB_PAT
 }
 trap cleanup EXIT
 
@@ -64,28 +78,19 @@ if ! bao token lookup >/dev/null 2>&1; then
   exit 1
 fi
 
-echo "Writing secret/ci/ekonnecta/registry"
-bao kv put secret/ci/ekonnecta/registry \
+echo "Writing secret/ci"
+bao kv put secret/ci \
   CONTAINER_REGISTRY_URL="$CONTAINER_REGISTRY_URL" \
   CONTAINER_REGISTRY_USERNAME="$CONTAINER_REGISTRY_USERNAME" \
-  CONTAINER_REGISTRY_PASSWORD="$CONTAINER_REGISTRY_PASSWORD" >/dev/null
-
-echo "Writing secret/ci/ekonnecta/database"
-bao kv put secret/ci/ekonnecta/database \
-  PROD_DATABASE_URL="$PROD_DATABASE_URL" >/dev/null
-
-echo "Writing secret/ci/ekonnecta/argocd"
-bao kv put secret/ci/ekonnecta/argocd \
+  CONTAINER_REGISTRY_PASSWORD="$CONTAINER_REGISTRY_PASSWORD" \
   ARGOCD_SERVER="$ARGOCD_SERVER" \
-  ARGOCD_PAT="$ARGOCD_PAT" >/dev/null
-
-echo "Writing secret/ci/ekonnecta/gitlab"
-bao kv put secret/ci/ekonnecta/gitlab \
-  GITLAB_PAT="$GITLAB_PAT" >/dev/null
+  ARGOCD_PAT="$ARGOCD_PAT" \
+  EKONNECTA_PROD_DATABASE_URL="$EKONNECTA_PROD_DATABASE_URL" \
+  EKONNECTA_GITLAB_PAT="$EKONNECTA_GITLAB_PAT" >/dev/null
 
 echo
-echo "Created/updated ekonnecta CI secrets under secret/ci/ekonnecta/"
-bao kv list secret/ci/ekonnecta
+echo "Created/updated CI secret at secret/ci with keys:"
+bao kv get -format=json secret/ci | python3 -c "import sys,json; [print('  '+k) for k in sorted(json.load(sys.stdin)['data']['data'].keys())]"
 echo
 echo "Replace any REPLACE_ME values via the OpenBao UI or 'bao kv patch', e.g.:"
-echo "  bao kv patch secret/ci/ekonnecta/gitlab GITLAB_PAT='glpat-...'"
+echo "  bao kv patch secret/ci EKONNECTA_GITLAB_PAT='glpat-...'"
