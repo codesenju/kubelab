@@ -509,33 +509,47 @@ are **case-sensitive** (note that `l`/`I` and `O`/`0` look alike). The secret is
 written only to `auth/oidc/config` in OpenBao and is never stored in this repo.
 
 `auth/oidc/config` reports `status: valid`, `default_role: reader`. Both the
-`reader` and `platform-admin` roles exist. The `platform-admin` role is bound
-to group `openbao-admins`, requests the `groups` OIDC scope, and issues the
-`platform-admin` policy with `token_ttl=1h`, `token_max_ttl=8h`.
+`reader` and `platform-admin` roles exist.
 
-> **Groups-scope prerequisite.** Authentik's OpenBao provider advertises
-> `scopes_supported: [openid, email, profile]` — the `groups` scope is **not**
-> included by default, even though `groups` is in `claims_supported`. Until the
-> provider emits groups, the group-bound `platform-admin` login will fail its
-> `bound_claims` check. Two ways to make admin login work:
+- **`reader`** (default role) issues the read-only `reader` policy. A plain
+  `bao login -method=oidc` (blank role) uses this.
+- **`platform-admin`** is **bound to a single user subject** (`bound_subject`)
+  and issues the `platform-admin` policy with `token_ttl=1h`,
+  `token_max_ttl=8h`. Admin is granted **only** when this role is selected
+  explicitly; it is not attached to any identity entity, so a `reader` login
+  stays read-only.
 
-**Option A — group-based (recommended, needs one Authentik change).** In
-Authentik, add the built-in scope mapping
-`goauthentik.io/providers/oauth2/scope-groups` to the "Provider for OpenBao",
-and ensure your user is a member of a group named `openbao-admins`. The OpenBao
-role already requests `oidc_scopes=["groups"]`, so no further OpenBao change is
-needed. Then:
-
-```bash
-bao login -method=oidc role=platform-admin
-```
-
-**Option B — subject-based (works with the current Authentik scopes).** Bind the
-role to your specific user `sub` instead of a group. Find your subject from
-Authentik (or from a `reader` login token's `sub`), then:
+To sign in:
 
 ```bash
 export BAO_ADDR="https://openbao.local.jazziro.com"
+
+bao login -method=oidc                      # read-only (reader)
+bao login -method=oidc role=platform-admin  # admin (subject-bound)
+```
+
+### Why subject-bound rather than group-bound
+
+Authentik's OpenBao provider advertises `scopes_supported: [openid, email,
+profile]` — the `groups` scope is **not** emitted by default, even though
+`groups` is in `claims_supported`. A group-bound role therefore fails with
+`failed to fetch groups: "groups" claim not found in token`. Binding the role
+to the user's `sub` avoids the group lookup entirely and works with the current
+provider scopes.
+
+Find the subject from a `reader` login (no secrets printed):
+
+```bash
+bao login -method=oidc role=reader
+bao read -format=json \
+  identity/entity/id/"$(bao token lookup -format=json | \
+    python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["entity_id"])')" \
+  | python3 -c 'import sys,json;print(json.load(sys.stdin)["data"]["aliases"][0]["name"])'
+```
+
+Set or update the subject binding (admin token required):
+
+```bash
 export BAO_TOKEN="$(cat ~/.config/openbao/platform-admin.token)"
 
 bao write auth/oidc/role/platform-admin - <<'EOF'
@@ -547,7 +561,7 @@ bao write auth/oidc/role/platform-admin - <<'EOF'
     "https://openbao.jazziro.com/ui/vault/auth/oidc/oidc/callback"
   ],
   "user_claim": "sub",
-  "bound_claims": {"sub": ["<your-oidc-subject>"]},
+  "bound_subject": "<your-oidc-subject>",
   "token_policies": ["platform-admin"],
   "token_ttl": "1h",
   "token_max_ttl": "8h"
@@ -555,9 +569,37 @@ bao write auth/oidc/role/platform-admin - <<'EOF'
 EOF
 ```
 
-Then `bao login -method=oidc role=platform-admin`. Note: inline
-`bound_claims='{...}'` on `bao write` fails to parse as a map; pass a JSON body
-on stdin (as above) for any map-valued field.
+### Optional: switch to group-based for multiple admins
+
+To manage admins by group instead of a single subject, in Authentik add the
+built-in scope mapping `goauthentik.io/providers/oauth2/scope-groups` to the
+"Provider for OpenBao" and put admins in a group named `openbao-admins`. Then
+replace `bound_subject` with the group binding:
+
+```bash
+export BAO_TOKEN="$(cat ~/.config/openbao/platform-admin.token)"
+
+bao write auth/oidc/role/platform-admin - <<'EOF'
+{
+  "bound_audiences": ["<authentik-client-id>"],
+  "allowed_redirect_uris": [
+    "http://localhost:8250/oidc/callback",
+    "https://openbao.local.jazziro.com/ui/vault/auth/oidc/oidc/callback",
+    "https://openbao.jazziro.com/ui/vault/auth/oidc/oidc/callback"
+  ],
+  "user_claim": "sub",
+  "groups_claim": "groups",
+  "oidc_scopes": ["groups"],
+  "bound_claims": {"groups": ["openbao-admins"]},
+  "token_policies": ["platform-admin"],
+  "token_ttl": "1h",
+  "token_max_ttl": "8h"
+}
+EOF
+```
+
+Note: inline `bound_claims='{...}'` on `bao write` fails to parse as a map; pass
+a JSON body on stdin (as above) for any map-valued field.
 
 ## Repository Setup
 
