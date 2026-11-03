@@ -58,6 +58,10 @@ spec:
         # through gluetun's firewall/kill-switch. Cilium cluster-pool = 10.0.0.0/8.
         - name: FIREWALL_OUTBOUND_SUBNETS
           value: "10.0.0.0/8,10.96.0.0/12"
+        # Open the WebUI port inbound through gluetun's firewall (INPUT policy is
+        # DROP by default), so Traefik/cluster can reach qBittorrent on 8080.
+        - name: FIREWALL_INPUT_PORTS
+          value: "8080"
         # Cluster is IPv4-only (Cilium cluster-pool). Use gluetun's internal DNS
         # (DoT) resolver; trackers resolve fine once the tunnel is up.
         - name: DNS_KEEP_NAMESERVER
