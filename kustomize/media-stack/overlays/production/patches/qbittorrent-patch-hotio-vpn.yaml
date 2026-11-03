@@ -9,7 +9,7 @@ spec:
       # WireGuard requires src_valid_mark=1 when rp_filter is strict (Cilium default).
       # Set it in the pod network namespace before the app container starts.
       - name: sysctl
-        image: ghcr.io/hotio/qbittorrent
+        image: busybox:1.36
         command:
           - /bin/sh
           - -c
