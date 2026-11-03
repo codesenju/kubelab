@@ -5,6 +5,9 @@ kind: Kustomization
 namespace: media-stack
 
 # Secret generators (automatically hashed for changes)
+# NOTE: the qbittorrent-vpn secret (WireGuard config) is created by the
+# ansible playbook addons/media-stack.yaml from the vault/secrets.yaml var
+# `qbittorrent_wireguard_conf` so the private key is never committed to git.
 # secretGenerator:
 # - name: vpn-credentials
 #   files:
@@ -102,6 +105,7 @@ patches:
 - path: patches/prowlarr-patch.yaml
 - path: patches/tdarr-patch.yaml
 # - path: patches/qbittorrent-patch.yaml
+- path: patches/qbittorrent-patch-hotio-vpn.yaml
 - path: patches/seerr-patch.yaml
 - path: patches/flaresolverr-patch.yaml
 # # Customize HPA for prod
