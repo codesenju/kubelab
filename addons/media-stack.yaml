@@ -196,7 +196,7 @@
             namespace: "{{ target_namespace }}"
           type: Opaque
           stringData:
-            wg0.conf: "{{ qbittorrent_wireguard_conf }}"
+            WIREGUARD_PRIVATE_KEY: "{{ qbittorrent_wireguard_private_key }}"
       tags:
         - media-stack
         - qbittorrent

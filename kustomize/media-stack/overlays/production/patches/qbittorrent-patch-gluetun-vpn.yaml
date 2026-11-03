@@ -1,0 +1,74 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  template:
+    spec:
+      # qBittorrent and gluetun share this pod's network namespace, so all of
+      # qBittorrent's traffic egresses through the gluetun WireGuard tunnel.
+      initContainers:
+      # WireGuard needs src_valid_mark=1 because Cilium sets rp_filter=strict.
+      - name: sysctl
+        image: busybox:1.36
+        command:
+          - /bin/sh
+          - -c
+          - sysctl -w net.ipv4.conf.all.src_valid_mark=1
+        securityContext:
+          privileged: true
+      containers:
+      # ---------------------------------------------------------------------
+      # gluetun VPN sidecar (Mullvad, WireGuard) — owns the pod network egress
+      # ---------------------------------------------------------------------
+      - name: gluetun
+        image: ghcr.io/qdm12/gluetun:v3.41.3
+        securityContext:
+          capabilities:
+            add:
+              - NET_ADMIN
+        env:
+        - name: VPN_SERVICE_PROVIDER
+          value: "mullvad"
+        - name: VPN_TYPE
+          value: "wireguard"
+        - name: WIREGUARD_PRIVATE_KEY
+          valueFrom:
+            secretKeyRef:
+              name: qbittorrent-vpn
+              key: WIREGUARD_PRIVATE_KEY
+        - name: WIREGUARD_ADDRESSES
+          value: "10.71.50.200/32"   # from ie-dub-wg-101.conf [Interface] Address (IPv4)
+        - name: SERVER_COUNTRIES
+          value: "Ireland"
+        - name: SERVER_CITIES
+          value: "Dublin"
+        # Allow the cluster (pods + services) to reach the qBittorrent WebUI
+        # through gluetun's firewall/kill-switch. Cilium cluster-pool = 10.0.0.0/8.
+        - name: FIREWALL_OUTBOUND_SUBNETS
+          value: "10.0.0.0/8,10.96.0.0/12"
+        # Cluster is IPv4-only (Cilium cluster-pool); disable IPv6 in gluetun.
+        - name: DOT
+          value: "off"               # use plaintext DNS (torrent trackers need it)
+        - name: DNS_ADDRESS
+          value: "10.64.0.1"         # Mullvad in-tunnel resolver
+        resources:
+          requests:
+            cpu: "50m"
+            memory: "64Mi"
+          limits:
+            cpu: "200m"
+            memory: "128Mi"
+        livenessProbe:
+          exec:
+            command: ["/bin/sh", "-c", "wget -qO- -T 5 https://am.i.mullvad.net/connected | grep -q 'You are connected'"]
+          initialDelaySeconds: 30
+          periodSeconds: 60
+          failureThreshold: 3
+      # ---------------------------------------------------------------------
+      # qBittorrent — no VPN logic of its own; routes via gluetun
+      # ---------------------------------------------------------------------
+      - name: qbittorrent
+        env:
+        - name: VPN_ENABLED
+          value: "false"
