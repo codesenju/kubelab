@@ -9,8 +9,6 @@ spec:
   selector:
     matchLabels:
       app: qbittorrent
-  strategy:
-    type: Recreate  # Required for VPN connection stability
   template:
     metadata:
       labels:
@@ -19,43 +17,41 @@ spec:
     spec:
       containers:
       - name: qbittorrent
-        image: lscr.io/linuxserver/qbittorrent:latest
+        image: ghcr.io/hotio/qbittorrent
+        imagePullPolicy: IfNotPresent
         securityContext:
-          capabilities:
-            add: ["NET_ADMIN"]  # Required for VPN
-        envFrom:
-        - configMapRef:
-            name: shared-permissions
-        - configMapRef:
-            name: global-env
+          allowPrivilegeEscalation: false
+          seccompProfile:
+            type: RuntimeDefault
         env:
-        - name: VPN_ENABLED
-          value: "true"
-        - name: LAN_NETWORK
-          value: "192.168.0.0/24"  # Adjust to your local network
+        - name: PUID
+          value: "1001"
+        - name: PGID
+          value: "1001"
         - name: UMASK
           value: "002"
+        - name: TZ
+          value: Etc/GMT-2
+        - name: WEBUI_PORTS
+          value: 8080/tcp
+        - name: LIBTORRENT
+          value: v1
         ports:
         - containerPort: 8080
           name: webui
-        - containerPort: 6881
-          name: tcp-torrent
-          protocol: TCP
-        - containerPort: 6881
-          name: udp-torrent
-          protocol: UDP
         volumeMounts:
         - name: media-stack-config
           mountPath: /config
           subPath: qbittorrent/config
         - name: data
           mountPath: /data
-        livenessProbe:
-          httpGet:
-            path: /
-            port: 8080
-          initialDelaySeconds: 60
-          periodSeconds: 30
+        resources:
+          requests:
+            cpu: 100m
+            memory: 256Mi
+          limits:
+            cpu: 500m
+            memory: 1Gi
       volumes:
       - name: media-stack-config
         persistentVolumeClaim:

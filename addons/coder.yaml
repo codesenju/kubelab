@@ -129,6 +129,13 @@
                 releaseName: coder
                 values: |
                   coder:
+                    resources:
+                      requests:
+                        cpu: 250m
+                        memory: 512Mi
+                      limits:
+                        cpu: "2"
+                        memory: 2Gi
                     env:
                       - name: CODER_PG_CONNECTION_URL
                         valueFrom:
