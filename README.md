@@ -588,7 +588,7 @@ docker build \
 - [Addon Configuration](docs/addon-config.md) - Customizing applications
 - [Troubleshooting](docs/troubleshooting.md) - Common issues and solutions
 - [CrowdSec Setup](crowdsec.md) - WAF, AppSec, bouncer key management, pentest guide
-- [SigNoz Host Alerts](projects/Signoz/signoz-host-alerts.md) - CPU, memory, and filesystem alert setup
+- [SigNoz Alerts](projects/Signoz/signoz-alerts.md) - Host utilization (CPU, memory, filesystem) and CNPG backup / WAL-archiving alerts and dashboards
 - [CNPG WAL Archiving Observability](docs/cnpg-wal-archiving-observability.md) - End-to-end CloudNativePG monitoring: metrics collector (kustomize + ArgoCD), SigNoz dashboard, and WAL-archiving alerts
 - [Storage Benchmark](storage/storage-benchmark.md) - TrueNAS backend comparison (NFS vs iSCSI vs NVMe-oF/TCP) and ClickHouse backend recommendation
 

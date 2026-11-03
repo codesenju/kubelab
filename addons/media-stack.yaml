@@ -154,6 +154,15 @@
                       - op: add
                         path: /spec/template/spec/containers/0/image
                         value: {{ registry_domain }}/ghcrio/hotio/bazarr:nightly-v1.6.3
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: qbittorrent
+                    patch: |-
+                      - op: add
+                        path: /spec/template/spec/containers/0/image
+                        value: {{ registry_domain }}/ghcrio/hotio/qbittorrent:release-5.1.2
             destination:
               server: https://kubernetes.default.svc
               namespace: media-stack
@@ -449,3 +458,27 @@
                 #       name: crowdsec-bouncer
       tags:
         - ingress
+
+    - name: Create HTTPRoute qbittorrent
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: qbittorrent
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure-pvt
+            hostnames:
+              - "qbittorrent.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: qbittorrent
+                    port: 8080
+      tags:
+        - ingress
+        - httproute

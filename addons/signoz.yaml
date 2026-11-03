@@ -19,11 +19,18 @@
             name: signoz
             image: "{{ registry_domain }}/ghcrio/cloudnative-pg/postgresql:18-minimal-trixie" # db version must be compatiable with the backup db version
             imagePullSecretName1: registry-secret
+            resources:
+              requests:
+                cpu: 100m
+                memory: 256Mi
+              limits:
+                cpu: 500m
+                memory: 512Mi
             db:
               name: signoz
               username: "{{ signoz_db_username }}"
               secretName: signoz-postgres-secrets
-              # size: 1Gi
+              size: 5Gi
               storageClassName: truenas-iscsi
             bootstrap:
               mode: recovery
