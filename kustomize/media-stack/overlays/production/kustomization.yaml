@@ -63,8 +63,8 @@ buildMetadata:
 images:
 - name: lscr.io/linuxserver/jellyfin
   newTag: "10.11.3"
-# - name: lscr.io/linuxserver/qbittorrent
-#   newTag: "5.0.4"
+# qbittorrent + gluetun images are pinned to the private registry via the
+# ArgoCD kustomize patch in ansible addons/media-stack.yaml (uses registry_domain).
 - name: lscr.io/linuxserver/sonarr
   newTag: "4.0.17"
 - name: lscr.io/linuxserver/radarr

@@ -5,6 +5,13 @@ metadata:
 spec:
   template:
     spec:
+      # Route all pod DNS through gluetun's local resolver (127.0.0.1). Without
+      # this, containers inherit the cluster resolver (e.g. 1.1.1.1) which
+      # gluetun's kill-switch firewall blocks, breaking tracker/DHT resolution.
+      dnsPolicy: "None"
+      dnsConfig:
+        nameservers:
+          - "127.0.0.1"
       # qBittorrent and gluetun share this pod's network namespace, so all of
       # qBittorrent's traffic egresses through the gluetun WireGuard tunnel.
       initContainers:
@@ -29,29 +36,35 @@ spec:
               - NET_ADMIN
         env:
         - name: VPN_SERVICE_PROVIDER
-          value: "mullvad"
+          value: "custom"
         - name: VPN_TYPE
           value: "wireguard"
+        - name: WIREGUARD_IMPLEMENTATION
+          value: "kernelspace"   # node has the wireguard kernel module; faster + reliable here
         - name: WIREGUARD_PRIVATE_KEY
           valueFrom:
             secretKeyRef:
               name: qbittorrent-vpn
               key: WIREGUARD_PRIVATE_KEY
+        - name: WIREGUARD_PUBLIC_KEY
+          value: "2RSnfqTRb0BL/bPaKGj0OA/qopQaNG1qtzEH2Y8JyjE="   # Mullvad peer (ie-dub-wg-102)
+        - name: WIREGUARD_ENDPOINT_IP
+          value: "146.70.189.130"    # force exact IPv4 endpoint (avoids gluetun picking an IPv6 server)
+        - name: WIREGUARD_ENDPOINT_PORT
+          value: "51820"
         - name: WIREGUARD_ADDRESSES
-          value: "10.71.50.200/32"   # from ie-dub-wg-101.conf [Interface] Address (IPv4)
-        - name: SERVER_COUNTRIES
-          value: "Ireland"
-        - name: SERVER_CITIES
-          value: "Dublin"
+          value: "10.65.228.136/32"  # from ie-dub-wg-102.conf [Interface] Address (IPv4)
         # Allow the cluster (pods + services) to reach the qBittorrent WebUI
         # through gluetun's firewall/kill-switch. Cilium cluster-pool = 10.0.0.0/8.
         - name: FIREWALL_OUTBOUND_SUBNETS
           value: "10.0.0.0/8,10.96.0.0/12"
-        # Cluster is IPv4-only (Cilium cluster-pool); disable IPv6 in gluetun.
-        - name: DOT
-          value: "off"               # use plaintext DNS (torrent trackers need it)
-        - name: DNS_ADDRESS
-          value: "10.64.0.1"         # Mullvad in-tunnel resolver
+        # Cluster is IPv4-only (Cilium cluster-pool). Use gluetun's internal DNS
+        # (DoT) resolver; trackers resolve fine once the tunnel is up.
+        - name: DNS_KEEP_NAMESERVER
+          value: "off"
+        volumeMounts:
+        - name: dev-net-tun
+          mountPath: /dev/net/tun
         resources:
           requests:
             cpu: "50m"
@@ -72,3 +85,8 @@ spec:
         env:
         - name: VPN_ENABLED
           value: "false"
+      volumes:
+      - name: dev-net-tun
+        hostPath:
+          path: /dev/net/tun
+          type: CharDevice
