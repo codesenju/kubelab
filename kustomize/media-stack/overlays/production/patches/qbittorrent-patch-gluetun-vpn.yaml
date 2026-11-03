@@ -78,9 +78,10 @@ spec:
             memory: "128Mi"
         livenessProbe:
           exec:
-            command: ["/bin/sh", "-c", "wget -qO- -T 5 https://am.i.mullvad.net/connected | grep -q 'You are connected'"]
-          initialDelaySeconds: 30
+            command: ["/bin/sh", "-c", "wget -qO- -T 8 https://am.i.mullvad.net/connected | grep -q 'You are connected'"]
+          initialDelaySeconds: 40
           periodSeconds: 60
+          timeoutSeconds: 12
           failureThreshold: 3
       # ---------------------------------------------------------------------
       # qBittorrent — no VPN logic of its own; routes via gluetun
