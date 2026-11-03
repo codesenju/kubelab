@@ -185,6 +185,23 @@
         - media-stack
         - argocd
 
+    - name: Create qbittorrent WireGuard VPN secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: qbittorrent-vpn
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            wg0.conf: "{{ qbittorrent_wireguard_conf }}"
+      tags:
+        - media-stack
+        - qbittorrent
+        - vpn
+
     - name: Create HTTPRoute flaresolverr
       kubernetes.core.k8s:
         state: present

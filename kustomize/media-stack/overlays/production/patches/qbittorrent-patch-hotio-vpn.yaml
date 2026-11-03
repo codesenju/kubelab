@@ -1,0 +1,45 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: qbittorrent
+spec:
+  template:
+    spec:
+      containers:
+      - name: qbittorrent
+        securityContext:
+          allowPrivilegeEscalation: true   # wg-quick needs to raise caps
+          capabilities:
+            add:
+              - NET_ADMIN   # Required for the built-in WireGuard VPN
+        env:
+        - name: VPN_ENABLED
+          value: "true"
+        - name: VPN_CONF
+          value: "wg0"            # Reads /config/wireguard/wg0.conf
+        - name: VPN_PROVIDER
+          value: "generic"
+        - name: VPN_LAN_NETWORK
+          value: "10.244.0.0/16,10.96.0.0/12" # Pod + Service CIDR so Traefik can reach the WebUI through the VPN kill-switch
+        - name: VPN_LAN_LEAK_ENABLED
+          value: "false"
+        - name: VPN_AUTO_PORT_FORWARD
+          value: "false"
+        - name: VPN_HEALTHCHECK_ENABLED
+          value: "false"
+        - name: PRIVOXY_ENABLED
+          value: "false"
+        - name: UNBOUND_ENABLED
+          value: "false"
+        volumeMounts:
+        - name: vpn-wireguard
+          mountPath: /config/wireguard/wg0.conf
+          subPath: wg0.conf
+          readOnly: true
+      volumes:
+      - name: vpn-wireguard
+        secret:
+          secretName: qbittorrent-vpn
+          items:
+          - key: wg0.conf
+            path: wg0.conf
