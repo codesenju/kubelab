@@ -5,6 +5,17 @@ metadata:
 spec:
   template:
     spec:
+      initContainers:
+      # WireGuard requires src_valid_mark=1 when rp_filter is strict (Cilium default).
+      # Set it in the pod network namespace before the app container starts.
+      - name: sysctl
+        image: ghcr.io/hotio/qbittorrent
+        command:
+          - /bin/sh
+          - -c
+          - sysctl -w net.ipv4.conf.all.src_valid_mark=1
+        securityContext:
+          privileged: true
       containers:
       - name: qbittorrent
         securityContext:
@@ -20,7 +31,7 @@ spec:
         - name: VPN_PROVIDER
           value: "generic"
         - name: VPN_LAN_NETWORK
-          value: "10.244.0.0/16,10.96.0.0/12" # Pod + Service CIDR so Traefik can reach the WebUI through the VPN kill-switch
+          value: "10.0.0.0/8,10.96.0.0/12" # Cilium cluster-pool pod CIDR + service CIDR so Traefik can reach the WebUI through the VPN kill-switch
         - name: VPN_LAN_LEAK_ENABLED
           value: "false"
         - name: VPN_AUTO_PORT_FORWARD
