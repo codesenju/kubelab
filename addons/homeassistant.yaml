@@ -1,0 +1,67 @@
+---
+- name: Home Assistant Playbook
+  hosts: k8s-control-plane-1
+  gather_facts: false
+  become: false
+  vars:
+    target_namespace: homeassistant
+  tasks:
+    - name: Deploy Home Assistant ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: homeassistant
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/homeassistant/overlays/prod
+              targetRevision: main
+              kustomize:
+                labels:
+                  app.kubernetes.io/instance: homeassistant
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags:
+        - homeassistant
+        - argocd
+
+    - name: Create HTTPRoute for homeassistant (private)
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: homeassistant
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: "{{ gatewayapi_namespace }}"
+                sectionName: websecure-pvt
+            hostnames:
+              - "smarthome.{{ local_dns }}"
+            rules:
+              - backendRefs:
+                  - name: homeassistant
+                    port: 8123
+      tags:
+        - homeassistant
+        - httproute
+        - ingress
