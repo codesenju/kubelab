@@ -1,0 +1,71 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: homeassistant
+  labels:
+    app: homeassistant
+spec:
+  replicas: 1
+  # Home Assistant owns the single Zigbee coordinator (via ser2net socket).
+  # Never run more than one instance against the same coordinator.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: homeassistant
+  template:
+    metadata:
+      labels:
+        app: homeassistant
+    spec:
+      # The Zigbee dongle is bridged over TCP (ser2net) from the VM at
+      # 192.168.0.31, so the pod only needs network reach to that host and can
+      # schedule on any node. No nodeSelector/affinity pinning required.
+      containers:
+        - name: homeassistant
+          image: ghcr.io/home-assistant/home-assistant:2026.11.0
+          imagePullPolicy: IfNotPresent
+          env:
+            - name: TZ
+              value: "Africa/Johannesburg"
+          ports:
+            - name: http
+              containerPort: 8123
+          resources:
+            requests:
+              cpu: "250m"
+              memory: "512Mi"
+            limits:
+              cpu: "2"
+              memory: "2Gi"
+          volumeMounts:
+            - name: config
+              mountPath: /config
+          livenessProbe:
+            httpGet:
+              path: /
+              port: 8123
+            initialDelaySeconds: 60
+            periodSeconds: 30
+            timeoutSeconds: 10
+            failureThreshold: 6
+          readinessProbe:
+            httpGet:
+              path: /
+              port: 8123
+            initialDelaySeconds: 30
+            periodSeconds: 15
+            timeoutSeconds: 10
+            failureThreshold: 6
+          startupProbe:
+            httpGet:
+              path: /
+              port: 8123
+            initialDelaySeconds: 20
+            periodSeconds: 10
+            timeoutSeconds: 10
+            failureThreshold: 60
+      volumes:
+        - name: config
+          persistentVolumeClaim:
+            claimName: homeassistant-config
