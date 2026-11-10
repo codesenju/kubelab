@@ -1,0 +1,81 @@
+# Per-app config volumes on TrueNAS iSCSI (block, RWO).
+#
+# WHY: the shared `media-stack-config` RWX volume is NFS-backed
+# (192.168.0.16:/mnt/pool2/AppData). Running the *arr apps' SQLite databases
+# on NFS causes lock stalls / periodic DB corruption (observed: radarr.db
+# pre-repair backups, API hangs under load). Block storage (iSCSI) gives each
+# app a dedicated, properly-locking filesystem.
+#
+# NAMING: zvols are provisioned under pool2/k8s/media-iscsi/<pvc-uuid> (see the
+# StorageClass `datasetPath`). This groups all media config zvols under one
+# parent dataset on the NAS, consistent with the existing pool2/k8s/nvmeof
+# convention, so they are easy to identify vs. UUIDs scattered at pool root.
+#
+# ACCESS MODE: ReadWriteOnce. iSCSI is block storage and cannot be RWX. Each app
+# gets its own volume; this is fine because every app already used a private
+# subPath (<app>/config) under the shared NFS volume.
+---
+apiVersion: storage.k8s.io/v1
+kind: StorageClass
+metadata:
+  name: truenas-iscsi-media
+provisioner: csi.truenas.io
+parameters:
+  protocol: iscsi
+  # Parent dataset (relative to the driver defaultPool `pool2`). Zvols for these
+  # PVCs are created as pool2/k8s/media-iscsi/pvc-<uuid>.
+  datasetPath: k8s/media-iscsi
+  compression: LZ4
+  iscsi.blocksize: "4096"
+  iscsi.networks: 192.168.0.0/24
+  volblocksize: "16K"
+  # Format the block device with ext4 and preserve it across detach/attach.
+  fsType: ext4
+reclaimPolicy: Retain
+allowVolumeExpansion: true
+volumeBindingMode: Immediate
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: radarr-config
+  labels:
+    app: radarr
+    app.kubernetes.io/component: movie-management
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-media
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarr-config
+  labels:
+    app: sonarr
+    app.kubernetes.io/component: tv-management
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-media
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: qbittorrent-config
+  labels:
+    app: qbittorrent
+    app.kubernetes.io/component: download-client
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-media
+  resources:
+    requests:
+      storage: 2Gi
