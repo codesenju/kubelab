@@ -49,13 +49,20 @@ spec:
           httpGet:
             path: /
             port: 7878
-          initialDelaySeconds: 10
+          # Generous budget so first boot after the iSCSI migration can finish
+          # SQLite DB migration before the probe starts failing the container.
+          initialDelaySeconds: 15
+          periodSeconds: 10
+          timeoutSeconds: 5
+          failureThreshold: 30
+          successThreshold: 1
         readinessProbe:
           httpGet:
             path: /
             port: 7878
           initialDelaySeconds: 0
-          periodSeconds: 5
+          periodSeconds: 10
+          timeoutSeconds: 5
           failureThreshold: 3
           successThreshold: 1
         livenessProbe:
