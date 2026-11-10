@@ -32,9 +32,10 @@ spec:
         - containerPort: 8989
           name: http
         volumeMounts:
-        - name: media-stack-config
+        # Config moved off shared NFS (media-stack-config) to a dedicated
+        # TrueNAS iSCSI block volume to fix SQLite-on-NFS locking/corruption.
+        - name: config
           mountPath: /config
-          subPath: sonarr/config
         - name: data
           mountPath: /data
         resources:
@@ -66,9 +67,9 @@ spec:
           failureThreshold: 3
           successThreshold: 1
       volumes:
-      - name: media-stack-config
+      - name: config
         persistentVolumeClaim:
-          claimName: media-stack-config
+          claimName: sonarr-config
       - name: data
         persistentVolumeClaim:
           claimName: media-data

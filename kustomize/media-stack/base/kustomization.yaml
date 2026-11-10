@@ -5,6 +5,7 @@ kind: Kustomization
 resources:
 - _shared/data-volume.yaml
 - _shared/permissions-cm.yaml
+- _shared/iscsi-config-volumes.yaml   # per-app config on TrueNAS iSCSI (radarr/sonarr/qbittorrent)
 # - _shared/network-policy.yaml
 
 # Core media services
