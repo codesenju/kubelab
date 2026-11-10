@@ -18,6 +18,7 @@ spec:
       labels:
         app: homeassistant
     spec:
+      priorityClassName: high-priority
       # The Zigbee dongle is bridged over TCP (ser2net) from the VM at
       # 192.168.0.31, so the pod only needs network reach to that host and can
       # schedule on any node. No nodeSelector/affinity pinning required.
