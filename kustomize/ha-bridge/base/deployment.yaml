@@ -21,6 +21,10 @@ spec:
       serviceAccountName: ha-bridge
       imagePullSecrets:
         - name: registry-secret
+      securityContext:
+        # Group-owns mounted secret files so the non-root user can read the
+        # SSH key (see ssh-key volume defaultMode 0440).
+        fsGroup: 10001
       containers:
         - name: ha-bridge
           image: IMAGE_PLACEHOLDER
@@ -115,4 +119,7 @@ spec:
         - name: ssh-key
           secret:
             secretName: ha-bridge-ssh
-            defaultMode: 0400
+            # 0440 + pod fsGroup=10001 lets the non-root `bridge` user read the
+            # key via group. 0400 (root-only) made ssh fail "Permission denied"
+            # because the pod runs as uid 10001, not root.
+            defaultMode: 0440
