@@ -65,7 +65,10 @@
               name: nexus
               username: "{{ nexus_db_username }}"
               secretName: nexus-postgres-secrets
-              # size: 1Gi
+              # Bumped from the 10Gi default: WAL filled the PGDATA volume while
+              # S3 archiving was failing (missing creds), crash-looping Postgres
+              # with "no free disk space for WALs". 20Gi gives WAL headroom.
+              size: 20Gi
               storageClassName: truenas-nvmeof
               maxConnections: "200" # Nexus HikariCP pool saturates the default 100
             bootstrap:
