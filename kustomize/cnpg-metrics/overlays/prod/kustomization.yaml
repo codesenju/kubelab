@@ -5,3 +5,13 @@ namespace: signoz
 
 resources:
   - ../../base
+
+# Disabled on the Contabo single-node cluster to relieve memory pressure.
+# The otel-collector container (otel/opentelemetry-collector-contrib) was
+# OOM-looping against its ~512Mi limit on an 11Gi, swapless node that was
+# sitting at ~80% memory. This only scrapes CNPG/Postgres metrics into SigNoz,
+# so disabling it loses Postgres observability only — no app/data impact.
+# Re-enable by setting replicas back to 1 (or removing this patch).
+replicas:
+  - name: cnpg-metrics-collector
+    count: 0
