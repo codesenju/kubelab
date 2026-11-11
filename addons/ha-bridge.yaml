@@ -10,11 +10,16 @@
 #   cd ansible && export ANSIBLE_CONFIG=ansible.cfg
 #   ansible-playbook ../addons/ha-bridge.yaml -i inventories/prod/hosts.ini
 - name: HA Bridge Playbook
-  hosts: k8s-control-plane-1
+  # Runs on the Ansible control node (localhost): it has the OpenBao CLI logged
+  # in, the SSH key for temperature collection, and a working kubeconfig. This
+  # mirrors nexus.yaml's intent (control-plane host) but keeps the OpenBao read
+  # where the `bao` token actually lives.
+  hosts: localhost
+  connection: local
   gather_facts: false
   vars:
     target_namespace: homeassistant
-    openbao_addr: "https://openbao.{{ local_dns }}"
+    openbao_addr: "https://openbao.{{ local_dns | default('local.jazziro.com') }}"
     # Path on the Ansible control node to the SSH key used for lm-sensors
     # temperature collection on the Proxmox nodes.
     temp_ssh_key_path: "{{ lookup('env', 'HOME') }}/codesenju/kubelab.pem"
@@ -44,7 +49,6 @@
       ansible.builtin.slurp:
         src: "{{ temp_ssh_key_path }}"
       register: temp_ssh_key
-      delegate_to: localhost
       tags: [secrets]
 
     - name: Create ha-bridge application secret
@@ -116,4 +120,14 @@
                 - CreateNamespace=true
                 - ServerSideApply=true
                 - RespectIgnoreDifferences=true
+            # The Gateway API controller defaults parentRefs[].group/kind and
+            # backendRefs[].group/kind/weight on the live HTTPRoute, which our
+            # manifest omits. Ignore those so the app doesn't sit OutOfSync.
+            ignoreDifferences:
+              - group: "gateway.networking.k8s.io"
+                kind: HTTPRoute
+                name: ha-bridge
+                jqPathExpressions:
+                  - .spec.parentRefs[]
+                  - .spec.rules[].backendRefs[]
       tags: [argocd]
