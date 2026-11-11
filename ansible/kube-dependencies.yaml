@@ -33,8 +33,30 @@
           - software-properties-common
           - nfs-common
           - open-iscsi
+          # NVMe-oF (NVMe over TCP) initiator tooling. Required by the
+          # democratic-csi / TrueNAS csi-truenas driver, which mounts volumes
+          # over nvme-tcp. Without the transport module present, every mount
+          # fails with "nvme_fabrics: no handler found for transport tcp" and
+          # Postgres/Nexus/etc. hang in Init waiting on their PVCs.
+          - nvme-cli
+          # Pulls linux-modules-extra for the running kernel (contains
+          # nvme-tcp.ko) AND, as a metapackage, tracks every FUTURE kernel so
+          # an unattended kernel bump can never again ship without the module.
+          # The default cloud image uses linux-image-virtual, which omits the
+          # extra modules — this is what broke NVMe-oF after a kernel upgrade.
+          - linux-image-generic
         state: present
         update_cache: true
+
+    - name: Ensure linux-modules-extra is present for the RUNNING kernel
+      # linux-image-generic covers current+future kernels, but install the
+      # concrete package for the already-running kernel too, so NVMe-oF works
+      # immediately on an existing node without requiring the reboot below.
+      apt:
+        name: "linux-modules-extra-{{ ansible_kernel }}"
+        state: present
+        update_cache: true
+      failed_when: false   # tolerate a running kernel with no matching -extra pkg
 
     - name: Disable SWAP
       shell: |
@@ -58,6 +80,17 @@
         block: |
           overlay
           br_netfilter
+
+    - name: Persist NVMe-oF (nvme-tcp) kernel modules across reboots
+      # Mirrors the containerd module pattern. Ensures the NVMe-over-TCP
+      # transport is auto-loaded at boot so the csi-truenas driver can always
+      # connect its volumes.
+      copy:
+        content: |
+          nvme_tcp
+          nvme_fabrics
+        dest: /etc/modules-load.d/nvme_tcp.conf
+        mode: "0644"
 
     - name: Create an empty file for K8S sysctl parameters
       copy:
@@ -156,6 +189,14 @@
     - name: Load br_netfilter kernel module
       modprobe:
         name: br_netfilter
+        state: present
+
+    - name: Load NVMe-oF (nvme-tcp) kernel module
+      # Load now so NVMe-oF works without waiting for the reboot below. Depends
+      # on nvme-tcp.ko being present, which linux-image-generic /
+      # linux-modules-extra-<kernel> installed in the prerequisites above.
+      modprobe:
+        name: nvme_tcp
         state: present
 
     - name: Set bridge-nf-call-iptables
