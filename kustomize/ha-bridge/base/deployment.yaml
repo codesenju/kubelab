@@ -1,0 +1,118 @@
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: ha-bridge
+  labels:
+    app: ha-bridge
+spec:
+  replicas: 1
+  revisionHistoryLimit: 1
+  # Singleton publisher — avoid two pods double-publishing during rollouts.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: ha-bridge
+  template:
+    metadata:
+      labels:
+        app: ha-bridge
+    spec:
+      serviceAccountName: ha-bridge
+      imagePullSecrets:
+        - name: registry-secret
+      containers:
+        - name: ha-bridge
+          image: IMAGE_PLACEHOLDER
+          ports:
+            - name: http
+              containerPort: 8080
+          env:
+            - name: HTTP_PORT
+              value: "8080"
+            - name: ONESHOT
+              value: "0"
+            - name: POLL_INTERVAL
+              value: "15"
+            - name: PVE_PORT
+              value: "8006"
+            - name: PVE_NODES
+              value: "kubelab-1,kubelab-2,kubelab-3"
+            - name: ENABLE_K8S
+              value: "1"
+            # kubectl uses the in-cluster ServiceAccount when KUBECONFIG is absent.
+            - name: KUBECONFIG
+              value: "/nonexistent"
+            - name: ENABLE_TEMP
+              value: "1"
+            - name: TEMP_SSH_USER
+              value: "root"
+            - name: TEMP_SSH_KEY
+              value: "/etc/ha-bridge-ssh/kubelab.pem"
+            - name: TEMP_NODE_HOSTS
+              value: "kubelab-1=192.168.0.11,kubelab-2=192.168.0.12,kubelab-3=192.168.0.13"
+            # Secrets (created by the Ansible playbook from OpenBao).
+            - name: HA_URL
+              valueFrom:
+                secretKeyRef:
+                  name: ha-bridge-secrets
+                  key: HA_URL
+            - name: HA_TOKEN
+              valueFrom:
+                secretKeyRef:
+                  name: ha-bridge-secrets
+                  key: HA_TOKEN
+            - name: PVE_HOST
+              valueFrom:
+                secretKeyRef:
+                  name: ha-bridge-secrets
+                  key: PVE_HOST
+            - name: PVE_TOKEN_ID
+              valueFrom:
+                secretKeyRef:
+                  name: ha-bridge-secrets
+                  key: PVE_TOKEN_ID
+            - name: PVE_TOKEN_SECRET
+              valueFrom:
+                secretKeyRef:
+                  name: ha-bridge-secrets
+                  key: PVE_TOKEN_SECRET
+            - name: PVE_FINGERPRINT
+              valueFrom:
+                secretKeyRef:
+                  name: ha-bridge-secrets
+                  key: PVE_FINGERPRINT
+          volumeMounts:
+            - name: ssh-key
+              mountPath: /etc/ha-bridge-ssh
+              readOnly: true
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 5
+            periodSeconds: 15
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            initialDelaySeconds: 30
+            periodSeconds: 30
+          resources:
+            requests:
+              cpu: 25m
+              memory: 64Mi
+            limits:
+              cpu: 200m
+              memory: 128Mi
+          securityContext:
+            runAsNonRoot: true
+            runAsUser: 10001
+            allowPrivilegeEscalation: false
+            capabilities:
+              drop: ["ALL"]
+      volumes:
+        - name: ssh-key
+          secret:
+            secretName: ha-bridge-ssh
+            defaultMode: 0400

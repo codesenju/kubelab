@@ -1,0 +1,15 @@
+apiVersion: kustomize.config.k8s.io/v1beta1
+kind: Kustomization
+
+namespace: homeassistant
+
+images:
+  - name: IMAGE_PLACEHOLDER
+    newName: registry.jazziro.com/kubelab/ha-bridge
+    newTag: "0.1.0"
+
+generatorOptions:
+  disableNameSuffixHash: true
+
+resources:
+  - ../../base
