@@ -193,6 +193,34 @@ EOF
 kubectl exec storage-test -- iostat -x 1
 ```
 
+**iSCSI RWO "Multi-Attach" on rollout:**
+```bash
+# A ReadWriteOnce (iSCSI/NVMe-oF) volume can only attach to one node. During a
+# rollout the new pod may report: FailedAttachVolume: Multi-Attach error ...
+# Volume is already used by pod(s) <old-pod>. Break the deadlock by scaling the
+# stale ReplicaSet (still replicas>0 but not the deployment's current revision)
+# to 0 so the volume detaches:
+kubectl get rs -n <ns> -l app=<app> \
+  -o custom-columns=RS:.metadata.name,REV:'.metadata.annotations.deployment\.kubernetes\.io/revision',REPL:.spec.replicas
+kubectl scale rs -n <ns> <old-rs-name> --replicas=0
+# watch the attachment move nodes:
+kubectl get volumeattachment | grep <pv-name>
+```
+
+**NVMe-oF volume won't mount after a node reboot:**
+```bash
+# Symptom: nvme_fabrics: no handler found for transport tcp / nvme connect
+# failed: Invalid argument. The nvme_tcp kernel module is missing on the node.
+K=$(uname -r)
+sudo apt-get install -y linux-modules-extra-$K   # provides nvme_tcp
+sudo modprobe nvme_tcp
+echo nvme_tcp | sudo tee /etc/modules-load.d/nvme_tcp.conf   # persist
+# then restart the CSI node pod on that node if the mount stays cached-failed.
+```
+
+See `docs/media-stack-iscsi-migration-runbook.md` for the full media-stack
+config→iSCSI migration and the related Nexus Postgres WAL/disk-full recovery.
+
 ### Networking Issues
 
 **Ingress Not Working:**
