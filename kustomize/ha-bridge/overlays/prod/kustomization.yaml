@@ -6,7 +6,7 @@ namespace: homeassistant
 images:
   - name: IMAGE_PLACEHOLDER
     newName: registry.jazziro.com/kubelab/ha-bridge
-    newTag: "0.2.0"
+    newTag: "0.3.0"
 
 generatorOptions:
   disableNameSuffixHash: true
