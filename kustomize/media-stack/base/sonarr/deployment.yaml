@@ -6,6 +6,9 @@ metadata:
     app.kubernetes.io/component: tv-management
 spec:
   replicas: 1
+  # iSCSI config is RWO; replace the pod instead of overlapping attachments.
+  strategy:
+    type: Recreate
   selector:
     matchLabels:
       app: sonarr
@@ -76,7 +79,7 @@ spec:
       volumes:
       - name: config
         persistentVolumeClaim:
-          claimName: sonarr-config
+          claimName: sonarr-config-recovered-20261112
       - name: data
         persistentVolumeClaim:
           claimName: media-data

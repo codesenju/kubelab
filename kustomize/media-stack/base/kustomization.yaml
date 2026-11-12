@@ -6,6 +6,7 @@ resources:
 - _shared/data-volume.yaml
 - _shared/permissions-cm.yaml
 - _shared/iscsi-config-volumes.yaml   # per-app config on TrueNAS iSCSI (radarr/sonarr/qbittorrent)
+- _shared/recovered-config-pvcs.yaml  # validated Sonarr/Radarr DB recovery copies
 # - _shared/network-policy.yaml
 
 # Core media services

@@ -1,0 +1,31 @@
+# Recovered Sonarr/Radarr config volumes. Originals remain on their original
+# PVCs; these retained copies are the active, integrity-checked databases.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: sonarr-config-recovered-20261112
+  labels:
+    app: sonarr
+    app.kubernetes.io/component: tv-management
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-media
+  resources:
+    requests:
+      storage: 5Gi
+---
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: radarr-config-recovered-20261112
+  labels:
+    app: radarr
+    app.kubernetes.io/component: movie-management
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-media
+  resources:
+    requests:
+      storage: 5Gi
