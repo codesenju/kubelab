@@ -7,6 +7,9 @@ metadata:
   labels:
     app: sonarr
     app.kubernetes.io/component: tv-management
+    app.kubernetes.io/instance: media-stack-prod
+    app.kubernetes.io/managed-by: kustomize-v5.8.1
+    app.kubernetes.io/part-of: media-stack
 spec:
   accessModes:
     - ReadWriteOnce
@@ -30,6 +33,9 @@ metadata:
   labels:
     app: radarr
     app.kubernetes.io/component: movie-management
+    app.kubernetes.io/instance: media-stack-prod
+    app.kubernetes.io/managed-by: kustomize-v5.8.1
+    app.kubernetes.io/part-of: media-stack
 spec:
   accessModes:
     - ReadWriteOnce
