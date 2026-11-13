@@ -15,6 +15,10 @@ spec:
     apiGroup: snapshot.storage.k8s.io
     kind: VolumeSnapshot
     name: sonarr-config-before-repair-20261112
+  dataSourceRef:
+    apiGroup: snapshot.storage.k8s.io
+    kind: VolumeSnapshot
+    name: sonarr-config-before-repair-20261112
   resources:
     requests:
       storage: 5Gi
@@ -31,6 +35,10 @@ spec:
     - ReadWriteOnce
   storageClassName: truenas-iscsi-media
   dataSource:
+    apiGroup: snapshot.storage.k8s.io
+    kind: VolumeSnapshot
+    name: radarr-config-before-repair-20261112
+  dataSourceRef:
     apiGroup: snapshot.storage.k8s.io
     kind: VolumeSnapshot
     name: radarr-config-before-repair-20261112
