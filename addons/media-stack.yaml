@@ -140,7 +140,7 @@
                     patch: |-
                       - op: add
                         path: /spec/template/spec/containers/0/image
-                        value: {{ registry_domain }}/ghcrio/seerr-team/seerr:v3.5.1
+                        value: {{ registry_domain }}/ghcrio/seerr-team/seerr:v3.5.2
                   - target:
                       group: apps
                       version: v1
