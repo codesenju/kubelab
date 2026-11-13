@@ -159,6 +159,19 @@
                       - op: add
                         path: /spec/template/spec/containers/0/image
                         value: {{ registry_domain }}/ghcrio/hotio/bazarr:nightly-v1.6.3
+            ignoreDifferences:
+              - group: ""
+                kind: PersistentVolumeClaim
+                name: sonarr-config-recovered-20261112
+                namespace: "{{ target_namespace }}"
+                jsonPointers:
+                  - /spec/volumeName
+              - group: ""
+                kind: PersistentVolumeClaim
+                name: radarr-config-recovered-20261112
+                namespace: "{{ target_namespace }}"
+                jsonPointers:
+                  - /spec/volumeName
             destination:
               server: https://kubernetes.default.svc
               namespace: media-stack
