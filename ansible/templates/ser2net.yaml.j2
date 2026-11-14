@@ -1,0 +1,11 @@
+%YAML 1.1
+---
+# RFC 2217 allows remote clients to set baud rate and DTR/RTS for ESP32
+# monitoring and flashing. Listener is bound to this Proxmox host's primary
+# LAN address; this protocol has no authentication or encryption.
+connection: &esp32
+    accepter: telnet(rfc2217),tcp,{{ ansible_facts.default_ipv4.address }},{{ ser2net_devices[inventory_hostname].port }}
+    enable: on
+    options:
+      max-connections: 1
+    connector: serialdev,{{ ser2net_devices[inventory_hostname].device }},115200n81,local,nobreak
