@@ -92,6 +92,28 @@ Enable volume expansion for storage classes:
 ansible-playbook -i "$INVENTORY" main.yaml --tags adhoc,enable_volume_expansion
 ```
 
+### Proxmox ESP32 serial bridges
+
+`proxmox-ser2net.yaml` exposes the ESP32-S3 USB serial device on `kubelab-2`
+and `kubelab-3` using RFC 2217, which supports remote baud-rate and DTR/RTS
+control needed by ESP32 flashing tools. Supply a **local, untracked inventory**
+with a `proxmox_serial_hosts` group containing those host aliases and their
+`ansible_host`, `ansible_user`, and SSH key settings:
+
+```bash
+export ANSIBLE_CONFIG=ansible.cfg
+ansible-playbook -i /path/to/private-proxmox-inventory.ini proxmox-ser2net.yaml
+```
+
+The playbook uses `/dev/serial/by-path` mappings and listens on each host's
+primary IPv4 address: port `20109` on `kubelab-2`, `20110` on `kubelab-3`.
+Connect with an RFC 2217 client using the host's LAN address, for example
+`rfc2217://<kubelab-2-host>:20109` or `rfc2217://<kubelab-3-host>:20110`.
+
+RFC 2217 has no authentication or encryption. Keep these ports on a trusted
+LAN/VPN and do not forward them from the Internet. Only one client may own
+each serial port at a time.
+
 ---
 
 ## ⚙️ Configuration

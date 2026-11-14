@@ -1,0 +1,89 @@
+---
+- name: Expose ESP32-S3 serial ports over RFC 2217
+  hosts: proxmox_serial_hosts
+  gather_facts: true
+  become: false
+  vars:
+    ser2net_devices:
+      kubelab-2:
+        device: /dev/serial/by-path/pci-0000:00:14.0-usb-0:1:1.0-port0
+        port: 20109
+      kubelab-3:
+        device: /dev/serial/by-path/pci-0000:00:14.0-usb-0:2:1.0-port0
+        port: 20110
+
+  pre_tasks:
+    - name: Require a configured host mapping
+      ansible.builtin.assert:
+        that:
+          - inventory_hostname in ser2net_devices
+          - ansible_facts.default_ipv4.address is defined
+        fail_msg: "No ser2net device mapping or default IPv4 address for {{ inventory_hostname }}"
+
+    - name: Check that the mapped serial device exists
+      ansible.builtin.stat:
+        path: "{{ ser2net_devices[inventory_hostname].device }}"
+        follow: true
+      register: serial_device
+
+    - name: Require the serial device to be present
+      ansible.builtin.assert:
+        that:
+          - serial_device.stat.exists
+          - serial_device.stat.ischr
+        fail_msg: "Mapped serial device is missing on {{ inventory_hostname }}"
+
+  tasks:
+    - name: Install ser2net
+      ansible.builtin.apt:
+        name: ser2net
+        state: present
+        update_cache: true
+        cache_valid_time: 3600
+
+    - name: Configure RFC 2217 serial bridge
+      ansible.builtin.template:
+        src: templates/ser2net.yaml.j2
+        dest: /etc/ser2net.yaml
+        owner: root
+        group: root
+        mode: "0644"
+      notify: Restart ser2net
+
+    - name: Enable and start ser2net
+      ansible.builtin.systemd:
+        name: ser2net
+        enabled: true
+        state: started
+      when: not ansible_check_mode
+
+    - name: Apply ser2net configuration before checking listener
+      ansible.builtin.meta: flush_handlers
+      when: not ansible_check_mode
+
+    - name: Inspect RFC 2217 listener without opening a serial session
+      ansible.builtin.command:
+        argv:
+          - ss
+          - -H
+          - -ltn
+          - sport
+          - "="
+          - ":{{ ser2net_devices[inventory_hostname].port }}"
+      register: ser2net_listener
+      changed_when: false
+      when: not ansible_check_mode
+
+    - name: Require the RFC 2217 listener
+      ansible.builtin.assert:
+        that:
+          - ser2net_listener.stdout | length > 0
+        fail_msg: "ser2net is not listening on port {{ ser2net_devices[inventory_hostname].port }}"
+      when: not ansible_check_mode
+
+  handlers:
+    - name: Restart ser2net
+      ansible.builtin.systemd:
+        name: ser2net
+        state: restarted
+      when: not ansible_check_mode
