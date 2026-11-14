@@ -25,7 +25,7 @@
               targetRevision: main
               kustomize:
                 images:
-                  - IMAGE_PLACEHOLDER=rustfs/rustfs:1.0.0
+                  - IMAGE_PLACEHOLDER=rustfs/rustfs:1.0.5
                 commonAnnotations:
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 labels:
