@@ -49,3 +49,6 @@
 
 - name: Waha
   import_playbook: ../addons/waha.yaml
+
+- name: OmniRoute
+  import_playbook: ../addons/omniroute.yaml

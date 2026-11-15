@@ -1,0 +1,81 @@
+---
+apiVersion: apps/v1
+kind: Deployment
+metadata:
+  name: omniroute
+  labels:
+    app: omniroute
+spec:
+  replicas: 1
+  # The data volume is ReadWriteOnce and holds a SQLite database; never run two
+  # pods against it at the same time.
+  strategy:
+    type: Recreate
+  selector:
+    matchLabels:
+      app: omniroute
+  template:
+    metadata:
+      labels:
+        app: omniroute
+    spec:
+      # The image runs as uid/gid 1000 (node) and keeps everything it owns under
+      # /app/data, so the PVC is group-owned by 1000.
+      securityContext:
+        fsGroup: 1000
+        fsGroupChangePolicy: OnRootMismatch
+      containers:
+        - name: omniroute
+          image: IMAGE_TEMPLATE
+          imagePullPolicy: IfNotPresent
+          ports:
+            - name: http
+              containerPort: 20128
+              protocol: TCP
+          env:
+            # Only used to bootstrap the first admin user. Generated runtime
+            # secrets (JWT_SECRET, STORAGE_ENCRYPTION_KEY, API_KEY_SECRET) live
+            # in /app/data/server.env on the PVC, never in git.
+            - name: INITIAL_PASSWORD
+              valueFrom:
+                secretKeyRef:
+                  name: omniroute-secrets
+                  key: INITIAL_PASSWORD
+          # /healthz is a pure in-memory lifecycle probe; /api/monitoring/health
+          # performs synchronous SQLite work on the same event loop and can stall
+          # under catalog rebuilds, so it is deliberately not used here.
+          startupProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 5
+            timeoutSeconds: 5
+            failureThreshold: 30
+          readinessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 10
+            timeoutSeconds: 5
+            failureThreshold: 3
+          livenessProbe:
+            httpGet:
+              path: /healthz
+              port: http
+            periodSeconds: 30
+            timeoutSeconds: 5
+            failureThreshold: 3
+          resources:
+            requests:
+              cpu: 100m
+              memory: 512Mi
+            limits:
+              # NODE_OPTIONS=--max-old-space-size=1024 is baked into the image.
+              memory: 1536Mi
+          volumeMounts:
+            - name: data
+              mountPath: /app/data
+      volumes:
+        - name: data
+          persistentVolumeClaim:
+            claimName: omniroute-data
