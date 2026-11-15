@@ -28,9 +28,11 @@ spec:
       imagePullSecretName3: string | default=""
       bootstrap:
         mode: string | enum="initdb,recovery" default="initdb" description="initdb or recovery"
+        postInitApplicationSQL: '[]string | default=[] description="SQL statements run after initdb as the application database owner"'
       db:
         name: string | required=true
         username: string | required=true
+        superuser: boolean | default=true description="Whether generated application role is a PostgreSQL superuser"
         size: string | default="1Gi"
         storageClassName: string | default=""
         secretName: string | required=true
@@ -142,7 +144,7 @@ spec:
           managed:
             roles:
               - name: ${schema.spec.db.username}
-                superuser: true
+                superuser: ${schema.spec.db.superuser}
                 login: true
           bootstrap:
             recovery:
@@ -201,7 +203,7 @@ spec:
           managed:
             roles:
               - name: ${schema.spec.db.username}
-                superuser: true
+                superuser: ${schema.spec.db.superuser}
                 login: true
           bootstrap:
             initdb:
@@ -209,6 +211,7 @@ spec:
               owner: ${schema.spec.db.username}
               secret:
                 name: ${schema.spec.db.secretName}
+              postInitApplicationSQL: ${schema.spec.bootstrap.postInitApplicationSQL}
           plugins:
             - name: barman-cloud.cloudnative-pg.io
               isWALArchiver: true

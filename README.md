@@ -147,6 +147,7 @@ Environment mapping:
 | **harness** | CI/CD platform | - | `ansible-playbook ../addons/harness.yaml --vault-password-file ~/vault-password.txt` |
 | **backstage** | Developer portal | cnpg, gitea | `ansible-playbook ../addons/backstage.yaml --vault-password-file ~/vault-password.txt` |
 | **n8n** | Workflow automation | cnpg | `ansible-playbook ../addons/n8n.yaml --vault-password-file ~/vault-password.txt` |
+| **hindsight** | Persistent agent memory (OmniRoute + CNPG) | cnpg, OpenBao, OmniRoute | `ansible-playbook -i inventories/prod/hosts.ini ../addons/hindsight.yaml --vault-password-file ~/vault-password.txt` — [operations guide](docs/hindsight.md) |
 
 ### Networking
 | Addon | Purpose | Dependencies | Deployment |
