@@ -1,0 +1,22 @@
+---
+# OmniRoute keeps a SQLite database (storage.sqlite + WAL) plus call logs under
+# /app/data. SQLite on NFS has repeatedly produced locking/corruption problems in
+# this cluster (see the media-stack iSCSI migration), so the volume is requested
+# from the iSCSI block class rather than the default NFS class.
+#
+# Use the TrueNAS iSCSI media class, whose reclaim policy is Retain. Losing the
+# PVC must never delete the OmniRoute database, which holds provider credentials
+# encrypted with /app/data/server.env.
+apiVersion: v1
+kind: PersistentVolumeClaim
+metadata:
+  name: omniroute-data
+  labels:
+    app: omniroute
+spec:
+  accessModes:
+    - ReadWriteOnce
+  storageClassName: truenas-iscsi-media
+  resources:
+    requests:
+      storage: 20Gi

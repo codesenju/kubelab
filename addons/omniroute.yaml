@@ -1,0 +1,145 @@
+---
+- name: OmniRoute Playbook
+  hosts: localhost
+  connection: local
+  gather_facts: false
+  vars:
+    target_namespace: omniroute
+    openbao_addr: "https://openbao.{{ local_dns }}"
+    openbao_secret_path: secret/agents/omniroute
+    omniroute_cleanup_external_services: false
+  environment:
+    BAO_ADDR: "{{ openbao_addr }}"
+  tasks:
+    - name: Require local DNS configuration
+      ansible.builtin.assert:
+        that:
+          - local_dns is defined
+          - local_dns | length > 0
+        fail_msg: "Production inventory must provide local_dns."
+      tags: [always]
+
+    - name: Read OmniRoute credentials from OpenBao
+      ansible.builtin.command:
+        argv: [bao, kv, get, -format=json, "{{ openbao_secret_path }}"]
+      register: omniroute_bao
+      changed_when: false
+      no_log: true
+      tags: [secrets]
+
+    - name: Parse OmniRoute credentials
+      ansible.builtin.set_fact:
+        omniroute_bao_data: "{{ (omniroute_bao.stdout | from_json).data.data }}"
+      no_log: true
+      tags: [secrets]
+
+    - name: Require OmniRoute initial password
+      ansible.builtin.assert:
+        that:
+          - omniroute_bao_data.omniroute_password is defined
+          - omniroute_bao_data.omniroute_password | length > 0
+        fail_msg: "OpenBao secret/agents/omniroute must contain omniroute_password."
+      no_log: true
+      tags: [secrets]
+
+    - name: Create OmniRoute Kubernetes secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: omniroute-secrets
+            namespace: "{{ target_namespace }}"
+          type: Opaque
+          stringData:
+            INITIAL_PASSWORD: "{{ omniroute_bao_data.omniroute_password }}"
+      no_log: true
+      tags: [secrets]
+
+    - name: Deploy OmniRoute ArgoCD Application
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: argoproj.io/v1alpha1
+          kind: Application
+          metadata:
+            name: omniroute
+            namespace: argocd
+            finalizers:
+              - resources-finalizer.argocd.argoproj.io
+          spec:
+            project: default
+            source:
+              repoURL: https://github.com/codesenju/kubelab.git
+              path: kustomize/omniroute/overlays/prod
+              targetRevision: main
+              kustomize:
+                commonAnnotations:
+                  argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
+                labels:
+                  app.kubernetes.io/instance: omniroute-prod
+            destination:
+              server: https://kubernetes.default.svc
+              namespace: "{{ target_namespace }}"
+            syncPolicy:
+              automated:
+                prune: true
+                selfHeal: true
+              syncOptions:
+                - CreateNamespace=true
+                - ServerSideApply=true
+                - RespectIgnoreDifferences=true
+      tags: [argocd]
+
+    - name: Create OmniRoute HTTPRoute
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: omniroute
+            namespace: "{{ target_namespace }}"
+          spec:
+            parentRefs:
+              - name: local-gateway
+                namespace: gateway-infra
+                sectionName: websecure-pvt
+            hostnames:
+              - "omniroute.{{ local_dns }}"
+            rules:
+              - matches:
+                  - path:
+                      type: PathPrefix
+                      value: /
+                backendRefs:
+                  - name: omniroute
+                    port: 20128
+      tags: [httproute]
+
+    # Run explicitly after the in-cluster app has been verified:
+    # ansible-playbook addons/omniroute.yaml -i ansible/inventories/prod/hosts.ini \
+    #   -e omniroute_cleanup_external_services=true --tags cleanup
+    - name: Remove legacy OmniRoute resources from external-services
+      kubernetes.core.k8s:
+        state: absent
+        definition: "{{ item }}"
+      loop:
+        - apiVersion: gateway.networking.k8s.io/v1
+          kind: HTTPRoute
+          metadata:
+            name: omniroute
+            namespace: external-services
+        - apiVersion: v1
+          kind: Service
+          metadata:
+            name: omniroute
+            namespace: external-services
+        - apiVersion: discovery.k8s.io/v1
+          kind: EndpointSlice
+          metadata:
+            name: omniroute
+            namespace: external-services
+      when: omniroute_cleanup_external_services | bool
+      tags: [cleanup]
