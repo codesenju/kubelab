@@ -23,6 +23,9 @@
 - name: Cnpg
   import_playbook: ../addons/cnpg.yaml
 
+- name: Hindsight
+  import_playbook: ../addons/hindsight.yaml
+
 - name: Csi-driver-nfs
   import_playbook: ../addons/csi-driver-nfs.yaml
 
