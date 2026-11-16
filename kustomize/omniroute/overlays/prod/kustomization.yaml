@@ -5,8 +5,8 @@ namespace: omniroute
 
 images:
   - name: IMAGE_TEMPLATE
-    newName: diegosouzapw/omniroute
-    newTag: 3.8.53
+    newName: registry.jazziro.com/kubelab/omniroute
+    newTag: 3.8.53-kiro1.4.178-2
 
 resources:
   - ../../base
