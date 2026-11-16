@@ -88,9 +88,17 @@
                 p, role:devsecops, applications, sync, default/epcsa*, allow
                 p, role:devsecops, applications, sync, default/iysynergy*, allow
                 p, role:devsecops, applications, sync, default/drives3, allow
+                # Backstage catalog synchronization — strictly READ-ONLY identity.
+                # get only on applications + applicationsets in the default project;
+                # no sync, no update/delete, no admin, no other resources.
+                g, backstage-catalog, role:backstage-catalog
+                p, role:backstage-catalog, applications, get, default/*, allow
+                p, role:backstage-catalog, applicationsets, get, default/*, allow
             cm:
               accounts.devops: apiKey, login
               accounts.devops.enabled: "true"
+              accounts.backstage-catalog: apiKey, login
+              accounts.backstage-catalog.enabled: "true"
               admin.enabled: false
               exec.enabled: true
               dex.config: |
