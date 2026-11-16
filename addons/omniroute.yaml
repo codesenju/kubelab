@@ -98,6 +98,7 @@
                   # "400: This version of Kiro is no longer supported".
                   # Registry host comes from registry_domain so it stays out of git.
                   # Drop this override once upstream ships a fix.
+                  # Upgrade procedure: docs/omniroute.md
                   - "IMAGE_TEMPLATE={{ registry_domain }}/kubelab/omniroute:{{ omniroute_image_tag }}"
             destination:
               server: https://kubernetes.default.svc
