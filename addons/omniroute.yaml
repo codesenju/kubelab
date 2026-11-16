@@ -8,15 +8,18 @@
     openbao_addr: "https://openbao.{{ local_dns }}"
     openbao_secret_path: secret/agents/omniroute
     omniroute_cleanup_external_services: false
+    omniroute_image_tag: 3.8.53-kiro1.4.178-2
   environment:
     BAO_ADDR: "{{ openbao_addr }}"
   tasks:
-    - name: Require local DNS configuration
+    - name: Require local DNS and registry configuration
       ansible.builtin.assert:
         that:
           - local_dns is defined
           - local_dns | length > 0
-        fail_msg: "Production inventory must provide local_dns."
+          - registry_domain is defined
+          - registry_domain | length > 0
+        fail_msg: "Production inventory must provide local_dns and registry_domain."
       tags: [always]
 
     - name: Read OmniRoute credentials from OpenBao
@@ -89,6 +92,13 @@
                   argocd.argoproj.io/sync-options: SkipDryRunOnMissingResource=true
                 labels:
                   app.kubernetes.io/instance: omniroute-prod
+                images:
+                  # Patched image (docker/omniroute/Dockerfile) that sends a current
+                  # Kiro client version; upstream 3.8.53 is rejected by Kiro with
+                  # "400: This version of Kiro is no longer supported".
+                  # Registry host comes from registry_domain so it stays out of git.
+                  # Drop this override once upstream ships a fix.
+                  - "IMAGE_TEMPLATE={{ registry_domain }}/kubelab/omniroute:{{ omniroute_image_tag }}"
             destination:
               server: https://kubernetes.default.svc
               namespace: "{{ target_namespace }}"
