@@ -4,10 +4,10 @@ kind: Kustomization
 # Namespace configuration
 namespace: backstage
 
-imageTags:
+images:
   - name: IMAGE_NAME
-    newName: "ghcr.io/codesenju/backstage"
-    newTag: "b8743bc"
+    newName: registry.jazziro.com/kubelab/backstage
+    digest: sha256:bc07414f1b10cf1a0762c1d82821a989c067001b4af49fa81c180b0495be4107
 
 generatorOptions:
   disableNameSuffixHash: true
