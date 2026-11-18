@@ -1,0 +1,47 @@
+# Read-only inventory access for the Backstage Kubernetes plugin.
+# get/list/watch only. Deliberately NOT granted: secrets, pods/log, pods/exec,
+# replicasets, or any write verb.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backstage
+  namespace: backstage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backstage-inventory-readonly
+rules:
+  - apiGroups: [""]
+    resources:
+      - persistentvolumeclaims
+      - persistentvolumes
+      - namespaces
+      - pods
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["apps"]
+    resources:
+      - deployments
+      - statefulsets
+      - daemonsets
+    verbs: ["get", "list", "watch"]
+  - apiGroups: ["storage.k8s.io"]
+    resources:
+      - storageclasses
+      - csidrivers
+      - csinodes
+      - volumeattachments
+    verbs: ["get", "list", "watch"]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: backstage-inventory-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: backstage-inventory-readonly
+subjects:
+  - kind: ServiceAccount
+    name: backstage
+    namespace: backstage
