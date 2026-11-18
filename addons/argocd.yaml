@@ -72,7 +72,7 @@
               serviceMonitor:
                 enabled: false
           configs:
-            # secret:
+            # extra secrets (unused):
             #   extra:
             #     dex.authentik.clientSecret: "{{ argocd_openid_client_secret }}"
             rbac:
@@ -97,7 +97,7 @@
             cm:
               accounts.devops: apiKey, login
               accounts.devops.enabled: "true"
-              accounts.backstage-catalog: apiKey, login
+              accounts.backstage-catalog: apiKey
               accounts.backstage-catalog.enabled: "true"
               admin.enabled: false
               exec.enabled: true
