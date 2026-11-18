@@ -6,3 +6,4 @@ resources:
 - service.yaml
 - backstage.yaml
 - pv.yaml
+- rbac.yaml

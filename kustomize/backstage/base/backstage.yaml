@@ -13,6 +13,7 @@ spec:
       labels:
         app: backstage
     spec:
+      serviceAccountName: backstage
       containers:
         - name: backstage
           image: IMAGE_NAME # Replace with the actual image name
@@ -41,7 +42,7 @@ spec:
             # Token is provisioned from kustomize/backstage/overlays/prod/.env (secretGenerator).
             # optional: true so the app starts before the token is provisioned.
             - name: ARGOCD_API_URL
-              value: http://argocd-server.argocd.svc.cluster.local:8083
+              value: http://argocd-server.argocd.svc.cluster.local:80
             - name: ARGOCD_API_TOKEN
               valueFrom:
                 secretKeyRef:

@@ -1,0 +1,36 @@
+# Read-only identity for the Backstage storage inventory (/storage page).
+# Only get/list/watch on the objects needed to map workload -> PVC -> PV -> CSI.
+# No Secrets, no write verbs, no pods/exec.
+apiVersion: v1
+kind: ServiceAccount
+metadata:
+  name: backstage
+  namespace: backstage
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRole
+metadata:
+  name: backstage-storage-inventory-readonly
+rules:
+  - apiGroups: [""]
+    resources: [persistentvolumes, persistentvolumeclaims, pods]
+    verbs: [get, list]
+  - apiGroups: [apps]
+    resources: [replicasets]
+    verbs: [get, list]
+  - apiGroups: [storage.k8s.io]
+    resources: [storageclasses]
+    verbs: [get, list]
+---
+apiVersion: rbac.authorization.k8s.io/v1
+kind: ClusterRoleBinding
+metadata:
+  name: backstage-storage-inventory-readonly
+roleRef:
+  apiGroup: rbac.authorization.k8s.io
+  kind: ClusterRole
+  name: backstage-storage-inventory-readonly
+subjects:
+  - kind: ServiceAccount
+    name: backstage
+    namespace: backstage
