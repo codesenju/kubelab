@@ -7,7 +7,7 @@ namespace: backstage
 images:
   - name: IMAGE_NAME
     newName: registry.jazziro.com/kubelab/backstage
-    digest: sha256:e1c4c27ab20812c982020f95d1a5f19b19bc38e53e79e3f5d944b2cd1f1c11ae
+    digest: sha256:fe8ca0553a4e6819129068fe8b9cd6010a5359f4583cffc33decd92fcec277ad
 
 generatorOptions:
   disableNameSuffixHash: true
