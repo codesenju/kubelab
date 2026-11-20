@@ -38,10 +38,11 @@ spec:
             - name: POSTGRES_DB
               value: backstage
             # Argo CD catalog provider (read-only identity `backstage-catalog`).
+            # URL uses Service port 80 (-> argocd-server :8080). :8083 is the metrics port.
             # Token is provisioned from kustomize/backstage/overlays/prod/.env (secretGenerator).
             # optional: true so the app starts before the token is provisioned.
             - name: ARGOCD_API_URL
-              value: http://argocd-server.argocd.svc.cluster.local:8083
+              value: http://argocd-server.argocd.svc.cluster.local
             - name: ARGOCD_API_TOKEN
               valueFrom:
                 secretKeyRef:
