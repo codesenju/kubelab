@@ -24,11 +24,77 @@
             source:
               repoURL: https://github.com/codesenju/kubelab.git
               path: kustomize/backstage/overlays/prod
-              targetRevision: backstage
+              targetRevision: main
               kustomize:
-                # Add these to your existing kustomize config
-                labels:
-                  app.kubernetes.io/instance: backstage
+                # Keep in sync with the live Application: the OIDC env vars below
+                # exist ONLY here (not in the base), so dropping them removes sign-in.
+                images:
+                  - "ghcr.io/tensorchord/cloudnative-pgvecto.rs={{ registry_domain }}/kubelab/ghcrio/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba"
+                patches:
+                  - target:
+                      group: apps
+                      version: v1
+                      kind: Deployment
+                      name: backstage
+                    patch: |-
+                      - op: replace
+                        path: /spec/template/spec/imagePullSecrets
+                        value:
+                          - name: registry-secret
+                      # OIDC settings come from the manually created Secret
+                      # `backstage-oidc` (keys: AUTH_OIDC_METADATA_URL,
+                      # AUTH_OIDC_CLIENT_ID, AUTH_OIDC_CLIENT_SECRET,
+                      # AUTH_SESSION_SECRET). Values never live in Git.
+                      - op: add
+                        path: /spec/template/spec/containers/0/env/-
+                        value:
+                          name: AUTH_OIDC_METADATA_URL
+                          valueFrom:
+                            secretKeyRef:
+                              name: backstage-oidc
+                              key: AUTH_OIDC_METADATA_URL
+                      - op: add
+                        path: /spec/template/spec/containers/0/env/-
+                        value:
+                          name: AUTH_OIDC_CLIENT_ID
+                          valueFrom:
+                            secretKeyRef:
+                              name: backstage-oidc
+                              key: AUTH_OIDC_CLIENT_ID
+                      - op: add
+                        path: /spec/template/spec/containers/0/env/-
+                        value:
+                          name: AUTH_OIDC_CLIENT_SECRET
+                          valueFrom:
+                            secretKeyRef:
+                              name: backstage-oidc
+                              key: AUTH_OIDC_CLIENT_SECRET
+                      - op: add
+                        path: /spec/template/spec/containers/0/env/-
+                        value:
+                          name: AUTH_SESSION_SECRET
+                          valueFrom:
+                            secretKeyRef:
+                              name: backstage-oidc
+                              key: AUTH_SESSION_SECRET
+                  - target:
+                      group: postgresql.cnpg.io
+                      version: v1
+                      kind: Cluster
+                      name: backstage-postgres
+                    patch: |-
+                      - op: replace
+                        path: /spec/imageName
+                        value: "{{ registry_domain }}/ghcrio/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba"
+                      - op: add
+                        path: /spec/imagePullSecrets
+                        value:
+                          - name: registry-secret
+                      - op: replace
+                        path: /spec/storage/pvcTemplate/storageClassName
+                        value: truenas-iscsi
+                      - op: remove
+                        path: /spec/storage/pvcTemplate/selector
             destination:
               server: https://kubernetes.default.svc
               namespace: backstage
