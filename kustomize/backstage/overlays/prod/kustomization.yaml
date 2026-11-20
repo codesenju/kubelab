@@ -4,18 +4,9 @@ kind: Kustomization
 # Namespace configuration
 namespace: backstage
 
-images:
-  - name: IMAGE_NAME
-    newName: registry.jazziro.com/kubelab/backstage
-    digest: sha256:fe8ca0553a4e6819129068fe8b9cd6010a5359f4583cffc33decd92fcec277ad
-
-generatorOptions:
-  disableNameSuffixHash: true
-
-secretGenerator:
-- name: backstage-postgres-secrets
-  envs:
-    - .env
+# The image (IMAGE_NAME) is set by the Argo CD Application created in
+# addons/backstage.yaml. The backstage-postgres-secrets Secret is created by
+# that same playbook from Ansible vars, so nothing sensitive lives in Git.
 
 resources:
 - ../../base
