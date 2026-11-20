@@ -6,7 +6,47 @@
     registry_username: "{{ ghcr_username }}"
     registry_password: "{{ ghcr_token }}"
     registry_email: "{{ ghcr_email }}"
+    # Read from the environment at run time; values never live in Git.
+    backstage_db_username: "{{ lookup('env', 'BACKSTAGE_DB_USERNAME') | default('backstage', true) }}"
+    backstage_db_password: "{{ lookup('env', 'BACKSTAGE_DB_PASSWORD') }}"
+    backstage_argocd_api_token: "{{ lookup('env', 'BACKSTAGE_ARGOCD_API_TOKEN') }}"
   tasks:
+
+    - name: Create backstage namespace
+      kubernetes.core.k8s:
+        state: present
+        api_version: v1
+        kind: Namespace
+        name: backstage
+      tags: backstage-db-secret
+
+    - name: Require backstage secret inputs
+      ansible.builtin.assert:
+        that:
+          - backstage_db_password | length > 0
+          - backstage_argocd_api_token | length > 0
+        fail_msg: "Set BACKSTAGE_DB_PASSWORD and BACKSTAGE_ARGOCD_API_TOKEN in the environment."
+      no_log: true
+      tags: backstage-db-secret
+
+    - name: Create backstage postgres secrets
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: backstage-postgres-secrets
+            namespace: backstage
+            labels:
+              cnpg.io/reload: "true"
+          type: Opaque
+          stringData:
+            username: "{{ backstage_db_username }}"
+            password: "{{ backstage_db_password }}"
+            ARGOCD_API_TOKEN: "{{ backstage_argocd_api_token }}"
+      no_log: true
+      tags: backstage-db-secret
 
     - name: Deploy backstage
       kubernetes.core.k8s:
@@ -29,6 +69,7 @@
                 # Keep in sync with the live Application: the OIDC env vars below
                 # exist ONLY here (not in the base), so dropping them removes sign-in.
                 images:
+                  - "IMAGE_NAME={{ registry_domain }}/kubelab/backstage@sha256:fe8ca0553a4e6819129068fe8b9cd6010a5359f4583cffc33decd92fcec277ad"
                   - "ghcr.io/tensorchord/cloudnative-pgvecto.rs={{ registry_domain }}/kubelab/ghcrio/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba"
                 patches:
                   - target:

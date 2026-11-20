@@ -4,12 +4,8 @@ kind: Kustomization
 # Namespace configuration
 namespace: gitea
 
-generatorOptions:
-  disableNameSuffixHash: true
-
-secretGenerator:
-- name: gitea-postgres-secrets
-  envs:
-    - .env
+# gitea-postgres-secrets (keys: username, password) must exist in the gitea
+# namespace before this overlay is applied. It is no longer generated from a
+# tracked .env file.
 resources:
 - ../../base
