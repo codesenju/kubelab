@@ -10,10 +10,4 @@ images:
 
 resources:
   - ../../base/
-generatorOptions:
-  disableNameSuffixHash: true
-
-secretGenerator:
-- name: n8n-postgres-secrets
-  envs:
-    - .env
+# n8n-postgres-secrets is created by addons/n8n.yaml from Ansible vars.

@@ -13,14 +13,19 @@ spec:
   managed:
     roles:
       - name: backstage
-        superuser: true
+        # Least privilege: Backstage only creates its per-plugin databases.
+        superuser: false
+        createdb: true
         login: true
+        # Password is read from the Secret that addons/backstage.yaml creates.
+        passwordSecret:
+          name: backstage-postgres-secrets
 
   bootstrap:
     initdb:
       database: backstage
       owner: backstage
-      secret:
+      secret: # reference by name only; value comes from env via addons/backstage.yaml
         name: backstage-postgres-secrets
       postInitSQL:
         - CREATE EXTENSION IF NOT EXISTS "vectors";
