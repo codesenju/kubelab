@@ -10,6 +10,10 @@
     backstage_db_username: "{{ lookup('env', 'BACKSTAGE_DB_USERNAME') | default('backstage', true) }}"
     backstage_db_password: "{{ lookup('env', 'BACKSTAGE_DB_PASSWORD') }}"
     backstage_argocd_api_token: "{{ lookup('env', 'BACKSTAGE_ARGOCD_API_TOKEN') }}"
+    # Sign-in identities for the catalog. Emails come from the environment so
+    # they never live in Git.
+    backstage_user_agents_email: "{{ lookup('env', 'BACKSTAGE_USER_AGENTS_EMAIL') }}"
+    backstage_user_jazziro_email: "{{ lookup('env', 'BACKSTAGE_USER_JAZZIRO_EMAIL') }}"
   tasks:
 
     - name: Create backstage namespace
@@ -18,7 +22,48 @@
         api_version: v1
         kind: Namespace
         name: backstage
-      tags: backstage-db-secret
+      tags: [backstage-db-secret, backstage-catalog-users]
+
+    - name: Require backstage catalog user inputs
+      ansible.builtin.assert:
+        that:
+          - backstage_user_agents_email | length > 0
+          - backstage_user_jazziro_email | length > 0
+        fail_msg: "Set BACKSTAGE_USER_AGENTS_EMAIL and BACKSTAGE_USER_JAZZIRO_EMAIL in the environment."
+      no_log: true
+      tags: backstage-catalog-users
+
+    - name: Create backstage catalog users secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: backstage-catalog-users
+            namespace: backstage
+          type: Opaque
+          stringData:
+            users.yaml: |
+              apiVersion: backstage.io/v1alpha1
+              kind: User
+              metadata:
+                name: agents
+              spec:
+                profile:
+                  email: "{{ backstage_user_agents_email }}"
+                memberOf: []
+              ---
+              apiVersion: backstage.io/v1alpha1
+              kind: User
+              metadata:
+                name: jazziro
+              spec:
+                profile:
+                  email: "{{ backstage_user_jazziro_email }}"
+                memberOf: [guests]
+      no_log: true
+      tags: backstage-catalog-users
 
     - name: Require backstage secret inputs
       ansible.builtin.assert:

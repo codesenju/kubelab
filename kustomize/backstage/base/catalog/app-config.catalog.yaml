@@ -26,3 +26,7 @@ catalog:
       target: /catalog/resources.yaml
       rules:
         - allow: [Resource]
+    - type: file
+      target: /catalog-private/users.yaml
+      rules:
+        - allow: [User]
