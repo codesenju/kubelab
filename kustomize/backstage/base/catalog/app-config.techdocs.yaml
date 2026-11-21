@@ -1,0 +1,17 @@
+# TechDocs publisher on the in-cluster S3-compatible store (RustFS), so the built
+# docs survive pod restarts. The user can read and write only this one bucket.
+# Credentials come from env vars backed by the backstage-techdocs-s3 Secret.
+techdocs:
+  builder: local
+  generator:
+    runIn: docker
+  publisher:
+    type: awsS3
+    awsS3:
+      bucketName: backstage-techdocs
+      region: joburg-north-1
+      endpoint: http://rustfs.rustfs.svc.cluster.local:9000
+      s3ForcePathStyle: true
+      credentials:
+        accessKeyId: ${TECHDOCS_S3_ACCESS_KEY}
+        secretAccessKey: ${TECHDOCS_S3_SECRET_KEY}

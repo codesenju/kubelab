@@ -14,6 +14,9 @@
     # they never live in Git.
     backstage_user_agents_email: "{{ lookup('env', 'BACKSTAGE_USER_AGENTS_EMAIL') }}"
     backstage_user_jazziro_email: "{{ lookup('env', 'BACKSTAGE_USER_JAZZIRO_EMAIL') }}"
+    # TechDocs S3 publisher credentials, from the environment (OpenBao: backstage-techdocs-s3).
+    backstage_techdocs_s3_access_key: "{{ lookup('env', 'BACKSTAGE_TECHDOCS_S3_ACCESS_KEY') }}"
+    backstage_techdocs_s3_secret_key: "{{ lookup('env', 'BACKSTAGE_TECHDOCS_S3_SECRET_KEY') }}"
   tasks:
 
     - name: Create backstage namespace
@@ -32,6 +35,31 @@
         fail_msg: "Set BACKSTAGE_USER_AGENTS_EMAIL and BACKSTAGE_USER_JAZZIRO_EMAIL in the environment."
       no_log: true
       tags: backstage-catalog-users
+
+    - name: Require backstage techdocs S3 inputs
+      ansible.builtin.assert:
+        that:
+          - backstage_techdocs_s3_access_key | length > 0
+          - backstage_techdocs_s3_secret_key | length > 0
+        fail_msg: "Set BACKSTAGE_TECHDOCS_S3_ACCESS_KEY and BACKSTAGE_TECHDOCS_S3_SECRET_KEY in the environment."
+      no_log: true
+      tags: backstage-techdocs-s3
+
+    - name: Create backstage techdocs S3 secret
+      kubernetes.core.k8s:
+        state: present
+        definition:
+          apiVersion: v1
+          kind: Secret
+          metadata:
+            name: backstage-techdocs-s3
+            namespace: backstage
+          type: Opaque
+          stringData:
+            access_key: "{{ backstage_techdocs_s3_access_key }}"
+            secret_key: "{{ backstage_techdocs_s3_secret_key }}"
+      no_log: true
+      tags: backstage-techdocs-s3
 
     - name: Create backstage catalog users secret
       kubernetes.core.k8s:
