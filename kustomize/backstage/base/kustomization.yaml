@@ -15,6 +15,7 @@ configMapGenerator:
   files:
   - catalog/app-config.catalog.yaml
   - catalog/app-config.auth.yaml
+  - catalog/app-config.techdocs.yaml
   - catalog/groups.yaml
   - catalog/systems.yaml
   - catalog/components.yaml

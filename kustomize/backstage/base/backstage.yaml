@@ -33,6 +33,8 @@ spec:
             - /catalog/app-config.catalog.yaml
             - --config
             - /catalog/app-config.auth.yaml
+            - --config
+            - /catalog/app-config.techdocs.yaml
           ports:
             - name: http
               containerPort: 7007
@@ -53,6 +55,20 @@ spec:
               value: "5432"
             - name: POSTGRES_DB
               value: backstage
+            # TechDocs S3 publisher credentials (Secret created by addons/backstage.yaml from env vars).
+            # optional so the pod still starts if the Secret is missing; builds then fail until it exists.
+            - name: TECHDOCS_S3_ACCESS_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-techdocs-s3
+                  key: access_key
+                  optional: true
+            - name: TECHDOCS_S3_SECRET_KEY
+              valueFrom:
+                secretKeyRef:
+                  name: backstage-techdocs-s3
+                  key: secret_key
+                  optional: true
             # TechDocs generator talks to the dind sidecar over this socket.
             - name: DOCKER_HOST
               value: unix:///run/dind/docker.sock
