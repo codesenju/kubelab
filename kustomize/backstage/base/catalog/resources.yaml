@@ -1,0 +1,225 @@
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-control-plane-1
+  description: "Kubernetes control-plane node, kubelet v1.35.8."
+spec:
+  type: kubernetes-node
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-control-plane-2
+  description: "Kubernetes control-plane node, kubelet v1.35.8."
+spec:
+  type: kubernetes-node
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-control-plane-3
+  description: "Kubernetes control-plane node, kubelet v1.35.8."
+spec:
+  type: kubernetes-node
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-worker-1
+  description: "Kubernetes worker node, kubelet v1.35.8."
+spec:
+  type: kubernetes-node
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-worker-2
+  description: "Kubernetes worker node, kubelet v1.35.8."
+spec:
+  type: kubernetes-node
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: k8s-worker-3
+  description: "Kubernetes worker node, kubelet v1.35.8."
+spec:
+  type: kubernetes-node
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pve-kubelab-1
+  description: "Proxmox host. Runs the Hermes agent container."
+spec:
+  type: hypervisor
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pve-kubelab-2
+  description: "Proxmox host. Serial access to an ESP32-S3 device."
+spec:
+  type: hypervisor
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: pve-kubelab-3
+  description: "Proxmox host. Serial access to an ESP32-S3 device."
+spec:
+  type: hypervisor
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: truenas
+  description: "TrueNAS storage server (27.0.0-RC.1). Backs the truenas-* storage classes."
+spec:
+  type: nas
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: unifi-gateway
+  description: "UniFi Express 7 gateway."
+spec:
+  type: network-gateway
+  owner: group:default/platform-team
+  system: infrastructure
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: unifi-switch
+  description: "UniFi USW Flex 2.5G 8 switch."
+spec:
+  type: network-switch
+  owner: group:default/platform-team
+  system: infrastructure
+  dependsOn:
+    - resource:default/unifi-gateway
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-nfs-csi
+  description: "Kubernetes StorageClass, provisioner nfs.csi.k8s.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-nfs-csi-postgres
+  description: "Kubernetes StorageClass, provisioner nfs.csi.k8s.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-truenas-iscsi
+  description: "Kubernetes StorageClass, provisioner csi.truenas.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+  dependsOn:
+    - resource:default/truenas
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-truenas-iscsi-media
+  description: "Kubernetes StorageClass, provisioner csi.truenas.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+  dependsOn:
+    - resource:default/truenas
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-truenas-nfs
+  description: "Kubernetes StorageClass, provisioner csi.truenas.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+  dependsOn:
+    - resource:default/truenas
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-truenas-nfs-encrypted
+  description: "Kubernetes StorageClass, provisioner csi.truenas.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+  dependsOn:
+    - resource:default/truenas
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-truenas-nfs-postgres
+  description: "Kubernetes StorageClass, provisioner csi.truenas.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+  dependsOn:
+    - resource:default/truenas
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-truenas-nfs-zstd
+  description: "Kubernetes StorageClass, provisioner csi.truenas.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+  dependsOn:
+    - resource:default/truenas
+---
+apiVersion: backstage.io/v1alpha1
+kind: Resource
+metadata:
+  name: sc-truenas-nvmeof
+  description: "Kubernetes StorageClass, provisioner csi.truenas.io."
+spec:
+  type: storage-class
+  owner: group:default/platform-team
+  system: storage
+  dependsOn:
+    - resource:default/truenas

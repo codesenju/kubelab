@@ -17,6 +17,16 @@ spec:
         - name: backstage
           image: IMAGE_NAME # Replace with the actual image name
           imagePullPolicy: Always
+          # Same start command as the image, plus the catalog config file.
+          command:
+            - node
+            - packages/backend
+            - --config
+            - app-config.yaml
+            - --config
+            - app-config.production.yaml
+            - --config
+            - /catalog/app-config.catalog.yaml
           ports:
             - name: http
               containerPort: 7007
@@ -52,5 +62,13 @@ spec:
           # envFrom:
           #   - secretRef:
           #       name: backstage-secrets
+          volumeMounts:
+            - name: catalog
+              mountPath: /catalog
+              readOnly: true
+      volumes:
+        - name: catalog
+          configMap:
+            name: backstage-catalog
       imagePullSecrets:
       - name: ghcr-regcred

@@ -7,3 +7,14 @@ resources:
 - backstage.yaml
 - pv.yaml
 - rbac.yaml
+
+# Catalog content for Backstage. The ConfigMap name carries a content hash, so
+# editing these files rolls the Deployment automatically.
+configMapGenerator:
+- name: backstage-catalog
+  files:
+  - catalog/app-config.catalog.yaml
+  - catalog/groups.yaml
+  - catalog/systems.yaml
+  - catalog/components.yaml
+  - catalog/resources.yaml
