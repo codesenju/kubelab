@@ -1,0 +1,20 @@
+site_name: IY Synergy homelab
+site_description: Infrastructure, services and applications
+docs_dir: docs
+nav:
+  - Home: index.md
+  - Infrastructure:
+      - Proxmox nodes: infrastructure/proxmox-nodes.md
+      - Virtual machines and containers: infrastructure/guests.md
+      - Kubernetes cluster: infrastructure/kubernetes.md
+      - Storage: infrastructure/storage.md
+      - Network: infrastructure/network.md
+  - Services:
+      - Platform services: services/platform-services.md
+  - Applications:
+      - Overview: applications/index.md
+      - Media stack: applications/media-stack.md
+  - Operations:
+      - How changes reach the cluster: operations/gitops.md
+plugins:
+  - techdocs-core
