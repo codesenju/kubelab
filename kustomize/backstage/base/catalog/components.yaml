@@ -797,3 +797,17 @@ spec:
   lifecycle: production
   owner: group:default/platform-team
   system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: homelab-docs
+  description: "Homelab documentation: Proxmox node hardware and capacity, guests, Kubernetes, storage, network and services."
+  annotations:
+    backstage.io/techdocs-ref: url:https://github.com/codesenju/kubelab/tree/main/techdocs
+  tags: [docs]
+spec:
+  type: documentation
+  lifecycle: production
+  owner: group:default/platform-team
+  system: infrastructure
