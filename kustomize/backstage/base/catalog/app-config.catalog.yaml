@@ -30,3 +30,25 @@ catalog:
       target: /catalog-private/users.yaml
       rules:
         - allow: [User]
+
+# Kubernetes plugin: read the local cluster with the pod's own ServiceAccount token.
+# objectTypes matches what the backstage-read-only ClusterRole grants; metrics are
+# skipped because metrics.k8s.io is not granted.
+kubernetes:
+  serviceLocatorMethod:
+    type: multiTenant
+  clusterLocatorMethods:
+    - type: config
+      clusters:
+        - name: kubelab
+          url: https://kubernetes.default.svc
+          authProvider: serviceAccount
+          caFile: /var/run/secrets/kubernetes.io/serviceaccount/ca.crt
+          skipTLSVerify: false
+          skipMetricsLookup: true
+  objectTypes:
+    - pods
+    - replicasets
+    - deployments
+    - statefulsets
+    - daemonsets

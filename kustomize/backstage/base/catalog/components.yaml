@@ -51,6 +51,7 @@ metadata:
   name: cert-manager
   description: "Argo CD application (helm) in namespace cert-manager."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=cert-manager
     argocd/app-name: cert-manager
     backstage.io/kubernetes-namespace: cert-manager
   tags: [helm, gitops]
@@ -81,6 +82,7 @@ metadata:
   name: coder
   description: "Argo CD application (helm) in namespace coder."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=coder
     argocd/app-name: coder
     backstage.io/kubernetes-namespace: coder
   tags: [helm, gitops]
@@ -98,6 +100,7 @@ metadata:
   name: crossplane
   description: "Argo CD application (helm) in namespace crossplane-system."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=crossplane
     argocd/app-name: crossplane
     backstage.io/kubernetes-namespace: crossplane-system
   tags: [helm, gitops]
@@ -131,6 +134,7 @@ metadata:
   name: csi-driver-nfs
   description: "Argo CD application (helm) in namespace csi-driver-nfs."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=csi-driver-nfs
     argocd/app-name: csi-driver-nfs
     backstage.io/kubernetes-namespace: csi-driver-nfs
   tags: [helm, gitops]
@@ -221,6 +225,7 @@ metadata:
   name: hindsight
   description: "Argo CD application (helm) in namespace hindsight."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=hindsight
     argocd/app-name: hindsight
     backstage.io/kubernetes-namespace: hindsight
   tags: [helm, gitops]
@@ -238,6 +243,7 @@ metadata:
   name: homarr
   description: "Argo CD application (helm) in namespace homarr."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=homarr
     argocd/app-name: homarr
     backstage.io/kubernetes-namespace: homarr
   tags: [helm, gitops]
@@ -268,6 +274,7 @@ metadata:
   name: immich
   description: "Argo CD application (helm) in namespace immich."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=immich
     argocd/app-name: immich
     backstage.io/kubernetes-namespace: immich
   tags: [helm, gitops]
@@ -285,6 +292,7 @@ metadata:
   name: kro
   description: "Argo CD application (helm) in namespace kro."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=kro
     argocd/app-name: kro
     backstage.io/kubernetes-namespace: kro
   tags: [helm, gitops]
@@ -315,6 +323,7 @@ metadata:
   name: kube-prometheus-stack
   description: "Argo CD application (helm) in namespace kube-prometheus-stack."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=kube-prometheus-stack
     argocd/app-name: kube-prometheus-stack
     backstage.io/kubernetes-namespace: kube-prometheus-stack
   tags: [helm, gitops]
@@ -330,6 +339,7 @@ metadata:
   name: metrics-server
   description: "Argo CD application (helm) in namespace kube-system."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=metrics-server
     argocd/app-name: metrics-server
     backstage.io/kubernetes-namespace: kube-system
   tags: [helm, gitops]
@@ -379,6 +389,7 @@ metadata:
   name: openbao
   description: "Argo CD application (helm) in namespace zero-trust."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=openbao
     argocd/app-name: openbao
     backstage.io/kubernetes-namespace: zero-trust
   tags: [helm, gitops]
@@ -413,6 +424,7 @@ metadata:
   name: opentelemetry-operator
   description: "Argo CD application (helm) in namespace opentelemetry-operator-system."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=opentelemetry-operator
     argocd/app-name: opentelemetry-operator
     backstage.io/kubernetes-namespace: opentelemetry-operator-system
   tags: [helm, gitops]
@@ -443,6 +455,7 @@ metadata:
   name: plugin-barman-cloud
   description: "Argo CD application (helm) in namespace cnpg-system."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=plugin-barman-cloud
     argocd/app-name: plugin-barman-cloud
     backstage.io/kubernetes-namespace: cnpg-system
   tags: [helm, gitops]
@@ -458,6 +471,7 @@ metadata:
   name: postiz
   description: "Argo CD application (helm) in namespace postiz."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=postiz
     argocd/app-name: postiz
     backstage.io/kubernetes-namespace: postiz
   tags: [helm, gitops]
@@ -475,6 +489,7 @@ metadata:
   name: radar
   description: "Argo CD application (helm) in namespace radar."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=radar
     argocd/app-name: radar
     backstage.io/kubernetes-namespace: radar
   tags: [helm, gitops]
@@ -490,6 +505,7 @@ metadata:
   name: reflector
   description: "Argo CD application (helm) in namespace reflector."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=reflector
     argocd/app-name: reflector
     backstage.io/kubernetes-namespace: reflector
   tags: [helm, gitops]
@@ -535,6 +551,7 @@ metadata:
   name: signoz
   description: "Argo CD application (helm) in namespace signoz."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=signoz
     argocd/app-name: signoz
     backstage.io/kubernetes-namespace: signoz
   tags: [helm, gitops]
@@ -554,6 +571,7 @@ metadata:
   name: signoz-k8s-infra
   description: "Argo CD application (helm) in namespace signoz."
   annotations:
+    backstage.io/kubernetes-label-selector: app.kubernetes.io/instance=signoz-k8s-infra
     argocd/app-name: signoz-k8s-infra
     backstage.io/kubernetes-namespace: signoz
   tags: [helm, gitops]
@@ -654,6 +672,7 @@ metadata:
   name: bazarr
   description: "Media-stack workload (bazarr)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=bazarr
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -669,6 +688,7 @@ metadata:
   name: flaresolverr
   description: "Media-stack workload (flaresolverr)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=flaresolverr
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -684,6 +704,7 @@ metadata:
   name: jellyfin
   description: "Media-stack workload (jellyfin)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=jellyfin
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -699,6 +720,7 @@ metadata:
   name: prowlarr
   description: "Media-stack workload (prowlarr)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=prowlarr
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -714,6 +736,7 @@ metadata:
   name: qbittorrent
   description: "Media-stack workload (gluetun)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=qbittorrent
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -729,6 +752,7 @@ metadata:
   name: radarr
   description: "Media-stack workload (radarr)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=radarr
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -744,6 +768,7 @@ metadata:
   name: seerr
   description: "Media-stack workload (seerr)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=seerr
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -759,6 +784,7 @@ metadata:
   name: sonarr
   description: "Media-stack workload (sonarr)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=sonarr
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -774,6 +800,7 @@ metadata:
   name: tdarr
   description: "Media-stack workload (tdarr)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=tdarr
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]
@@ -789,6 +816,7 @@ metadata:
   name: tdarr-worker
   description: "Media-stack workload (tdarr_node)."
   annotations:
+    backstage.io/kubernetes-label-selector: app=tdarr-worker
     argocd/app-name: media-stack
     backstage.io/kubernetes-namespace: media-stack
   tags: [media, gitops]

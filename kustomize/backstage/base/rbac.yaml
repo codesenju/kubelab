@@ -6,6 +6,12 @@
 # Least privilege: get/list/watch only. NO secrets, NO pods/exec,
 # NO pods/portforward, NO pods/log and NO write verbs. Add pods/log in a
 # separate, commented rule only if the app enables log viewing.
+#
+# The Deployment runs as this ServiceAccount (serviceAccountName: backstage), and
+# the Kubernetes plugin reads the cluster with its token (see the `kubernetes:`
+# block in catalog/app-config.catalog.yaml). replicasets is needed to map pods to
+# their Deployment. services and configmaps are deliberately not granted, so
+# kubernetes.objectTypes is limited to the kinds below.
 apiVersion: rbac.authorization.k8s.io/v1
 kind: ClusterRole
 metadata:
@@ -30,6 +36,7 @@ rules:
   - apiGroups: ["apps"]
     resources:
       - deployments
+      - replicasets
       - statefulsets
       - daemonsets
     verbs: ["get", "list", "watch"]
