@@ -22,7 +22,12 @@ spec:
         # so nothing else in the cluster can reach it.
         - name: dind
           image: docker:29.1.3-dind@sha256:173f284a4299164772a90f52b373e73e087583c0963f1334c9995f190ef6f3f5
+          # Go through the image's dind wrapper: it sets up cgroup v2 nesting and
+          # shared mount propagation. Calling dockerd directly skips both.
+          # Using `command` replaces the image entrypoint, so the entrypoint's
+          # default TCP listener (2375) is never added.
           command:
+            - dind
             - dockerd
             - --host=unix:///run/dind/docker.sock
             - --group=1000
