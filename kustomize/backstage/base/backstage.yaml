@@ -66,9 +66,18 @@ spec:
             - name: catalog
               mountPath: /catalog
               readOnly: true
+            - name: catalog-users
+              mountPath: /catalog-private
+              readOnly: true
       volumes:
         - name: catalog
           configMap:
             name: backstage-catalog
+        # Sign-in User entities. Created by addons/backstage.yaml from env vars.
+        # optional so the pod still starts if the Secret is missing.
+        - name: catalog-users
+          secret: # reference by name only, value comes from env via addons/backstage.yaml
+            secretName: backstage-catalog-users
+            optional: true
       imagePullSecrets:
       - name: ghcr-regcred
