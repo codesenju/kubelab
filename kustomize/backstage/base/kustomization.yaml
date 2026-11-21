@@ -14,6 +14,7 @@ configMapGenerator:
 - name: backstage-catalog
   files:
   - catalog/app-config.catalog.yaml
+  - catalog/app-config.auth.yaml
   - catalog/groups.yaml
   - catalog/systems.yaml
   - catalog/components.yaml

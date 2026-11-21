@@ -30,6 +30,8 @@ spec:
             - app-config.production.yaml
             - --config
             - /catalog/app-config.catalog.yaml
+            - --config
+            - /catalog/app-config.auth.yaml
           ports:
             - name: http
               containerPort: 7007
