@@ -17,37 +17,6 @@ spec:
         kubectl.kubernetes.io/default-container: backstage
     spec:
       containers:
-        # Docker-in-Docker sidecar for the TechDocs generator (techdocs.generator.runIn: docker).
-        # Privileged. It listens only on a unix socket in a shared volume, never on TCP,
-        # so nothing else in the cluster can reach it.
-        - name: dind
-          image: docker:29.1.3-dind@sha256:173f284a4299164772a90f52b373e73e087583c0963f1334c9995f190ef6f3f5
-          # Go through the image's dind wrapper: it sets up cgroup v2 nesting and
-          # shared mount propagation. Calling dockerd directly skips both.
-          # Using `command` replaces the image entrypoint, so the entrypoint's
-          # default TCP listener (2375) is never added.
-          command:
-            - dind
-            - dockerd
-            - --host=unix:///run/dind/docker.sock
-            - --group=1000
-          securityContext:
-            privileged: true
-          resources:
-            requests:
-              cpu: 100m
-              memory: 256Mi
-            limits:
-              memory: 1Gi
-          volumeMounts:
-            - name: dind-socket
-              mountPath: /run/dind
-            - name: dind-storage
-              mountPath: /var/lib/docker
-            # Same path as in the backstage container: the generator bind-mounts
-            # its /tmp working directories into the job containers.
-            - name: tmp
-              mountPath: /tmp
         - name: backstage
           image: IMAGE_NAME # Replace with the actual image name
           imagePullPolicy: Always
@@ -108,6 +77,39 @@ spec:
               readOnly: true
             - name: dind-socket
               mountPath: /run/dind
+            - name: tmp
+              mountPath: /tmp
+        # dind stays AFTER the backstage container: the Argo CD Application patches
+        # containers/0/env, so the app container must be index 0.
+        # Docker-in-Docker sidecar for the TechDocs generator (techdocs.generator.runIn: docker).
+        # Privileged. It listens only on a unix socket in a shared volume, never on TCP,
+        # so nothing else in the cluster can reach it.
+        - name: dind
+          image: docker:29.1.3-dind@sha256:173f284a4299164772a90f52b373e73e087583c0963f1334c9995f190ef6f3f5
+          # Go through the image's dind wrapper: it sets up cgroup v2 nesting and
+          # shared mount propagation. Calling dockerd directly skips both.
+          # Using `command` replaces the image entrypoint, so the entrypoint's
+          # default TCP listener (2375) is never added.
+          command:
+            - dind
+            - dockerd
+            - --host=unix:///run/dind/docker.sock
+            - --group=1000
+          securityContext:
+            privileged: true
+          resources:
+            requests:
+              cpu: 100m
+              memory: 256Mi
+            limits:
+              memory: 1Gi
+          volumeMounts:
+            - name: dind-socket
+              mountPath: /run/dind
+            - name: dind-storage
+              mountPath: /var/lib/docker
+            # Same path as in the backstage container: the generator bind-mounts
+            # its /tmp working directories into the job containers.
             - name: tmp
               mountPath: /tmp
       volumes:
