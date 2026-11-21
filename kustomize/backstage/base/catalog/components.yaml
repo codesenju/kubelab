@@ -1,0 +1,799 @@
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: backstage
+  description: "Argo CD application (kustomize) in namespace backstage."
+  annotations:
+    argocd/app-name: backstage
+    backstage.io/kubernetes-namespace: backstage
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+  dependsOn:
+    - resource:default/sc-truenas-iscsi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: beszel
+  description: "Argo CD application (kustomize) in namespace beszel."
+  annotations:
+    argocd/app-name: beszel
+    backstage.io/kubernetes-namespace: beszel
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: beszel-agent
+  description: "Argo CD application (kustomize) in namespace beszel."
+  annotations:
+    argocd/app-name: beszel-agent
+    backstage.io/kubernetes-namespace: beszel
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: cert-manager
+  description: "Argo CD application (helm) in namespace cert-manager."
+  annotations:
+    argocd/app-name: cert-manager
+    backstage.io/kubernetes-namespace: cert-manager
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: security
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: cloudnative-postgresql
+  description: "Argo CD application (helm) in namespace cnpg-system."
+  annotations:
+    argocd/app-name: cloudnative-postgresql
+    backstage.io/kubernetes-namespace: cnpg-system
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: coder
+  description: "Argo CD application (helm) in namespace coder."
+  annotations:
+    argocd/app-name: coder
+    backstage.io/kubernetes-namespace: coder
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+  dependsOn:
+    - resource:default/sc-truenas-iscsi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: crossplane
+  description: "Argo CD application (helm) in namespace crossplane-system."
+  annotations:
+    argocd/app-name: crossplane
+    backstage.io/kubernetes-namespace: crossplane-system
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: crowdsec
+  description: "Argo CD application (helm) in namespace crowdsec."
+  annotations:
+    argocd/app-name: crowdsec
+    backstage.io/kubernetes-namespace: crowdsec
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: security
+  dependsOn:
+    - resource:default/sc-nfs-csi
+    - resource:default/sc-truenas-nvmeof
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: csi-driver-nfs
+  description: "Argo CD application (helm) in namespace csi-driver-nfs."
+  annotations:
+    argocd/app-name: csi-driver-nfs
+    backstage.io/kubernetes-namespace: csi-driver-nfs
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: csi-truenas
+  description: "Argo CD application (kustomize) in namespace csi-truenas."
+  annotations:
+    argocd/app-name: csi-truenas
+    backstage.io/kubernetes-namespace: csi-truenas
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: databasus
+  description: "Argo CD application (kustomize) in namespace databasus."
+  annotations:
+    argocd/app-name: databasus
+    backstage.io/kubernetes-namespace: databasus
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: external-snapshotter
+  description: "Argo CD application (kustomize) in namespace external-snapshotter."
+  annotations:
+    argocd/app-name: external-snapshotter
+    backstage.io/kubernetes-namespace: external-snapshotter
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: gitlab-runner
+  description: "Argo CD application (helm) in namespace gitlab."
+  annotations:
+    argocd/app-name: gitlab-runner
+    backstage.io/kubernetes-namespace: gitlab
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: ha-bridge
+  description: "Argo CD application (kustomize) in namespace homeassistant."
+  annotations:
+    argocd/app-name: ha-bridge
+    backstage.io/kubernetes-namespace: homeassistant
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: hindsight
+  description: "Argo CD application (helm) in namespace hindsight."
+  annotations:
+    argocd/app-name: hindsight
+    backstage.io/kubernetes-namespace: hindsight
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+  dependsOn:
+    - resource:default/sc-truenas-iscsi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: homarr
+  description: "Argo CD application (helm) in namespace homarr."
+  annotations:
+    argocd/app-name: homarr
+    backstage.io/kubernetes-namespace: homarr
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: homeassistant
+  description: "Argo CD application (kustomize) in namespace homeassistant."
+  annotations:
+    argocd/app-name: homeassistant
+    backstage.io/kubernetes-namespace: homeassistant
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: immich
+  description: "Argo CD application (helm) in namespace immich."
+  annotations:
+    argocd/app-name: immich
+    backstage.io/kubernetes-namespace: immich
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+  dependsOn:
+    - resource:default/sc-truenas-iscsi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kro
+  description: "Argo CD application (helm) in namespace kro."
+  annotations:
+    argocd/app-name: kro
+    backstage.io/kubernetes-namespace: kro
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kro-rgd
+  description: "Argo CD application (kustomize) in namespace kro."
+  annotations:
+    argocd/app-name: kro-rgd
+    backstage.io/kubernetes-namespace: kro
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: kube-prometheus-stack
+  description: "Argo CD application (helm) in namespace kube-prometheus-stack."
+  annotations:
+    argocd/app-name: kube-prometheus-stack
+    backstage.io/kubernetes-namespace: kube-prometheus-stack
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: metrics-server
+  description: "Argo CD application (helm) in namespace kube-system."
+  annotations:
+    argocd/app-name: metrics-server
+    backstage.io/kubernetes-namespace: kube-system
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: nexus
+  description: "Argo CD application (kustomize) in namespace nexus."
+  annotations:
+    argocd/app-name: nexus
+    backstage.io/kubernetes-namespace: nexus
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+  dependsOn:
+    - resource:default/sc-truenas-nvmeof
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: omniroute
+  description: "Argo CD application (kustomize) in namespace omniroute."
+  annotations:
+    argocd/app-name: omniroute
+    backstage.io/kubernetes-namespace: omniroute
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+  dependsOn:
+    - resource:default/sc-truenas-iscsi-media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: openbao
+  description: "Argo CD application (helm) in namespace zero-trust."
+  annotations:
+    argocd/app-name: openbao
+    backstage.io/kubernetes-namespace: zero-trust
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: security
+  dependsOn:
+    - resource:default/sc-nfs-csi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: openbao-transit
+  description: "Argo CD application (kustomize) in namespace zero-trust."
+  annotations:
+    argocd/app-name: openbao-transit
+    backstage.io/kubernetes-namespace: zero-trust
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: security
+  dependsOn:
+    - resource:default/sc-nfs-csi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: opentelemetry-operator
+  description: "Argo CD application (helm) in namespace opentelemetry-operator-system."
+  annotations:
+    argocd/app-name: opentelemetry-operator
+    backstage.io/kubernetes-namespace: opentelemetry-operator-system
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: otel-collector
+  description: "Argo CD application (kustomize) in namespace otel-system."
+  annotations:
+    argocd/app-name: otel-collector
+    backstage.io/kubernetes-namespace: otel-system
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: plugin-barman-cloud
+  description: "Argo CD application (helm) in namespace cnpg-system."
+  annotations:
+    argocd/app-name: plugin-barman-cloud
+    backstage.io/kubernetes-namespace: cnpg-system
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: postiz
+  description: "Argo CD application (helm) in namespace postiz."
+  annotations:
+    argocd/app-name: postiz
+    backstage.io/kubernetes-namespace: postiz
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+  dependsOn:
+    - resource:default/sc-truenas-iscsi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: radar
+  description: "Argo CD application (helm) in namespace radar."
+  annotations:
+    argocd/app-name: radar
+    backstage.io/kubernetes-namespace: radar
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: reflector
+  description: "Argo CD application (helm) in namespace reflector."
+  annotations:
+    argocd/app-name: reflector
+    backstage.io/kubernetes-namespace: reflector
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: security
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: registry-creds
+  description: "Argo CD application (kustomize) in namespace registry-creds."
+  annotations:
+    argocd/app-name: registry-creds
+    backstage.io/kubernetes-namespace: registry-creds
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: security
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: rustfs
+  description: "Argo CD application (kustomize) in namespace rustfs."
+  annotations:
+    argocd/app-name: rustfs
+    backstage.io/kubernetes-namespace: rustfs
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: storage
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: signoz
+  description: "Argo CD application (helm) in namespace signoz."
+  annotations:
+    argocd/app-name: signoz
+    backstage.io/kubernetes-namespace: signoz
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+  dependsOn:
+    - resource:default/sc-nfs-csi
+    - resource:default/sc-truenas-iscsi
+    - resource:default/sc-truenas-nvmeof
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: signoz-k8s-infra
+  description: "Argo CD application (helm) in namespace signoz."
+  annotations:
+    argocd/app-name: signoz-k8s-infra
+    backstage.io/kubernetes-namespace: signoz
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+  dependsOn:
+    - resource:default/sc-nfs-csi
+    - resource:default/sc-truenas-iscsi
+    - resource:default/sc-truenas-nvmeof
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: signoz-mcp
+  description: "Argo CD application (kustomize) in namespace signoz."
+  annotations:
+    argocd/app-name: signoz-mcp
+    backstage.io/kubernetes-namespace: signoz
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: observability
+  dependsOn:
+    - resource:default/sc-nfs-csi
+    - resource:default/sc-truenas-iscsi
+    - resource:default/sc-truenas-nvmeof
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: traefik
+  description: "Argo CD application (helm) in namespace traefik."
+  annotations:
+    argocd/app-name: traefik
+    backstage.io/kubernetes-namespace: traefik
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: traefik-crds
+  description: "Argo CD application (helm) in namespace traefik."
+  annotations:
+    argocd/app-name: traefik-crds
+    backstage.io/kubernetes-namespace: traefik
+  tags: [helm, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: platform
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: vaultwarden
+  description: "Argo CD application (kustomize) in namespace zero-trust."
+  annotations:
+    argocd/app-name: vaultwarden
+    backstage.io/kubernetes-namespace: zero-trust
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: security
+  dependsOn:
+    - resource:default/sc-nfs-csi
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: waha
+  description: "Argo CD application (kustomize) in namespace waha."
+  annotations:
+    argocd/app-name: waha
+    backstage.io/kubernetes-namespace: waha
+  tags: [kustomize, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: applications
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: bazarr
+  description: "Media-stack workload (bazarr)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: flaresolverr
+  description: "Media-stack workload (flaresolverr)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: jellyfin
+  description: "Media-stack workload (jellyfin)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: prowlarr
+  description: "Media-stack workload (prowlarr)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: qbittorrent
+  description: "Media-stack workload (gluetun)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: radarr
+  description: "Media-stack workload (radarr)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: seerr
+  description: "Media-stack workload (seerr)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: sonarr
+  description: "Media-stack workload (sonarr)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: tdarr
+  description: "Media-stack workload (tdarr)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media
+---
+apiVersion: backstage.io/v1alpha1
+kind: Component
+metadata:
+  name: tdarr-worker
+  description: "Media-stack workload (tdarr_node)."
+  annotations:
+    argocd/app-name: media-stack
+    backstage.io/kubernetes-namespace: media-stack
+  tags: [media, gitops]
+spec:
+  type: service
+  lifecycle: production
+  owner: group:default/platform-team
+  system: media

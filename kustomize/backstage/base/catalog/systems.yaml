@@ -1,0 +1,55 @@
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: observability
+  description: "Metrics, logs, traces and host monitoring."
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: security
+  description: "Secrets, certificates, SSO and runtime protection."
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: storage
+  description: "CSI drivers, snapshots, databases and object storage."
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: platform
+  description: "Ingress, delivery, developer tooling and cluster add-ons."
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: applications
+  description: "Self-hosted applications."
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: media
+  description: "Media server, *arr automation and transcoding."
+spec:
+  owner: group:default/platform-team
+---
+apiVersion: backstage.io/v1alpha1
+kind: System
+metadata:
+  name: infrastructure
+  description: "Physical and virtual infrastructure: hypervisors, nodes, network and NAS."
+spec:
+  owner: group:default/platform-team

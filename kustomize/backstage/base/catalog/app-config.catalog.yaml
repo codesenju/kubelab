@@ -1,0 +1,28 @@
+# Extra Backstage config merged after app-config.production.yaml.
+# Arrays replace earlier values, so the original org and template sources are repeated here.
+catalog:
+  locations:
+    - type: file
+      target: ./examples/org.yaml
+      rules:
+        - allow: [User, Group]
+    - type: file
+      target: ./examples/template/template.yaml
+      rules:
+        - allow: [Template]
+    - type: file
+      target: /catalog/groups.yaml
+      rules:
+        - allow: [Group]
+    - type: file
+      target: /catalog/systems.yaml
+      rules:
+        - allow: [System]
+    - type: file
+      target: /catalog/components.yaml
+      rules:
+        - allow: [Component]
+    - type: file
+      target: /catalog/resources.yaml
+      rules:
+        - allow: [Resource]
