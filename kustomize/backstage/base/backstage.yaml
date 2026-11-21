@@ -16,6 +16,7 @@ spec:
         # Keep `kubectl exec/logs deploy/backstage` pointed at the app, not dind.
         kubectl.kubernetes.io/default-container: backstage
     spec:
+      serviceAccountName: backstage
       containers:
         - name: backstage
           image: IMAGE_NAME # Replace with the actual image name
