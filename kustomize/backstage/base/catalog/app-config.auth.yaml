@@ -1,0 +1,13 @@
+# Extra Backstage config merged after app-config.production.yaml.
+# Keeps the signed-in session across page loads and browser restarts.
+auth:
+  providers:
+    oidc:
+      production:
+        # offline_access makes the identity provider issue a refresh token.
+        # Without it /api/auth/oidc/refresh returns 401 and every reload signs the user out.
+        additionalScopes:
+          - offline_access
+        # "auto" leaves the prompt parameter out, so an existing identity provider
+        # session is reused. "login" forced a fresh password prompt on every sign-in.
+        prompt: auto
