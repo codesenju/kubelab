@@ -1,50 +1,98 @@
 # Backstage → Argo CD read-only catalog identity
 
-Prepared 2026-11-16 (recovery-ops) for the IY Synergy Backstage catalog synchronization
-workstream (Hermes board `IY Synergy Platform V2`, tasks `t_b418805f` / `t_0f22360d`).
+Account: `backstage-catalog` (reused; no second `backstage` account is created).
+Consumer: the IY Synergy Backstage Argo CD catalog provider.
 
-**Status: PREPARED — awaiting human approval before applying.** Nothing in this branch is
-live until the PR is merged and the playbooks run.
+**BLOCKED: pending user approval.** Nothing here is live until the PR is merged and
+`addons/argocd.yaml` is re-applied with `--tags argocd`. Do not push, merge, apply or
+generate a token without that approval.
 
-## What this branch changes
+## Decision: reuse, do not duplicate
 
-1. `addons/argocd.yaml` — Argo CD RBAC (helm `configs`):
-   - New role `role:backstage-catalog`:
-     - `p, role:backstage-catalog, applications, get, default/*, allow`
-     - `p, role:backstage-catalog, applicationsets, get, default/*, allow`
-   - New account binding: `g, backstage-catalog, role:backstage-catalog`
-   - `argocd-cm` account enablement: `accounts.backstage-catalog: apiKey, login` + `enabled: "true"`
-   - **Granted:** `get` on `applications` and `applicationsets` in project `default` (covers
-     Argo CD API list+get). **Not granted:** `sync`, `update`, `delete`, admin, projects,
-     repositories, or any other resource.
-   - The existing `devops` account is **unchanged** and must **not** be reused for the
-     Backstage provider (it carries `applications,sync`).
+The live `backstage-catalog` account is already read-only. A new `backstage` account with
+the same grants would only add a second identity to rotate and revoke. The only repo change
+needed is to fix drift (see below).
 
-2. `kustomize/backstage/base/backstage.yaml` — deployment env:
-   - `ARGOCD_API_URL` = `http://argocd-server.argocd.svc.cluster.local:8083` (in-cluster API)
-   - `ARGOCD_API_TOKEN` from secret `backstage-postgres-secrets` key `ARGOCD_API_TOKEN`
-     (`optional: true` — the app boots before the token exists)
-   - The token enters via the existing `secretGenerator`/`.env` pattern
-     (`kustomize/backstage/overlays/prod/.env`), same as the Postgres credentials.
+## Change in this PR
 
-## Approval + apply procedure (human)
+`addons/argocd.yaml`, `configs.cm`:
 
-1. Review/merge this PR.
-2. Apply the Argo CD change (existing Ansible path used for `addons/argocd.yaml`, or
-   `helm upgrade argocd ...` with the same values). Verify:
-   `argocd admin whoami` / `kubectl -n argocd get cm argocd-cm -o yaml | grep backstage`
-3. Generate the API token for the new account:
-   `argocd account token generate backstage-catalog`
-4. Store the token:
-   - preferred: OpenBao (e.g. `bao kv put secret/data/backstage argocd_api_token=<token>`),
-   - then set `ARGOCD_API_TOKEN=<token>` in `kustomize/backstage/overlays/prod/.env`
-     (the tracked `.env` file — long-term, move all overlay secrets to OpenBao-injected
-     values; flagged as a hygiene item, not part of this change).
-5. Argo CD syncs the backstage deployment; verify from inside the cluster:
-   `curl -s -H "Authorization: Bearer <token>" $ARGOCD_API_URL/api/v1/apps | head`
-6. Unblock Hermes task `t_b418805f` (implementation) once the token round-trip is verified.
+```diff
+-              accounts.backstage-catalog: apiKey, login
++              accounts.backstage-catalog: apiKey
+```
 
-## Rollback
+- The live cluster is already `apiKey` only. The repo said `apiKey, login`, so a re-run of
+  `--tags argocd` would have turned UI/CLI password login on for a service account.
+- `accounts.backstage-catalog.enabled: "true"` stays.
+- The RBAC block is unchanged:
+  - `g, backstage-catalog, role:backstage-catalog`
+  - `p, role:backstage-catalog, applications, get, default/*, allow`
+  - `p, role:backstage-catalog, applicationsets, get, default/*, allow`
+- No `list` lines. Argo CD RBAC has no `list` verb; `get` covers API list and get.
+- No sync, override, action, create, update or delete grants.
 
-- Remove the two `p,` / `g,` policy lines and the two `accounts.backstage-catalog*` cm keys;
-  `argocd account delete backstage-catalog`; unset `ARGOCD_API_TOKEN` in `.env`.
+### Scope decision (not in this diff)
+
+The role is scoped to `default/*`. `default` is the only AppProject today, so this covers
+every app. Apps in a future project would be invisible to Backstage. Widening to `*/*`
+is a separate, optional change (staged in task t_776f6c62). It was left out here to keep
+the change a pure drift fix.
+
+### policy.default
+
+Not set in the repo, and empty live, so the account gets no implicit role. Keep it empty. If it
+is ever set to `role:readonly` or `role:admin`, every account and token, including this
+one, gains those rights. Setting it would also affect the SSO groups and `devops`.
+
+## Blast radius
+
+- Can read: Applications and ApplicationSets in `default`, through the Argo CD API. That
+  includes live resource manifests of managed apps, **including Secret manifests**. Argo CD
+  RBAC cannot exclude them. If this exposure is not acceptable, have Backstage read the
+  Application custom resources through Kubernetes RBAC instead of the Argo API.
+- Cannot: sync, override, run actions, create, update or delete anything, or read
+  projects, repositories, clusters or certificates. This follows from `policy.csv`. Write
+  verbs were not tested live with this token in this task.
+- ConfigMap changes: `argocd-cm` key `accounts.backstage-catalog` goes from `apiKey, login`
+  to `apiKey`. `argocd-rbac-cm` is unchanged. Live `argocd-cm` is already `apiKey`, so the
+  effective change is zero.
+- Restart: none expected. `argocd-server` watches both ConfigMaps. A Helm/Ansible re-apply
+  only touches the ConfigMaps. Not verified on a live run.
+- Existing API key (unchanged, still valid): issued 2026-11-16, no expiry.
+
+## After approval: apply
+
+```bash
+cd ansible && ANSIBLE_CONFIG=ansible.cfg ansible-playbook -i inventories/prod/hosts.ini \
+  ../addons/argocd.yaml --tags argocd
+kubectl -n argocd get cm argocd-cm -o jsonpath='{.data.accounts\.backstage-catalog}{"\n"}'   # apiKey
+```
+
+## After approval: rotate to an expiring token (optional)
+
+Writes the token straight into OpenBao. Nothing is printed and no file is written.
+
+```bash
+argocd account generate-token --account backstage-catalog --expires-in <duration> \
+  | bao kv put secret/agents/backstage argocd_api_token=-   # example invocation; the value never touches disk or stdout
+```
+
+Then point Backstage at `secret/agents/backstage` (key `argocd_api_token`) and check that
+the catalog sync works. Remove the old token only after that:
+
+```bash
+argocd account get --account backstage-catalog          # lists token ids
+argocd account delete-token --account backstage-catalog <old-token-id>
+```
+
+## Rollback and revocation
+
+- Repo: revert the PR. This restores `apiKey, login`; do not re-apply it unless you want
+  login on.
+- Disable the account: set `accounts.backstage-catalog.enabled: "false"`, or remove the
+  `accounts.backstage-catalog*` keys plus the `g,` and `p,` lines for `role:backstage-catalog`,
+  then re-apply with `--tags argocd`.
+- Revoke tokens: `argocd account delete-token --account backstage-catalog <id>`.
+- Rotate or delete any copy of the token in OpenBao (`secret/agents/backstage`) and in the
+  Backstage secret that consumes it.
