@@ -69,7 +69,7 @@
                 # Keep in sync with the live Application: the OIDC env vars below
                 # exist ONLY here (not in the base), so dropping them removes sign-in.
                 images:
-                  - "IMAGE_NAME={{ registry_domain }}/kubelab/backstage@sha256:fe8ca0553a4e6819129068fe8b9cd6010a5359f4583cffc33decd92fcec277ad"
+                  - "IMAGE_NAME={{ registry_domain }}/kubelab/backstage@sha256:de8c913e697e49b0b85c6f979ecfd65582babd1514ace88b8fad9274e597a9ad"
                   - "ghcr.io/tensorchord/cloudnative-pgvecto.rs={{ registry_domain }}/kubelab/ghcrio/tensorchord/cloudnative-pgvecto.rs:16.5-v0.3.0@sha256:be3f025d79aa1b747817f478e07e71be43236e14d00d8a9eb3914146245035ba"
                 patches:
                   - target:
